@@ -74,7 +74,8 @@ ls -la .claude/
 **If still broken:**
 - Open the JSON file in a text editor
 - Look for any obvious errors (missing brackets, etc.)
-- Ask in Slack with screenshot
+- Some complex AI workflows (with LangChain nodes) may have occasional import issues
+- Ask in Slack with screenshot - instructors can help with alternative import methods
 
 ### "Node Type Not Found"
 

@@ -635,6 +635,7 @@ bash setup.sh
    - Delete the JSON file
    - Re-clone the repository
    - Try importing again
+4. **For complex AI workflows:** Some workflows with LangChain/AI nodes may occasionally have import issues. Ask in Slack - instructors have alternative import methods.
 
 ---
 
