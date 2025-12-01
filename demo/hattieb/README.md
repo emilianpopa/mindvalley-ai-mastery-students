@@ -62,13 +62,13 @@ This demo showcases a production-grade email response system for Hattie B's Hot 
 
 Import these workflows in sequence from the `workflows/` folder:
 
-1. **First**: `hattieb-email-main-workflow.json`
+1. **First**: `main-agent-chain-hattieb.json`
    - The orchestrator workflow
-   - Coordinates all agents
+   - Coordinates all agents (CinnaMon → Hatch → YGM → QA)
 
-2. **Then**: Any sub-workflows (if separated)
-   - Agent-specific workflows
-   - QA evaluation workflow
+2. **Then**: `hitl-slack-hattieb.json`
+   - Human-in-the-loop Slack notifications
+   - Handles escalations from QA agent
 
 **How to Import**:
 - N8N Dashboard → "Add Workflow" → "Import from File"
@@ -156,7 +156,8 @@ Work through all 10 test emails in `test-emails/sample-emails.md`:
 hattieb-complete/
 ├── README.md                          ← You are here
 ├── workflows/
-│   └── hattieb-email-main-workflow.json   ← Import this into N8N
+│   ├── main-agent-chain-hattieb.json      ← Import first (main workflow)
+│   └── hitl-slack-hattieb.json            ← Import second (HITL notifications)
 ├── prompts/
 │   ├── ygm-hattieb.md                 ← YGM agent system prompt
 │   ├── qa-hattieb.md                  ← QA agent system prompt (v1)

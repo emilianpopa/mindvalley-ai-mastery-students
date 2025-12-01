@@ -47,7 +47,7 @@ Fast fixes for common issues. For each problem, try the Quick Fix first, then De
 **Check:**
 ```bash
 ls -la .claude/
-# Should show: CLAUDE.md, settings.json, etc.
+# Should show: settings.local.json
 ```
 
 ### "Rate Limited" or "Too Many Requests"
