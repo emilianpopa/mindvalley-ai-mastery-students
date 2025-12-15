@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ExpandHealth KB Uploader</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      max-width: 600px;
+      width: 100%;
+      padding: 40px;
+    }
+
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+      font-size: 28px;
+    }
+
+    .subtitle {
+      color: #666;
+      margin-bottom: 30px;
+      font-size: 14px;
+    }
+
+    .store-info {
+      background: #f0f4f8;
+      border-left: 4px solid #667eea;
+      padding: 15px;
+      margin-bottom: 30px;
+      border-radius: 8px;
+      font-size: 13px;
+      color: #555;
+    }
+
+    .upload-area {
+      border: 3px dashed #667eea;
+      border-radius: 12px;
+      padding: 40px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+      margin-bottom: 20px;
+      background: #f8f9ff;
+    }
+
+    .upload-area:hover {
+      border-color: #764ba2;
+      background: #f0f4ff;
+    }
+
+    .upload-area.dragover {
+      border-color: #764ba2;
+      background: #e8edff;
+      transform: scale(1.02);
+    }
+
+    .upload-icon {
+      font-size: 48px;
+      margin-bottom: 10px;
+    }
+
+    .upload-text {
+      color: #667eea;
+      font-weight: 600;
+      margin-bottom: 5px;
+    }
+
+    .upload-hint {
+      color: #999;
+      font-size: 13px;
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    button {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 15px 30px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      width: 100%;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .file-list {
+      margin: 20px 0;
+    }
+
+    .file-item {
+      background: #f8f9fa;
+      padding: 12px 15px;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 14px;
+    }
+
+    .file-name {
+      color: #333;
+      font-weight: 500;
+      flex: 1;
+    }
+
+    .file-size {
+      color: #999;
+      font-size: 12px;
+      margin-left: 10px;
+    }
+
+    .remove-file {
+      background: #ff4757;
+      color: white;
+      border: none;
+      padding: 5px 12px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 12px;
+      margin-left: 10px;
+    }
+
+    .progress {
+      margin: 20px 0;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: #e0e0e0;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+      width: 0%;
+      transition: width 0.3s;
+    }
+
+    .status {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    .status.success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+
+    .status.error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+
+    .status.info {
+      background: #d1ecf1;
+      color: #0c5460;
+      border: 1px solid #bee5eb;
+    }
+
+    .documents-list {
+      margin-top: 30px;
+      padding-top: 30px;
+      border-top: 2px solid #f0f0f0;
+    }
+
+    .documents-list h2 {
+      font-size: 18px;
+      color: #333;
+      margin-bottom: 15px;
+    }
+
+    .doc-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px;
+      border-bottom: 1px solid #f0f0f0;
+      font-size: 13px;
+    }
+
+    .doc-name {
+      color: #333;
+      font-weight: 500;
+      flex: 1;
+    }
+
+    .doc-meta {
+      color: #999;
+      font-size: 12px;
+      margin-right: 10px;
+    }
+
+    .delete-doc-btn {
+      background: #ff4757;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 12px;
+      transition: background 0.2s;
+    }
+
+    .delete-doc-btn:hover {
+      background: #ee3344;
+    }
+
+    .delete-doc-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .refresh-btn {
+      background: #6c757d;
+      padding: 8px 16px;
+      font-size: 14px;
+      margin-top: 15px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📚 ExpandHealth KB Uploader</h1>
+    <p class="subtitle">Upload documents to your Gemini Knowledge Base</p>
+
+    <div class="store-info">
+      <strong>Store ID:</strong> expandhealth-knowledge-base-zh869gf9ylhw<br>
+      <strong>Status:</strong> <span id="storeStatus">Checking...</span>
+    </div>
+
+    <div class="upload-area" id="uploadArea">
+      <div class="upload-icon">📄</div>
+      <div class="upload-text">Click to select files or drag & drop</div>
+      <div class="upload-hint">Supports .md, .txt files</div>
+      <input type="file" id="fileInput" multiple accept=".md,.txt">
+    </div>
+
+    <div class="file-list" id="fileList"></div>
+
+    <button id="uploadBtn" style="display: none;">Upload Files</button>
+
+    <div class="progress" id="progressContainer" style="display: none;">
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+    </div>
+
+    <div id="statusMessage"></div>
+
+    <div class="documents-list">
+      <h2>📋 Current Documents</h2>
+      <div id="documentsList">Loading...</div>
+      <button class="refresh-btn" onclick="loadDocuments()">🔄 Refresh List</button>
+    </div>
+  </div>
+
+  <script>
+    const GEMINI_API_KEY = 'AIzaSyCYUCzA4Vo038s1XbryUTrurrwpWjtEcgo';
+    const STORE_ID = 'expandhealth-knowledge-base-zh869gf9ylhw';
+
+    let selectedFiles = [];
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      loadDocuments();
+      setupEventListeners();
+    });
+
+    function setupEventListeners() {
+      const uploadArea = document.getElementById('uploadArea');
+      const fileInput = document.getElementById('fileInput');
+      const uploadBtn = document.getElementById('uploadBtn');
+
+      uploadArea.addEventListener('click', () => fileInput.click());
+
+      uploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadArea.classList.add('dragover');
+      });
+
+      uploadArea.addEventListener('dragleave', () => {
+        uploadArea.classList.remove('dragover');
+      });
+
+      uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+        handleFiles(e.dataTransfer.files);
+      });
+
+      fileInput.addEventListener('change', (e) => {
+        handleFiles(e.target.files);
+      });
+
+      uploadBtn.addEventListener('click', uploadFiles);
+    }
+
+    function handleFiles(files) {
+      selectedFiles = Array.from(files).filter(f =>
+        f.name.endsWith('.md') || f.name.endsWith('.txt')
+      );
+
+      displayFileList();
+    }
+
+    function displayFileList() {
+      const fileList = document.getElementById('fileList');
+      const uploadBtn = document.getElementById('uploadBtn');
+
+      if (selectedFiles.length === 0) {
+        fileList.innerHTML = '';
+        uploadBtn.style.display = 'none';
+        return;
+      }
+
+      fileList.innerHTML = selectedFiles.map((file, index) => `
+        <div class="file-item">
+          <span class="file-name">📄 ${file.name}</span>
+          <span class="file-size">${(file.size / 1024).toFixed(2)} KB</span>
+          <button class="remove-file" onclick="removeFile(${index})">✕</button>
+        </div>
+      `).join('');
+
+      uploadBtn.style.display = 'block';
+    }
+
+    function removeFile(index) {
+      selectedFiles.splice(index, 1);
+      displayFileList();
+    }
+
+    async function uploadFiles() {
+      const uploadBtn = document.getElementById('uploadBtn');
+      const progressContainer = document.getElementById('progressContainer');
+      const progressFill = document.getElementById('progressFill');
+      const statusMessage = document.getElementById('statusMessage');
+
+      uploadBtn.disabled = true;
+      progressContainer.style.display = 'block';
+      statusMessage.innerHTML = '';
+
+      let uploaded = 0;
+      const total = selectedFiles.length;
+
+      for (const file of selectedFiles) {
+        try {
+          await uploadSingleFile(file);
+          uploaded++;
+          progressFill.style.width = `${(uploaded / total) * 100}%`;
+        } catch (error) {
+          showStatus(`Error uploading ${file.name}: ${error.message}`, 'error');
+        }
+      }
+
+      progressFill.style.width = '100%';
+
+      setTimeout(() => {
+        showStatus(`✅ Successfully uploaded ${uploaded} of ${total} files!`, 'success');
+        selectedFiles = [];
+        displayFileList();
+        loadDocuments();
+        progressContainer.style.display = 'none';
+        progressFill.style.width = '0%';
+        uploadBtn.disabled = false;
+      }, 500);
+    }
+
+    async function uploadSingleFile(file) {
+      const content = await file.arrayBuffer();
+      const contentLength = content.byteLength;
+
+      // Step 1: Start upload
+      const startRes = await fetch(
+        `https://generativelanguage.googleapis.com/upload/v1beta/fileSearchStores/${STORE_ID}:uploadToFileSearchStore?key=${GEMINI_API_KEY}`,
+        {
+          method: 'POST',
+          headers: {
+            'X-Goog-Upload-Protocol': 'resumable',
+            'X-Goog-Upload-Command': 'start',
+            'X-Goog-Upload-Header-Content-Length': contentLength.toString(),
+            'X-Goog-Upload-Header-Content-Type': 'text/plain',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            displayName: file.name,
+            mimeType: 'text/plain'
+          })
+        }
+      );
+
+      const uploadUrl = startRes.headers.get('x-goog-upload-url');
+      if (!uploadUrl) throw new Error('Failed to get upload URL');
+
+      // Step 2: Upload content
+      const uploadRes = await fetch(uploadUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Length': contentLength.toString(),
+          'X-Goog-Upload-Offset': '0',
+          'X-Goog-Upload-Command': 'upload, finalize'
+        },
+        body: content
+      });
+
+      if (!uploadRes.ok) {
+        const errorText = await uploadRes.text();
+        throw new Error(`Upload failed: ${errorText}`);
+      }
+
+      return await uploadRes.json();
+    }
+
+    async function loadDocuments() {
+      const documentsList = document.getElementById('documentsList');
+      const storeStatus = document.getElementById('storeStatus');
+
+      try {
+        const res = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/fileSearchStores/${STORE_ID}/documents?key=${GEMINI_API_KEY}`
+        );
+
+        const data = await res.json();
+
+        if (data.documents && data.documents.length > 0) {
+          storeStatus.textContent = `✅ Active (${data.documents.length} documents)`;
+          storeStatus.style.color = '#28a745';
+
+          documentsList.innerHTML = data.documents.map(doc => {
+            const sizeKB = (parseInt(doc.sizeBytes) / 1024).toFixed(2);
+            const docId = doc.name; // Full path like "fileSearchStores/xxx/documents/yyy"
+            return `
+              <div class="doc-item">
+                <span class="doc-name">${doc.displayName}</span>
+                <span class="doc-meta">${sizeKB} KB • ${doc.state}</span>
+                <button class="delete-doc-btn" onclick="deleteDocument('${docId}', '${doc.displayName}')">🗑️ Delete</button>
+              </div>
+            `;
+          }).join('');
+        } else {
+          storeStatus.textContent = '⚠️ No documents';
+          storeStatus.style.color = '#ffc107';
+          documentsList.innerHTML = '<div class="doc-item">No documents found</div>';
+        }
+      } catch (error) {
+        storeStatus.textContent = '❌ Error loading';
+        storeStatus.style.color = '#dc3545';
+        documentsList.innerHTML = `<div class="doc-item">Error: ${error.message}</div>`;
+      }
+    }
+
+    function showStatus(message, type) {
+      const statusMessage = document.getElementById('statusMessage');
+      statusMessage.innerHTML = `<div class="status ${type}">${message}</div>`;
+
+      setTimeout(() => {
+        statusMessage.innerHTML = '';
+      }, 5000);
+    }
+
+    async function deleteDocument(docId, displayName) {
+      if (!confirm(`Are you sure you want to delete "${displayName}"?`)) {
+        return;
+      }
+
+      try {
+        showStatus(`🗑️ Deleting ${displayName}...`, 'info');
+
+        const res = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/${docId}?key=${GEMINI_API_KEY}`,
+          {
+            method: 'DELETE'
+          }
+        );
+
+        if (!res.ok) {
+          const errorText = await res.text();
+          throw new Error(`Delete failed: ${errorText}`);
+        }
+
+        showStatus(`✅ Successfully deleted "${displayName}"`, 'success');
+        loadDocuments();
+
+      } catch (error) {
+        showStatus(`❌ Error deleting document: ${error.message}`, 'error');
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,41 @@
+%% MindValley AI Mastery Architecture Diagram
+%% View this at: https://mermaid.live/
+
+graph TB
+    subgraph "SYSTEM 1: Knowledge Base Management"
+        UI1[Uploader UI<br/>localhost:3001]
+        UI2[The Stacks UI<br/>localhost:3000<br/>BROKEN]
+
+        UI1 -->|Direct HTTPS| GEMINI[Google Gemini<br/>File Search API]
+        UI2 -->|HTTP POST| N8N_UPLOAD[N8N Webhook<br/>/kb-upload-document]
+        N8N_UPLOAD -->|Old API ❌| GEMINI
+
+        GEMINI --> KB[(Gemini Knowledge Base<br/>expandhealth-knowledge-base<br/><br/>Documents:<br/>• Brand Voice<br/>• FAQ<br/>• Locations<br/>• Services<br/>• Policies)]
+    end
+
+    subgraph "SYSTEM 2: AI Agent Workflows"
+        EMAIL[Customer Email<br/>"What are your hours?"]
+        GMAIL[Gmail API<br/>Inbox Watcher]
+
+        EMAIL --> GMAIL
+        GMAIL -->|New email trigger| N8N_AGENT[N8N Workflow<br/>"Email Sugar Agent"]
+
+        N8N_AGENT --> QUERY[Query Gemini KB]
+        QUERY --> KB
+        KB -->|Returns context| QUERY
+        QUERY --> N8N_AGENT
+
+        N8N_AGENT --> CLAUDE[Claude API<br/>Generate Response]
+        CLAUDE -->|Draft response| N8N_AGENT
+
+        N8N_AGENT --> HUMAN[Human Review<br/>Slack/Email]
+        HUMAN -->|Approve| N8N_AGENT
+        N8N_AGENT --> SEND[Send Email Reply]
+    end
+
+    style KB fill:#e1f5e1
+    style UI1 fill:#c8e6c9
+    style UI2 fill:#ffcdd2
+    style N8N_AGENT fill:#bbdefb
+    style GEMINI fill:#fff9c4
+    style CLAUDE fill:#f8bbd0
