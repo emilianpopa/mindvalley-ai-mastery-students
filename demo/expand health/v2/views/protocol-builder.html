@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Protocol Builder - ExpandHealth</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/protocol-builder.css">
+  <link rel="stylesheet" href="/css/chat-widget.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo-small">
+          <span class="logo-icon">✦</span>
+          <span class="logo-text">ExpandHealth</span>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <p class="nav-section-title">CLIENT ZONE</p>
+          <a href="/clients" class="nav-item">
+            <span class="nav-icon">👥</span>
+            <span class="nav-text">Clients</span>
+          </a>
+          <a href="/forms" class="nav-item">
+            <span class="nav-icon">📋</span>
+            <span class="nav-text">Forms</span>
+          </a>
+          <a href="/protocol-templates" class="nav-item active">
+            <span class="nav-icon">📄</span>
+            <span class="nav-text">Protocol Templates</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <p class="nav-section-title">ADMIN</p>
+          <a href="/staff" class="nav-item">
+            <span class="nav-icon">👨‍⚕️</span>
+            <span class="nav-text">Staff</span>
+          </a>
+          <a href="/kb-admin" class="nav-item">
+            <span class="nav-icon">📚</span>
+            <span class="nav-text">AI Knowledge Base</span>
+          </a>
+        </div>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button class="ask-ai-btn" onclick="window.chatWidget && window.chatWidget.toggleChat()">
+          <span>✨</span>
+          <span>Ask AI</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Header -->
+      <header class="header">
+        <div class="header-left">
+          <h1 id="pageTitle">Create Protocol Template</h1>
+          <p class="breadcrumb">
+            <a href="/protocol-templates">Protocol Templates</a> → <span id="breadcrumbTitle">New Template</span>
+          </p>
+        </div>
+        <div class="header-right">
+          <button class="icon-btn">🔔</button>
+          <div class="user-menu">
+            <img src="https://ui-avatars.com/api/?name=Admin+User&background=0F766E&color=fff" alt="User" class="user-avatar">
+            <div class="user-info">
+              <p class="user-name" id="userName">Loading...</p>
+              <p class="user-role" id="userRole">Admin</p>
+            </div>
+            <button class="icon-btn" onclick="window.auth.logout()">🚪</button>
+          </div>
+        </div>
+      </header>
+
+      <!-- Builder Content -->
+      <div class="content">
+        <!-- Loading State -->
+        <div id="loadingState" class="loading-container" style="display: none;">
+          <div class="loader"></div>
+          <p>Loading template...</p>
+        </div>
+
+        <!-- Builder Form -->
+        <div id="builderForm">
+          <!-- Basic Info Section -->
+          <div class="builder-section">
+            <div class="section-header">
+              <h2>📋 Basic Information</h2>
+              <p class="section-description">Core details about this protocol template</p>
+            </div>
+
+            <div class="form-grid">
+              <div class="form-group full-width">
+                <label for="templateName">Template Name *</label>
+                <input
+                  type="text"
+                  id="templateName"
+                  class="form-input"
+                  placeholder="e.g., Hormone Balance Protocol"
+                  required
+                >
+              </div>
+
+              <div class="form-group">
+                <label for="category">Category *</label>
+                <select id="category" class="form-input" required>
+                  <option value="">Select category...</option>
+                  <option value="Hormone Health">Hormone Health</option>
+                  <option value="Gut Health">Gut Health</option>
+                  <option value="Detox">Detox</option>
+                  <option value="Energy & Vitality">Energy & Vitality</option>
+                  <option value="Weight Management">Weight Management</option>
+                  <option value="Sleep">Sleep</option>
+                  <option value="Stress & Anxiety">Stress & Anxiety</option>
+                  <option value="Immune Support">Immune Support</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="duration">Duration (weeks)</label>
+                <input
+                  type="number"
+                  id="duration"
+                  class="form-input"
+                  placeholder="e.g., 12"
+                  min="1"
+                >
+                <small class="form-hint">Leave blank for flexible duration</small>
+              </div>
+
+              <div class="form-group full-width">
+                <label for="description">Description</label>
+                <textarea
+                  id="description"
+                  class="form-input"
+                  rows="3"
+                  placeholder="Brief overview of this protocol and what it addresses..."
+                ></textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- Modules Section -->
+          <div class="builder-section">
+            <div class="section-header">
+              <h2>🗂️ Protocol Modules</h2>
+              <p class="section-description">Define the phases and steps of this protocol</p>
+            </div>
+
+            <div id="modulesList" class="modules-list">
+              <!-- Modules will be added here -->
+            </div>
+
+            <button type="button" class="btn-secondary" onclick="addModule()">
+              <span>➕</span>
+              <span>Add Module</span>
+            </button>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="builder-actions">
+            <button type="button" class="btn-secondary" onclick="window.location.href='/protocol-templates'">
+              Cancel
+            </button>
+            <button type="button" class="btn-primary" onclick="saveTemplate()" id="saveBtn">
+              <span>💾</span>
+              <span id="saveBtnText">Save Template</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="/js/dashboard.js"></script>
+  <script src="/js/protocol-builder.js"></script>
+  <script src="/js/chat-widget.js"></script>
+</body>
+</html>

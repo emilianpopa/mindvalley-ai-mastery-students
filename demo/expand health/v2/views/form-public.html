@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ExpandHealth Form</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/form-public.css">
+</head>
+<body>
+  <div class="public-container">
+    <!-- Header -->
+    <div class="public-header">
+      <div class="public-logo">
+        <span class="logo-icon">✦</span>
+        <span class="logo-text">ExpandHealth</span>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div id="loadingState" class="state-container">
+      <div class="loading-spinner"></div>
+      <p>Loading form...</p>
+    </div>
+
+    <!-- Error State -->
+    <div id="errorState" class="state-container" style="display: none;">
+      <div class="state-icon error">!</div>
+      <h2>Form Not Available</h2>
+      <p id="errorMessage">This form may have been deleted or is no longer accepting responses.</p>
+    </div>
+
+    <!-- Step 1: Identity Entry -->
+    <div id="emailStep" class="form-card" style="display: none;">
+      <div class="step-indicator">
+        <div class="step active">1</div>
+        <div class="step-line"></div>
+        <div class="step">2</div>
+        <div class="step-line"></div>
+        <div class="step">3</div>
+      </div>
+
+      <div class="card-header">
+        <h1 id="formTitleEmail" class="card-title"></h1>
+        <p class="card-description">Please enter your details to access this form. We'll send you a verification code.</p>
+      </div>
+
+      <!-- Pre-filled info for personalized links -->
+      <div id="prefilledInfo" class="prefilled-info" style="display: none;">
+        <div class="prefilled-badge">Welcome back!</div>
+        <p>We found your information: <strong id="prefilledName"></strong></p>
+        <p class="prefilled-email" id="prefilledEmail"></p>
+      </div>
+
+      <form id="emailForm" class="card-form">
+        <div class="form-group">
+          <label for="userName">Full Name</label>
+          <input type="text" id="userName" placeholder="Your full name" required autocomplete="name">
+        </div>
+        <div class="form-group">
+          <label for="userEmail">Email Address</label>
+          <input type="email" id="userEmail" placeholder="your@email.com" required autocomplete="email">
+        </div>
+        <div id="emailError" class="error-message"></div>
+        <button type="submit" id="sendOtpBtn" class="btn-primary">
+          <span id="sendOtpText">Send Verification Code</span>
+          <span id="sendOtpSpinner" class="btn-spinner" style="display: none;"></span>
+        </button>
+      </form>
+
+      <p class="privacy-note">Your information will be securely stored and used to link your form response to your record.</p>
+    </div>
+
+    <!-- Step 2: OTP Verification -->
+    <div id="otpStep" class="form-card" style="display: none;">
+      <div class="step-indicator">
+        <div class="step completed">✓</div>
+        <div class="step-line completed"></div>
+        <div class="step active">2</div>
+        <div class="step-line"></div>
+        <div class="step">3</div>
+      </div>
+
+      <div class="card-header">
+        <h1 class="card-title">Enter Verification Code</h1>
+        <p class="card-description">We've sent a 6-digit code to <strong id="displayEmail"></strong></p>
+      </div>
+
+      <form id="otpForm" class="card-form">
+        <div class="otp-inputs">
+          <input type="text" class="otp-input" maxlength="1" pattern="[0-9]" inputmode="numeric" data-index="0">
+          <input type="text" class="otp-input" maxlength="1" pattern="[0-9]" inputmode="numeric" data-index="1">
+          <input type="text" class="otp-input" maxlength="1" pattern="[0-9]" inputmode="numeric" data-index="2">
+          <input type="text" class="otp-input" maxlength="1" pattern="[0-9]" inputmode="numeric" data-index="3">
+          <input type="text" class="otp-input" maxlength="1" pattern="[0-9]" inputmode="numeric" data-index="4">
+          <input type="text" class="otp-input" maxlength="1" pattern="[0-9]" inputmode="numeric" data-index="5">
+        </div>
+        <div id="otpError" class="error-message"></div>
+        <button type="submit" id="verifyOtpBtn" class="btn-primary">
+          <span id="verifyOtpText">Verify Code</span>
+          <span id="verifyOtpSpinner" class="btn-spinner" style="display: none;"></span>
+        </button>
+      </form>
+
+      <div class="resend-section">
+        <p>Didn't receive the code? <button type="button" id="resendBtn" class="link-btn">Resend Code</button></p>
+        <button type="button" class="link-btn" onclick="goBackToEmail()">Use different email</button>
+      </div>
+
+      <!-- Demo OTP Display (remove in production) -->
+      <div id="demoOtpDisplay" class="demo-otp" style="display: none;">
+        <strong>Demo Mode:</strong> Your OTP is <span id="demoOtpCode"></span>
+      </div>
+    </div>
+
+    <!-- Step 3: Form Content -->
+    <div id="formStep" class="form-card wide" style="display: none;">
+      <div class="step-indicator">
+        <div class="step completed">✓</div>
+        <div class="step-line completed"></div>
+        <div class="step completed">✓</div>
+        <div class="step-line completed"></div>
+        <div class="step active">3</div>
+      </div>
+
+      <div class="card-header">
+        <h1 id="formTitle" class="card-title"></h1>
+        <p id="formDescription" class="card-description"></p>
+      </div>
+
+      <!-- Progress Bar -->
+      <div id="progressContainer" class="progress-container">
+        <div class="progress-bar">
+          <div id="progressFill" class="progress-fill"></div>
+        </div>
+        <span id="progressText" class="progress-text">0% Complete</span>
+      </div>
+
+      <!-- Form Sections -->
+      <form id="mainForm" class="main-form">
+        <div id="formSections" class="form-sections">
+          <!-- Sections will be dynamically added here -->
+        </div>
+
+        <!-- Navigation -->
+        <div class="form-navigation">
+          <button type="button" id="prevBtn" class="btn-secondary" style="display: none;" onclick="prevSection()">
+            Previous
+          </button>
+          <button type="button" id="nextBtn" class="btn-primary" onclick="nextSection()">
+            Next
+          </button>
+          <button type="submit" id="submitBtn" class="btn-primary" style="display: none;">
+            Submit Form
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Success State -->
+    <div id="successState" class="state-container success" style="display: none;">
+      <div class="state-icon success">✓</div>
+      <h2>Form Submitted Successfully!</h2>
+      <p>Thank you for completing this form. Your responses have been recorded.</p>
+      <p class="confirmation-email">A confirmation email has been sent to <strong id="confirmEmail"></strong></p>
+    </div>
+  </div>
+
+  <script src="/js/form-public.js?v=11"></script>
+</body>
+</html>

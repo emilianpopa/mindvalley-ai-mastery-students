@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Form Responses - ExpandHealth</title>
+  <link rel="stylesheet" href="/css/main.css?v=14">
+  <link rel="stylesheet" href="/css/form-responses.css?v=16">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo-small">
+          <span class="logo-icon">✦</span>
+          <span class="logo-text">ExpandHealth</span>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <p class="nav-section-title">CLIENT ZONE</p>
+          <a href="/clients" class="nav-item">
+            <span class="nav-icon">👥</span>
+            <span class="nav-text">Clients</span>
+          </a>
+          <a href="/forms" class="nav-item active">
+            <span class="nav-icon">📋</span>
+            <span class="nav-text">Forms</span>
+          </a>
+          <a href="/protocol-templates" class="nav-item">
+            <span class="nav-icon">📄</span>
+            <span class="nav-text">Protocol Templates</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <p class="nav-section-title">ADMIN</p>
+          <a href="/staff" class="nav-item">
+            <span class="nav-icon">👨‍⚕️</span>
+            <span class="nav-text">Staff</span>
+          </a>
+          <a href="/kb-admin" class="nav-item">
+            <span class="nav-icon">📚</span>
+            <span class="nav-text">AI Knowledge Base</span>
+          </a>
+        </div>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button class="ask-ai-btn" onclick="openQuickNotes()">
+          <span>📝</span>
+          <span>Quick Notes</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Form Tabs Header -->
+      <header class="form-header">
+        <a href="/forms" class="back-link">
+          <span>‹</span>
+          <span>Back to Forms</span>
+        </a>
+
+        <nav class="form-tabs">
+          <a href="#" class="form-tab" onclick="navigateToBuilder()">Questions</a>
+          <a href="#" class="form-tab" onclick="navigateToSettings()">Form Settings</a>
+          <a href="#" class="form-tab" onclick="previewForm()">Preview</a>
+          <a href="#" class="form-tab active">Responses</a>
+        </nav>
+
+        <div class="form-actions">
+          <button class="btn-outline" onclick="saveDraft()">Save as Draft</button>
+          <button class="btn-primary-small" id="publishBtn" onclick="togglePublish()">Published</button>
+        </div>
+      </header>
+
+      <!-- Content -->
+      <div class="content">
+        <!-- Response Type Tabs -->
+        <div class="response-tabs-container">
+          <div class="response-tabs">
+            <button class="response-tab active" data-tab="clients" onclick="switchTab('clients')">Clients</button>
+            <button class="response-tab" data-tab="leads" onclick="switchTab('leads')">Leads</button>
+          </div>
+        </div>
+
+        <!-- Stats and Search Row -->
+        <div class="responses-header">
+          <p class="response-count" id="responseCount">0 lead responses</p>
+          <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="searchInput" placeholder="Search responses" oninput="filterResponses()">
+          </div>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loadingState" class="loading-state">
+          <div class="loading-spinner"></div>
+          <p>Loading responses...</p>
+        </div>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="empty-state" style="display: none;">
+          <div class="empty-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="1.5">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+            </svg>
+          </div>
+          <h3>No Responses Yet</h3>
+          <p>Share your form to start collecting responses</p>
+          <button class="btn-primary" onclick="copyFormLink()">
+            📋 Copy Form Link
+          </button>
+        </div>
+
+        <!-- Responses Table -->
+        <div id="responsesTable" class="responses-table-container" style="display: none;">
+          <table class="responses-table">
+            <thead>
+              <tr>
+                <th class="sortable" onclick="sortBy('name')">
+                  Responder Name
+                  <span class="sort-icon">⇅</span>
+                </th>
+                <th class="sortable" onclick="sortBy('email')">
+                  Email Address
+                  <span class="sort-icon">⇅</span>
+                </th>
+                <th class="sortable" onclick="sortBy('date')">
+                  Received Date
+                  <span class="sort-icon">⇅</span>
+                </th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="responsesTableBody">
+              <!-- Populated by JavaScript -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Response Detail Modal -->
+  <div id="detailModal" class="modal" style="display: none;">
+    <div class="modal-overlay" onclick="closeDetailModal()"></div>
+    <div class="modal-content modal-large">
+      <div class="modal-header">
+        <h2>Response Details</h2>
+        <button class="modal-close" onclick="closeDetailModal()">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Responder Info -->
+        <div class="responder-info">
+          <div class="info-grid">
+            <div class="info-item">
+              <label>Name</label>
+              <span id="detailName">-</span>
+            </div>
+            <div class="info-item">
+              <label>Email</label>
+              <span id="detailEmail">-</span>
+            </div>
+            <div class="info-item">
+              <label>Submitted</label>
+              <span id="detailDate">-</span>
+            </div>
+            <div class="info-item">
+              <label>Status</label>
+              <span id="detailStatus" class="status-badge">-</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- AI Summary Section -->
+        <div class="ai-summary-section" id="aiSummarySection">
+          <div class="ai-summary-header">
+            <h3>✨ AI Summary</h3>
+            <button class="btn-outline-small" id="generateSummaryBtn" onclick="generateAISummary()">
+              Generate Summary
+            </button>
+          </div>
+          <div id="aiSummaryContent" class="ai-summary-content">
+            <p class="ai-summary-placeholder">Click "Generate Summary" to get an AI-powered analysis of this response.</p>
+          </div>
+        </div>
+
+        <!-- Form Responses -->
+        <div class="responses-section">
+          <h3>Form Responses</h3>
+          <div id="responsesContainer" class="responses-container">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+
+        <!-- Notes Section -->
+        <div class="notes-section">
+          <h3>Internal Notes</h3>
+          <textarea id="internalNotes" placeholder="Add notes about this response..." rows="3"></textarea>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="closeDetailModal()">Close</button>
+        <button class="btn-danger" id="rejectBtn" onclick="rejectResponse()">
+          ✕ Reject
+        </button>
+        <button class="btn-success" id="approveBtn" onclick="approveResponse()">
+          ✓ Approve
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Notes Floating Button -->
+  <button class="quick-notes-fab" onclick="openQuickNotes()">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+      <polyline points="14 2 14 8 20 8"/>
+      <line x1="16" y1="13" x2="8" y2="13"/>
+      <line x1="16" y1="17" x2="8" y2="17"/>
+    </svg>
+    <span>Quick Notes</span>
+  </button>
+
+  <!-- Quick Notes Panel -->
+  <div id="quickNotesPanel" class="quick-notes-panel" style="display: none;">
+    <div class="quick-notes-header">
+      <h3>Quick Notes</h3>
+      <button class="close-panel" onclick="closeQuickNotes()">×</button>
+    </div>
+    <div class="quick-notes-content">
+      <textarea id="quickNotesText" placeholder="Write your notes here..."></textarea>
+      <button class="btn-primary-small" onclick="saveQuickNote()">Save Note</button>
+    </div>
+  </div>
+
+  <script src="/js/dashboard.js"></script>
+  <script src="/js/form-responses.js?v=16"></script>
+  <script>
+    // Quick Notes functionality
+    function openQuickNotes() {
+      document.getElementById('quickNotesPanel').style.display = 'block';
+    }
+
+    function closeQuickNotes() {
+      document.getElementById('quickNotesPanel').style.display = 'none';
+    }
+
+    function saveQuickNote() {
+      const noteText = document.getElementById('quickNotesText').value;
+      if (noteText.trim()) {
+        // Save to localStorage for now
+        const notes = JSON.parse(localStorage.getItem('quickNotes') || '[]');
+        notes.push({
+          text: noteText,
+          timestamp: new Date().toISOString(),
+          page: 'form-responses'
+        });
+        localStorage.setItem('quickNotes', JSON.stringify(notes));
+        document.getElementById('quickNotesText').value = '';
+        alert('Note saved!');
+      }
+    }
+  </script>
+</body>
+</html>

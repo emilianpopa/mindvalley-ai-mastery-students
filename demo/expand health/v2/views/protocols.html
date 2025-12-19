@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Client Protocols - ExpandHealth</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/protocols.css">
+  <link rel="stylesheet" href="/css/chat-widget.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo-small">
+          <span class="logo-icon">✦</span>
+          <span class="logo-text">ExpandHealth</span>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <p class="nav-section-title">CLIENT ZONE</p>
+          <a href="/clients" class="nav-item">
+            <span class="nav-icon">👥</span>
+            <span class="nav-text">Clients</span>
+          </a>
+          <a href="/forms" class="nav-item">
+            <span class="nav-icon">📋</span>
+            <span class="nav-text">Forms</span>
+          </a>
+          <a href="/protocol-templates" class="nav-item">
+            <span class="nav-icon">📄</span>
+            <span class="nav-text">Protocol Templates</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <p class="nav-section-title">ADMIN</p>
+          <a href="/staff" class="nav-item">
+            <span class="nav-icon">👨‍⚕️</span>
+            <span class="nav-text">Staff</span>
+          </a>
+          <a href="/kb-admin" class="nav-item">
+            <span class="nav-icon">📚</span>
+            <span class="nav-text">AI Knowledge Base</span>
+          </a>
+        </div>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button class="ask-ai-btn" onclick="window.chatWidget && window.chatWidget.toggleChat()">
+          <span>✨</span>
+          <span>Ask AI</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Header -->
+      <header class="header">
+        <div class="header-left">
+          <h1>Client Protocols</h1>
+          <p class="breadcrumb">Active treatment protocols assigned to clients</p>
+        </div>
+        <div class="header-right">
+          <button class="icon-btn">🔔</button>
+          <div class="user-menu">
+            <img src="https://ui-avatars.com/api/?name=Admin+User&background=0F766E&color=fff" alt="User" class="user-avatar">
+            <div class="user-info">
+              <p class="user-name" id="userName">Loading...</p>
+              <p class="user-role" id="userRole">Admin</p>
+            </div>
+            <button class="icon-btn" onclick="window.auth.logout()">🚪</button>
+          </div>
+        </div>
+      </header>
+
+      <!-- Protocols Content -->
+      <div class="content">
+        <!-- Stats Cards -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon">📋</div>
+            <div class="stat-info">
+              <p class="stat-label">Active Protocols</p>
+              <p class="stat-value" id="activeProtocols">0</p>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon">✅</div>
+            <div class="stat-info">
+              <p class="stat-label">Completed</p>
+              <p class="stat-value" id="completedProtocols">0</p>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon">👥</div>
+            <div class="stat-info">
+              <p class="stat-label">Clients on Protocol</p>
+              <p class="stat-value" id="clientsCount">0</p>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon">🔄</div>
+            <div class="stat-info">
+              <p class="stat-label">Starting This Week</p>
+              <p class="stat-value" id="startingThisWeek">0</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Actions Bar -->
+        <div class="actions-bar">
+          <div class="search-filter-group">
+            <div class="search-box">
+              <span class="search-icon">🔍</span>
+              <input type="text" id="searchInput" placeholder="Search by client name...">
+            </div>
+
+            <select id="statusFilter" class="filter-select">
+              <option value="">All Status</option>
+              <option value="active">Active</option>
+              <option value="completed">Completed</option>
+              <option value="paused">Paused</option>
+              <option value="archived">Archived</option>
+            </select>
+
+            <select id="templateFilter" class="filter-select">
+              <option value="">All Templates</option>
+            </select>
+          </div>
+
+          <button class="btn-primary" onclick="openAssignModal()">
+            <span>➕</span>
+            <span>Assign Protocol</span>
+          </button>
+        </div>
+
+        <!-- Protocols Table -->
+        <div class="table-container">
+          <table class="protocols-table" id="protocolsTable">
+            <thead>
+              <tr>
+                <th>Client</th>
+                <th>Protocol</th>
+                <th>Category</th>
+                <th>Start Date</th>
+                <th>End Date</th>
+                <th>Status</th>
+                <th>Progress</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="protocolsTableBody">
+              <!-- Protocols will be loaded here -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loadingState" class="loading-container">
+          <div class="loader"></div>
+          <p>Loading protocols...</p>
+        </div>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="empty-state" style="display: none;">
+          <div class="empty-icon">📋</div>
+          <h3>No Protocols Yet</h3>
+          <p>Assign protocol templates to clients to get started</p>
+          <button class="btn-primary" onclick="openAssignModal()">
+            <span>➕</span>
+            <span>Assign First Protocol</span>
+          </button>
+        </div>
+
+        <!-- Pagination -->
+        <div id="pagination" class="pagination" style="display: none;">
+          <button id="prevPage" class="pagination-btn" disabled>← Previous</button>
+          <span id="pageInfo" class="page-info">Page 1 of 1</span>
+          <button id="nextPage" class="pagination-btn" disabled>Next →</button>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Assign Protocol Modal -->
+  <div id="assignModal" class="modal" style="display: none;">
+    <div class="modal-overlay" onclick="closeAssignModal()"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Assign Protocol to Client</h2>
+        <button class="modal-close" onclick="closeAssignModal()">×</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="clientSelect">Client *</label>
+          <select id="clientSelect" class="form-input" required>
+            <option value="">Select a client...</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="templateSelect">Protocol Template *</label>
+          <select id="templateSelect" class="form-input" required>
+            <option value="">Select a template...</option>
+          </select>
+          <small class="form-hint" id="templateInfo"></small>
+        </div>
+
+        <div class="form-group">
+          <label for="startDate">Start Date *</label>
+          <input type="date" id="startDate" class="form-input" required>
+        </div>
+
+        <div class="form-group">
+          <label for="protocolNotes">Notes (Optional)</label>
+          <textarea id="protocolNotes" class="form-input" rows="3" placeholder="Any special instructions or modifications..."></textarea>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="closeAssignModal()">Cancel</button>
+        <button class="btn-primary" onclick="assignProtocol()" id="assignBtn">
+          <span>💾</span>
+          <span>Assign Protocol</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/dashboard.js"></script>
+  <script src="/js/protocols.js"></script>
+  <script src="/js/chat-widget.js"></script>
+</body>
+</html>

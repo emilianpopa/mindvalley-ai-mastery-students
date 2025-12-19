@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Form Builder - ExpandHealth</title>
+  <link rel="stylesheet" href="/css/clients-light.css?v=3">
+  <link rel="stylesheet" href="/css/form-builder-light.css?v=2">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">
+          <svg class="logo-icon" width="28" height="28" viewBox="0 0 24 24" fill="none">
+            <path d="M4 4L11 12L4 20" stroke="#0F766E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M20 4L13 12L20 20" stroke="#0F766E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <div class="logo-text">
+            <span class="logo-expand">EXPAND</span>
+            <span class="logo-health">HEALTH</span>
+          </div>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <p class="nav-section-title">CLIENT ZONE</p>
+          <a href="/clients" class="nav-item">
+            <span class="nav-icon">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+              </svg>
+            </span>
+            <span class="nav-text">Clients</span>
+          </a>
+          <a href="/forms" class="nav-item active">
+            <span class="nav-icon">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M9 11l3 3L22 4"/>
+                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+              </svg>
+            </span>
+            <span class="nav-text">Forms</span>
+          </a>
+          <a href="/protocol-templates" class="nav-item">
+            <span class="nav-icon">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+                <polyline points="10 9 9 9 8 9"/>
+              </svg>
+            </span>
+            <span class="nav-text">Protocol Templates</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <p class="nav-section-title">ADMIN</p>
+          <a href="/staff" class="nav-item">
+            <span class="nav-icon">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
+              </svg>
+            </span>
+            <span class="nav-text">Staff</span>
+          </a>
+          <a href="/kb-admin" class="nav-item">
+            <span class="nav-icon">
+              <svg viewBox="0 0 24 24" fill="none">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+              </svg>
+            </span>
+            <span class="nav-text">AI Knowledge Base</span>
+          </a>
+        </div>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button class="ask-ai-btn" onclick="if(window.chatWidget){window.chatWidget.toggleChat()}else{alert('Chat widget loading...')}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+          </svg>
+          <span>Ask AI</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Form Tabs Header (shown when editing existing form) -->
+      <header id="formTabsHeader" class="form-header" style="display: none;">
+        <a href="/forms" class="back-link">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+          <span>Back to Forms</span>
+        </a>
+
+        <nav class="form-tabs">
+          <a href="#" class="form-tab active" onclick="switchToQuestions(); return false;">Questions</a>
+          <a href="#" class="form-tab" onclick="switchToSettings(); return false;">Form Settings</a>
+          <a href="#" class="form-tab" onclick="previewForm(); return false;">Preview</a>
+          <a href="#" class="form-tab" onclick="navigateToResponses(); return false;">Responses</a>
+        </nav>
+
+        <div class="form-actions">
+          <button class="btn-outline" onclick="saveForm()">Save as Draft</button>
+          <button class="btn-primary-small" id="publishBtn" onclick="togglePublish()">Save & Publish</button>
+        </div>
+      </header>
+
+      <!-- Simple Header (shown when creating new form) -->
+      <header id="simpleHeader" class="header">
+        <div class="header-left">
+          <h1 id="pageTitle">Create Form</h1>
+          <p class="breadcrumb">
+            <a href="/forms">Forms</a> → <span id="breadcrumbTitle">New Form</span>
+          </p>
+        </div>
+        <div class="header-right">
+          <button class="btn-secondary" onclick="cancelForm()">
+            <span>Cancel</span>
+          </button>
+          <button class="btn-primary" onclick="saveForm()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+              <polyline points="17 21 17 13 7 13 7 21"></polyline>
+              <polyline points="7 3 7 8 15 8"></polyline>
+            </svg>
+            <span id="saveButtonText">Save Form</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Content -->
+      <div class="content">
+        <!-- Questions View (default) -->
+        <div id="questionsView" class="builder-container">
+          <!-- Left Sidebar - Form Name and Fields List -->
+          <div class="settings-panel">
+            <div class="form-group">
+              <label for="formName">Form Name *</label>
+              <input type="text" id="formName" placeholder="e.g., Patient Intake Form" required>
+            </div>
+
+            <div class="form-group">
+              <label for="formDescription">Description</label>
+              <textarea id="formDescription" placeholder="Brief description of the form's purpose" rows="3"></textarea>
+            </div>
+
+            <div class="form-group">
+              <label for="formCategory">Category</label>
+              <select id="formCategory">
+                <option value="">Select category</option>
+                <option value="Onboarding">Onboarding</option>
+                <option value="Assessment">Assessment</option>
+                <option value="Mental Health">Mental Health</option>
+                <option value="Check-in">Check-in</option>
+                <option value="Follow-up">Follow-up</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+
+            <!-- Hidden fields for form settings -->
+            <input type="hidden" id="formStatus" value="draft">
+            <input type="hidden" id="allowMultiple" value="false">
+            <input type="hidden" id="showProgress" value="true">
+            <input type="hidden" id="requireLogin" value="true">
+            <input type="hidden" id="sendConfirmation" value="false">
+          </div>
+
+          <!-- Form Builder Panel -->
+          <div class="builder-panel">
+            <div class="builder-header">
+              <h2>Form Fields</h2>
+              <button class="btn-secondary-small" onclick="showFieldLibrary()">
+                <span>+</span>
+                <span>Add Field</span>
+              </button>
+            </div>
+
+            <!-- Field Library Popup -->
+            <div id="fieldLibrary" class="field-library" style="display: none;">
+              <h3>Add Field</h3>
+              <div class="field-types-grid">
+                <button class="field-type-btn" onclick="addField('text')">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0F766E" stroke-width="2">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                  </svg>
+                  <span>Short Text</span>
+                </button>
+                <button class="field-type-btn" onclick="addField('textarea')">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0F766E" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                  </svg>
+                  <span>Long Text</span>
+                </button>
+                <button class="field-type-btn" onclick="addField('email')">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0F766E" stroke-width="2">
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                    <polyline points="22,6 12,13 2,6"></polyline>
+                  </svg>
+                  <span>Email</span>
+                </button>
+                <button class="field-type-btn" onclick="addField('tel')">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0F766E" stroke-width="2">
+                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                  </svg>
+                  <span>Phone</span>
+                </button>
+                <button class="field-type-btn" onclick="addField('date')">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0F766E" stroke-width="2">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                  </svg>
+                  <span>Date</span>
+                </button>
+                <button class="field-type-btn" onclick="addField('radio')">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0F766E" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <circle cx="12" cy="12" r="3" fill="#0F766E"></circle>
+                  </svg>
+                  <span>Multiple Choice</span>
+                </button>
+                <button class="field-type-btn" onclick="addField('checkbox')">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0F766E" stroke-width="2">
+                    <path d="M9 11l3 3L22 4"></path>
+                    <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                  </svg>
+                  <span>Checkboxes</span>
+                </button>
+                <button class="field-type-btn" onclick="addField('range')">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0F766E" stroke-width="2">
+                    <line x1="4" y1="21" x2="4" y2="14"></line>
+                    <line x1="4" y1="10" x2="4" y2="3"></line>
+                    <line x1="12" y1="21" x2="12" y2="12"></line>
+                    <line x1="12" y1="8" x2="12" y2="3"></line>
+                    <line x1="20" y1="21" x2="20" y2="16"></line>
+                    <line x1="20" y1="12" x2="20" y2="3"></line>
+                    <line x1="1" y1="14" x2="7" y2="14"></line>
+                    <line x1="9" y1="8" x2="15" y2="8"></line>
+                    <line x1="17" y1="16" x2="23" y2="16"></line>
+                  </svg>
+                  <span>Scale (1-10)</span>
+                </button>
+              </div>
+              <h4 style="margin: 20px 0 12px; font-size: 13px; color: #6B7280; text-transform: uppercase;">Advanced</h4>
+              <div class="field-types-grid">
+                <button class="field-type-btn" onclick="addField('section')" style="border-color: #14B8A6;">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#14B8A6" stroke-width="2">
+                    <path d="M4 6h16"></path>
+                    <path d="M4 12h16"></path>
+                    <path d="M4 18h10"></path>
+                  </svg>
+                  <span>Section Break</span>
+                </button>
+                <button class="field-type-btn" onclick="addField('ai_personalized')" style="border-color: #A855F7;">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#A855F7" stroke-width="2">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                  </svg>
+                  <span>AI Questions</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Fields List -->
+            <div id="fieldsList" class="fields-list">
+              <!-- Fields will be dynamically added here -->
+            </div>
+
+            <div id="emptyFieldsState" class="empty-fields-state">
+              <div class="empty-icon">
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="1.5">
+                  <path d="M9 11l3 3L22 4"/>
+                  <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+                </svg>
+              </div>
+              <p>No fields yet</p>
+              <p class="empty-subtitle">Click "Add Field" to start building your form</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Form Settings View (hidden by default) -->
+        <div id="settingsView" class="settings-view" style="display: none;">
+          <!-- Sharing Section -->
+          <div class="settings-card">
+            <h2>Sharing</h2>
+            <p class="settings-description">Use the following link to allow new and existing clients to complete this form</p>
+            <p class="settings-note">Form responses will be recorded in the Responses section. Potential clients that fill out this form will require approval before being added to the Expand system.</p>
+            <div class="sharing-url-box">
+              <input type="text" id="sharingUrl" class="sharing-url-input" readonly>
+              <button type="button" class="copy-icon-btn" onclick="copyShareUrl()" title="Copy URL">
+                <svg id="copyIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Frequency Settings Section -->
+          <div class="settings-card">
+            <h2>Frequency Settings</h2>
+
+            <div class="settings-row">
+              <div class="settings-row-content">
+                <h3>Send to client immediately after they log in to the app</h3>
+                <p>Enabling this will send the form automatically when any client logs into the Expand mobile app for the first time.</p>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="sendOnLogin">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+
+            <div class="settings-row">
+              <div class="settings-row-content">
+                <h3>This is a recurring form</h3>
+                <p>This form will be automatically sent at a selected frequency.</p>
+              </div>
+              <select id="recurringFrequency" class="frequency-select">
+                <option value="">Does not repeat</option>
+                <option value="weekly">Weekly</option>
+                <option value="biweekly">Every 2 weeks</option>
+                <option value="monthly">Monthly</option>
+                <option value="quarterly">Quarterly</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Unpublish or Delete Section -->
+          <div class="settings-card">
+            <h2>Unpublish or Delete a Form</h2>
+
+            <div class="settings-row">
+              <div class="settings-row-content">
+                <h3>Unpublish</h3>
+                <p>The sharing link will be disabled, and clients will no longer have access to assigned forms via the app. However, the form contents will remain saved and accessible in the form admin section.</p>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="unpublishForm" onchange="handleUnpublish()">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+
+            <div class="settings-row delete-row">
+              <div class="settings-row-content">
+                <h3>Delete</h3>
+                <p>This form will be permanently deleted, along with all its content and response data.</p>
+              </div>
+              <button class="btn-danger" onclick="deleteForm()">Delete Form</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Quick Notes Button -->
+    <button class="quick-notes-btn" onclick="toggleQuickNotes()">
+      <span class="notes-icon">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/>
+          <rect x="9" y="3" width="6" height="4" rx="1"/>
+          <path d="M9 12h6"/>
+          <path d="M9 16h6"/>
+        </svg>
+      </span>
+      <span>Quick Notes</span>
+    </button>
+  </div>
+
+  <script src="/js/dashboard.js"></script>
+  <script src="/js/form-builder.js"></script>
+  <script>
+    function toggleQuickNotes() {
+      alert('Quick Notes feature coming soon!');
+    }
+  </script>
+</body>
+</html>

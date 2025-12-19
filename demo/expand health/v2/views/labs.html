@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Labs & Tests - ExpandHealth</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/labs.css">
+  <link rel="stylesheet" href="/css/chat-widget.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo-small">
+          <span class="logo-icon">✦</span>
+          <span class="logo-text">ExpandHealth</span>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <p class="nav-section-title">CLIENT ZONE</p>
+          <a href="/clients" class="nav-item">
+            <span class="nav-icon">👥</span>
+            <span class="nav-text">Clients</span>
+          </a>
+          <a href="/forms" class="nav-item">
+            <span class="nav-icon">📋</span>
+            <span class="nav-text">Forms</span>
+          </a>
+          <a href="/protocol-templates" class="nav-item">
+            <span class="nav-icon">📄</span>
+            <span class="nav-text">Protocol Templates</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <p class="nav-section-title">ADMIN</p>
+          <a href="/staff" class="nav-item">
+            <span class="nav-icon">👨‍⚕️</span>
+            <span class="nav-text">Staff</span>
+          </a>
+          <a href="/kb-admin" class="nav-item">
+            <span class="nav-icon">📚</span>
+            <span class="nav-text">AI Knowledge Base</span>
+          </a>
+        </div>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button class="ask-ai-btn" onclick="window.chatWidget && window.chatWidget.toggleChat()">
+          <span>✨</span>
+          <span>Ask AI</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Header -->
+      <header class="header">
+        <div class="header-left">
+          <h1>Labs & Tests</h1>
+          <p class="breadcrumb">Dashboard → Labs & Tests</p>
+        </div>
+        <div class="header-right">
+          <button class="icon-btn">🔔</button>
+          <div class="user-menu">
+            <img src="https://ui-avatars.com/api/?name=Admin+User&background=0F766E&color=fff" alt="User" class="user-avatar">
+            <div class="user-info">
+              <p class="user-name" id="userName">Loading...</p>
+              <p class="user-role" id="userRole">Admin</p>
+            </div>
+            <button class="icon-btn" onclick="window.auth.logout()">🚪</button>
+          </div>
+        </div>
+      </header>
+
+      <!-- Labs Content -->
+      <div class="content">
+        <!-- Controls Row -->
+        <div class="controls-row">
+          <div class="search-filter-group">
+            <div class="search-box">
+              <input type="text" id="searchInput" placeholder="Search by client name, lab title, or type...">
+              <span class="search-icon">🔍</span>
+            </div>
+
+            <select id="clientFilter" class="filter-select">
+              <option value="">All Clients</option>
+              <!-- Will be populated dynamically -->
+            </select>
+
+            <select id="typeFilter" class="filter-select">
+              <option value="">All Types</option>
+              <option value="Blood Work">Blood Work</option>
+              <option value="Hormone Panel">Hormone Panel</option>
+              <option value="Genetic Test">Genetic Test</option>
+              <option value="Imaging">Imaging</option>
+              <option value="General">General</option>
+            </select>
+          </div>
+
+          <button class="btn-primary" onclick="window.location.href='/labs/upload'">
+            <span>+ Upload Lab Result</span>
+          </button>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon">📊</div>
+            <div class="stat-content">
+              <p class="stat-label">Total Labs</p>
+              <h3 class="stat-value" id="totalLabs">0</h3>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon">📅</div>
+            <div class="stat-content">
+              <p class="stat-label">This Month</p>
+              <h3 class="stat-value" id="monthLabs">0</h3>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon">✨</div>
+            <div class="stat-content">
+              <p class="stat-label">With AI Summary</p>
+              <h3 class="stat-value" id="aiSummaryCount">0</h3>
+            </div>
+          </div>
+        </div>
+
+        <!-- Labs Table -->
+        <div class="table-card">
+          <table class="data-table" id="labsTable">
+            <thead>
+              <tr>
+                <th>Client</th>
+                <th>Title</th>
+                <th>Type</th>
+                <th>Test Date</th>
+                <th>File Size</th>
+                <th>Uploaded</th>
+                <th>AI Summary</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="labsTableBody">
+              <tr>
+                <td colspan="8" class="loading-row">
+                  <div class="loader"></div>
+                  <p>Loading labs...</p>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <!-- Pagination -->
+          <div class="pagination" id="pagination" style="display: none;">
+            <button id="prevPage" class="pagination-btn" disabled>← Previous</button>
+            <div class="pagination-info" id="paginationInfo">Page 1 of 1</div>
+            <button id="nextPage" class="pagination-btn" disabled>Next →</button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="/js/dashboard.js"></script>
+  <script src="/js/labs.js"></script>
+  <script src="/js/chat-widget.js"></script>
+</body>
+</html>

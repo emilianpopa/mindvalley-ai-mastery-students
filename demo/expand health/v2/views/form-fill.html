@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fill Form - ExpandHealth</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/form-fill.css">
+</head>
+<body>
+  <div class="fill-container">
+    <!-- Header -->
+    <div class="fill-header">
+      <div class="fill-logo">
+        <h1>🌿 ExpandHealth</h1>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div id="loadingState" class="loading-state">
+      <div class="loading-spinner"></div>
+      <p>Loading form...</p>
+    </div>
+
+    <!-- Error State -->
+    <div id="errorState" class="error-state" style="display: none;">
+      <div class="error-icon">⚠️</div>
+      <h2>Form Not Found</h2>
+      <p>This form may have been deleted or is no longer available.</p>
+    </div>
+
+    <!-- Form Content -->
+    <div id="formContent" class="form-content" style="display: none;">
+      <!-- Form Header -->
+      <div class="form-header-section">
+        <h1 id="formTitle" class="form-title"></h1>
+        <p id="formDescription" class="form-description"></p>
+
+        <!-- Progress Bar -->
+        <div id="progressBar" class="progress-bar" style="display: none;">
+          <div id="progressFill" class="progress-fill"></div>
+          <div id="progressText" class="progress-text">0% Complete</div>
+        </div>
+      </div>
+
+      <!-- Form Fields -->
+      <form id="formSubmit" class="form-submit">
+        <div id="formFields" class="form-fields"></div>
+
+        <!-- Optional Client Login -->
+        <div id="clientLoginSection" class="client-login-section" style="display: none;">
+          <h3>Client Information (Optional)</h3>
+          <p class="section-description">Link this submission to your client profile</p>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Email</label>
+              <input type="email" id="clientEmail" placeholder="your@email.com">
+            </div>
+            <div class="form-group">
+              <label>Client ID</label>
+              <input type="text" id="clientId" placeholder="Optional">
+            </div>
+          </div>
+        </div>
+
+        <!-- Submit Button -->
+        <div class="form-actions">
+          <button type="submit" id="submitBtn" class="btn-primary">
+            Submit Form
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Success State -->
+    <div id="successState" class="success-state" style="display: none;">
+      <div class="success-icon">✅</div>
+      <h2>Form Submitted Successfully!</h2>
+      <p id="successMessage">Thank you for completing this form. Your responses have been recorded.</p>
+      <button class="btn-secondary" onclick="window.location.reload()">Submit Another Response</button>
+    </div>
+  </div>
+
+  <script src="/js/form-fill.js"></script>
+</body>
+</html>

@@ -1,0 +1,36 @@
+{
+  "name": "expandhealth-v2",
+  "version": "2.0.0",
+  "description": "ExpandHealth Web Portal - Full practice management platform with AI",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [
+    "healthcare",
+    "ai",
+    "practice-management",
+    "treatment-planning"
+  ],
+  "author": "ExpandHealth",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.71.2",
+    "@google/generative-ai": "^0.24.1",
+    "bcrypt": "^5.1.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "formidable": "^3.5.4",
+    "helmet": "^7.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^1.4.5-lts.1",
+    "pdf-parse": "^1.1.1",
+    "pg": "^8.11.3",
+    "resend": "^6.6.0"
+  }
+}

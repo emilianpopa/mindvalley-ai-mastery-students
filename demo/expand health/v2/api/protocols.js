@@ -1,0 +1,1606 @@
+/**
+ * Protocols & Templates API Routes
+ * Handles protocol templates and client-specific protocols
+ */
+
+const express = require('express');
+const router = express.Router();
+const { authenticateToken } = require('../middleware/auth');
+const db = require('../database/db');
+
+// Initialize Claude SDK for AI protocol generation
+const Anthropic = require('@anthropic-ai/sdk');
+const anthropic = new Anthropic({
+  apiKey: process.env.CLAUDE_API_KEY
+});
+
+// Initialize Gemini SDK for Knowledge Base queries
+const { GoogleGenerativeAI } = require('@google/generative-ai');
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+
+// Helper function to query Knowledge Base
+async function queryKnowledgeBase(query, context = '') {
+  if (!process.env.GEMINI_API_KEY) {
+    console.log('[KB Query] No GEMINI_API_KEY configured, skipping KB query');
+    return null;
+  }
+
+  try {
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro-002' });
+
+    const fullPrompt = `You are a knowledgeable assistant for ExpandHealth, a functional medicine practice.
+${context ? `\nContext: ${context}` : ''}
+
+Based on ExpandHealth's clinical knowledge and best practices, please provide relevant information for:
+${query}
+
+Provide specific, evidence-based recommendations including:
+- Therapeutic dosages
+- Timing recommendations
+- Clinical considerations
+- Any relevant protocols or guidelines
+
+Be concise but thorough.`;
+
+    const result = await model.generateContent(fullPrompt);
+    const response = await result.response;
+    const text = response.text();
+
+    console.log('[KB Query] Successfully retrieved KB context');
+    return text;
+  } catch (error) {
+    console.error('[KB Query] Error querying knowledge base:', error.message);
+    return null;
+  }
+}
+
+// ========================================
+// PROTOCOL TEMPLATES
+// ========================================
+
+// Get all protocol templates (with pagination and search)
+router.get('/templates', authenticateToken, async (req, res, next) => {
+  try {
+    const {
+      page = 1,
+      limit = 20,
+      search = '',
+      category = '',
+      sortBy = 'created_at',
+      sortOrder = 'DESC'
+    } = req.query;
+
+    const offset = (page - 1) * limit;
+
+    // Build WHERE clause
+    let whereConditions = [];
+    let queryParams = [];
+    let paramCount = 0;
+
+    if (search) {
+      paramCount++;
+      whereConditions.push(`(name ILIKE $${paramCount} OR description ILIKE $${paramCount})`);
+      queryParams.push(`%${search}%`);
+    }
+
+    if (category) {
+      paramCount++;
+      whereConditions.push(`category = $${paramCount}`);
+      queryParams.push(category);
+    }
+
+    const whereClause = whereConditions.length > 0
+      ? 'WHERE ' + whereConditions.join(' AND ')
+      : '';
+
+    // Get total count
+    const countQuery = `SELECT COUNT(*) FROM protocol_templates ${whereClause}`;
+    const countResult = await db.query(countQuery, queryParams);
+    const totalCount = parseInt(countResult.rows[0].count);
+
+    // Get templates
+    const validSortColumns = ['name', 'category', 'created_at', 'updated_at'];
+    const sortColumn = validSortColumns.includes(sortBy) ? sortBy : 'created_at';
+    const order = sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+
+    queryParams.push(limit, offset);
+
+    const templatesQuery = `
+      SELECT
+        id,
+        name,
+        description,
+        category,
+        duration_weeks,
+        modules,
+        created_at,
+        updated_at,
+        (SELECT COUNT(*) FROM protocols WHERE template_id = protocol_templates.id) as usage_count
+      FROM protocol_templates
+      ${whereClause}
+      ORDER BY ${sortColumn} ${order}
+      LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}
+    `;
+
+    const templatesResult = await db.query(templatesQuery, queryParams);
+
+    res.json({
+      templates: templatesResult.rows,
+      pagination: {
+        total: totalCount,
+        page: parseInt(page),
+        limit: parseInt(limit),
+        totalPages: Math.ceil(totalCount / limit)
+      }
+    });
+
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Get single protocol template by ID
+router.get('/templates/:id', authenticateToken, async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const result = await db.query(
+      `SELECT
+        pt.*,
+        (SELECT COUNT(*) FROM protocols WHERE template_id = pt.id) as usage_count,
+        (SELECT json_agg(json_build_object(
+          'client_id', p.client_id,
+          'client_name', c.first_name || ' ' || c.last_name,
+          'start_date', p.start_date,
+          'status', p.status
+        )) FROM protocols p
+        LEFT JOIN clients c ON p.client_id = c.id
+        WHERE p.template_id = pt.id
+        LIMIT 5) as recent_uses
+      FROM protocol_templates pt
+      WHERE pt.id = $1`,
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Protocol template not found' });
+    }
+
+    res.json({ template: result.rows[0] });
+
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Create new protocol template
+router.post('/templates', authenticateToken, async (req, res, next) => {
+  try {
+    const {
+      name,
+      description,
+      category,
+      duration_weeks,
+      modules
+    } = req.body;
+
+    // Validation
+    if (!name || !category || !modules) {
+      return res.status(400).json({
+        error: 'Missing required fields',
+        required: ['name', 'category', 'modules']
+      });
+    }
+
+    // Validate modules is an array
+    if (!Array.isArray(modules)) {
+      return res.status(400).json({ error: 'Modules must be an array' });
+    }
+
+    const result = await db.query(
+      `INSERT INTO protocol_templates (
+        name, description, category, duration_weeks, modules
+      )
+      VALUES ($1, $2, $3, $4, $5)
+      RETURNING *`,
+      [name, description, category, duration_weeks || null, JSON.stringify(modules)]
+    );
+
+    res.status(201).json({
+      message: 'Protocol template created successfully',
+      template: result.rows[0]
+    });
+
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Update protocol template
+router.put('/templates/:id', authenticateToken, async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const {
+      name,
+      description,
+      category,
+      duration_weeks,
+      modules
+    } = req.body;
+
+    const result = await db.query(
+      `UPDATE protocol_templates SET
+        name = COALESCE($1, name),
+        description = COALESCE($2, description),
+        category = COALESCE($3, category),
+        duration_weeks = COALESCE($4, duration_weeks),
+        modules = COALESCE($5, modules),
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = $6
+      RETURNING *`,
+      [
+        name,
+        description,
+        category,
+        duration_weeks,
+        modules ? JSON.stringify(modules) : null,
+        id
+      ]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Protocol template not found' });
+    }
+
+    res.json({
+      message: 'Protocol template updated successfully',
+      template: result.rows[0]
+    });
+
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Delete protocol template
+router.delete('/templates/:id', authenticateToken, async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    // Check if template is in use
+    const usageCheck = await db.query(
+      'SELECT COUNT(*) FROM protocols WHERE template_id = $1',
+      [id]
+    );
+
+    const usageCount = parseInt(usageCheck.rows[0].count);
+
+    if (usageCount > 0) {
+      return res.status(400).json({
+        error: 'Cannot delete template that is in use',
+        usageCount: usageCount,
+        message: `This template is used by ${usageCount} client protocol(s). Archive them first.`
+      });
+    }
+
+    const result = await db.query(
+      'DELETE FROM protocol_templates WHERE id = $1 RETURNING id',
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Protocol template not found' });
+    }
+
+    res.json({ message: 'Protocol template deleted successfully' });
+
+  } catch (error) {
+    next(error);
+  }
+});
+
+// ========================================
+// CLIENT PROTOCOLS
+// ========================================
+
+// Get all client protocols (with filters and pagination)
+router.get('/', authenticateToken, async (req, res, next) => {
+  try {
+    const {
+      client_id,
+      template_id,
+      status,
+      page = 1,
+      limit = 20,
+      sortBy = 'start_date',
+      sortOrder = 'DESC'
+    } = req.query;
+
+    const offset = (page - 1) * limit;
+
+    // Build WHERE clause
+    let whereConditions = [];
+    let queryParams = [];
+    let paramCount = 0;
+
+    if (client_id) {
+      paramCount++;
+      whereConditions.push(`p.client_id = $${paramCount}`);
+      queryParams.push(client_id);
+    }
+
+    if (template_id) {
+      paramCount++;
+      whereConditions.push(`p.template_id = $${paramCount}`);
+      queryParams.push(template_id);
+    }
+
+    if (status) {
+      paramCount++;
+      whereConditions.push(`p.status = $${paramCount}`);
+      queryParams.push(status);
+    }
+
+    const whereClause = whereConditions.length > 0
+      ? 'WHERE ' + whereConditions.join(' AND ')
+      : '';
+
+    // Get total count
+    const countQuery = `SELECT COUNT(*) FROM protocols p ${whereClause}`;
+    const countResult = await db.query(countQuery, queryParams);
+    const totalCount = parseInt(countResult.rows[0].count);
+
+    // Get protocols with client and template info
+    const validSortColumns = ['start_date', 'end_date', 'status', 'created_at'];
+    const sortColumn = validSortColumns.includes(sortBy) ? sortBy : 'start_date';
+    const order = sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+
+    queryParams.push(limit, offset);
+
+    const protocolsQuery = `
+      SELECT
+        p.*,
+        c.first_name || ' ' || c.last_name as client_name,
+        c.email as client_email,
+        pt.name as template_name,
+        pt.category as template_category,
+        pt.duration_weeks as template_duration
+      FROM protocols p
+      LEFT JOIN clients c ON p.client_id = c.id
+      LEFT JOIN protocol_templates pt ON p.template_id = pt.id
+      ${whereClause}
+      ORDER BY p.${sortColumn} ${order}
+      LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}
+    `;
+
+    const protocolsResult = await db.query(protocolsQuery, queryParams);
+
+    res.json({
+      protocols: protocolsResult.rows,
+      pagination: {
+        total: totalCount,
+        page: parseInt(page),
+        limit: parseInt(limit),
+        totalPages: Math.ceil(totalCount / limit)
+      }
+    });
+
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Get single client protocol by ID
+router.get('/:id', authenticateToken, async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const result = await db.query(
+      `SELECT
+        p.*,
+        c.first_name || ' ' || c.last_name as client_name,
+        c.email as client_email,
+        c.phone as client_phone,
+        pt.name as template_name,
+        pt.description as template_description,
+        pt.category as template_category,
+        pt.modules as template_modules
+      FROM protocols p
+      LEFT JOIN clients c ON p.client_id = c.id
+      LEFT JOIN protocol_templates pt ON p.template_id = pt.id
+      WHERE p.id = $1`,
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Protocol not found' });
+    }
+
+    res.json({ protocol: result.rows[0] });
+
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Create new client protocol
+router.post('/', authenticateToken, async (req, res, next) => {
+  try {
+    const {
+      client_id,
+      template_id,
+      start_date,
+      custom_modules,
+      notes
+    } = req.body;
+
+    // Validation
+    if (!client_id || !template_id || !start_date) {
+      return res.status(400).json({
+        error: 'Missing required fields',
+        required: ['client_id', 'template_id', 'start_date']
+      });
+    }
+
+    // Verify client exists
+    const clientCheck = await db.query(
+      'SELECT id FROM clients WHERE id = $1',
+      [client_id]
+    );
+
+    if (clientCheck.rows.length === 0) {
+      return res.status(404).json({ error: 'Client not found' });
+    }
+
+    // Verify template exists and get duration
+    const templateCheck = await db.query(
+      'SELECT duration_weeks, modules FROM protocol_templates WHERE id = $1',
+      [template_id]
+    );
+
+    if (templateCheck.rows.length === 0) {
+      return res.status(404).json({ error: 'Protocol template not found' });
+    }
+
+    const template = templateCheck.rows[0];
+
+    // Calculate end date if duration is specified
+    let end_date = null;
+    if (template.duration_weeks) {
+      const startDate = new Date(start_date);
+      const endDate = new Date(startDate);
+      endDate.setDate(endDate.getDate() + (template.duration_weeks * 7));
+      end_date = endDate.toISOString().split('T')[0];
+    }
+
+    // Use custom modules or fall back to template modules
+    const modules = custom_modules || template.modules;
+
+    const result = await db.query(
+      `INSERT INTO protocols (
+        client_id, template_id, start_date, end_date,
+        modules, notes, status, created_by
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      RETURNING *`,
+      [
+        client_id,
+        template_id,
+        start_date,
+        end_date,
+        JSON.stringify(modules),
+        notes,
+        'active',
+        req.user.userId
+      ]
+    );
+
+    res.status(201).json({
+      message: 'Protocol created successfully',
+      protocol: result.rows[0]
+    });
+
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Update client protocol
+router.put('/:id', authenticateToken, async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const {
+      start_date,
+      end_date,
+      status,
+      modules,
+      notes,
+      ai_recommendations
+    } = req.body;
+
+    const result = await db.query(
+      `UPDATE protocols SET
+        start_date = COALESCE($1, start_date),
+        end_date = COALESCE($2, end_date),
+        status = COALESCE($3, status),
+        modules = COALESCE($4, modules),
+        notes = COALESCE($5, notes),
+        ai_recommendations = COALESCE($6, ai_recommendations),
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = $7
+      RETURNING *`,
+      [
+        start_date,
+        end_date,
+        status,
+        modules ? JSON.stringify(modules) : null,
+        notes,
+        ai_recommendations,
+        id
+      ]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Protocol not found' });
+    }
+
+    res.json({
+      message: 'Protocol updated successfully',
+      protocol: result.rows[0]
+    });
+
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Archive protocol (soft delete)
+router.delete('/:id', authenticateToken, async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const result = await db.query(
+      `UPDATE protocols SET
+        status = 'archived',
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = $1
+      RETURNING id`,
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Protocol not found' });
+    }
+
+    res.json({ message: 'Protocol archived successfully' });
+
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Generate AI recommendations for protocol
+router.post('/:id/generate-recommendations', authenticateToken, async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    // Get protocol data with client info
+    const protocolResult = await db.query(
+      `SELECT
+        p.*,
+        c.first_name || ' ' || c.last_name as client_name,
+        c.health_conditions,
+        c.medications,
+        c.health_goals,
+        pt.name as template_name,
+        pt.category as template_category
+      FROM protocols p
+      LEFT JOIN clients c ON p.client_id = c.id
+      LEFT JOIN protocol_templates pt ON p.template_id = pt.id
+      WHERE p.id = $1`,
+      [id]
+    );
+
+    if (protocolResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Protocol not found' });
+    }
+
+    const protocol = protocolResult.rows[0];
+
+    // Check if GEMINI_API_KEY is configured
+    if (!process.env.GEMINI_API_KEY) {
+      return res.status(500).json({
+        error: 'Gemini API key not configured',
+        recommendations: 'AI recommendations are not available. Please configure GEMINI_API_KEY in environment variables.'
+      });
+    }
+
+    // For MVP: Generate placeholder recommendations
+    // In production, you would:
+    // 1. Query Gemini Knowledge Base with client health data
+    // 2. Ask for protocol optimization suggestions
+    // 3. Parse and format the response
+
+    const recommendations = `**AI Protocol Recommendations for ${protocol.client_name}**
+
+**Current Protocol:** ${protocol.template_name} (${protocol.template_category})
+**Start Date:** ${new Date(protocol.start_date).toLocaleDateString()}
+**Status:** ${protocol.status}
+
+**Personalized Suggestions:**
+- Based on client health goals: ${protocol.health_goals || 'Not specified'}
+- Consider health conditions: ${protocol.health_conditions || 'None reported'}
+- Current medications: ${protocol.medications || 'None reported'}
+
+**Optimization Opportunities:**
+1. Review supplement timing for better absorption
+2. Consider adding stress management techniques
+3. Adjust protocol duration based on progress markers
+
+**Next Steps:**
+To enable full AI recommendations:
+1. Ensure GEMINI_API_KEY is set in environment
+2. Query Gemini Knowledge Base with client data
+3. Use structured prompts for protocol optimization
+4. Parse and format recommendations
+
+**Note:** This is a demonstration of the AI recommendations feature. Full integration requires Gemini API connection.`;
+
+    // Update protocol with recommendations
+    await db.query(
+      'UPDATE protocols SET ai_recommendations = $1 WHERE id = $2',
+      [recommendations, id]
+    );
+
+    res.json({
+      message: 'AI recommendations generated successfully',
+      recommendations: recommendations
+    });
+
+  } catch (error) {
+    console.error('Error generating recommendations:', error);
+    next(error);
+  }
+});
+
+// ========================================
+// GET PROTOCOLS BY CLIENT
+// ========================================
+
+// Get all protocols for a specific client
+router.get('/client/:clientId', authenticateToken, async (req, res, next) => {
+  try {
+    const { clientId } = req.params;
+
+    const result = await db.query(
+      `SELECT p.*, pt.name as template_name, pt.category as template_category
+       FROM protocols p
+       LEFT JOIN protocol_templates pt ON p.template_id = pt.id
+       WHERE p.client_id = $1
+       ORDER BY p.created_at DESC`,
+      [clientId]
+    );
+
+    // Transform the data to include title from notes field
+    const protocols = result.rows.map(row => {
+      // Extract title from notes field (format: "Title: xxx\n\n...")
+      const titleMatch = row.notes?.match(/^Title:\s*(.+?)(?:\n|$)/);
+      const title = titleMatch ? titleMatch[1] : row.template_name || 'Custom Protocol';
+
+      return {
+        id: row.id,
+        client_id: row.client_id,
+        title: title,
+        status: row.status,
+        template_name: row.template_name,
+        template_category: row.template_category,
+        modules: row.modules,
+        ai_recommendations: row.ai_recommendations,
+        start_date: row.start_date,
+        end_date: row.end_date,
+        created_at: row.created_at,
+        updated_at: row.updated_at
+      };
+    });
+
+    res.json({ protocols });
+  } catch (error) {
+    console.error('Error fetching protocols for client:', error);
+    next(error);
+  }
+});
+
+// ========================================
+// AI PROTOCOL GENERATION
+// ========================================
+
+// Generate protocol using AI based on prompt, templates, and notes
+router.post('/generate', authenticateToken, async (req, res, next) => {
+  try {
+    const {
+      client_id,
+      prompt,
+      templates = [],
+      note_ids = []
+    } = req.body;
+
+    console.log('[Protocol Generate] Request received:', { client_id, prompt, templates, note_ids });
+
+    // Validation
+    if (!client_id || !prompt) {
+      return res.status(400).json({
+        error: 'Missing required fields',
+        required: ['client_id', 'prompt']
+      });
+    }
+
+    // Get client data
+    let clientData = null;
+    try {
+      const clientResult = await db.query(
+        `SELECT id, first_name, last_name, email, date_of_birth, gender,
+                medical_history, current_medications, allergies
+         FROM clients WHERE id = $1`,
+        [client_id]
+      );
+      if (clientResult.rows.length > 0) {
+        clientData = clientResult.rows[0];
+      }
+    } catch (dbError) {
+      console.error('[Protocol Generate] Error fetching client:', dbError.message);
+    }
+
+    if (!clientData) {
+      return res.status(404).json({ error: 'Client not found' });
+    }
+
+    // Get notes content if note_ids provided
+    let notesContent = '';
+    if (note_ids.length > 0) {
+      try {
+        const notesResult = await db.query(
+          `SELECT content, note_type, created_at FROM notes
+           WHERE id = ANY($1) AND client_id = $2
+           ORDER BY created_at DESC`,
+          [note_ids, client_id]
+        );
+        if (notesResult.rows.length > 0) {
+          notesContent = notesResult.rows.map(note =>
+            `[${note.note_type || 'Note'} - ${new Date(note.created_at).toLocaleDateString()}]:\n${note.content}`
+          ).join('\n\n');
+        }
+      } catch (dbError) {
+        console.error('[Protocol Generate] Error fetching notes:', dbError.message);
+      }
+    }
+
+    // Map template codes to full names and database IDs
+    const templateInfo = {
+      'sleep': { name: 'Sleep Optimization Protocol', id: 4 },  // Energy Optimization
+      'hygiene': { name: 'Sleep Hygiene Protocol', id: 4 },
+      'gut': { name: 'Gut Healing Protocol', id: 2 },
+      'weight': { name: 'Weight Management Protocol', id: 5 },
+      'adrenal': { name: 'Adrenal Support Protocol', id: 4 },
+      'blood-sugar': { name: 'Blood Sugar Management Protocol', id: 1 },
+      'immune': { name: 'Immune Support Protocol', id: 3 }
+    };
+
+    const selectedTemplateNames = templates.map(t => templateInfo[t]?.name || t).join(', ');
+    // Get the first template ID from selected templates, or default to 1
+    const primaryTemplateId = templates.length > 0 && templateInfo[templates[0]]
+      ? templateInfo[templates[0]].id
+      : 1;
+
+    // Query Knowledge Base for relevant protocol information
+    console.log('[Protocol Generate] Querying Knowledge Base...');
+    const kbQueries = [];
+
+    // Build context-aware KB queries based on templates and prompt
+    if (templates.includes('gut') || prompt.toLowerCase().includes('gut')) {
+      kbQueries.push('gut healing protocols, L-glutamine dosing, probiotic recommendations, digestive enzyme protocols');
+    }
+    if (templates.includes('sleep') || prompt.toLowerCase().includes('sleep') || prompt.toLowerCase().includes('fatigue')) {
+      kbQueries.push('sleep optimization protocols, magnesium supplementation, circadian rhythm support, melatonin alternatives');
+    }
+    if (templates.includes('adrenal') || prompt.toLowerCase().includes('stress') || prompt.toLowerCase().includes('adrenal')) {
+      kbQueries.push('adrenal support protocols, adaptogen recommendations, cortisol management, ashwagandha dosing');
+    }
+    if (templates.includes('immune') || prompt.toLowerCase().includes('immune')) {
+      kbQueries.push('immune support protocols, vitamin D dosing, zinc protocols, immune-boosting supplements');
+    }
+    if (templates.includes('weight') || prompt.toLowerCase().includes('weight') || prompt.toLowerCase().includes('metabolic')) {
+      kbQueries.push('metabolic support protocols, blood sugar management, weight management supplements');
+    }
+
+    // Always query for general best practices
+    kbQueries.push(`best practices for ${prompt}`);
+
+    // Execute KB queries in parallel
+    let kbContext = '';
+    try {
+      const kbResults = await Promise.all(
+        kbQueries.map(q => queryKnowledgeBase(q, `Client: ${clientData.first_name}, Conditions: ${clientData.medical_history || 'none'}`))
+      );
+      kbContext = kbResults.filter(r => r).join('\n\n---\n\n');
+      if (kbContext) {
+        console.log('[Protocol Generate] KB context retrieved successfully');
+      }
+    } catch (kbError) {
+      console.error('[Protocol Generate] KB query error:', kbError.message);
+    }
+
+    // Build the AI prompt with KB context
+    const aiPrompt = `You are an expert functional medicine protocol specialist with deep knowledge of evidence-based supplement protocols, therapeutic dosages, and clinical timing recommendations. Generate a comprehensive, personalized wellness protocol.
+
+CLIENT INFORMATION:
+- Name: ${clientData.first_name} ${clientData.last_name}
+- Age: ${clientData.date_of_birth ? calculateAge(clientData.date_of_birth) : 'Unknown'}
+- Gender: ${clientData.gender || 'Not specified'}
+- Medical History: ${clientData.medical_history || 'None provided'}
+- Current Medications: ${clientData.current_medications || 'None listed'}
+- Allergies: ${clientData.allergies || 'None listed'}
+
+SELECTED PROTOCOL TEMPLATES: ${selectedTemplateNames || 'None - custom protocol'}
+
+${notesContent ? `RELEVANT CLINICAL NOTES:\n${notesContent}\n` : ''}
+
+${kbContext ? `KNOWLEDGE BASE RECOMMENDATIONS:\nThe following evidence-based recommendations are from the ExpandHealth clinical knowledge base:\n\n${kbContext}\n\nUse these recommendations to inform your protocol. Prioritize KB recommendations when they provide specific dosages or protocols.\n` : ''}
+
+USER REQUEST: ${prompt}
+
+IMPORTANT REQUIREMENTS:
+1. For ALL supplements, you MUST include specific therapeutic dosages (e.g., "5g", "500mg", "10 billion CFU")
+2. For ALL supplements, you MUST include precise timing (e.g., "With breakfast", "30 min before bed", "Between meals on empty stomach")
+3. Include clinical notes explaining WHY each supplement is recommended and any special instructions
+
+Generate a detailed protocol with this EXACT JSON structure:
+{
+  "title": "Protocol title",
+  "summary": "Brief 2-3 sentence summary of protocol goals and expected outcomes",
+  "duration_weeks": 8,
+  "modules": [
+    {
+      "name": "Gut Healing Supplements",
+      "description": "Targeted supplements to repair intestinal lining and restore gut health",
+      "goal": "Heal leaky gut, reduce inflammation, restore microbiome balance",
+      "items": [
+        {
+          "name": "L-Glutamine",
+          "dosage": "5g powder",
+          "timing": "Twice daily - morning on empty stomach and before bed",
+          "notes": "Primary amino acid for intestinal cell repair. Mix in water. Start with 2.5g and increase over 1 week."
+        }
+      ]
+    },
+    {
+      "name": "Sleep Optimization Supplements",
+      "description": "Natural compounds to improve sleep quality and duration",
+      "goal": "Improve sleep onset, increase deep sleep phases, reduce night waking",
+      "items": [
+        {
+          "name": "Magnesium Glycinate",
+          "dosage": "400mg",
+          "timing": "30-60 minutes before bed",
+          "notes": "Glycinate form has superior absorption and calming effect. May cause loose stools initially."
+        }
+      ]
+    },
+    {
+      "name": "Diet & Nutrition",
+      "description": "Dietary modifications to support healing",
+      "goal": "Reduce inflammatory triggers, support gut repair",
+      "items": [
+        {
+          "name": "Eliminate inflammatory foods",
+          "description": "Remove gluten, dairy, refined sugar, and processed foods for protocol duration",
+          "duration": "Full protocol duration",
+          "notes": "Keep food diary to track reactions when reintroducing foods later"
+        }
+      ]
+    },
+    {
+      "name": "Lifestyle Modifications",
+      "description": "Daily habits to enhance protocol effectiveness",
+      "goal": "Optimize rest, reduce stress, support natural healing",
+      "items": [
+        {
+          "name": "Sleep hygiene routine",
+          "description": "Consistent sleep/wake times, no screens 1hr before bed, cool dark room",
+          "frequency": "Daily",
+          "notes": "This amplifies supplement effectiveness significantly"
+        }
+      ]
+    }
+  ],
+  "precautions": ["Specific precautions based on client's medications and conditions"],
+  "followUp": "Recommended follow-up timeline"
+}
+
+SUPPLEMENT DOSAGE GUIDELINES TO FOLLOW:
+- L-Glutamine: 5-10g/day for gut healing
+- Probiotics: 25-100 billion CFU for therapeutic effect
+- Digestive Enzymes: Full spectrum with each meal
+- Zinc Carnosine: 75-150mg/day for gut lining
+- Omega-3 Fish Oil: 2-4g EPA/DHA combined
+- Vitamin D3: 2000-5000 IU based on levels, always with K2
+- Magnesium (any form): 300-500mg
+- B-Complex: Methylated forms preferred
+- Vitamin C: 1-3g/day in divided doses
+- Ashwagandha: 300-600mg standardized extract
+- Berberine: 500mg 2-3x daily with meals
+- Curcumin: 500-1000mg with piperine or liposomal form
+
+Return ONLY valid JSON. No markdown, no code blocks, no explanation outside the JSON.`;
+
+    console.log('[Protocol Generate] Calling Claude API...');
+
+    // Call Claude API
+    const response = await anthropic.messages.create({
+      model: 'claude-sonnet-4-5-20250929',
+      max_tokens: 4096,
+      messages: [{
+        role: 'user',
+        content: aiPrompt
+      }]
+    });
+
+    console.log('[Protocol Generate] Claude API response received');
+
+    const aiResponse = response.content[0].text;
+
+    // Parse the JSON response
+    let protocolData;
+    try {
+      const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        protocolData = JSON.parse(jsonMatch[0]);
+      } else {
+        throw new Error('No JSON found in response');
+      }
+    } catch (parseError) {
+      console.error('[Protocol Generate] Failed to parse response:', parseError.message);
+      // Return a comprehensive fallback structure with clinical dosages
+      const isGutProtocol = templates.includes('gut') || prompt.toLowerCase().includes('gut');
+      const isSleepProtocol = templates.includes('sleep') || prompt.toLowerCase().includes('sleep') || prompt.toLowerCase().includes('fatigue');
+
+      protocolData = {
+        title: `${selectedTemplateNames || 'Comprehensive Wellness'} Protocol for ${clientData.first_name}`,
+        summary: `Personalized protocol addressing ${prompt}. This protocol combines targeted supplementation, dietary modifications, and lifestyle changes for optimal results.`,
+        duration_weeks: 8,
+        modules: [],
+        precautions: ['Consult with healthcare provider before starting', 'Start supplements one at a time to monitor tolerance', 'Discontinue if adverse reactions occur'],
+        followUp: 'Follow up in 4 weeks to assess progress and adjust protocol as needed'
+      };
+
+      // Add Gut Healing Supplements if relevant
+      if (isGutProtocol) {
+        protocolData.modules.push({
+          name: 'Gut Healing Supplements',
+          description: 'Targeted supplements to repair intestinal lining and restore gut health',
+          goal: 'Heal intestinal lining, reduce inflammation, restore healthy microbiome',
+          items: [
+            { name: 'L-Glutamine', dosage: '5g powder', timing: 'Twice daily - morning on empty stomach and before bed', notes: 'Primary amino acid for intestinal cell repair. Mix in water. Start with 2.5g and increase over 1 week.' },
+            { name: 'Multi-Strain Probiotic', dosage: '50 billion CFU', timing: 'Morning with breakfast', notes: 'Look for strains including Lactobacillus and Bifidobacterium. Refrigerate after opening.' },
+            { name: 'Digestive Enzymes', dosage: 'Full spectrum blend', timing: 'With each main meal', notes: 'Take at beginning of meal. Should include protease, lipase, and amylase.' },
+            { name: 'Zinc Carnosine', dosage: '75mg', timing: 'Twice daily between meals', notes: 'Specifically supports gastric and intestinal lining repair.' },
+            { name: 'Omega-3 Fish Oil', dosage: '2g EPA/DHA', timing: 'With meals (split dose)', notes: 'Anti-inflammatory. Choose molecularly distilled, third-party tested brand.' },
+            { name: 'Vitamin D3 with K2', dosage: '5000 IU D3 / 100mcg K2', timing: 'Morning with fatty meal', notes: 'Essential for gut immune function. K2 ensures proper calcium metabolism.' }
+          ]
+        });
+      }
+
+      // Add Sleep Supplements if relevant
+      if (isSleepProtocol) {
+        protocolData.modules.push({
+          name: 'Sleep & Energy Supplements',
+          description: 'Natural compounds to optimize sleep quality and restore energy',
+          goal: 'Improve sleep onset, increase deep sleep, reduce daytime fatigue',
+          items: [
+            { name: 'Magnesium Glycinate', dosage: '400mg', timing: '30-60 minutes before bed', notes: 'Glycinate form is highly absorbable and has calming effect. May cause loose stools initially.' },
+            { name: 'Ashwagandha', dosage: '300mg (KSM-66 extract)', timing: 'Evening with dinner', notes: 'Adaptogen that reduces cortisol and supports adrenal function. Take for 4-8 weeks continuously.' },
+            { name: 'L-Theanine', dosage: '200mg', timing: 'Before bed or during stressful periods', notes: 'Promotes relaxation without sedation. Can be combined with magnesium.' },
+            { name: 'B-Complex (Methylated)', dosage: 'Full spectrum', timing: 'Morning with breakfast', notes: 'Essential for energy production. Methylated forms (methylfolate, methylcobalamin) are better absorbed.' },
+            { name: 'CoQ10 (Ubiquinol)', dosage: '200mg', timing: 'Morning with fatty breakfast', notes: 'Mitochondrial support for cellular energy. Ubiquinol form is active and better absorbed.' }
+          ]
+        });
+      }
+
+      // Add Diet module
+      protocolData.modules.push({
+        name: 'Diet & Nutrition',
+        description: 'Dietary modifications to support healing and reduce inflammation',
+        goal: 'Remove inflammatory triggers, nourish gut lining, stabilize blood sugar',
+        items: [
+          { name: 'Eliminate inflammatory foods', description: 'Remove gluten, dairy, refined sugar, alcohol, and processed foods for protocol duration', notes: 'Keep food diary to track symptoms and reactions' },
+          { name: 'Increase fiber intake', description: 'Add 25-35g fiber daily from vegetables, legumes, and low-sugar fruits', notes: 'Increase gradually to avoid digestive discomfort' },
+          { name: 'Bone broth daily', description: 'Consume 1-2 cups of quality bone broth', notes: 'Rich in collagen, glutamine, and minerals for gut healing' },
+          { name: 'Anti-inflammatory foods', description: 'Include fatty fish, olive oil, leafy greens, berries, turmeric', notes: 'These provide natural anti-inflammatory compounds' }
+        ]
+      });
+
+      // Add Lifestyle module
+      protocolData.modules.push({
+        name: 'Lifestyle Modifications',
+        description: 'Daily habits to enhance protocol effectiveness',
+        goal: 'Optimize circadian rhythm, reduce stress, support natural healing',
+        items: [
+          { name: 'Sleep hygiene routine', description: 'Consistent 10pm-6am sleep schedule, no screens 1hr before bed, cool dark room (65-68°F)', notes: 'Critical for gut repair which happens during sleep' },
+          { name: 'Morning sunlight exposure', description: '10-20 minutes of natural light within 1 hour of waking', notes: 'Sets circadian rhythm and improves cortisol pattern' },
+          { name: 'Stress management practice', description: '10-15 minutes daily of meditation, breathwork, or gentle yoga', notes: 'Stress directly impairs gut function via vagus nerve' },
+          { name: 'Gentle movement', description: '30 minutes daily walking or light exercise', notes: 'Avoid intense exercise initially as it can stress the body' }
+        ]
+      });
+    }
+
+    // Save the protocol to the database
+    // Actual DB Schema: id, client_id, template_id, start_date, end_date, status, modules, notes, ai_recommendations, created_by, created_at, updated_at
+    try {
+      const durationWeeks = protocolData.duration_weeks || 8;
+      const insertResult = await db.query(
+        `INSERT INTO protocols (
+          client_id, template_id, start_date, end_date, status, modules, notes, ai_recommendations, created_by
+        ) VALUES ($1, $2, CURRENT_DATE, CURRENT_DATE + interval '${durationWeeks} weeks', 'draft', $3, $4, $5, $6)
+        RETURNING *`,
+        [
+          client_id,
+          primaryTemplateId, // template_id from first selected template
+          JSON.stringify(protocolData.modules),
+          `Title: ${protocolData.title}\n\nPrompt: ${prompt}\n\nPrecautions: ${protocolData.precautions?.join(', ')}\n\nFollow-up: ${protocolData.followUp}`,
+          protocolData.summary,
+          req.user.id
+        ]
+      );
+
+      console.log('[Protocol Generate] Protocol saved to database');
+
+      res.status(201).json({
+        message: 'Protocol generated successfully',
+        protocol: insertResult.rows[0],
+        ...protocolData
+      });
+
+    } catch (saveError) {
+      console.error('[Protocol Generate] Error saving protocol:', saveError.message);
+      // Return the generated data even if save fails
+      res.json({
+        message: 'Protocol generated (not saved - database error)',
+        ...protocolData,
+        saveError: saveError.message
+      });
+    }
+
+  } catch (error) {
+    console.error('[Protocol Generate] Error:', error);
+    next(error);
+  }
+});
+
+// ========================================
+// AI MODULE EDITING
+// ========================================
+
+// Edit a module using AI prompt
+router.post('/edit-module', authenticateToken, async (req, res, next) => {
+  try {
+    const {
+      module: currentModule,
+      prompt,
+      action = 'edit' // 'edit', 'add', or 'remove'
+    } = req.body;
+
+    console.log('[Module Edit] Request received:', { action, prompt, moduleName: currentModule?.name });
+
+    if (!prompt) {
+      return res.status(400).json({ error: 'Prompt is required' });
+    }
+
+    // For 'add' action, we're creating a new module
+    if (action === 'add') {
+      const aiPrompt = `You are a functional medicine protocol specialist. Create a NEW protocol module based on this request:
+
+USER REQUEST: ${prompt}
+
+Generate a protocol module with this EXACT JSON structure:
+{
+  "name": "Module Name",
+  "description": "Brief description of this module's purpose",
+  "goal": "Specific goal this module aims to achieve",
+  "items": [
+    {
+      "name": "Item name",
+      "dosage": "Specific dosage (e.g., '500mg', '5g')",
+      "timing": "When to take/do this",
+      "notes": "Clinical notes and instructions"
+    }
+  ]
+}
+
+For supplement modules, always include: name, dosage, timing, notes
+For lifestyle modules, include: name, description, frequency, notes
+For diet modules, include: name, description, duration, notes
+
+Return ONLY valid JSON. No markdown, no code blocks.`;
+
+      const response = await anthropic.messages.create({
+        model: 'claude-sonnet-4-5-20250929',
+        max_tokens: 2048,
+        messages: [{ role: 'user', content: aiPrompt }]
+      });
+
+      const aiResponse = response.content[0].text;
+      let newModule;
+
+      try {
+        const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          newModule = JSON.parse(jsonMatch[0]);
+        } else {
+          throw new Error('No JSON found');
+        }
+      } catch (parseError) {
+        // Create a basic module structure
+        newModule = {
+          name: 'New Module',
+          description: prompt,
+          goal: 'As specified in request',
+          items: []
+        };
+      }
+
+      console.log('[Module Edit] New module created:', newModule.name);
+
+      return res.json({
+        success: true,
+        action: 'add',
+        module: newModule
+      });
+    }
+
+    // For 'edit' or 'remove' actions, we need the current module
+    if (!currentModule) {
+      return res.status(400).json({ error: 'Current module data is required for edit/remove actions' });
+    }
+
+    const aiPrompt = `You are a functional medicine protocol specialist. Modify this protocol module based on the user's request.
+
+CURRENT MODULE:
+${JSON.stringify(currentModule, null, 2)}
+
+USER REQUEST: ${prompt}
+
+IMPORTANT INSTRUCTIONS:
+1. If the user asks to REMOVE an item (e.g., "remove L-Theanine"), remove that specific item from the items array
+2. If the user asks to ADD an item, add it with proper dosage, timing, and notes
+3. If the user asks to MODIFY an item, update just that specific item
+4. Keep all other items unchanged
+5. Maintain the same structure and format
+
+Return the MODIFIED module as valid JSON with this structure:
+{
+  "name": "Module Name",
+  "description": "Module description",
+  "goal": "Module goal",
+  "items": [
+    // Modified items array
+  ]
+}
+
+Return ONLY valid JSON. No markdown, no code blocks, no explanations.`;
+
+    console.log('[Module Edit] Calling Claude API...');
+
+    const response = await anthropic.messages.create({
+      model: 'claude-sonnet-4-5-20250929',
+      max_tokens: 2048,
+      messages: [{ role: 'user', content: aiPrompt }]
+    });
+
+    console.log('[Module Edit] Claude API response received');
+
+    const aiResponse = response.content[0].text;
+    let updatedModule;
+
+    try {
+      const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        updatedModule = JSON.parse(jsonMatch[0]);
+      } else {
+        throw new Error('No JSON found in response');
+      }
+    } catch (parseError) {
+      console.error('[Module Edit] Failed to parse response:', parseError.message);
+      return res.status(500).json({
+        error: 'Failed to parse AI response',
+        details: parseError.message
+      });
+    }
+
+    console.log('[Module Edit] Module updated successfully');
+
+    res.json({
+      success: true,
+      action: action,
+      module: updatedModule
+    });
+
+  } catch (error) {
+    console.error('[Module Edit] Error:', error);
+    next(error);
+  }
+});
+
+// Generate a new module using AI
+router.post('/generate-module', authenticateToken, async (req, res, next) => {
+  try {
+    const { prompt, client_id } = req.body;
+
+    console.log('[Module Generate] Request received:', { prompt, client_id });
+
+    if (!prompt) {
+      return res.status(400).json({ error: 'Prompt is required' });
+    }
+
+    // Get client data if provided
+    let clientContext = '';
+    if (client_id) {
+      try {
+        const clientResult = await db.query(
+          `SELECT first_name, last_name, medical_history, current_medications, allergies
+           FROM clients WHERE id = $1`,
+          [client_id]
+        );
+        if (clientResult.rows.length > 0) {
+          const client = clientResult.rows[0];
+          clientContext = `
+CLIENT CONTEXT:
+- Name: ${client.first_name} ${client.last_name}
+- Medical History: ${client.medical_history || 'None provided'}
+- Current Medications: ${client.current_medications || 'None listed'}
+- Allergies: ${client.allergies || 'None listed'}
+`;
+        }
+      } catch (dbError) {
+        console.error('[Module Generate] Error fetching client:', dbError.message);
+      }
+    }
+
+    const aiPrompt = `You are a functional medicine protocol specialist. Create a NEW protocol module based on this request:
+${clientContext}
+USER REQUEST: ${prompt}
+
+Generate a detailed protocol module with this EXACT JSON structure:
+{
+  "name": "Descriptive Module Name",
+  "description": "Clear description of this module's purpose and approach",
+  "goal": "Specific, measurable goal this module aims to achieve",
+  "items": [
+    {
+      "name": "Supplement/Activity Name",
+      "dosage": "Specific therapeutic dosage (e.g., '500mg', '5g powder', '2 capsules')",
+      "timing": "Precise timing instructions (e.g., 'Morning with breakfast', '30 min before bed')",
+      "notes": "Clinical rationale, precautions, and additional instructions"
+    }
+  ]
+}
+
+REQUIREMENTS:
+- Include 3-6 relevant items in the module
+- Use evidence-based therapeutic dosages
+- Provide specific timing instructions
+- Include clinical notes with rationale
+- Consider any client allergies or medications if provided
+
+Return ONLY valid JSON. No markdown, no code blocks.`;
+
+    console.log('[Module Generate] Calling Claude API...');
+
+    const response = await anthropic.messages.create({
+      model: 'claude-sonnet-4-5-20250929',
+      max_tokens: 2048,
+      messages: [{ role: 'user', content: aiPrompt }]
+    });
+
+    console.log('[Module Generate] Claude API response received');
+
+    const aiResponse = response.content[0].text;
+    let newModule;
+
+    try {
+      const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        newModule = JSON.parse(jsonMatch[0]);
+      } else {
+        throw new Error('No JSON found in response');
+      }
+    } catch (parseError) {
+      console.error('[Module Generate] Failed to parse response:', parseError.message);
+      // Create fallback module
+      newModule = {
+        name: 'Custom Module',
+        description: prompt,
+        goal: 'Custom goal based on user request',
+        items: [
+          {
+            name: 'Custom Item',
+            dosage: 'As directed',
+            timing: 'As needed',
+            notes: 'Please customize this module based on your specific needs.'
+          }
+        ]
+      };
+    }
+
+    console.log('[Module Generate] New module generated:', newModule.name);
+
+    res.json({
+      success: true,
+      module: newModule
+    });
+
+  } catch (error) {
+    console.error('[Module Generate] Error:', error);
+    next(error);
+  }
+});
+
+// Helper function to calculate age
+function calculateAge(dateOfBirth) {
+  const today = new Date();
+  const birthDate = new Date(dateOfBirth);
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDiff = today.getMonth() - birthDate.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+  return age;
+}
+
+// ========================================
+// ENGAGEMENT PLAN GENERATION
+// ========================================
+
+// Generate personalized engagement plan from protocol
+router.post('/:id/generate-engagement-plan', authenticateToken, async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { personality_type, communication_preferences } = req.body;
+
+    console.log('[Engagement Plan] Generating for protocol:', id);
+
+    // Get protocol with client info
+    const protocolResult = await db.query(
+      `SELECT
+        p.*,
+        c.first_name, c.last_name, c.email, c.phone,
+        c.medical_history, c.health_goals,
+        pt.name as template_name, pt.category as template_category
+      FROM protocols p
+      LEFT JOIN clients c ON p.client_id = c.id
+      LEFT JOIN protocol_templates pt ON p.template_id = pt.id
+      WHERE p.id = $1`,
+      [id]
+    );
+
+    if (protocolResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Protocol not found' });
+    }
+
+    const protocol = protocolResult.rows[0];
+    const clientName = `${protocol.first_name} ${protocol.last_name}`;
+
+    // Parse modules from protocol
+    let modules = [];
+    try {
+      modules = typeof protocol.modules === 'string'
+        ? JSON.parse(protocol.modules)
+        : protocol.modules || [];
+    } catch (e) {
+      console.error('[Engagement Plan] Error parsing modules:', e.message);
+    }
+
+    // Query KB for engagement strategies
+    console.log('[Engagement Plan] Querying KB for engagement strategies...');
+    let kbEngagementContext = '';
+    try {
+      const engagementQueries = [
+        'patient engagement strategies functional medicine',
+        'phased protocol delivery best practices',
+        'behavior change techniques wellness coaching',
+        `engagement strategies for ${protocol.template_category || 'wellness'} protocols`
+      ];
+
+      const kbResults = await Promise.all(
+        engagementQueries.map(q => queryKnowledgeBase(q, `Protocol: ${protocol.template_name}, Client goals: ${protocol.health_goals || 'general wellness'}`))
+      );
+      kbEngagementContext = kbResults.filter(r => r).join('\n\n');
+      if (kbEngagementContext) {
+        console.log('[Engagement Plan] KB engagement context retrieved');
+      }
+    } catch (kbError) {
+      console.error('[Engagement Plan] KB query error:', kbError.message);
+    }
+
+    // Build the AI prompt for engagement plan
+    const aiPrompt = `You are an expert health coach and patient engagement specialist. Create a personalized, phased engagement plan to help a patient successfully implement their wellness protocol.
+
+PATIENT INFORMATION:
+- Name: ${clientName}
+- Health Goals: ${protocol.health_goals || 'Not specified'}
+- Personality Type: ${personality_type || 'Not specified'}
+- Communication Preferences: ${communication_preferences || 'Standard'}
+
+PROTOCOL DETAILS:
+- Protocol Name: ${protocol.template_name || 'Custom Protocol'}
+- Category: ${protocol.template_category || 'General Wellness'}
+- Duration: ${protocol.end_date ? Math.ceil((new Date(protocol.end_date) - new Date(protocol.start_date)) / (1000 * 60 * 60 * 24 * 7)) : 8} weeks
+
+PROTOCOL MODULES:
+${modules.map((m, i) => `${i + 1}. ${m.name}: ${m.items?.length || 0} items`).join('\n')}
+
+${kbEngagementContext ? `KNOWLEDGE BASE ENGAGEMENT STRATEGIES:\n${kbEngagementContext}\n\nIncorporate these evidence-based engagement strategies into the plan.\n` : ''}
+
+Create a 4-phase engagement plan with this EXACT JSON structure:
+{
+  "title": "${protocol.template_name || 'Wellness'} Engagement Plan",
+  "summary": "A 2-3 sentence overview of the engagement approach tailored to this patient",
+  "total_weeks": 4,
+  "phases": [
+    {
+      "phase_number": 1,
+      "title": "Phase 1: Foundations (Week 1)",
+      "subtitle": "Brief description of phase focus",
+      "items": [
+        "Specific action item 1 from the protocol",
+        "Specific action item 2",
+        "Specific action item 3",
+        "Specific action item 4",
+        "Specific action item 5"
+      ],
+      "progress_goal": "Measurable goal for this phase",
+      "check_in_prompts": ["Question to ask patient at end of week"]
+    }
+  ],
+  "communication_schedule": {
+    "check_in_frequency": "Every 3 days",
+    "preferred_channel": "WhatsApp",
+    "message_tone": "Encouraging and supportive"
+  },
+  "success_metrics": ["Metric 1", "Metric 2", "Metric 3"]
+}
+
+IMPORTANT GUIDELINES:
+1. Each phase should build progressively - don't overwhelm the patient in Week 1
+2. Phase 1: Focus on 2-3 foundational habits only
+3. Phase 2: Add dietary changes and expand supplements
+4. Phase 3: Integrate feedback, adjust based on response
+5. Phase 4: Optimize, assess results, plan long-term maintenance
+6. Include specific items from the protocol modules in each phase
+7. Make action items concrete and actionable (not vague)
+8. Include check-in prompts to gather patient feedback
+
+Return ONLY valid JSON. No markdown, no code blocks.`;
+
+    console.log('[Engagement Plan] Calling Claude API...');
+
+    const response = await anthropic.messages.create({
+      model: 'claude-sonnet-4-5-20250929',
+      max_tokens: 4096,
+      messages: [{ role: 'user', content: aiPrompt }]
+    });
+
+    console.log('[Engagement Plan] Claude API response received');
+
+    const aiResponse = response.content[0].text;
+    let engagementPlan;
+
+    try {
+      const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        engagementPlan = JSON.parse(jsonMatch[0]);
+      } else {
+        throw new Error('No JSON found in response');
+      }
+    } catch (parseError) {
+      console.error('[Engagement Plan] Failed to parse response:', parseError.message);
+      // Return fallback engagement plan
+      engagementPlan = {
+        title: `${protocol.template_name || 'Wellness'} Engagement Plan`,
+        summary: `This 4-week engagement plan is designed to help ${clientName} successfully implement their wellness protocol through phased delivery and regular check-ins.`,
+        total_weeks: 4,
+        phases: [
+          {
+            phase_number: 1,
+            title: 'Phase 1: Foundations (Week 1)',
+            subtitle: 'Establishing the groundwork for success',
+            items: [
+              'Start core supplement regimen as prescribed',
+              'Get morning sunlight within 30 minutes of waking',
+              'Avoid screens at least 45 minutes before bedtime',
+              'Begin food journaling to track meals and energy levels',
+              'Journal stress triggers twice this week'
+            ],
+            progress_goal: 'Build initial rhythm and reduce common health disruptors',
+            check_in_prompts: ['How are you feeling with the new supplements?', 'Any challenges with the morning routine?']
+          },
+          {
+            phase_number: 2,
+            title: 'Phase 2: Expand & Adapt (Week 2)',
+            subtitle: 'Building on foundations and introducing dietary changes',
+            items: [
+              'Introduce dietary modifications per protocol guidelines',
+              'Begin elimination of trigger foods if applicable',
+              'Add 5-10 minutes of breathwork or meditation daily',
+              'Track energy levels and symptoms in app',
+              'Review and adjust supplement timing based on feedback'
+            ],
+            progress_goal: 'Establish dietary patterns and introduce mindfulness practices',
+            check_in_prompts: ['How is the dietary transition going?', 'Notice any changes in energy or sleep?']
+          },
+          {
+            phase_number: 3,
+            title: 'Phase 3: Refine & Reflect (Week 3)',
+            subtitle: 'Integrating feedback and tracking body response',
+            items: [
+              'Monitor wearable metrics daily (e.g. HRV, sleep quality)',
+              'Track cortisol-related symptoms like restlessness or energy crashes',
+              'Add one evening yoga or stretching session this week',
+              'Share journal notes with practitioner',
+              'Schedule recommended lab tests if applicable'
+            ],
+            progress_goal: 'Identify trends and begin individualizing the approach',
+            check_in_prompts: ['What patterns are you noticing?', 'Any symptoms we should address?']
+          },
+          {
+            phase_number: 4,
+            title: 'Phase 4: Assess & Sustain (Week 4)',
+            subtitle: 'Reviewing results and locking in long-term strategies',
+            items: [
+              'Complete any pending lab tests',
+              'Evaluate supplement effectiveness and tolerability',
+              'Refine the protocol with your practitioner based on results',
+              'Maintain consistent habits (routine, dietary choices, journaling)',
+              'Prepare questions for follow-up consultation'
+            ],
+            progress_goal: 'Make final adjustments and ensure long-term sustainability',
+            check_in_prompts: ['What has worked best for you?', 'What would you like to adjust going forward?']
+          }
+        ],
+        communication_schedule: {
+          check_in_frequency: 'Every 3 days',
+          preferred_channel: 'WhatsApp',
+          message_tone: 'Encouraging and supportive'
+        },
+        success_metrics: [
+          'Supplement adherence rate',
+          'Sleep quality improvement',
+          'Energy level changes',
+          'Symptom reduction'
+        ]
+      };
+    }
+
+    // Update protocol with engagement plan
+    await db.query(
+      `UPDATE protocols SET
+        ai_recommendations = COALESCE(ai_recommendations, '') || E'\n\n--- ENGAGEMENT PLAN ---\n' || $1,
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = $2`,
+      [JSON.stringify(engagementPlan, null, 2), id]
+    );
+
+    console.log('[Engagement Plan] Generated successfully');
+
+    res.json({
+      success: true,
+      engagement_plan: engagementPlan,
+      protocol_id: id,
+      client_name: clientName
+    });
+
+  } catch (error) {
+    console.error('[Engagement Plan] Error:', error);
+    next(error);
+  }
+});
+
+module.exports = router;

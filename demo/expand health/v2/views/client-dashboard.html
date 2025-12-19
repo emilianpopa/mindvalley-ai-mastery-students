@@ -1,0 +1,1792 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Client Dashboard - ExpandHealth</title>
+  <link rel="stylesheet" href="/css/main.css?v=14">
+  <link rel="stylesheet" href="/css/client-dashboard.css?v=35">
+  <link rel="stylesheet" href="/css/protocol-builder.css?v=13">
+  <!-- PDF.js for high-quality PDF rendering -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo-small">
+          <span class="logo-icon">✦</span>
+          <span class="logo-text">ExpandHealth</span>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <p class="nav-section-title">CLIENT ZONE</p>
+          <a href="/clients" class="nav-item active">
+            <span class="nav-icon">👥</span>
+            <span class="nav-text">Clients</span>
+          </a>
+          <a href="/forms" class="nav-item">
+            <span class="nav-icon">📋</span>
+            <span class="nav-text">Forms</span>
+          </a>
+          <a href="/protocol-templates" class="nav-item">
+            <span class="nav-icon">📄</span>
+            <span class="nav-text">Protocol Templates</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <p class="nav-section-title">ADMIN</p>
+          <a href="/staff" class="nav-item">
+            <span class="nav-icon">👨‍⚕️</span>
+            <span class="nav-text">Staff</span>
+          </a>
+          <a href="/kb-admin" class="nav-item">
+            <span class="nav-icon">📚</span>
+            <span class="nav-text">AI Knowledge Base</span>
+          </a>
+        </div>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button class="ask-ai-btn" onclick="openRightPanel()">
+          <span>📝</span>
+          <span>Quick Notes</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Header -->
+      <header class="header">
+        <div class="header-left">
+          <p class="breadcrumb">
+            <a href="/">Home</a> → <a href="/clients">Clients</a> → <span id="breadcrumbName">Loading...</span>
+          </p>
+        </div>
+        <div class="header-right">
+          <button class="icon-btn">🔔</button>
+          <div class="user-menu">
+            <img src="https://ui-avatars.com/api/?name=Admin+User&background=0F766E&color=fff" alt="User" class="user-avatar">
+            <div class="user-info">
+              <p class="user-name" id="userName">Loading...</p>
+              <p class="user-role" id="userRole">Admin</p>
+            </div>
+            <button class="icon-btn" onclick="window.auth.logout()">🚪</button>
+          </div>
+        </div>
+      </header>
+
+      <!-- Client Header Card -->
+      <div id="clientHeader" style="display: none;">
+        <div class="client-header-card">
+          <div class="client-header-left">
+            <img id="clientAvatar" src="" alt="Client" class="client-avatar-large">
+            <div class="client-header-info">
+              <h1 id="clientName">Loading...</h1>
+              <p class="client-meta" id="clientMeta">
+                <span id="clientGender">-</span>, <span id="clientAge">-</span><span id="clientRoleContainer"></span>
+              </p>
+            </div>
+          </div>
+          <!-- Dashboard Tabs - Inline with header -->
+          <div class="dashboard-tabs-inline">
+            <button class="tab-btn active" data-tab="dashboard">Dashboard</button>
+            <button class="tab-btn" data-tab="forms">Forms</button>
+            <button class="tab-btn" data-tab="labs">Labs & Tests</button>
+            <button class="tab-btn" data-tab="wearables">Wearables</button>
+            <button class="tab-btn" data-tab="notes">Notes</button>
+            <button class="tab-btn" data-tab="protocol">Protocol</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Content Area -->
+      <div class="content">
+        <!-- Loading State -->
+        <div id="loadingState" class="loading-container">
+          <div class="loader"></div>
+          <p>Loading client data...</p>
+        </div>
+
+        <!-- Dashboard Tab -->
+        <div id="dashboardTab" class="tab-content active">
+          <!-- Score Cards Row -->
+          <div class="scores-grid">
+            <div class="score-card">
+              <div class="score-header">
+                <span class="score-title">Sleep Score</span>
+                <button class="info-btn" title="View details">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M12 16v-4"/>
+                    <path d="M12 8h.01"/>
+                  </svg>
+                </button>
+              </div>
+              <div class="score-content">
+                <div class="score-value-wrapper">
+                  <span class="score-value">48%</span>
+                </div>
+                <div class="score-icon-wrapper sleep">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                    <path d="M12 8l2 2-2 2"/>
+                  </svg>
+                </div>
+              </div>
+              <div class="score-segments warning">
+                <span class="segment filled"></span>
+                <span class="segment filled"></span>
+                <span class="segment half"></span>
+                <span class="segment"></span>
+                <span class="segment"></span>
+              </div>
+            </div>
+
+            <div class="score-card">
+              <div class="score-header">
+                <span class="score-title">Diet Score</span>
+                <button class="info-btn" title="View details">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M12 16v-4"/>
+                    <path d="M12 8h.01"/>
+                  </svg>
+                </button>
+              </div>
+              <div class="score-content">
+                <div class="score-value-wrapper">
+                  <span class="score-value">90%</span>
+                </div>
+                <div class="score-icon-wrapper diet">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M18 8h1a4 4 0 0 1 0 8h-1"/>
+                    <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/>
+                    <line x1="6" y1="1" x2="6" y2="4"/>
+                    <line x1="10" y1="1" x2="10" y2="4"/>
+                    <line x1="14" y1="1" x2="14" y2="4"/>
+                  </svg>
+                </div>
+              </div>
+              <div class="score-segments success">
+                <span class="segment filled"></span>
+                <span class="segment filled"></span>
+                <span class="segment filled"></span>
+                <span class="segment filled"></span>
+                <span class="segment half"></span>
+              </div>
+            </div>
+
+            <div class="score-card">
+              <div class="score-header">
+                <span class="score-title">Stress Score</span>
+                <button class="info-btn" title="View details">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M12 16v-4"/>
+                    <path d="M12 8h.01"/>
+                  </svg>
+                </button>
+              </div>
+              <div class="score-content">
+                <div class="score-value-wrapper">
+                  <span class="score-value">42%</span>
+                </div>
+                <div class="score-icon-wrapper stress">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M8 15s1.5-2 4-2 4 2 4 2"/>
+                    <line x1="9" y1="9" x2="9.01" y2="9"/>
+                    <line x1="15" y1="9" x2="15.01" y2="9"/>
+                  </svg>
+                </div>
+              </div>
+              <div class="score-segments danger">
+                <span class="segment filled"></span>
+                <span class="segment filled"></span>
+                <span class="segment"></span>
+                <span class="segment"></span>
+                <span class="segment"></span>
+              </div>
+            </div>
+
+            <div class="score-card">
+              <div class="score-header">
+                <span class="score-title">Activity Score</span>
+                <button class="info-btn" title="View details">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M12 16v-4"/>
+                    <path d="M12 8h.01"/>
+                  </svg>
+                </button>
+              </div>
+              <div class="score-content">
+                <div class="score-value-wrapper">
+                  <span class="score-value">89%</span>
+                </div>
+                <div class="score-icon-wrapper activity">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+                  </svg>
+                </div>
+              </div>
+              <div class="score-segments success">
+                <span class="segment filled"></span>
+                <span class="segment filled"></span>
+                <span class="segment filled"></span>
+                <span class="segment filled"></span>
+                <span class="segment half"></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Health Metrics Section -->
+          <div class="health-metrics-grid">
+            <!-- Biological Age Card -->
+            <div class="health-metric-card biological-age-card">
+              <div class="metric-header">
+                <span class="metric-title">Biological Age</span>
+                <button class="info-btn" title="View details">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M12 16v-4"/>
+                    <path d="M12 8h.01"/>
+                  </svg>
+                </button>
+              </div>
+              <div class="biological-age-content">
+                <div class="age-gauge-container">
+                  <svg class="age-gauge" viewBox="0 0 120 70">
+                    <!-- Gauge background arc -->
+                    <path class="gauge-bg" d="M 10 60 A 50 50 0 0 1 110 60" fill="none" stroke-width="8"/>
+                    <!-- Gauge colored sections -->
+                    <path class="gauge-section optimal" d="M 10 60 A 50 50 0 0 1 35 20" fill="none" stroke-width="8"/>
+                    <path class="gauge-section good" d="M 35 20 A 50 50 0 0 1 60 10" fill="none" stroke-width="8"/>
+                    <path class="gauge-section moderate" d="M 60 10 A 50 50 0 0 1 85 20" fill="none" stroke-width="8"/>
+                    <path class="gauge-section poor" d="M 85 20 A 50 50 0 0 1 110 60" fill="none" stroke-width="8"/>
+                    <!-- Gauge needle -->
+                    <line class="gauge-needle" id="bioAgeNeedle" x1="60" y1="60" x2="60" y2="18" stroke-width="2" stroke-linecap="round"/>
+                    <circle class="gauge-center" cx="60" cy="60" r="5"/>
+                  </svg>
+                  <div class="age-value-display">
+                    <span class="bio-age-value" id="bioAgeValue">52</span>
+                    <span class="bio-age-label">years</span>
+                  </div>
+                </div>
+                <div class="age-comparison">
+                  <div class="age-stat">
+                    <span class="stat-label">Chronological</span>
+                    <span class="stat-value" id="chronoAge">56</span>
+                  </div>
+                  <div class="age-difference positive" id="ageDifference">
+                    <span class="diff-arrow">↓</span>
+                    <span class="diff-value">4 years younger</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Vitals Card -->
+            <div class="health-metric-card vitals-card">
+              <div class="metric-header">
+                <span class="metric-title">Vitals</span>
+                <button class="info-btn" title="View details">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M12 16v-4"/>
+                    <path d="M12 8h.01"/>
+                  </svg>
+                </button>
+              </div>
+              <div class="vitals-grid">
+                <div class="vital-item">
+                  <span class="vital-icon">⚖️</span>
+                  <div class="vital-info">
+                    <span class="vital-label">Weight</span>
+                    <span class="vital-value" id="vitalWeight">82 <small>kg</small></span>
+                  </div>
+                </div>
+                <div class="vital-item">
+                  <span class="vital-icon">📏</span>
+                  <div class="vital-info">
+                    <span class="vital-label">Height</span>
+                    <span class="vital-value" id="vitalHeight">178 <small>cm</small></span>
+                  </div>
+                </div>
+                <div class="vital-item">
+                  <span class="vital-icon">📊</span>
+                  <div class="vital-info">
+                    <span class="vital-label">BMI</span>
+                    <span class="vital-value" id="vitalBMI">25.9</span>
+                  </div>
+                </div>
+                <div class="vital-item">
+                  <span class="vital-icon">❤️</span>
+                  <div class="vital-info">
+                    <span class="vital-label">Blood Pressure</span>
+                    <span class="vital-value" id="vitalBP">128/82 <small>mmHg</small></span>
+                  </div>
+                </div>
+              </div>
+              <p class="vitals-updated">Last updated: <span id="vitalsDate">31.05.2025</span></p>
+            </div>
+
+            <!-- Wearable Vitals Card -->
+            <div class="health-metric-card wearable-vitals-card">
+              <div class="metric-header">
+                <span class="metric-title">Wearable Vitals</span>
+                <span class="wearable-badge">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="4" width="18" height="16" rx="2"/>
+                    <path d="M7 8h10"/>
+                    <path d="M7 12h6"/>
+                  </svg>
+                  Connected
+                </span>
+              </div>
+              <div class="wearable-vitals-grid">
+                <div class="wearable-vital-item">
+                  <div class="wearable-icon vo2">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+                    </svg>
+                  </div>
+                  <div class="wearable-info">
+                    <span class="wearable-label">Vo2 Max</span>
+                    <span class="wearable-value" id="wearableVo2">42.5 <small>ml/kg/min</small></span>
+                  </div>
+                  <span class="wearable-trend up" id="vo2Trend">↑ 2.3</span>
+                </div>
+                <div class="wearable-vital-item">
+                  <div class="wearable-icon rhr">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                    </svg>
+                  </div>
+                  <div class="wearable-info">
+                    <span class="wearable-label">RHR</span>
+                    <span class="wearable-value" id="wearableRHR">58 <small>bpm</small></span>
+                  </div>
+                  <span class="wearable-trend down" id="rhrTrend">↓ 3</span>
+                </div>
+                <div class="wearable-vital-item">
+                  <div class="wearable-icon hrv">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                    </svg>
+                  </div>
+                  <div class="wearable-info">
+                    <span class="wearable-label">HRV</span>
+                    <span class="wearable-value" id="wearableHRV">45 <small>ms</small></span>
+                  </div>
+                  <span class="wearable-trend up" id="hrvTrend">↑ 8</span>
+                </div>
+              </div>
+              <p class="wearable-source">Source: <span id="wearableSource">Oura Ring</span> | Synced <span id="wearableSyncTime">2h ago</span></p>
+            </div>
+          </div>
+
+          <!-- Dashboard Grid: Summary + Activity -->
+          <div class="dashboard-grid">
+            <!-- AI Summary Card -->
+            <div class="dashboard-card summary-card">
+              <div class="card-header">
+                <div class="card-title">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0F766E" stroke-width="2">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                  </svg>
+                  <h3>Summary</h3>
+                  <span class="ai-badge">AI</span>
+                </div>
+                <button class="btn-refresh" onclick="regenerateSummary()">Refresh</button>
+              </div>
+              <p class="summary-timestamp">Last refreshed on 31.05.2025</p>
+              <div class="summary-content">
+                <ul>
+                  <li><strong>Health goals</strong> include managing stress and enhancing sleep quality.</li>
+                  <li><strong>Symptoms</strong> include poor sleep, unstable energy, stress-related chest tightness, and mood instability.</li>
+                  <li><strong>Medical history</strong> includes hypertension with a blood pressure reading of 128/82; currently, he is taking Amlodipine 5 mg daily.</li>
+                  <li><strong>Family history</strong> indicates that his father passed away from a myocardial infarction at the age of 76.</li>
+                  <li><strong>Previous surgical intervention</strong> was performed for a torn meniscus in 2020, with a successful arthroscopic meniscal repair conducted in 2021.</li>
+                  <li>No known drug or food <strong>allergies</strong></li>
+                </ul>
+              </div>
+            </div>
+
+            <!-- Client Activity Card -->
+            <div class="dashboard-card activity-card">
+              <div class="card-header">
+                <div class="card-title">
+                  <h3>Client Activity</h3>
+                </div>
+              </div>
+              <p class="activity-subtitle">Monitor all client activity in one continuous view.</p>
+              <div class="activity-feed" id="activityFeed">
+                <div class="activity-item">
+                  <div class="activity-checkbox">
+                    <span class="checkbox-circle"></span>
+                  </div>
+                  <div class="activity-icon-small protocol">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                      <polyline points="14 2 14 8 20 8"/>
+                    </svg>
+                    <span class="activity-status-dot active"></span>
+                  </div>
+                  <div class="activity-info">
+                    <p class="activity-title">Protocol Activated</p>
+                    <p class="activity-date">05.06.2025</p>
+                  </div>
+                  <span class="activity-tag protocol">Protocol</span>
+                  <button class="activity-more-btn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="1"/>
+                      <circle cx="19" cy="12" r="1"/>
+                      <circle cx="5" cy="12" r="1"/>
+                    </svg>
+                  </button>
+                </div>
+
+                <div class="activity-item">
+                  <div class="activity-checkbox">
+                    <span class="checkbox-circle"></span>
+                  </div>
+                  <div class="activity-icon-small labs">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                      <polyline points="14 2 14 8 20 8"/>
+                    </svg>
+                  </div>
+                  <div class="activity-info">
+                    <p class="activity-title">Pathcare Full Blood Count</p>
+                    <p class="activity-date">31.05.2025</p>
+                  </div>
+                  <span class="activity-tag lab">Labs & Tests</span>
+                  <button class="activity-more-btn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="1"/>
+                      <circle cx="19" cy="12" r="1"/>
+                      <circle cx="5" cy="12" r="1"/>
+                    </svg>
+                  </button>
+                </div>
+
+                <div class="activity-item">
+                  <div class="activity-checkbox">
+                    <span class="checkbox-circle"></span>
+                  </div>
+                  <div class="activity-icon-small notes">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                      <polyline points="14 2 14 8 20 8"/>
+                    </svg>
+                  </div>
+                  <div class="activity-info">
+                    <p class="activity-title">Consultation 2 Summary & Transcript</p>
+                    <p class="activity-date">03.05.2025</p>
+                  </div>
+                  <span class="activity-tag notes">Notes</span>
+                  <button class="activity-more-btn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="1"/>
+                      <circle cx="19" cy="12" r="1"/>
+                      <circle cx="5" cy="12" r="1"/>
+                    </svg>
+                  </button>
+                </div>
+
+                <div class="activity-item">
+                  <div class="activity-checkbox">
+                    <span class="checkbox-circle"></span>
+                  </div>
+                  <div class="activity-icon-small forms">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                      <polyline points="14 2 14 8 20 8"/>
+                    </svg>
+                  </div>
+                  <div class="activity-info">
+                    <p class="activity-title">Intake Form Completed</p>
+                    <p class="activity-date">02.01.2025</p>
+                  </div>
+                  <span class="activity-tag forms">Forms</span>
+                  <button class="activity-more-btn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="1"/>
+                      <circle cx="19" cy="12" r="1"/>
+                      <circle cx="5" cy="12" r="1"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Personality Insights Section -->
+          <div class="dashboard-card personality-card">
+            <div class="card-header">
+              <div class="card-title">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0F766E" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/>
+                  <path d="M12 16v-4"/>
+                  <path d="M12 8h.01"/>
+                </svg>
+                <h3>Personality Insights</h3>
+                <span class="ai-badge">AI</span>
+              </div>
+              <button class="btn-refresh" onclick="regeneratePersonalityInsights()">Refresh</button>
+            </div>
+            <div class="personality-grid">
+              <div class="personality-item">
+                <span class="personality-label">Personality Type</span>
+                <span class="personality-value" id="personalityType">ENTJ - The Commander</span>
+              </div>
+              <div class="personality-item">
+                <span class="personality-label">Communication Style</span>
+                <span class="personality-value" id="communicationStyle">Direct & Analytical</span>
+              </div>
+              <div class="personality-item">
+                <span class="personality-label">Decision Making</span>
+                <span class="personality-value" id="decisionMaking">Data-Driven</span>
+              </div>
+              <div class="personality-item">
+                <span class="personality-label">Motivation Driver</span>
+                <span class="personality-value" id="motivationDriver">Achievement & Results</span>
+              </div>
+            </div>
+            <div class="personality-insights">
+              <h4>AI-Generated Insights</h4>
+              <ul id="personalityInsightsList">
+                <li><strong>Best approach:</strong> Present information with clear data and evidence. This client values efficiency and logical reasoning over emotional appeals.</li>
+                <li><strong>Communication tip:</strong> Be direct and concise. They appreciate professionals who respect their time and get to the point quickly.</li>
+                <li><strong>Engagement style:</strong> Focus on measurable outcomes and progress tracking. Set clear milestones and provide regular status updates.</li>
+                <li><strong>Potential challenges:</strong> May resist recommendations that seem too slow or lack clear rationale. Ensure protocols include clear timelines and expected outcomes.</li>
+              </ul>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Forms Tab -->
+        <div id="formsTab" class="tab-content">
+          <!-- Forms Tab Header with Search and Assign Button -->
+          <div class="forms-tab-header">
+            <div class="forms-search-wrapper">
+              <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"/>
+                <path d="M21 21l-4.35-4.35"/>
+              </svg>
+              <input type="text" id="formsSearchInput" class="forms-search-input" placeholder="Search forms...">
+            </div>
+            <button class="btn-assign-form" onclick="openSendFormModal()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 5v14M5 12h14"/>
+              </svg>
+              <span>Assign Form</span>
+            </button>
+          </div>
+
+          <!-- Forms Loading -->
+          <div id="formsLoading" class="loading-container" style="display: none;">
+            <div class="loader"></div>
+            <p>Loading forms...</p>
+          </div>
+
+          <!-- Empty Forms State -->
+          <div id="formsEmpty" class="empty-message" style="display: none;">
+            <p>No forms assigned yet. Click "Assign Form" to send a form to this client.</p>
+          </div>
+
+          <!-- Forms Table -->
+          <div id="formsContent" class="forms-table-container" style="display: none;">
+            <table class="forms-table">
+              <thead>
+                <tr>
+                  <th>Form Name</th>
+                  <th>Form Description</th>
+                  <th>Status</th>
+                  <th>Assigned on</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="formsTableBody">
+                <!-- Populated by JavaScript -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Labs Tab -->
+        <div id="labsTab" class="tab-content">
+          <div class="tab-content-header">
+            <h2>Labs & Tests</h2>
+            <div class="header-actions">
+              <button class="btn-primary" onclick="openUploadLabModal()">
+                <span>📤</span>
+                <span>Upload New File</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Loading State -->
+          <div id="labsLoading" class="loading-container" style="display: none;">
+            <div class="loader"></div>
+            <p>Loading labs...</p>
+          </div>
+
+          <!-- Empty State -->
+          <div id="labsEmpty" class="empty-message" style="display: none;">
+            <p>No lab results uploaded yet. Click "Upload New File" to add lab documents.</p>
+          </div>
+
+          <!-- Labs Table -->
+          <div id="labsTableContainer" class="data-section" style="display: none;">
+            <div class="table-container">
+              <table class="data-table labs-table">
+                <thead>
+                  <tr>
+                    <th>File Name</th>
+                    <th>Tag</th>
+                    <th>Uploaded Date</th>
+                    <th>Summary</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="labsTableBody">
+                  <!-- Populated by JavaScript -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Wearables Tab -->
+        <div id="wearablesTab" class="tab-content">
+          <div class="tab-content-header">
+            <h2>Wearables</h2>
+            <button class="btn-primary" onclick="createReport()">
+              <span>+</span>
+              <span>Create Report</span>
+            </button>
+          </div>
+          <div id="wearablesContent" class="wearables-list">
+            <p class="empty-message">Wearables module will display HRV, sleep, readiness reports with export and sharing options.</p>
+          </div>
+        </div>
+
+        <!-- Notes Tab -->
+        <div id="notesTab" class="tab-content">
+          <div class="tab-content-header">
+            <h2>Notes</h2>
+            <button class="btn-primary" onclick="newNote()">
+              <span>+</span>
+              <span>New Note</span>
+            </button>
+          </div>
+          <div id="notesContent" class="notes-list">
+            <p class="empty-message">Notes module will display consultation notes, notes-on-the-go, AI transcripts, and voice-to-text entries.</p>
+          </div>
+        </div>
+
+        <!-- Protocol Tab -->
+        <div id="protocolTab" class="tab-content">
+          <!-- Protocol Loading State -->
+          <div id="protocolLoading" class="loading-container" style="display: none;">
+            <div class="loader"></div>
+            <p>Loading protocols...</p>
+          </div>
+
+          <!-- Protocol Empty State -->
+          <div id="protocolEmpty" class="protocol-empty-state">
+            <div class="protocol-empty-content">
+              <div class="protocol-empty-icon">
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                  <line x1="16" y1="13" x2="8" y2="13"/>
+                  <line x1="16" y1="17" x2="8" y2="17"/>
+                  <polyline points="10 9 9 9 8 9"/>
+                </svg>
+              </div>
+              <h3>Currently, there are no protocols</h3>
+              <p>Create a personalized protocol for this client using AI-powered recommendations based on their health data and consultation notes.</p>
+              <button class="btn-primary btn-create-protocol" onclick="openProtocolBuilder()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 5v14M5 12h14"/>
+                </svg>
+                <span>Create a Protocol</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Protocol List (shown when protocols exist) -->
+          <div id="protocolList" class="protocol-list-container" style="display: none;">
+            <div class="protocol-list-header">
+              <h2>Protocols</h2>
+              <button class="btn-primary" onclick="openProtocolBuilder()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 5v14M5 12h14"/>
+                </svg>
+                <span>Create New Protocol</span>
+              </button>
+            </div>
+            <div id="protocolListContent" class="protocol-cards">
+              <!-- Protocol cards populated by JavaScript -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Right Panel (Notes on the Go) -->
+  <div id="rightPanel" class="right-panel" style="display: none;">
+    <div class="panel-header">
+      <h3>Notes on the Go</h3>
+      <button class="close-panel" onclick="closeRightPanel()">×</button>
+    </div>
+    <div class="panel-content">
+      <textarea id="quickNotes" placeholder="Quick notes about this client..."></textarea>
+      <button class="btn-primary-small" onclick="saveQuickNote()">Save Note</button>
+      <div class="quick-notes-divider"></div>
+      <div id="quickNotesList" class="quick-notes-list">
+        <p class="no-notes">Loading notes...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Send Form Modal (Unified) -->
+  <div id="sendFormModal" class="modal" style="display: none;">
+    <div class="modal-overlay" onclick="closeSendFormModal()"></div>
+    <div class="modal-container">
+      <div class="modal-header">
+        <h2>Send Form to Client</h2>
+        <button class="close-modal" onclick="closeSendFormModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-description">Select a form and choose how to send it to the client. The form will be automatically linked to their profile.</p>
+
+        <!-- Step 1: Select Form -->
+        <div id="sendFormStep1">
+          <div class="form-group">
+            <label for="sendFormSelect">Select Form</label>
+            <select id="sendFormSelect" class="form-select">
+              <option value="">Loading forms...</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="sendFormExpiry">Link Expiry</label>
+            <select id="sendFormExpiry" class="form-select">
+              <option value="7">7 days</option>
+              <option value="14" selected>14 days</option>
+              <option value="30">30 days</option>
+              <option value="60">60 days</option>
+              <option value="90">90 days</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Step 2: Generated Link + Send Options -->
+        <div id="sendFormStep2" style="display: none;">
+          <div class="generated-link-success">
+            <div class="success-icon">✅</div>
+            <p>Form link created successfully!</p>
+          </div>
+
+          <div class="form-group">
+            <label>Form Link</label>
+            <div class="link-display">
+              <input type="text" id="generatedFormLink" class="form-input" readonly>
+              <button class="btn-icon" onclick="copyFormLink()" title="Copy Link">📋</button>
+            </div>
+            <p class="link-expiry-info" id="formLinkExpiry"></p>
+          </div>
+
+          <div class="send-options">
+            <p class="send-options-label">Share this link:</p>
+            <div class="send-options-buttons">
+              <button class="send-option-btn" onclick="copyFormLink()">
+                <span>📋</span>
+                <span>Copy Link</span>
+              </button>
+              <button class="send-option-btn" onclick="sendFormViaEmail()">
+                <span>📧</span>
+                <span>Send Email</span>
+              </button>
+              <button class="send-option-btn" onclick="sendFormViaWhatsApp()">
+                <span>💬</span>
+                <span>WhatsApp</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Email Options (hidden by default) -->
+          <div id="emailOptionsSection" style="display: none; margin-top: 20px;">
+            <div class="form-group">
+              <label for="emailMessage">Personal Message (Optional)</label>
+              <textarea id="emailMessage" class="form-textarea" rows="3" placeholder="Add a personal message to include in the email..."></textarea>
+            </div>
+            <button class="btn-primary" onclick="confirmSendEmail()" style="width: 100%;">
+              <span>📧</span>
+              <span>Send Email Now</span>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer" id="sendFormFooter">
+        <button class="btn-secondary" onclick="closeSendFormModal()">Cancel</button>
+        <button class="btn-primary" id="createLinkBtn" onclick="createFormLink()">Create Link</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- New Note Modal -->
+  <div id="newNoteModal" class="modal" style="display: none;">
+    <div class="modal-overlay" onclick="closeNewNoteModal()"></div>
+    <div class="modal-container modal-large">
+      <div class="modal-header">
+        <h2>New Consultation Note</h2>
+        <button class="close-modal" onclick="closeNewNoteModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-description">Create a consultation note with speech-to-text input and AI scribe assistance.</p>
+
+        <div class="form-group">
+          <label for="noteTitle">Note Title</label>
+          <input type="text" id="noteTitle" class="form-input" placeholder="e.g., Initial Consultation, Follow-up Visit">
+        </div>
+
+        <div class="form-group">
+          <label for="noteType">Note Type</label>
+          <select id="noteType" class="form-select">
+            <option value="consultation">Consultation Note</option>
+            <option value="quick">Quick Note</option>
+            <option value="transcript">AI Transcript</option>
+            <option value="progress">Progress Note</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <label for="noteContent" style="margin-bottom: 0;">Note Content</label>
+            <div class="note-input-controls">
+              <button class="btn-icon" id="voiceInputBtn" onclick="toggleVoiceInput()" title="Voice Input">
+                <span id="voiceIcon">🎤</span>
+                <span id="voiceText">Start Voice</span>
+              </button>
+              <button class="btn-icon" id="aiScribeBtn" onclick="toggleAIScribe()" title="AI Scribe">
+                <span>✨</span>
+                <span>AI Scribe</span>
+              </button>
+            </div>
+          </div>
+          <div id="aiScribeStatus" class="ai-scribe-status" style="display: none;">
+            <span class="recording-indicator"></span>
+            <span>AI Scribe is listening and will generate a summary...</span>
+          </div>
+          <textarea id="noteContent" class="form-textarea" rows="8" placeholder="Enter consultation notes here, or use voice input..."></textarea>
+          <div class="note-helper-text">
+            💡 Tip: Use voice input for faster note-taking during consultations
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>
+            <input type="checkbox" id="generateSummary" checked>
+            Generate AI summary from note content
+          </label>
+        </div>
+
+        <div id="aiSummaryPreview" class="ai-summary-preview" style="display: none;">
+          <h4>AI Summary Preview</h4>
+          <div id="summaryContent" class="summary-preview-content">
+            Summary will appear here...
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="closeNewNoteModal()">Cancel</button>
+        <button class="btn-secondary" onclick="generateAISummaryPreview()">Preview Summary</button>
+        <button class="btn-primary" onclick="saveNote()">Save Note</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Upload Lab Modal -->
+  <div id="uploadLabModal" class="modal" style="display: none;">
+    <div class="modal-overlay" onclick="closeUploadLabModal()"></div>
+    <div class="modal-container">
+      <div class="modal-header">
+        <h2>Upload New File</h2>
+        <button class="close-modal" onclick="closeUploadLabModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="labFileName">File Name</label>
+          <input type="text" id="labFileName" class="form-input" placeholder="e.g., Blood Test Results - January 2025">
+        </div>
+
+        <div class="form-group">
+          <label for="labTag">Tag</label>
+          <select id="labTag" class="form-select">
+            <option value="Blood Test">Blood Test</option>
+            <option value="MRI Scan">MRI Scan</option>
+            <option value="Oligoscan">Oligoscan</option>
+            <option value="Vo2Max">Vo2Max</option>
+            <option value="Genetic Test">Genetic Test</option>
+            <option value="CT Scan">CT Scan</option>
+            <option value="X-Ray">X-Ray</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>File Upload</label>
+          <div class="file-upload-zone" id="fileUploadZone">
+            <input type="file" id="labFileInput" accept=".pdf,.doc,.docx" style="display: none;">
+            <div class="upload-placeholder" id="uploadPlaceholder">
+              <span class="upload-icon">📄</span>
+              <p class="upload-text">Drag and drop a file here or <span class="upload-link">browse</span></p>
+              <p class="upload-hint">Supports PDF and Word documents (max 10MB)</p>
+            </div>
+            <div class="upload-preview" id="uploadPreview" style="display: none;">
+              <span class="file-icon">📄</span>
+              <div class="file-info">
+                <p class="file-name" id="selectedFileName">filename.pdf</p>
+                <p class="file-size" id="selectedFileSize">2.3 MB</p>
+              </div>
+              <button class="btn-icon-small" onclick="clearFileSelection()">✕</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="closeUploadLabModal()">Cancel</button>
+        <button class="btn-primary" id="uploadLabBtn" onclick="uploadLabFile()">Upload</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lab Viewer Modal (PDF with AI Summary and Notes) - Redesigned -->
+  <div id="labViewerModal" class="modal lab-viewer-modal" style="display: none;">
+    <div class="modal-overlay" onclick="closeLabViewerModal()"></div>
+    <div class="modal-content modal-fullscreen lab-viewer-content">
+      <div class="lab-viewer-layout">
+        <!-- Left Side: PDF Viewer -->
+        <div class="lab-viewer-pdf">
+          <div class="pdf-container" id="labPdfContainer">
+            <iframe id="labPdfFrame" src="" frameborder="0"></iframe>
+          </div>
+        </div>
+
+        <!-- Right Side: Info Panel -->
+        <div class="lab-viewer-sidebar">
+          <!-- Header with title and actions -->
+          <div class="lab-sidebar-header">
+            <div class="lab-title-row">
+              <h2 id="labSidebarTitle">Document Title</h2>
+              <div class="lab-header-actions">
+                <button class="lab-action-btn" onclick="downloadLabPdf()" title="Download">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="7 10 12 15 17 10"/>
+                    <line x1="12" y1="15" x2="12" y2="3"/>
+                  </svg>
+                </button>
+                <button class="lab-action-btn" onclick="printLabPdf()" title="Print">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="6 9 6 2 18 2 18 9"/>
+                    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+                    <rect x="6" y="14" width="12" height="8"/>
+                  </svg>
+                </button>
+                <button class="lab-action-btn lab-more-btn" title="More options">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="1"/>
+                    <circle cx="12" cy="5" r="1"/>
+                    <circle cx="12" cy="19" r="1"/>
+                  </svg>
+                </button>
+                <button class="lab-close-btn" onclick="closeLabViewerModal()" title="Close">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"/>
+                    <line x1="6" y1="6" x2="18" y2="18"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <p class="lab-meta"><span id="labSidebarTag">MRI Test</span> | <span id="labSidebarDate">23.12.2024</span></p>
+          </div>
+
+          <!-- Summary Section -->
+          <div class="lab-summary-section">
+            <div class="lab-section-header">
+              <span class="lab-section-icon">✨</span>
+              <h3>Summary</h3>
+              <span class="ai-badge">AI</span>
+            </div>
+            <div id="labAiSummary" class="lab-summary-content">
+              <p class="summary-placeholder">Click below to generate an AI summary of this document.</p>
+            </div>
+            <button class="btn-generate-summary" id="generateLabSummaryBtn" onclick="generateLabSummary()">
+              ✨ Generate Summary
+            </button>
+          </div>
+
+          <!-- Notes Section -->
+          <div class="lab-notes-section">
+            <h3>Notes</h3>
+            <div id="labNotesContainer" class="lab-notes-list">
+              <!-- Populated by JavaScript -->
+            </div>
+          </div>
+
+          <!-- Note Input at Bottom -->
+          <div class="lab-note-input-container">
+            <div class="lab-note-input-wrapper">
+              <textarea id="labNoteInput" placeholder="Enter your notes" rows="1"></textarea>
+              <button class="lab-note-expand-btn" title="Expand">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="15 3 21 3 21 9"/>
+                  <polyline points="9 21 3 21 3 15"/>
+                  <line x1="21" y1="3" x2="14" y2="10"/>
+                  <line x1="3" y1="21" x2="10" y2="14"/>
+                </svg>
+              </button>
+            </div>
+            <button class="lab-note-send-btn" onclick="addLabNote()" title="Add Note">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="22" y1="2" x2="11" y2="13"/>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Protocol Builder Modal - New Single Page Layout -->
+  <div id="protocolBuilderModal" class="modal protocol-builder-modal" style="display: none;">
+    <div class="modal-overlay" onclick="closeProtocolBuilder()"></div>
+    <div class="modal-content modal-fullscreen protocol-builder-content">
+      <!-- Top Navigation -->
+      <div class="protocol-builder-topbar">
+        <button class="back-to-protocol-btn" onclick="closeProtocolBuilder()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+          </svg>
+          <span>Back to Protocol</span>
+        </button>
+      </div>
+
+      <div class="protocol-builder-layout-v2">
+        <!-- Left Sidebar: How to Create Steps -->
+        <div class="protocol-steps-sidebar">
+          <h2>How to Create a Protocol?</h2>
+
+          <div class="step-guide">
+            <div class="step-guide-item">
+              <div class="step-number">1</div>
+              <div class="step-info">
+                <h4>Select Protocol Templates</h4>
+                <p>Select the protocol templates to quickly get started.</p>
+              </div>
+            </div>
+
+            <div class="step-guide-item">
+              <div class="step-number">2</div>
+              <div class="step-info">
+                <h4>Select Reference Notes</h4>
+                <p>Include relevant notes to provide context.</p>
+              </div>
+            </div>
+
+            <div class="step-guide-item">
+              <div class="step-number">3</div>
+              <div class="step-info">
+                <h4>Write Prompt for Protocol</h4>
+                <p>Use a prompt to generate personalized structure and content for protocol.</p>
+              </div>
+            </div>
+
+            <div class="step-guide-item">
+              <div class="step-number">4</div>
+              <div class="step-info">
+                <h4>Complete</h4>
+                <p>Review and finalize your protocol setup.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Ask AI Button -->
+          <button class="ask-ai-btn" onclick="openProtocolAIChat()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+            </svg>
+            <span>Ask AI</span>
+          </button>
+        </div>
+
+        <!-- Main Content: All Steps Visible -->
+        <div class="protocol-builder-main-v2">
+          <!-- Step 1: Protocol Templates -->
+          <div class="protocol-section">
+            <div class="section-label">
+              <span class="label-badge">Step - 1</span>
+              <h3>Protocol Templates</h3>
+              <div class="section-search">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="11" cy="11" r="8"/>
+                  <path d="M21 21l-4.35-4.35"/>
+                </svg>
+                <input type="text" id="templateSearch" placeholder="Search Template" onkeyup="filterTemplates()">
+              </div>
+            </div>
+
+            <div class="template-cards-scroll">
+              <div class="template-cards-container" id="templateCardsContainer">
+                <label class="protocol-template-card">
+                  <input type="checkbox" name="template" value="sleep" class="template-checkbox">
+                  <div class="template-card-inner">
+                    <div class="template-card-header">
+                      <span class="template-name">Sleep Protocol</span>
+                      <div class="template-check">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                          <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                      </div>
+                    </div>
+                    <p class="template-desc">3+ Sections</p>
+                    <div class="template-preview-lines">
+                      <div class="preview-line"></div>
+                      <div class="preview-line short"></div>
+                      <div class="preview-line"></div>
+                      <div class="preview-line short"></div>
+                    </div>
+                  </div>
+                </label>
+
+                <label class="protocol-template-card">
+                  <input type="checkbox" name="template" value="hygiene" class="template-checkbox">
+                  <div class="template-card-inner">
+                    <div class="template-card-header">
+                      <span class="template-name">Hygiene Protocol</span>
+                      <div class="template-check">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                          <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                      </div>
+                    </div>
+                    <p class="template-desc">3+ Sections</p>
+                    <div class="template-preview-lines">
+                      <div class="preview-line"></div>
+                      <div class="preview-line short"></div>
+                      <div class="preview-line"></div>
+                      <div class="preview-line short"></div>
+                    </div>
+                  </div>
+                </label>
+
+                <label class="protocol-template-card">
+                  <input type="checkbox" name="template" value="gut" class="template-checkbox">
+                  <div class="template-card-inner">
+                    <div class="template-card-header">
+                      <span class="template-name">Gut Healing Protocol</span>
+                      <div class="template-check">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                          <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                      </div>
+                    </div>
+                    <p class="template-desc">3+ Sections</p>
+                    <div class="template-preview-lines">
+                      <div class="preview-line"></div>
+                      <div class="preview-line short"></div>
+                      <div class="preview-line"></div>
+                      <div class="preview-line short"></div>
+                    </div>
+                  </div>
+                </label>
+
+                <label class="protocol-template-card">
+                  <input type="checkbox" name="template" value="weight" class="template-checkbox">
+                  <div class="template-card-inner">
+                    <div class="template-card-header">
+                      <span class="template-name">Weight Loss Protocol</span>
+                      <div class="template-check">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                          <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                      </div>
+                    </div>
+                    <p class="template-desc">3+ Sections</p>
+                    <div class="template-preview-lines">
+                      <div class="preview-line"></div>
+                      <div class="preview-line short"></div>
+                      <div class="preview-line"></div>
+                      <div class="preview-line short"></div>
+                    </div>
+                  </div>
+                </label>
+
+                <label class="protocol-template-card">
+                  <input type="checkbox" name="template" value="adrenal" class="template-checkbox">
+                  <div class="template-card-inner">
+                    <div class="template-card-header">
+                      <span class="template-name">Adrenal Support</span>
+                      <div class="template-check">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                          <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                      </div>
+                    </div>
+                    <p class="template-desc">3+ Sections</p>
+                    <div class="template-preview-lines">
+                      <div class="preview-line"></div>
+                      <div class="preview-line short"></div>
+                      <div class="preview-line"></div>
+                      <div class="preview-line short"></div>
+                    </div>
+                  </div>
+                </label>
+
+                <label class="protocol-template-card">
+                  <input type="checkbox" name="template" value="blood-sugar" class="template-checkbox">
+                  <div class="template-card-inner">
+                    <div class="template-card-header">
+                      <span class="template-name">Blood Sugar Management</span>
+                      <div class="template-check">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                          <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                      </div>
+                    </div>
+                    <p class="template-desc">3+ Sections</p>
+                    <div class="template-preview-lines">
+                      <div class="preview-line"></div>
+                      <div class="preview-line short"></div>
+                      <div class="preview-line"></div>
+                      <div class="preview-line short"></div>
+                    </div>
+                  </div>
+                </label>
+
+                <label class="protocol-template-card">
+                  <input type="checkbox" name="template" value="immune" class="template-checkbox">
+                  <div class="template-card-inner">
+                    <div class="template-card-header">
+                      <span class="template-name">Immune Support</span>
+                      <div class="template-check">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                          <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                      </div>
+                    </div>
+                    <p class="template-desc">3+ Sections</p>
+                    <div class="template-preview-lines">
+                      <div class="preview-line"></div>
+                      <div class="preview-line short"></div>
+                      <div class="preview-line"></div>
+                      <div class="preview-line short"></div>
+                    </div>
+                  </div>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 2: Select Notes -->
+          <div class="protocol-section">
+            <div class="section-label">
+              <span class="label-badge">Step - 2</span>
+              <h3>Select Notes to Include as References for Protocol</h3>
+              <div class="section-search">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="11" cy="11" r="8"/>
+                  <path d="M21 21l-4.35-4.35"/>
+                </svg>
+                <input type="text" id="notesSearch" placeholder="Search Notes" onkeyup="filterNotes()">
+              </div>
+            </div>
+
+            <div class="notes-cards-scroll">
+              <div class="notes-cards-container" id="notesCardsContainer">
+                <!-- Notes will be populated by JavaScript -->
+                <div class="notes-loading">Loading notes...</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 3: Prompt Input -->
+          <div class="protocol-section">
+            <div class="section-label">
+              <span class="label-badge">Step - 3</span>
+              <h3>Enter a Prompt to Get Started with a Protocol</h3>
+            </div>
+
+            <div class="prompt-input-container">
+              <textarea id="protocolPromptInput" class="protocol-prompt-input" rows="2" placeholder='E.g. "Generate a wellness protocol for improving gut health and reducing fatigue"'></textarea>
+              <button class="prompt-submit-btn" onclick="generateProtocolFromPrompt()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="22" y1="2" x2="11" y2="13"/>
+                  <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Protocol Editor View (Full Screen Overlay) -->
+  <div id="protocolEditorView" class="protocol-editor-view" style="display: none;">
+    <!-- Header -->
+    <div class="protocol-editor-header">
+      <button class="back-btn" onclick="closeProtocolEditor()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+        <span>Back to Protocol</span>
+      </button>
+      <div class="header-tabs">
+        <button class="header-tab active" data-tab="protocol" onclick="switchEditorTab('protocol')">Protocol</button>
+        <button class="header-tab" data-tab="engagement-plan" id="engagementPlanTab" onclick="switchEditorTab('engagement-plan')" style="display: none;">Engagement Plan</button>
+      </div>
+      <div class="header-actions">
+        <button class="btn-secondary" onclick="saveAsTemplate()" id="saveTemplateBtn">Save as a Template</button>
+        <div class="save-protocol-dropdown">
+          <button class="btn-primary" onclick="toggleSaveDropdown()" id="saveProtocolBtn">
+            Save Protocol
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-left: 6px;">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+          <div class="save-dropdown-menu" id="saveDropdownMenu">
+            <button onclick="saveProtocolAsPDF()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+              </svg>
+              Save as PDF
+            </button>
+            <button onclick="generateEngagementPlan()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 20h9"/>
+                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+              </svg>
+              Create Engagement Plan
+            </button>
+            <button onclick="shareWithClient()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="18" cy="5" r="3"/>
+                <circle cx="6" cy="12" r="3"/>
+                <circle cx="18" cy="19" r="3"/>
+                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+              </svg>
+              Share with Client
+            </button>
+            <div class="dropdown-divider"></div>
+            <button onclick="saveProtocolEditor()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                <polyline points="17 21 17 13 7 13 7 21"/>
+                <polyline points="7 3 7 8 15 8"/>
+              </svg>
+              Save Draft
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="protocol-editor-layout">
+      <!-- Left Reference Panel with Tabs -->
+      <div class="protocol-reference-panel" id="protocolReferencePanel">
+        <!-- Reference Panel Tabs -->
+        <div class="reference-panel-tabs">
+          <button class="ref-tab active" data-ref-tab="ask-ai" onclick="switchRefTab('ask-ai')">Ask AI</button>
+          <button class="ref-tab" data-ref-tab="prev-protocols" onclick="switchRefTab('prev-protocols')">Previous Protocols</button>
+          <button class="ref-tab" data-ref-tab="lab-results" onclick="switchRefTab('lab-results')">Lab Results</button>
+          <button class="ref-tab" data-ref-tab="notes" onclick="switchRefTab('notes')">Notes</button>
+          <button class="ref-tab" data-ref-tab="forms" onclick="switchRefTab('forms')">Forms</button>
+          <button class="ref-panel-collapse" onclick="toggleReferencePanel()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="15 18 9 12 15 6"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Tab Content: Ask AI -->
+        <div class="ref-tab-content active" id="refTab-ask-ai">
+          <div class="ref-panel-search">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"/>
+              <path d="M21 21l-4.35-4.35"/>
+            </svg>
+            <input type="text" placeholder="Ask a question about this client..." id="refAskAIInput" onkeypress="handleRefAIQuestion(event)">
+          </div>
+          <div class="ref-panel-list" id="refAskAIContent">
+            <div class="ref-ai-suggestions">
+              <p class="ref-section-label">Suggested Questions</p>
+              <button class="ref-ai-suggestion" onclick="askRefAIQuestion('What supplements might conflict with their medications?')">
+                What supplements might conflict with their medications?
+              </button>
+              <button class="ref-ai-suggestion" onclick="askRefAIQuestion('Are there any contraindications based on their medical history?')">
+                Are there any contraindications based on their medical history?
+              </button>
+              <button class="ref-ai-suggestion" onclick="askRefAIQuestion('What dosage adjustments should I consider?')">
+                What dosage adjustments should I consider?
+              </button>
+              <button class="ref-ai-suggestion" onclick="askRefAIQuestion('What are the key findings from their recent labs?')">
+                What are the key findings from their recent labs?
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab Content: Previous Protocols -->
+        <div class="ref-tab-content" id="refTab-prev-protocols">
+          <div class="ref-panel-search">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"/>
+              <path d="M21 21l-4.35-4.35"/>
+            </svg>
+            <input type="text" placeholder="Search Protocols or Keywords" id="refProtocolSearch" onkeyup="filterRefProtocols()">
+          </div>
+          <div class="ref-panel-list" id="refProtocolsList">
+            <div class="ref-loading">Loading protocols...</div>
+          </div>
+        </div>
+
+        <!-- Tab Content: Lab Results -->
+        <div class="ref-tab-content" id="refTab-lab-results">
+          <div class="ref-panel-search">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"/>
+              <path d="M21 21l-4.35-4.35"/>
+            </svg>
+            <input type="text" placeholder="Search Lab Results or Tags" id="refLabSearch" onkeyup="filterRefLabs()">
+          </div>
+          <div class="ref-panel-list" id="refLabResultsList">
+            <div class="ref-loading">Loading lab results...</div>
+          </div>
+        </div>
+
+        <!-- Tab Content: Notes -->
+        <div class="ref-tab-content" id="refTab-notes">
+          <div class="ref-panel-search">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"/>
+              <path d="M21 21l-4.35-4.35"/>
+            </svg>
+            <input type="text" placeholder="Search Notes" id="refNotesSearch" onkeyup="filterRefNotes()">
+          </div>
+          <div class="ref-panel-list" id="refNotesList">
+            <div class="ref-loading">Loading notes...</div>
+          </div>
+        </div>
+
+        <!-- Tab Content: Forms -->
+        <div class="ref-tab-content" id="refTab-forms">
+          <div class="ref-panel-search">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"/>
+              <path d="M21 21l-4.35-4.35"/>
+            </svg>
+            <input type="text" placeholder="Search Forms" id="refFormsSearch" onkeyup="filterRefForms()">
+          </div>
+          <div class="ref-panel-list" id="refFormsList">
+            <div class="ref-loading">Loading forms...</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Lab Preview Panel (shown when lab is selected) -->
+      <div class="lab-preview-panel" id="labPreviewPanel" style="display: none;">
+        <div class="lab-preview-header">
+          <button class="lab-preview-close" onclick="closeLabPreview()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+        <div class="lab-preview-content">
+          <div class="lab-preview-document" id="labPreviewDocument">
+            <!-- Lab PDF/image will be rendered here -->
+          </div>
+          <div class="lab-preview-sidebar">
+            <h3 id="labPreviewTitle">Lab Title</h3>
+            <p class="lab-preview-meta" id="labPreviewMeta">Type | Date</p>
+            <div class="lab-preview-section">
+              <h4>Summary</h4>
+              <p id="labPreviewSummary">AI summary will appear here...</p>
+            </div>
+            <div class="lab-preview-section">
+              <h4>Notes</h4>
+              <p id="labPreviewNotes">No notes to show</p>
+              <textarea id="labPreviewNotesInput" placeholder="Enter your notes" rows="4"></textarea>
+              <button class="lab-preview-note-btn" onclick="saveLabNote()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="22" y1="2" x2="11" y2="13"/>
+                  <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Content Area -->
+      <div class="protocol-editor-main">
+        <!-- Loading State -->
+        <div id="protocolEditorLoading" class="protocol-editor-loading">
+          <h2>Creating protocol</h2>
+          <div class="loading-dots">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+          <p class="loading-status" id="editorLoadingStatus">Analyzing client data and generating personalized recommendations...</p>
+        </div>
+
+        <!-- Protocol Document Content -->
+        <div id="protocolEditorContent" class="protocol-editor-content" style="display: none;">
+          <!-- Formatting Toolbar -->
+          <div class="editor-toolbar">
+            <div class="toolbar-group">
+              <select class="toolbar-select font-size" onchange="execCommand('fontSize', this.value)">
+                <option value="3">16</option>
+                <option value="4">18</option>
+                <option value="5">24</option>
+                <option value="6">32</option>
+              </select>
+              <select class="toolbar-select font-family" onchange="execCommand('fontName', this.value)">
+                <option value="Arial">Arial</option>
+                <option value="Times New Roman">Times New Roman</option>
+                <option value="Georgia">Georgia</option>
+                <option value="Verdana">Verdana</option>
+              </select>
+            </div>
+            <div class="toolbar-divider"></div>
+            <div class="toolbar-group">
+              <button class="toolbar-btn" onclick="execCommand('bold')" title="Bold">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M15.6 10.79c.97-.67 1.65-1.77 1.65-2.79 0-2.26-1.75-4-4-4H7v14h7.04c2.09 0 3.71-1.7 3.71-3.79 0-1.52-.86-2.82-2.15-3.42zM10 6.5h3c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5h-3v-3zm3.5 9H10v-3h3.5c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5z"/></svg>
+              </button>
+              <button class="toolbar-btn" onclick="execCommand('italic')" title="Italic">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M10 4v3h2.21l-3.42 8H6v3h8v-3h-2.21l3.42-8H18V4z"/></svg>
+              </button>
+              <button class="toolbar-btn" onclick="execCommand('underline')" title="Underline">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17c3.31 0 6-2.69 6-6V3h-2.5v8c0 1.93-1.57 3.5-3.5 3.5S8.5 12.93 8.5 11V3H6v8c0 3.31 2.69 6 6 6zm-7 2v2h14v-2H5z"/></svg>
+              </button>
+              <button class="toolbar-btn" onclick="execCommand('strikeThrough')" title="Strikethrough">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M10 19h4v-3h-4v3zM5 4v3h5v3h4V7h5V4H5zM3 14h18v-2H3v2z"/></svg>
+              </button>
+            </div>
+            <div class="toolbar-divider"></div>
+            <div class="toolbar-group">
+              <button class="toolbar-btn" onclick="execCommand('justifyLeft')" title="Align Left">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M15 15H3v2h12v-2zm0-8H3v2h12V7zM3 13h18v-2H3v2zm0 8h18v-2H3v2zM3 3v2h18V3H3z"/></svg>
+              </button>
+              <button class="toolbar-btn" onclick="execCommand('justifyCenter')" title="Align Center">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M7 15v2h10v-2H7zm-4 6h18v-2H3v2zm0-8h18v-2H3v2zm4-6v2h10V7H7zM3 3v2h18V3H3z"/></svg>
+              </button>
+              <button class="toolbar-btn" onclick="execCommand('justifyRight')" title="Align Right">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M3 21h18v-2H3v2zm6-4h12v-2H9v2zm-6-4h18v-2H3v2zm6-4h12V7H9v2zM3 3v2h18V3H3z"/></svg>
+              </button>
+            </div>
+            <div class="toolbar-divider"></div>
+            <div class="toolbar-group">
+              <button class="toolbar-btn" onclick="execCommand('insertUnorderedList')" title="Bullet List">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M4 10.5c-.83 0-1.5.67-1.5 1.5s.67 1.5 1.5 1.5 1.5-.67 1.5-1.5-.67-1.5-1.5-1.5zm0-6c-.83 0-1.5.67-1.5 1.5S3.17 7.5 4 7.5 5.5 6.83 5.5 6 4.83 4.5 4 4.5zm0 12c-.83 0-1.5.68-1.5 1.5s.68 1.5 1.5 1.5 1.5-.68 1.5-1.5-.67-1.5-1.5-1.5zM7 19h14v-2H7v2zm0-6h14v-2H7v2zm0-8v2h14V5H7z"/></svg>
+              </button>
+              <button class="toolbar-btn" onclick="execCommand('insertOrderedList')" title="Numbered List">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M2 17h2v.5H3v1h1v.5H2v1h3v-4H2v1zm1-9h1V4H2v1h1v3zm-1 3h1.8L2 13.1v.9h3v-1H3.2L5 10.9V10H2v1zm5-6v2h14V5H7zm0 14h14v-2H7v2zm0-6h14v-2H7v2z"/></svg>
+              </button>
+            </div>
+            <div class="toolbar-divider"></div>
+            <div class="toolbar-group">
+              <button class="toolbar-btn" onclick="insertTable()" title="Insert Table">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM8 20H4v-4h4v4zm0-6H4v-4h4v4zm0-6H4V4h4v4zm6 12h-4v-4h4v4zm0-6h-4v-4h4v4zm0-6h-4V4h4v4zm6 12h-4v-4h4v4zm0-6h-4v-4h4v4zm0-6h-4V4h4v4z"/></svg>
+              </button>
+              <button class="toolbar-btn" onclick="exportProtocol()" title="Export">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+              </button>
+            </div>
+            <button class="toolbar-more" title="More options">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
+            </button>
+          </div>
+
+          <!-- Protocol Document -->
+          <div class="protocol-document" id="protocolDocument">
+            <!-- Protocol Title -->
+            <h1 class="protocol-title" id="protocolEditorTitle" contenteditable="true">Sleep Optimization Protocol</h1>
+
+            <!-- Protocol Metadata -->
+            <div class="protocol-metadata">
+              <div class="meta-row">
+                <span class="meta-label">Patient:</span>
+                <span class="meta-value" id="protocolPatient">-</span>
+              </div>
+              <div class="meta-row">
+                <span class="meta-label">Protocol Created On:</span>
+                <span class="meta-value" id="protocolCreatedDate">-</span>
+              </div>
+              <div class="meta-row">
+                <span class="meta-label">Template Used:</span>
+                <span class="meta-value">
+                  <span class="meta-tag" id="protocolTemplate">-</span>
+                </span>
+              </div>
+              <div class="meta-row">
+                <span class="meta-label">Reference Notes:</span>
+                <span class="meta-value" id="protocolReferenceNotes">
+                  <!-- Tags will be populated dynamically -->
+                </span>
+              </div>
+              <div class="meta-row">
+                <span class="meta-label">Created By:</span>
+                <span class="meta-value" id="protocolCreatedBy">-</span>
+              </div>
+            </div>
+
+            <!-- Protocol Sections -->
+            <div class="protocol-sections" id="protocolSections">
+              <!-- Sections will be populated dynamically -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Engagement Plan Content (shown when Engagement Plan tab is active) -->
+        <div id="engagementPlanContent" class="engagement-plan-content" style="display: none;">
+          <div class="engagement-plan-header">
+            <h2>Personalized Engagement Plan</h2>
+            <p class="engagement-plan-description">A phased delivery plan tailored to your client's personality and lifestyle</p>
+          </div>
+          <div class="engagement-plan-body" id="engagementPlanBody">
+            <div class="engagement-empty">
+              <p>Click "Create Engagement Plan" to generate a personalized delivery schedule based on the protocol.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Footer with Section Selection and AI Input -->
+    <div class="protocol-editor-footer">
+      <div class="selected-section-tag" id="selectedSectionTag" style="display: none;">
+        <span>Section Selected</span>
+        <button onclick="clearSectionSelection()">&times;</button>
+      </div>
+      <div class="ai-input-container">
+        <input type="text" id="protocolAIInput" placeholder='E.g. "Remove the supplements that may have side effects"' onkeypress="handleProtocolAI(event)">
+        <button class="ai-submit-btn" onclick="submitProtocolAI()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="22" y1="2" x2="11" y2="13"/>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Floating Quick Notes Button -->
+  <button class="quick-notes-fab" onclick="openRightPanel()">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+      <polyline points="14 2 14 8 20 8"/>
+      <line x1="16" y1="13" x2="8" y2="13"/>
+      <line x1="16" y1="17" x2="8" y2="17"/>
+    </svg>
+    <span>Quick Notes</span>
+  </button>
+
+  <!-- Share with Client Modal -->
+  <div id="shareClientModal" class="modal" style="display: none;">
+    <div class="modal-overlay" onclick="closeShareModal()"></div>
+    <div class="modal-container">
+      <div class="modal-header">
+        <h2>Share Protocol with Client</h2>
+        <button class="close-modal" onclick="closeShareModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-description">Choose how you'd like to share this protocol with your client.</p>
+
+        <div class="share-options">
+          <button class="share-option" onclick="shareViaEmail()">
+            <div class="share-option-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                <polyline points="22,6 12,13 2,6"/>
+              </svg>
+            </div>
+            <div class="share-option-text">
+              <span class="share-option-title">Send via Email</span>
+              <span class="share-option-desc">Email the protocol directly to the client</span>
+            </div>
+          </button>
+
+          <button class="share-option" onclick="shareViaWhatsApp()">
+            <div class="share-option-icon whatsapp">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+              </svg>
+            </div>
+            <div class="share-option-text">
+              <span class="share-option-title">Send via WhatsApp</span>
+              <span class="share-option-desc">Share protocol summary on WhatsApp</span>
+            </div>
+          </button>
+
+          <button class="share-option" onclick="generateShareLink()">
+            <div class="share-option-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+              </svg>
+            </div>
+            <div class="share-option-text">
+              <span class="share-option-title">Generate Shareable Link</span>
+              <span class="share-option-desc">Create a secure link to share</span>
+            </div>
+          </button>
+
+          <button class="share-option" onclick="shareToClientApp()">
+            <div class="share-option-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
+                <line x1="12" y1="18" x2="12.01" y2="18"/>
+              </svg>
+            </div>
+            <div class="share-option-text">
+              <span class="share-option-title">Share to Client App</span>
+              <span class="share-option-desc">Send directly to client's app</span>
+            </div>
+          </button>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="closeShareModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/dashboard.js"></script>
+  <script src="/js/client-dashboard.js?v=56"></script>
+</body>
+</html>

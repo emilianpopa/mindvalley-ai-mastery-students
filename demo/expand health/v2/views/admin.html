@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Settings - ExpandHealth</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar - Same as main app -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">
+          <svg class="logo-icon" width="28" height="28" viewBox="0 0 24 24" fill="none">
+            <path d="M4 4L11 12L4 20" stroke="#0F766E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M20 4L13 12L20 20" stroke="#0F766E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <div class="logo-text">
+            <span class="logo-expand">EXPAND</span>
+            <span class="logo-health">HEALTH</span>
+          </div>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <p class="nav-section-title">CLIENT ZONE</p>
+          <a href="/clients" class="nav-item">
+            <span class="nav-icon">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+              </svg>
+            </span>
+            <span class="nav-text">Clients</span>
+          </a>
+          <a href="/forms" class="nav-item">
+            <span class="nav-icon">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M9 11l3 3L22 4"/>
+                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+              </svg>
+            </span>
+            <span class="nav-text">Forms</span>
+          </a>
+          <a href="/protocol-templates" class="nav-item">
+            <span class="nav-icon">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+                <polyline points="10 9 9 9 8 9"/>
+              </svg>
+            </span>
+            <span class="nav-text">Protocol Templates</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <p class="nav-section-title">ADMIN</p>
+          <a href="/admin" class="nav-item active">
+            <span class="nav-icon">
+              <svg viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+              </svg>
+            </span>
+            <span class="nav-text">Admin Settings</span>
+          </a>
+          <a href="/kb-admin" class="nav-item">
+            <span class="nav-icon">
+              <svg viewBox="0 0 24 24" fill="none">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+              </svg>
+            </span>
+            <span class="nav-text">AI Knowledge Base</span>
+          </a>
+        </div>
+      </nav>
+
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Header -->
+      <header class="header">
+        <div class="header-left">
+          <h1 id="pageTitle">Admin Settings</h1>
+          <p class="breadcrumb">Admin → <span id="breadcrumbSection">Dashboard</span></p>
+        </div>
+        <div class="header-right">
+          <div class="tenant-badge" id="tenantBadge" style="display: none;">
+            <span id="tenantName">ExpandHealth Demo</span>
+          </div>
+          <div class="user-menu-wrapper">
+            <button class="user-avatar-btn" onclick="toggleUserMenu()">
+              <img src="https://ui-avatars.com/api/?name=Admin&background=0F766E&color=fff&size=40" alt="User" class="user-avatar" id="userAvatar">
+            </button>
+            <div class="user-dropdown" id="userDropdown">
+              <div class="user-dropdown-header">
+                <img src="https://ui-avatars.com/api/?name=Admin&background=0F766E&color=fff&size=40" alt="User" class="dropdown-avatar">
+                <div class="dropdown-user-info">
+                  <span class="dropdown-user-name" id="dropdownUserName">Admin User</span>
+                  <span class="dropdown-user-email" id="dropdownUserEmail">admin@expandhealth.io</span>
+                </div>
+              </div>
+              <div class="user-dropdown-divider"></div>
+              <button class="user-dropdown-item logout-item" onclick="handleLogout()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                  <polyline points="16 17 21 12 16 7"/>
+                  <line x1="21" y1="12" x2="9" y2="12"/>
+                </svg>
+                <span>Log Out</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Content -->
+      <div class="content">
+        <!-- Admin Tab Navigation -->
+        <div class="admin-tabs">
+          <button class="admin-tab active" data-section="dashboard" onclick="showSection('dashboard')">
+            <svg viewBox="0 0 24 24" fill="none">
+              <rect x="3" y="3" width="7" height="9" rx="1"/>
+              <rect x="14" y="3" width="7" height="5" rx="1"/>
+              <rect x="14" y="12" width="7" height="9" rx="1"/>
+              <rect x="3" y="16" width="7" height="5" rx="1"/>
+            </svg>
+            <span>Dashboard</span>
+          </button>
+          <button class="admin-tab" data-section="users" onclick="showSection('users')">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+            <span>Users</span>
+          </button>
+          <button class="admin-tab" data-section="roles" onclick="showSection('roles')">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+            <span>Roles</span>
+          </button>
+          <button class="admin-tab platform-only" data-section="tenants" onclick="showSection('tenants')" style="display: none;">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+              <polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+            <span>Clinics</span>
+          </button>
+          <button class="admin-tab" data-section="kb" onclick="showSection('kb')">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+            </svg>
+            <span>KB Sharing</span>
+          </button>
+          <button class="admin-tab" data-section="audit" onclick="showSection('audit')">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+            </svg>
+            <span>Audit Log</span>
+          </button>
+        </div>
+
+        <!-- Dashboard Section -->
+        <section id="dashboard-section" class="admin-section active">
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-icon stat-icon-users">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                  <circle cx="9" cy="7" r="4"/>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
+              </div>
+              <div class="stat-info">
+                <h3 id="statUsers">-</h3>
+                <p>Total Users</p>
+              </div>
+            </div>
+
+            <div class="stat-card" id="tenantsStatCard" style="display: none;">
+              <div class="stat-icon stat-icon-tenants">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                  <polyline points="9 22 9 12 15 12 15 22"/>
+                </svg>
+              </div>
+              <div class="stat-info">
+                <h3 id="statTenants">-</h3>
+                <p>Active Clinics</p>
+              </div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-icon stat-icon-clients">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                  <circle cx="12" cy="7" r="4"/>
+                </svg>
+              </div>
+              <div class="stat-info">
+                <h3 id="statClients">-</h3>
+                <p>Total Clients</p>
+              </div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-icon stat-icon-protocols">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                  <line x1="16" y1="13" x2="8" y2="13"/>
+                  <line x1="16" y1="17" x2="8" y2="17"/>
+                </svg>
+              </div>
+              <div class="stat-info">
+                <h3 id="statProtocols">-</h3>
+                <p>Protocols</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="dashboard-grid">
+            <div class="admin-card">
+              <h3>Recent Activity</h3>
+              <div class="activity-list" id="activityList">
+                <p class="empty-state">Loading activity...</p>
+              </div>
+            </div>
+
+            <div class="admin-card">
+              <h3>Quick Actions</h3>
+              <div class="quick-actions-admin">
+                <button class="quick-action-btn" onclick="showSection('users'); openUserModal()">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <line x1="12" y1="5" x2="12" y2="19"/>
+                    <line x1="5" y1="12" x2="19" y2="12"/>
+                  </svg>
+                  Add User
+                </button>
+                <button class="quick-action-btn" onclick="showSection('users'); openInviteModal()">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <path d="M22 2L11 13"/>
+                    <path d="M22 2L15 22 11 13 2 9 22 2z"/>
+                  </svg>
+                  Invite User
+                </button>
+                <button class="quick-action-btn platform-only" onclick="showSection('tenants'); openTenantModal()" style="display: none;">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                  </svg>
+                  Add Clinic
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Users Section -->
+        <section id="users-section" class="admin-section">
+          <div class="section-header">
+            <div class="search-filter-bar">
+              <div class="search-box">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <circle cx="11" cy="11" r="8"/>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+                <input type="text" id="userSearch" placeholder="Search users..." oninput="debounceSearch(loadUsers)">
+              </div>
+              <select id="userRoleFilter" onchange="loadUsers()">
+                <option value="">All Roles</option>
+                <option value="super_admin">Super Admin</option>
+                <option value="clinic_admin">Clinic Admin</option>
+                <option value="doctor">Doctor</option>
+                <option value="therapist">Therapist</option>
+                <option value="receptionist">Receptionist</option>
+              </select>
+              <select id="userStatusFilter" onchange="loadUsers()">
+                <option value="">All Status</option>
+                <option value="enabled">Enabled</option>
+                <option value="disabled">Disabled</option>
+              </select>
+            </div>
+            <div class="section-actions">
+              <button class="btn btn-secondary" onclick="openInviteModal()">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path d="M22 2L11 13"/>
+                  <path d="M22 2L15 22 11 13 2 9 22 2z"/>
+                </svg>
+                Invite
+              </button>
+              <button class="btn btn-primary" onclick="openUserModal()">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <line x1="12" y1="5" x2="12" y2="19"/>
+                  <line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+                Add User
+              </button>
+            </div>
+          </div>
+
+          <div class="data-table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>User</th>
+                  <th>Email</th>
+                  <th>Role(s)</th>
+                  <th class="platform-only">Clinic</th>
+                  <th>Status</th>
+                  <th>Last Login</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="usersTableBody">
+                <tr>
+                  <td colspan="7" class="loading-row">Loading users...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Roles Section -->
+        <section id="roles-section" class="admin-section">
+          <div class="section-header">
+            <h3>Manage Roles & Permissions</h3>
+            <div class="section-actions platform-only" style="display: none;">
+              <button class="btn btn-primary" onclick="openRoleModal()">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <line x1="12" y1="5" x2="12" y2="19"/>
+                  <line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+                Create Role
+              </button>
+            </div>
+          </div>
+
+          <div class="roles-grid" id="rolesGrid">
+            <p class="empty-state">Loading roles...</p>
+          </div>
+
+          <div class="permission-matrix-card">
+            <h3>Permission Matrix</h3>
+            <p class="subtitle">View and edit module access for each role</p>
+            <div class="permission-matrix" id="permissionMatrix">
+              <p class="empty-state">Select a role to view permissions</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Tenants Section (Platform Admin only) -->
+        <section id="tenants-section" class="admin-section">
+          <div class="section-header">
+            <div class="search-filter-bar">
+              <div class="search-box">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <circle cx="11" cy="11" r="8"/>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+                <input type="text" id="tenantSearch" placeholder="Search clinics..." oninput="debounceSearch(loadTenants)">
+              </div>
+              <select id="tenantStatusFilter" onchange="loadTenants()">
+                <option value="">All Status</option>
+                <option value="active">Active</option>
+                <option value="suspended">Suspended</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </div>
+            <div class="section-actions">
+              <button class="btn btn-primary" onclick="openTenantModal()">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <line x1="12" y1="5" x2="12" y2="19"/>
+                  <line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+                Add Clinic
+              </button>
+            </div>
+          </div>
+
+          <div class="tenants-grid" id="tenantsGrid">
+            <p class="empty-state">Loading clinics...</p>
+          </div>
+        </section>
+
+        <!-- KB Sharing Section -->
+        <section id="kb-section" class="admin-section">
+          <div class="section-header">
+            <h3>Knowledge Base Sharing</h3>
+          </div>
+
+          <div class="kb-sharing-info">
+            <div class="info-card">
+              <h4>KB Sharing Modes</h4>
+              <ul>
+                <li><strong>Private:</strong> Only your clinic can access your KB documents</li>
+                <li><strong>Shared:</strong> Documents are shared across all clinics</li>
+                <li><strong>Hybrid:</strong> Global documents shared, plus private collections</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="kb-collections-grid" id="kbCollectionsGrid">
+            <p class="empty-state">Loading KB collections...</p>
+          </div>
+        </section>
+
+        <!-- Audit Log Section -->
+        <section id="audit-section" class="admin-section">
+          <div class="section-header">
+            <h3>Audit Log</h3>
+            <div class="search-filter-bar">
+              <select id="auditActionFilter" onchange="loadAuditLog()">
+                <option value="">All Actions</option>
+                <option value="create_user">Create User</option>
+                <option value="update_user">Update User</option>
+                <option value="delete_user">Delete User</option>
+                <option value="create_tenant">Create Tenant</option>
+                <option value="update_tenant">Update Tenant</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="data-table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Date/Time</th>
+                  <th>User</th>
+                  <th>Action</th>
+                  <th>Entity</th>
+                  <th>Details</th>
+                </tr>
+              </thead>
+              <tbody id="auditTableBody">
+                <tr>
+                  <td colspan="5" class="loading-row">Loading audit log...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <!-- User Modal -->
+  <div class="modal" id="userModal">
+    <div class="modal-overlay" onclick="closeUserModal()"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="userModalTitle">Add New User</h2>
+        <button class="modal-close" onclick="closeUserModal()">&times;</button>
+      </div>
+      <form id="userForm" onsubmit="handleUserSubmit(event)">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="userFirstName">First Name</label>
+            <input type="text" id="userFirstName" name="first_name" required>
+          </div>
+          <div class="form-group">
+            <label for="userLastName">Last Name</label>
+            <input type="text" id="userLastName" name="last_name" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="userEmail">Email</label>
+          <input type="email" id="userEmail" name="email" required>
+        </div>
+        <div class="form-group" id="passwordGroup">
+          <label for="userPassword">Password</label>
+          <input type="password" id="userPassword" name="password" minlength="6">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="userJobTitle">Job Title</label>
+            <input type="text" id="userJobTitle" name="job_title">
+          </div>
+          <div class="form-group">
+            <label for="userPhone">Phone</label>
+            <input type="tel" id="userPhone" name="phone">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Role(s)</label>
+          <div class="checkbox-group" id="roleCheckboxes">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+        <div class="form-group platform-only" id="userTenantGroup" style="display: none;">
+          <label for="userTenant">Clinic</label>
+          <select id="userTenant" name="tenant_id">
+            <option value="">Select clinic...</option>
+          </select>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" onclick="closeUserModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="userSubmitBtn">Create User</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Invite Modal -->
+  <div class="modal" id="inviteModal">
+    <div class="modal-overlay" onclick="closeInviteModal()"></div>
+    <div class="modal-content modal-sm">
+      <div class="modal-header">
+        <h2>Invite User</h2>
+        <button class="modal-close" onclick="closeInviteModal()">&times;</button>
+      </div>
+      <form id="inviteForm" onsubmit="handleInviteSubmit(event)">
+        <div class="form-group">
+          <label for="inviteEmail">Email Address</label>
+          <input type="email" id="inviteEmail" name="email" required placeholder="colleague@example.com">
+        </div>
+        <div class="form-group">
+          <label for="inviteRole">Role</label>
+          <select id="inviteRole" name="role" required>
+            <option value="doctor">Doctor</option>
+            <option value="therapist">Therapist</option>
+            <option value="receptionist">Receptionist</option>
+            <option value="clinic_admin">Clinic Admin</option>
+          </select>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" onclick="closeInviteModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary">Send Invitation</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Tenant Modal (Platform Admin) -->
+  <div class="modal" id="tenantModal">
+    <div class="modal-overlay" onclick="closeTenantModal()"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="tenantModalTitle">Add New Clinic</h2>
+        <button class="modal-close" onclick="closeTenantModal()">&times;</button>
+      </div>
+      <form id="tenantForm" onsubmit="handleTenantSubmit(event)">
+        <div class="form-group">
+          <label for="tenantName">Clinic Name</label>
+          <input type="text" id="tenantName" name="name" required placeholder="e.g., ExpandHealth Clinic">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="tenantSlug">URL Slug</label>
+            <input type="text" id="tenantSlug" name="slug" placeholder="expandhealth-clinic" pattern="[a-z0-9-]+">
+            <small>Leave blank to auto-generate</small>
+          </div>
+          <div class="form-group">
+            <label for="tenantColor">Brand Color</label>
+            <input type="color" id="tenantColor" name="primary_color" value="#0d9488">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="tenantTier">Subscription</label>
+            <select id="tenantTier" name="subscription_tier">
+              <option value="starter">Starter</option>
+              <option value="professional">Professional</option>
+              <option value="enterprise">Enterprise</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="tenantKbMode">KB Sharing</label>
+            <select id="tenantKbMode" name="kb_sharing_mode">
+              <option value="private">Private</option>
+              <option value="shared">Shared</option>
+              <option value="hybrid">Hybrid</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" onclick="closeTenantModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="tenantSubmitBtn">Create Clinic</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Role Modal (Platform Admin) -->
+  <div class="modal" id="roleModal">
+    <div class="modal-overlay" onclick="closeRoleModal()"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Create Custom Role</h2>
+        <button class="modal-close" onclick="closeRoleModal()">&times;</button>
+      </div>
+      <form id="roleForm" onsubmit="handleRoleSubmit(event)">
+        <div class="form-group">
+          <label for="roleName">Role Name</label>
+          <input type="text" id="roleName" name="name" required placeholder="e.g., nurse_practitioner">
+        </div>
+        <div class="form-group">
+          <label for="roleDescription">Description</label>
+          <textarea id="roleDescription" name="description" rows="2" placeholder="What can this role do?"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Module Permissions</label>
+          <div class="permission-checkboxes" id="newRolePermissions">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" onclick="closeRoleModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary">Create Role</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Notifications -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="/js/admin.js"></script>
+</body>
+</html>

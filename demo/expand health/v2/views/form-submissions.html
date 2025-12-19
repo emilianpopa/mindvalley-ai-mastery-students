@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Form Submissions - ExpandHealth</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/form-submissions.css">
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="nav-brand">
+      <h1>🌿 ExpandHealth</h1>
+    </div>
+    <div class="nav-menu">
+      <a href="/">Dashboard</a>
+      <a href="/clients">Clients</a>
+      <a href="/protocols">Protocols</a>
+      <a href="/labs">Labs</a>
+      <a href="/forms" class="active">Forms</a>
+      <button class="btn-icon ask-ai-btn" onclick="window.chatWidget && window.chatWidget.toggleChat()" title="Ask AI Assistant">
+        💬 Ask AI
+      </button>
+    </div>
+    <div class="nav-user">
+      <span id="userName">Loading...</span>
+      <button class="btn-secondary" onclick="logout()">Logout</button>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <div class="container">
+    <!-- Breadcrumb -->
+    <div class="breadcrumb">
+      <a href="/forms">Forms</a>
+      <span class="breadcrumb-separator">›</span>
+      <span id="breadcrumbTitle">Submissions</span>
+    </div>
+
+    <!-- Page Header -->
+    <div class="page-header">
+      <div>
+        <h1 id="pageTitle">Form Submissions</h1>
+        <p id="formDescription" class="page-subtitle"></p>
+      </div>
+      <div class="page-actions">
+        <button class="btn-secondary" onclick="window.location.href='/forms'">
+          ← Back to Forms
+        </button>
+        <button class="btn-secondary" id="exportBtn" onclick="exportSubmissions()">
+          📥 Export CSV
+        </button>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters-bar">
+      <div class="filter-group">
+        <label>Status:</label>
+        <select id="statusFilter" onchange="loadSubmissions()">
+          <option value="">All Status</option>
+          <option value="pending">Pending</option>
+          <option value="reviewed">Reviewed</option>
+        </select>
+      </div>
+
+      <div class="stats-summary" id="statsSummary">
+        <span class="stat-item">
+          <strong id="totalCount">0</strong> Total
+        </span>
+        <span class="stat-item">
+          <strong id="pendingCount">0</strong> Pending
+        </span>
+        <span class="stat-item">
+          <strong id="reviewedCount">0</strong> Reviewed
+        </span>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div id="loadingState" class="loading-state">
+      <div class="loading-spinner"></div>
+      <p>Loading submissions...</p>
+    </div>
+
+    <!-- Empty State -->
+    <div id="emptyState" class="empty-state" style="display: none;">
+      <div class="empty-icon">📝</div>
+      <h3>No Submissions Yet</h3>
+      <p>When clients fill out this form, their submissions will appear here.</p>
+      <button class="btn-primary" onclick="copyFormLink()">
+        📋 Copy Form Link
+      </button>
+    </div>
+
+    <!-- Submissions Table -->
+    <div id="submissionsTable" class="data-table-container" style="display: none;">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Submitted</th>
+            <th>Client</th>
+            <th>Status</th>
+            <th>Reviewed By</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="submissionsTableBody">
+          <!-- Populated by JavaScript -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Submission Detail Modal -->
+  <div id="detailModal" class="modal" style="display: none;">
+    <div class="modal-overlay" onclick="closeDetailModal()"></div>
+    <div class="modal-content modal-large">
+      <div class="modal-header">
+        <h2>Submission Details</h2>
+        <button class="modal-close" onclick="closeDetailModal()">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Submission Info -->
+        <div class="submission-info">
+          <div class="info-row">
+            <div class="info-item">
+              <label>Submitted:</label>
+              <span id="detailSubmittedAt"></span>
+            </div>
+            <div class="info-item">
+              <label>Client:</label>
+              <span id="detailClient"></span>
+            </div>
+            <div class="info-item">
+              <label>Status:</label>
+              <span id="detailStatus"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Form Responses -->
+        <div class="responses-section">
+          <h3>Responses</h3>
+          <div id="responsesContainer" class="responses-container">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+
+        <!-- Review Section -->
+        <div class="review-section">
+          <h3>Review Notes</h3>
+          <textarea id="reviewNotes" placeholder="Add notes about this submission..." rows="4"></textarea>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="closeDetailModal()">
+          Close
+        </button>
+        <button class="btn-primary" id="markReviewedBtn" onclick="markAsReviewed()">
+          ✓ Mark as Reviewed
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Include chat widget -->
+  <script src="/js/chat-widget.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/form-submissions.js"></script>
+</body>
+</html>

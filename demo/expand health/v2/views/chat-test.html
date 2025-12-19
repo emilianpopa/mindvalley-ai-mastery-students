@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Chat Test - ExpandHealth</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <style>
+    .chat-test-container {
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 20px;
+    }
+
+    .chat-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      height: 500px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .chat-header {
+      padding: 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .chat-header h2 {
+      margin: 0;
+      font-size: 18px;
+      color: var(--text-light);
+    }
+
+    .chat-messages {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .message {
+      display: flex;
+      gap: 12px;
+      max-width: 80%;
+    }
+
+    .message.user {
+      align-self: flex-end;
+      flex-direction: row-reverse;
+    }
+
+    .message-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .message.user .message-avatar {
+      background: var(--secondary);
+    }
+
+    .message-content {
+      background: var(--bg-darker);
+      padding: 12px 16px;
+      border-radius: 12px;
+      color: var(--text-light);
+      line-height: 1.6;
+    }
+
+    .message.user .message-content {
+      background: var(--primary);
+      color: white;
+    }
+
+    .message-content p {
+      margin: 0 0 8px 0;
+    }
+
+    .message-content p:last-child {
+      margin-bottom: 0;
+    }
+
+    .message-content strong {
+      font-weight: 600;
+    }
+
+    .message-content ul {
+      margin: 8px 0;
+      padding-left: 20px;
+    }
+
+    .message-content li {
+      margin: 4px 0;
+    }
+
+    .context-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      background: rgba(139, 92, 246, 0.2);
+      color: var(--secondary);
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 500;
+      margin-top: 8px;
+    }
+
+    .chat-input-area {
+      padding: 20px;
+      border-top: 1px solid var(--border);
+    }
+
+    .context-selector {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .context-selector select {
+      padding: 8px 12px;
+      background: var(--bg-darker);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-light);
+      font-size: 13px;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 12px;
+    }
+
+    .chat-input {
+      flex: 1;
+      padding: 12px 16px;
+      background: var(--bg-darker);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-light);
+      font-size: 14px;
+      font-family: inherit;
+      resize: none;
+    }
+
+    .chat-input:focus {
+      outline: none;
+      border-color: var(--primary-light);
+    }
+
+    .send-btn {
+      padding: 12px 24px;
+      background: var(--primary);
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .send-btn:hover:not(:disabled) {
+      background: var(--primary-light);
+      transform: translateY(-1px);
+    }
+
+    .send-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .suggestions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+
+    .suggestion-chip {
+      padding: 6px 12px;
+      background: var(--bg-darker);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-light);
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .suggestion-chip:hover {
+      border-color: var(--primary-light);
+      color: var(--primary-light);
+    }
+
+    .loading-indicator {
+      display: flex;
+      gap: 4px;
+      padding: 12px 16px;
+    }
+
+    .loading-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--text-muted);
+      border-radius: 50%;
+      animation: bounce 1.4s infinite ease-in-out both;
+    }
+
+    .loading-dot:nth-child(1) { animation-delay: -0.32s; }
+    .loading-dot:nth-child(2) { animation-delay: -0.16s; }
+
+    @keyframes bounce {
+      0%, 80%, 100% { transform: scale(0); }
+      40% { transform: scale(1); }
+    }
+
+    .clear-btn {
+      padding: 8px 16px;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-muted);
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .clear-btn:hover {
+      border-color: var(--error);
+      color: var(--error);
+    }
+  </style>
+</head>
+<body>
+  <div class="chat-test-container">
+    <h1 style="margin-bottom: 24px; color: var(--text-light);">✨ AI Chat Assistant Test</h1>
+
+    <div class="chat-box">
+      <div class="chat-header">
+        <h2>Chat with AI</h2>
+        <button class="clear-btn" onclick="clearChat()">Clear Chat</button>
+      </div>
+
+      <div class="chat-messages" id="chatMessages">
+        <div class="message assistant">
+          <div class="message-avatar">🤖</div>
+          <div class="message-content">
+            <p><strong>Hi! I'm your AI assistant.</strong></p>
+            <p>I can help you with:</p>
+            <ul>
+              <li>Protocol recommendations</li>
+              <li>Lab result interpretation</li>
+              <li>Client health questions</li>
+              <li>Treatment strategies</li>
+            </ul>
+            <p>Try selecting a client or protocol from the dropdowns to add context to your questions!</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="chat-input-area">
+        <div class="context-selector">
+          <select id="clientSelect">
+            <option value="">No client context</option>
+          </select>
+          <select id="protocolSelect">
+            <option value="">No protocol context</option>
+          </select>
+        </div>
+
+        <div class="suggestions" id="suggestions"></div>
+
+        <div class="input-row">
+          <textarea
+            id="chatInput"
+            class="chat-input"
+            placeholder="Ask me anything about protocols, labs, or client care..."
+            rows="2"
+          ></textarea>
+          <button class="send-btn" id="sendBtn" onclick="sendMessage()">
+            Send
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = window.location.origin;
+    const chatMessages = document.getElementById('chatMessages');
+    const chatInput = document.getElementById('chatInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const clientSelect = document.getElementById('clientSelect');
+    const protocolSelect = document.getElementById('protocolSelect');
+    const suggestionsDiv = document.getElementById('suggestions');
+
+    let conversationHistory = [];
+
+    // Load clients and protocols
+    async function loadData() {
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        window.location.href = '/login';
+        return;
+      }
+
+      try {
+        // Load clients
+        const clientsRes = await fetch(`${API_BASE}/api/clients?limit=100`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const clientsData = await clientsRes.json();
+
+        clientSelect.innerHTML = '<option value="">No client context</option>' +
+          (clientsData.clients || []).map(c =>
+            `<option value="${c.id}">${c.first_name} ${c.last_name}</option>`
+          ).join('');
+
+        // Load protocols
+        const protocolsRes = await fetch(`${API_BASE}/api/protocols?limit=100`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const protocolsData = await protocolsRes.json();
+
+        protocolSelect.innerHTML = '<option value="">No protocol context</option>' +
+          (protocolsData.protocols || []).map(p =>
+            `<option value="${p.id}">${p.template_name} - ${p.client_name}</option>`
+          ).join('');
+
+        // Load suggestions
+        loadSuggestions();
+
+      } catch (error) {
+        console.error('Error loading data:', error);
+      }
+    }
+
+    // Load suggested queries
+    async function loadSuggestions() {
+      const token = localStorage.getItem('auth_token');
+
+      try {
+        const response = await fetch(`${API_BASE}/api/chat/suggestions`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            context: { page: 'chat-test' }
+          })
+        });
+
+        const data = await response.json();
+
+        suggestionsDiv.innerHTML = data.suggestions.map(s =>
+          `<div class="suggestion-chip" onclick="useSuggestion('${s.replace(/'/g, "\\'")}')">${s}</div>`
+        ).join('');
+
+      } catch (error) {
+        console.error('Error loading suggestions:', error);
+      }
+    }
+
+    // Use a suggested query
+    function useSuggestion(text) {
+      chatInput.value = text;
+      chatInput.focus();
+    }
+
+    // Add message to chat
+    function addMessage(role, content) {
+      const messageDiv = document.createElement('div');
+      messageDiv.className = `message ${role}`;
+
+      const avatar = role === 'user' ? '👤' : '🤖';
+
+      // Format content with markdown-like support
+      const formattedContent = content
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\n\n/g, '</p><p>')
+        .replace(/\n- /g, '<li>')
+        .replace(/\n/g, '<br>');
+
+      let htmlContent = formattedContent;
+      if (!htmlContent.startsWith('<p>')) {
+        htmlContent = '<p>' + htmlContent + '</p>';
+      }
+
+      messageDiv.innerHTML = `
+        <div class="message-avatar">${avatar}</div>
+        <div class="message-content">
+          ${htmlContent}
+        </div>
+      `;
+
+      chatMessages.appendChild(messageDiv);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    // Show loading indicator
+    function showLoading() {
+      const loadingDiv = document.createElement('div');
+      loadingDiv.className = 'message assistant';
+      loadingDiv.id = 'loading-indicator';
+      loadingDiv.innerHTML = `
+        <div class="message-avatar">🤖</div>
+        <div class="message-content">
+          <div class="loading-indicator">
+            <div class="loading-dot"></div>
+            <div class="loading-dot"></div>
+            <div class="loading-dot"></div>
+          </div>
+        </div>
+      `;
+      chatMessages.appendChild(loadingDiv);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    // Remove loading indicator
+    function removeLoading() {
+      const loading = document.getElementById('loading-indicator');
+      if (loading) {
+        loading.remove();
+      }
+    }
+
+    // Send message
+    async function sendMessage() {
+      const message = chatInput.value.trim();
+      if (!message) return;
+
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        window.location.href = '/login';
+        return;
+      }
+
+      // Build context
+      const context = {};
+      if (clientSelect.value) {
+        context.client_id = parseInt(clientSelect.value);
+      }
+      if (protocolSelect.value) {
+        context.protocol_id = parseInt(protocolSelect.value);
+      }
+
+      // Add user message to UI
+      addMessage('user', message);
+      chatInput.value = '';
+
+      // Add to history
+      conversationHistory.push({
+        role: 'user',
+        content: message
+      });
+
+      // Show loading
+      sendBtn.disabled = true;
+      showLoading();
+
+      try {
+        const response = await fetch(`${API_BASE}/api/chat`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            message: message,
+            context: context,
+            conversationHistory: conversationHistory
+          })
+        });
+
+        removeLoading();
+
+        if (!response.ok) {
+          throw new Error('Chat request failed');
+        }
+
+        const data = await response.json();
+
+        // Add assistant message
+        let assistantMessage = data.message;
+
+        // Add context badges if context was used
+        if (data.context.client || data.context.protocol || data.context.knowledgeBase) {
+          const badges = [];
+          if (data.context.client) badges.push('Client Context');
+          if (data.context.protocol) badges.push('Protocol Context');
+          if (data.context.knowledgeBase) badges.push('Knowledge Base');
+
+          assistantMessage += `\n\n<span class="context-badge">📊 ${badges.join(' • ')}</span>`;
+        }
+
+        addMessage('assistant', assistantMessage);
+
+        // Add to history
+        conversationHistory.push({
+          role: 'assistant',
+          content: data.message
+        });
+
+      } catch (error) {
+        removeLoading();
+        console.error('Error sending message:', error);
+        addMessage('assistant', '❌ Sorry, I encountered an error. Please try again.');
+      } finally {
+        sendBtn.disabled = false;
+        chatInput.focus();
+      }
+    }
+
+    // Clear chat
+    function clearChat() {
+      if (confirm('Clear all messages?')) {
+        conversationHistory = [];
+        chatMessages.innerHTML = `
+          <div class="message assistant">
+            <div class="message-avatar">🤖</div>
+            <div class="message-content">
+              <p><strong>Chat cleared!</strong> How can I help you today?</p>
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    // Handle enter key
+    chatInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    // Initialize
+    loadData();
+  </script>
+</body>
+</html>

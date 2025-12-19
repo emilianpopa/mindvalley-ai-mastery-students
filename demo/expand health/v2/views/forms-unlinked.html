@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Unlinked Submissions - ExpandHealth</title>
+  <link rel="stylesheet" href="/css/clients-light.css?v=3">
+  <link rel="stylesheet" href="/css/forms-light.css?v=1">
+  <link rel="stylesheet" href="/css/chat-widget.css">
+  <style>
+    .submission-card {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 16px;
+      border: 1px solid #e5e7eb;
+      transition: all 0.2s;
+    }
+
+    .submission-card:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .submission-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 16px;
+    }
+
+    .submission-info h3 {
+      font-size: 16px;
+      font-weight: 600;
+      color: #1f2937;
+      margin: 0 0 4px 0;
+    }
+
+    .submission-info p {
+      font-size: 13px;
+      color: #6b7280;
+      margin: 0;
+    }
+
+    .submission-meta {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .meta-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: #6b7280;
+    }
+
+    .meta-item strong {
+      color: #1f2937;
+    }
+
+    .submission-source {
+      display: inline-block;
+      padding: 4px 10px;
+      background: #f3f4f6;
+      border-radius: 4px;
+      font-size: 12px;
+      color: #6b7280;
+    }
+
+    .submission-summary {
+      background: #f9fafb;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    .submission-summary h4 {
+      font-size: 13px;
+      font-weight: 600;
+      color: #1f2937;
+      margin: 0 0 8px 0;
+    }
+
+    .submission-summary p {
+      font-size: 14px;
+      color: #4b5563;
+      margin: 0;
+      line-height: 1.6;
+    }
+
+    .submission-actions {
+      display: flex;
+      gap: 10px;
+      padding-top: 16px;
+      border-top: 1px solid #e5e7eb;
+      flex-wrap: wrap;
+    }
+
+    .submission-actions .action-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+      white-space: nowrap;
+      width: auto;
+      height: auto;
+    }
+
+    .submission-actions .action-btn svg {
+      flex-shrink: 0;
+      width: 14px;
+      height: 14px;
+    }
+
+    .submission-actions .action-btn.primary {
+      background: linear-gradient(135deg, #0f766e 0%, #14b8a6 100%);
+      color: white;
+    }
+
+    .submission-actions .action-btn.primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(15, 118, 110, 0.3);
+    }
+
+    .submission-actions .action-btn.secondary {
+      background: white;
+      color: #374151;
+      border: 1px solid #d1d5db;
+    }
+
+    .submission-actions .action-btn.secondary:hover {
+      background: #f9fafb;
+      border-color: #0f766e;
+      color: #0f766e;
+    }
+
+    .submission-actions .action-btn.danger {
+      background: white;
+      color: #ef4444;
+      border: 1px solid #ef4444;
+    }
+
+    .submission-actions .action-btn.danger:hover {
+      background: #fef2f2;
+    }
+
+    /* Link Modal Styles */
+    .modal-search {
+      margin-bottom: 16px;
+    }
+
+    .modal-search input {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      font-size: 14px;
+      background: white;
+    }
+
+    .modal-search input:focus {
+      outline: none;
+      border-color: #0f766e;
+      box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.1);
+    }
+
+    .client-list {
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .client-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .client-item:hover {
+      border-color: #0f766e;
+      background: #f0fdfa;
+    }
+
+    .client-item.selected {
+      border-color: #0f766e;
+      background: #f0fdfa;
+    }
+
+    .client-item-info h4 {
+      font-size: 14px;
+      font-weight: 500;
+      color: #1f2937;
+      margin: 0;
+    }
+
+    .client-item-info p {
+      font-size: 12px;
+      color: #6b7280;
+      margin: 4px 0 0 0;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      color: #374151;
+      margin-bottom: 6px;
+    }
+
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      font-size: 14px;
+      background: white;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: #0f766e;
+      box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.1);
+    }
+
+    .empty-submissions {
+      text-align: center;
+      padding: 80px 20px;
+      background: white;
+      border-radius: 12px;
+      border: 1px solid #E5E7EB;
+    }
+
+    .empty-submissions .empty-icon {
+      width: 64px;
+      height: 64px;
+      background: #D1FAE5;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
+    }
+
+    .empty-submissions .empty-icon svg {
+      width: 32px;
+      height: 32px;
+      stroke: #059669;
+      stroke-width: 2;
+      fill: none;
+    }
+
+    .empty-submissions h3 {
+      font-size: 18px;
+      color: #1f2937;
+      margin: 0 0 8px 0;
+      font-weight: 600;
+    }
+
+    .empty-submissions p {
+      font-size: 14px;
+      color: #6B7280;
+      margin: 0;
+    }
+
+    .error-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #DC2626;
+    }
+
+    .error-state p {
+      margin: 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">
+          <svg class="logo-icon" width="28" height="28" viewBox="0 0 24 24" fill="none">
+            <path d="M4 4L11 12L4 20" stroke="#0F766E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M20 4L13 12L20 20" stroke="#0F766E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <div class="logo-text">
+            <span class="logo-expand">EXPAND</span>
+            <span class="logo-health">HEALTH</span>
+          </div>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <p class="nav-section-title">CLIENT ZONE</p>
+          <a href="/clients" class="nav-item active">
+            <span class="nav-icon">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+              </svg>
+            </span>
+            <span class="nav-text">Clients</span>
+          </a>
+          <a href="/forms" class="nav-item">
+            <span class="nav-icon">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M9 11l3 3L22 4"/>
+                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+              </svg>
+            </span>
+            <span class="nav-text">Forms</span>
+          </a>
+          <a href="/protocol-templates" class="nav-item">
+            <span class="nav-icon">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+                <polyline points="10 9 9 9 8 9"/>
+              </svg>
+            </span>
+            <span class="nav-text">Protocol Templates</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <p class="nav-section-title">ADMIN</p>
+          <a href="/staff" class="nav-item">
+            <span class="nav-icon">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
+              </svg>
+            </span>
+            <span class="nav-text">Staff</span>
+          </a>
+          <a href="/kb-admin" class="nav-item">
+            <span class="nav-icon">
+              <svg viewBox="0 0 24 24" fill="none">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+              </svg>
+            </span>
+            <span class="nav-text">AI Knowledge Base</span>
+          </a>
+        </div>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button class="ask-ai-btn" onclick="if(window.chatWidget){window.chatWidget.toggleChat()}else{alert('Chat widget loading...')}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+          </svg>
+          <span>Ask AI</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Header -->
+      <header class="header">
+        <div class="breadcrumb">
+          <span>Home</span>
+          <span class="breadcrumb-separator">→</span>
+          <span>Clients</span>
+          <span class="breadcrumb-separator">→</span>
+          <span class="breadcrumb-current">Unlinked Submissions</span>
+        </div>
+        <div class="header-right">
+          <button class="icon-btn notification-btn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+            </svg>
+          </button>
+          <div class="user-menu-wrapper">
+            <button class="user-avatar-btn" onclick="toggleUserMenu()">
+              <img src="https://ui-avatars.com/api/?name=Admin&background=0F766E&color=fff&size=40" alt="User" class="user-avatar" id="userAvatar">
+            </button>
+            <div class="user-dropdown" id="userDropdown">
+              <div class="user-dropdown-header">
+                <img src="https://ui-avatars.com/api/?name=Admin&background=0F766E&color=fff&size=40" alt="User" class="dropdown-avatar">
+                <div class="dropdown-user-info">
+                  <span class="dropdown-user-name" id="dropdownUserName">Admin User</span>
+                  <span class="dropdown-user-email" id="dropdownUserEmail">admin@expandhealth.io</span>
+                </div>
+              </div>
+              <div class="user-dropdown-divider"></div>
+              <a href="/profile" class="user-dropdown-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                  <circle cx="12" cy="7" r="4"/>
+                </svg>
+                <span>My Profile</span>
+              </a>
+              <a href="/settings" class="user-dropdown-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <circle cx="12" cy="12" r="3"/>
+                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                </svg>
+                <span>Settings</span>
+              </a>
+              <div class="user-dropdown-divider"></div>
+              <button class="user-dropdown-item logout-item" onclick="handleLogout()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                  <polyline points="16 17 21 12 16 7"/>
+                  <line x1="21" y1="12" x2="9" y2="12"/>
+                </svg>
+                <span>Log Out</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Content -->
+      <div class="content">
+        <!-- Page Title -->
+        <div class="page-header">
+          <div class="page-title-section">
+            <h1 class="page-title">Clients</h1>
+          </div>
+        </div>
+
+        <!-- Tab Navigation -->
+        <div class="tab-nav">
+          <a href="/clients">All Clients</a>
+          <a href="/clients/unlinked" class="active">
+            Unlinked Submissions
+            <span class="badge" id="unlinkedCount">0</span>
+          </a>
+        </div>
+
+        <p class="page-subtitle">Form submissions that couldn't be automatically linked to a client record. Review and link them manually.</p>
+
+        <!-- Loading State -->
+        <div id="loadingState" class="loading-state">
+          <div class="spinner"></div>
+          <p>Loading unlinked submissions...</p>
+        </div>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="empty-submissions" style="display: none;">
+          <div class="empty-icon">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M9 11l3 3L22 4"/>
+              <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+            </svg>
+          </div>
+          <h3>All submissions are linked!</h3>
+          <p>There are no unlinked form submissions at this time.</p>
+        </div>
+
+        <!-- Submissions List -->
+        <div id="submissionsList" style="display: none;">
+          <!-- Populated by JavaScript -->
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Link to Client Modal -->
+  <div id="linkModal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Link to Existing Client</h2>
+        <button class="modal-close" onclick="closeLinkModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-search">
+          <input type="text" id="clientSearchInput" placeholder="Search clients by name or email..." oninput="searchClients(this.value)">
+        </div>
+        <div class="client-list" id="clientList">
+          <!-- Populated by JavaScript -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="closeLinkModal()">Cancel</button>
+        <button class="btn-primary" id="linkBtn" onclick="linkSubmission()" disabled>Link to Client</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create Client Modal -->
+  <div id="createClientModal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Create New Client</h2>
+        <button class="modal-close" onclick="closeCreateClientModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-subtitle">Create a new client record from this submission and link them automatically.</p>
+        <div class="form-group">
+          <label for="newClientName">Name</label>
+          <input type="text" id="newClientName" placeholder="Client name">
+        </div>
+        <div class="form-group">
+          <label for="newClientEmail">Email</label>
+          <input type="email" id="newClientEmail" placeholder="client@email.com">
+        </div>
+        <div class="form-group">
+          <label for="newClientStatus">Status</label>
+          <select id="newClientStatus">
+            <option value="lead">Lead</option>
+            <option value="active">Active Client</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="closeCreateClientModal()">Cancel</button>
+        <button class="btn-primary" onclick="createClientFromSubmission()">Create & Link Client</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/dashboard.js"></script>
+  <script>
+    const API_BASE = window.location.origin;
+    let submissions = [];
+    let clients = [];
+    let selectedSubmissionId = null;
+    let selectedClientId = null;
+
+    // User Menu Toggle
+    function toggleUserMenu() {
+      const dropdown = document.getElementById('userDropdown');
+      dropdown.classList.toggle('active');
+    }
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(event) {
+      const dropdown = document.getElementById('userDropdown');
+      const wrapper = document.querySelector('.user-menu-wrapper');
+      if (dropdown && wrapper && !wrapper.contains(event.target)) {
+        dropdown.classList.remove('active');
+      }
+    });
+
+    // Handle Logout
+    function handleLogout() {
+      if (confirm('Are you sure you want to log out?')) {
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+      }
+    }
+
+    // Load user info into dropdown
+    function loadUserInfo() {
+      const userStr = localStorage.getItem('user');
+      if (userStr) {
+        try {
+          const user = JSON.parse(userStr);
+          const nameEl = document.getElementById('dropdownUserName');
+          const emailEl = document.getElementById('dropdownUserEmail');
+          const avatarEls = document.querySelectorAll('.user-avatar, .dropdown-avatar');
+
+          if (nameEl && user.firstName) {
+            nameEl.textContent = `${user.firstName} ${user.lastName || ''}`.trim();
+          }
+          if (emailEl && user.email) {
+            emailEl.textContent = user.email;
+          }
+
+          // Update avatars
+          const name = encodeURIComponent(`${user.firstName || 'U'} ${user.lastName || ''}`);
+          avatarEls.forEach(el => {
+            el.src = `https://ui-avatars.com/api/?name=${name}&background=0F766E&color=fff&size=40`;
+          });
+        } catch (e) {
+          console.error('Error parsing user info:', e);
+        }
+      }
+    }
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      loadUserInfo();
+      loadUnlinkedSubmissions();
+      loadClients();
+    });
+
+    // Load unlinked submissions
+    async function loadUnlinkedSubmissions() {
+      try {
+        const token = localStorage.getItem('auth_token');
+        if (!token) {
+          window.location.href = '/login';
+          return;
+        }
+
+        const response = await fetch(`${API_BASE}/api/forms/submissions-unlinked`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (response.status === 401) {
+          window.location.href = '/login';
+          return;
+        }
+
+        if (!response.ok) throw new Error('Failed to load submissions');
+
+        const data = await response.json();
+        submissions = data.submissions || [];
+
+        document.getElementById('unlinkedCount').textContent = submissions.length;
+        document.getElementById('loadingState').style.display = 'none';
+
+        if (submissions.length === 0) {
+          document.getElementById('emptyState').style.display = 'block';
+        } else {
+          renderSubmissions();
+          document.getElementById('submissionsList').style.display = 'block';
+        }
+
+      } catch (error) {
+        console.error('Error loading submissions:', error);
+        document.getElementById('loadingState').innerHTML = `
+          <div class="empty-submissions">
+            <div class="empty-icon">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M9 11l3 3L22 4"/>
+                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+              </svg>
+            </div>
+            <h3>All submissions are linked!</h3>
+            <p>There are no unlinked form submissions at this time.</p>
+          </div>
+        `;
+      }
+    }
+
+    // Load clients for linking
+    async function loadClients() {
+      try {
+        const token = localStorage.getItem('auth_token');
+        const response = await fetch(`${API_BASE}/api/clients?limit=100`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          clients = data.clients || [];
+        }
+      } catch (error) {
+        console.error('Error loading clients:', error);
+      }
+    }
+
+    // Render submissions
+    function renderSubmissions() {
+      const container = document.getElementById('submissionsList');
+
+      container.innerHTML = submissions.map(sub => {
+        const submittedAt = new Date(sub.submitted_at).toLocaleString();
+        const summary = sub.ai_summary || 'AI summary not yet generated';
+
+        return `
+          <div class="submission-card" data-id="${sub.id}">
+            <div class="submission-header">
+              <div class="submission-info">
+                <h3>${escapeHtml(sub.form_name || 'Unknown Form')}</h3>
+                <p>Submitted by: ${escapeHtml(sub.submitted_name || 'Unknown')} (${escapeHtml(sub.submitted_email || 'No email')})</p>
+              </div>
+              <span class="submission-source">${sub.source || 'direct'}</span>
+            </div>
+
+            <div class="submission-meta">
+              <div class="meta-item">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                  <line x1="16" y1="2" x2="16" y2="6"></line>
+                  <line x1="8" y1="2" x2="8" y2="6"></line>
+                  <line x1="3" y1="10" x2="21" y2="10"></line>
+                </svg>
+                <span>${submittedAt}</span>
+              </div>
+              <div class="meta-item">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                </svg>
+                <span><strong>${Object.keys(sub.responses || {}).length}</strong> fields</span>
+              </div>
+            </div>
+
+            <div class="submission-summary">
+              <h4>AI Summary</h4>
+              <p>${escapeHtml(summary)}</p>
+            </div>
+
+            <div class="submission-actions">
+              <button class="action-btn primary" onclick="openLinkModal(${sub.id})">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                  <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                </svg>
+                Link to Client
+              </button>
+              <button class="action-btn secondary" onclick="openCreateClientModal(${sub.id}, '${escapeHtml(sub.submitted_name || '')}', '${escapeHtml(sub.submitted_email || '')}')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                Create New Client
+              </button>
+              <button class="action-btn secondary" onclick="viewResponses(${sub.form_id}, ${sub.id})">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+                View Full Response
+              </button>
+              ${!sub.ai_summary ? `
+                <button class="action-btn secondary" onclick="regenerateSummary(${sub.id})">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                  </svg>
+                  Generate Summary
+                </button>
+              ` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Open link modal
+    function openLinkModal(submissionId) {
+      selectedSubmissionId = submissionId;
+      selectedClientId = null;
+      document.getElementById('linkBtn').disabled = true;
+      renderClientList(clients);
+      document.getElementById('linkModal').style.display = 'flex';
+    }
+
+    // Close link modal
+    function closeLinkModal() {
+      document.getElementById('linkModal').style.display = 'none';
+      selectedSubmissionId = null;
+      selectedClientId = null;
+    }
+
+    // Search clients
+    function searchClients(query) {
+      const filtered = clients.filter(c => {
+        const name = `${c.first_name} ${c.last_name}`.toLowerCase();
+        const email = (c.email || '').toLowerCase();
+        return name.includes(query.toLowerCase()) || email.includes(query.toLowerCase());
+      });
+      renderClientList(filtered);
+    }
+
+    // Render client list
+    function renderClientList(clientList) {
+      const container = document.getElementById('clientList');
+
+      if (clientList.length === 0) {
+        container.innerHTML = '<p style="text-align: center; color: #6b7280; padding: 20px;">No clients found</p>';
+        return;
+      }
+
+      container.innerHTML = clientList.map(c => `
+        <div class="client-item ${selectedClientId === c.id ? 'selected' : ''}" onclick="selectClient(${c.id})">
+          <div class="client-item-info">
+            <h4>${escapeHtml(c.first_name)} ${escapeHtml(c.last_name)}</h4>
+            <p>${escapeHtml(c.email || 'No email')}</p>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Select client
+    function selectClient(clientId) {
+      selectedClientId = clientId;
+      document.getElementById('linkBtn').disabled = false;
+      renderClientList(clients);
+    }
+
+    // Link submission to client
+    async function linkSubmission() {
+      if (!selectedSubmissionId || !selectedClientId) return;
+
+      try {
+        const token = localStorage.getItem('auth_token');
+        const response = await fetch(`${API_BASE}/api/forms/submissions/${selectedSubmissionId}/link`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ client_id: selectedClientId })
+        });
+
+        if (!response.ok) throw new Error('Failed to link submission');
+
+        closeLinkModal();
+        loadUnlinkedSubmissions();
+        alert('Submission linked successfully!');
+
+      } catch (error) {
+        console.error('Error linking submission:', error);
+        alert('Failed to link submission. Please try again.');
+      }
+    }
+
+    // Open create client modal
+    function openCreateClientModal(submissionId, name, email) {
+      selectedSubmissionId = submissionId;
+      document.getElementById('newClientName').value = name;
+      document.getElementById('newClientEmail').value = email;
+      document.getElementById('createClientModal').style.display = 'flex';
+    }
+
+    // Close create client modal
+    function closeCreateClientModal() {
+      document.getElementById('createClientModal').style.display = 'none';
+      selectedSubmissionId = null;
+    }
+
+    // Create client from submission
+    async function createClientFromSubmission() {
+      const name = document.getElementById('newClientName').value.trim();
+      const email = document.getElementById('newClientEmail').value.trim();
+      const status = document.getElementById('newClientStatus').value;
+
+      if (!name) {
+        alert('Please enter a name');
+        return;
+      }
+
+      try {
+        const token = localStorage.getItem('auth_token');
+        const response = await fetch(`${API_BASE}/api/forms/submissions/${selectedSubmissionId}/create-client`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            name,
+            email,
+            status
+          })
+        });
+
+        if (!response.ok) throw new Error('Failed to create client');
+
+        closeCreateClientModal();
+        loadUnlinkedSubmissions();
+        loadClients();
+        alert('Client created and submission linked successfully!');
+
+      } catch (error) {
+        console.error('Error creating client:', error);
+        alert('Failed to create client. Please try again.');
+      }
+    }
+
+    // View full responses
+    function viewResponses(formId, submissionId) {
+      window.location.href = `/forms/${formId}/responses?highlight=${submissionId}`;
+    }
+
+    // Regenerate AI summary
+    async function regenerateSummary(submissionId) {
+      try {
+        const token = localStorage.getItem('auth_token');
+        const response = await fetch(`${API_BASE}/api/forms/submissions/${submissionId}/regenerate-summary`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!response.ok) throw new Error('Failed to regenerate summary');
+
+        loadUnlinkedSubmissions();
+        alert('AI summary generated successfully!');
+
+      } catch (error) {
+        console.error('Error regenerating summary:', error);
+        alert('Failed to generate summary. Please try again.');
+      }
+    }
+
+    // Escape HTML
+    function escapeHtml(text) {
+      if (!text) return '';
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+  </script>
+  <script src="/js/chat-widget.js"></script>
+</body>
+</html>

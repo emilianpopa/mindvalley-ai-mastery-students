@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Edit Client - ExpandHealth</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/client-form.css">
+  <link rel="stylesheet" href="/css/chat-widget.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo-small">
+          <span class="logo-icon">✦</span>
+          <span class="logo-text">ExpandHealth</span>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <p class="nav-section-title">CLIENT ZONE</p>
+          <a href="/clients" class="nav-item active">
+            <span class="nav-icon">👥</span>
+            <span class="nav-text">Clients</span>
+          </a>
+          <a href="/forms" class="nav-item">
+            <span class="nav-icon">📋</span>
+            <span class="nav-text">Forms</span>
+          </a>
+          <a href="/protocol-templates" class="nav-item">
+            <span class="nav-icon">📄</span>
+            <span class="nav-text">Protocol Templates</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <p class="nav-section-title">ADMIN</p>
+          <a href="/staff" class="nav-item">
+            <span class="nav-icon">👨‍⚕️</span>
+            <span class="nav-text">Staff</span>
+          </a>
+          <a href="/kb-admin" class="nav-item">
+            <span class="nav-icon">📚</span>
+            <span class="nav-text">AI Knowledge Base</span>
+          </a>
+        </div>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button class="ask-ai-btn" onclick="window.chatWidget && window.chatWidget.toggleChat()">
+          <span>✨</span>
+          <span>Ask AI</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Header -->
+      <header class="header">
+        <div class="header-left">
+          <h1 id="pageTitle">Edit Client</h1>
+          <p class="breadcrumb">
+            <a href="/clients">Clients</a> → <span id="breadcrumbName">Edit Client</span>
+          </p>
+        </div>
+        <div class="header-right">
+          <button class="icon-btn">🔔</button>
+          <div class="user-menu">
+            <img src="https://ui-avatars.com/api/?name=Admin+User&background=0F766E&color=fff" alt="User" class="user-avatar">
+            <div class="user-info">
+              <p class="user-name" id="userName">Loading...</p>
+              <p class="user-role" id="userRole">Admin</p>
+            </div>
+            <button class="icon-btn" onclick="window.auth.logout()">🚪</button>
+          </div>
+        </div>
+      </header>
+
+      <!-- Form Content -->
+      <div class="content">
+        <!-- Loading State -->
+        <div id="loadingState" class="loading-container">
+          <div class="loader"></div>
+          <p>Loading client data...</p>
+        </div>
+
+        <!-- Form Card -->
+        <div class="form-card" id="formCard" style="display: none;">
+          <form id="clientForm">
+            <!-- Alert -->
+            <div id="alert" class="alert" style="display: none;"></div>
+
+            <!-- Basic Information -->
+            <div class="form-section">
+              <h3 class="section-title">Basic Information</h3>
+              <div class="form-grid">
+                <div class="form-group">
+                  <label for="firstName" class="required">First Name</label>
+                  <input type="text" id="firstName" name="first_name" required class="form-input">
+                </div>
+
+                <div class="form-group">
+                  <label for="lastName" class="required">Last Name</label>
+                  <input type="text" id="lastName" name="last_name" required class="form-input">
+                </div>
+
+                <div class="form-group">
+                  <label for="email" class="required">Email</label>
+                  <input type="email" id="email" name="email" required class="form-input">
+                </div>
+
+                <div class="form-group">
+                  <label for="phone">Phone</label>
+                  <input type="tel" id="phone" name="phone" class="form-input" placeholder="(555) 123-4567">
+                </div>
+
+                <div class="form-group">
+                  <label for="dateOfBirth">Date of Birth</label>
+                  <input type="date" id="dateOfBirth" name="date_of_birth" class="form-input">
+                </div>
+
+                <div class="form-group">
+                  <label for="gender">Gender</label>
+                  <select id="gender" name="gender" class="form-input">
+                    <option value="">Select...</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
+                    <option value="prefer_not_to_say">Prefer not to say</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label for="status">Status</label>
+                  <select id="status" name="status" class="form-input">
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                    <option value="archived">Archived</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Address Information -->
+            <div class="form-section">
+              <h3 class="section-title">Address</h3>
+              <div class="form-grid">
+                <div class="form-group full-width">
+                  <label for="address">Street Address</label>
+                  <input type="text" id="address" name="address" class="form-input">
+                </div>
+
+                <div class="form-group">
+                  <label for="city">City</label>
+                  <input type="text" id="city" name="city" class="form-input">
+                </div>
+
+                <div class="form-group">
+                  <label for="state">State</label>
+                  <input type="text" id="state" name="state" class="form-input" placeholder="CA">
+                </div>
+
+                <div class="form-group">
+                  <label for="zipCode">ZIP Code</label>
+                  <input type="text" id="zipCode" name="zip_code" class="form-input" placeholder="12345">
+                </div>
+              </div>
+            </div>
+
+            <!-- Emergency Contact -->
+            <div class="form-section">
+              <h3 class="section-title">Emergency Contact</h3>
+              <div class="form-grid">
+                <div class="form-group">
+                  <label for="emergencyContactName">Contact Name</label>
+                  <input type="text" id="emergencyContactName" name="emergency_contact_name" class="form-input">
+                </div>
+
+                <div class="form-group">
+                  <label for="emergencyContactPhone">Contact Phone</label>
+                  <input type="tel" id="emergencyContactPhone" name="emergency_contact_phone" class="form-input">
+                </div>
+              </div>
+            </div>
+
+            <!-- Medical Information -->
+            <div class="form-section">
+              <h3 class="section-title">Medical Information</h3>
+              <div class="form-grid">
+                <div class="form-group full-width">
+                  <label for="medicalHistory">Medical History</label>
+                  <textarea id="medicalHistory" name="medical_history" rows="4" class="form-input" placeholder="Previous conditions, surgeries, etc."></textarea>
+                </div>
+
+                <div class="form-group full-width">
+                  <label for="currentMedications">Current Medications</label>
+                  <textarea id="currentMedications" name="current_medications" rows="3" class="form-input" placeholder="List current medications"></textarea>
+                </div>
+
+                <div class="form-group full-width">
+                  <label for="allergies">Allergies</label>
+                  <textarea id="allergies" name="allergies" rows="2" class="form-input" placeholder="Food allergies, drug allergies, etc."></textarea>
+                </div>
+              </div>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="form-actions">
+              <button type="button" class="btn-secondary" id="cancelBtn">
+                Cancel
+              </button>
+              <button type="submit" class="btn-primary" id="submitBtn">
+                <span class="btn-text">Save Changes</span>
+                <span class="btn-loader" style="display: none;">Saving...</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="/js/dashboard.js"></script>
+  <script src="/js/client-edit.js"></script>
+  <script src="/js/chat-widget.js"></script>
+</body>
+</html>

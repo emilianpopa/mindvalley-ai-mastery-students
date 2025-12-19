@@ -1,0 +1,245 @@
+/**
+ * ExpandHealth V2 - Main Server
+ * Express-based API server with PostgreSQL
+ */
+
+require('dotenv').config();
+const express = require('express');
+const helmet = require('helmet');
+const cors = require('cors');
+const path = require('path');
+
+// Import middleware
+const errorHandler = require('./middleware/errorHandler');
+
+// Import API routes
+const authRoutes = require('./api/auth');
+const clientsRoutes = require('./api/clients');
+const labsRoutes = require('./api/labs');
+const protocolsRoutes = require('./api/protocols');
+const formsRoutes = require('./api/forms');
+const kbRoutes = require('./api/kb');
+const notesRoutes = require('./api/notes');
+const chatRoutes = require('./api/chat');
+const dashboardRoutes = require('./api/dashboard');
+const adminRoutes = require('./api/admin');
+
+// Initialize Express app
+const app = express();
+const PORT = process.env.PORT || 3001;
+
+// ============================================
+// MIDDLEWARE
+// ============================================
+
+// Security headers
+app.use(helmet({
+  contentSecurityPolicy: false, // Disable for development (enable in production)
+}));
+
+// CORS configuration
+app.use(cors({
+  origin: process.env.NODE_ENV === 'production'
+    ? ['https://app.expandhealth.io', 'https://expandhealth-ai-copilot-production.up.railway.app']
+    : ['http://localhost:3001', 'http://127.0.0.1:3001'],
+  credentials: true
+}));
+
+// Body parsers
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Serve static files
+app.use(express.static(path.join(__dirname, 'public')));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/data', express.static(path.join(__dirname, 'data')));
+
+// Request logging (development)
+if (process.env.NODE_ENV === 'development') {
+  app.use((req, res, next) => {
+    console.log(`${req.method} ${req.path}`);
+    next();
+  });
+}
+
+// ============================================
+// API ROUTES
+// ============================================
+
+app.use('/api/auth', authRoutes);
+app.use('/api/clients', clientsRoutes);
+app.use('/api/labs', labsRoutes);
+app.use('/api/protocols', protocolsRoutes);
+app.use('/api/forms', formsRoutes);
+app.use('/api/kb', kbRoutes);
+app.use('/api/notes', notesRoutes);
+app.use('/api/chat', chatRoutes);
+app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/admin', adminRoutes);
+
+// ============================================
+// SERVE HTML PAGES
+// ============================================
+
+// Login page (no auth required)
+app.get('/login', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'login.html'));
+});
+
+// Protected pages (auth handled by frontend)
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'dashboard.html'));
+});
+
+app.get('/clients', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'clients.html'));
+});
+
+app.get('/clients/new', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'client-new.html'));
+});
+
+// Unlinked submissions - must be before /clients/:id to avoid matching "unlinked" as an ID
+app.get('/clients/unlinked', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'forms-unlinked.html'));
+});
+
+app.get('/clients/:id', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'client-dashboard.html'));
+});
+
+app.get('/clients/:id/edit', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'client-edit.html'));
+});
+
+app.get('/forms', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'forms.html'));
+});
+
+// Redirect old URL for backwards compatibility
+app.get('/forms/unlinked', (req, res) => {
+  res.redirect('/clients/unlinked');
+});
+
+app.get('/forms/new', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'form-builder.html'));
+});
+
+app.get('/forms/:id/edit', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'form-builder.html'));
+});
+
+app.get('/forms/:id/submissions', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'form-responses.html'));
+});
+
+app.get('/forms/:id/responses', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'form-responses.html'));
+});
+
+// Submission detail view
+app.get('/forms/:formId/submission/:submissionId', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'submission-detail.html'));
+});
+
+app.get('/forms/:id/fill', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'form-fill.html'));
+});
+
+// Public form access (no auth required)
+app.get('/f/:id', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'form-public.html'));
+});
+
+app.get('/labs', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'labs.html'));
+});
+
+app.get('/labs/upload', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'lab-upload.html'));
+});
+
+app.get('/labs/:id', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'lab-viewer.html'));
+});
+
+app.get('/protocols', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'protocols.html'));
+});
+
+app.get('/protocol-templates', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'protocol-templates.html'));
+});
+
+app.get('/protocol-templates/new', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'protocol-builder.html'));
+});
+
+app.get('/protocol-templates/:id/edit', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'protocol-builder.html'));
+});
+
+app.get('/protocols/:id', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'protocol-viewer.html'));
+});
+
+app.get('/kb-admin', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'kb-admin.html'));
+});
+
+app.get('/admin', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'admin.html'));
+});
+
+// Redirect /staff to admin users section
+app.get('/staff', (req, res) => {
+  res.redirect('/admin#users');
+});
+
+app.get('/chat-test', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'chat-test.html'));
+});
+
+// ============================================
+// ERROR HANDLING
+// ============================================
+
+// 404 handler
+app.use((req, res) => {
+  res.status(404).json({ error: 'Not found' });
+});
+
+// Global error handler
+app.use(errorHandler);
+
+// ============================================
+// START SERVER
+// ============================================
+
+app.listen(PORT, '0.0.0.0', () => {
+  console.log('\n🚀 ExpandHealth V2 Server');
+  console.log('═'.repeat(50));
+  console.log(`\n✅ Server running on port: ${PORT}`);
+  console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`🌐 URL: http://localhost:${PORT}`);
+  console.log('\n📋 Available endpoints:');
+  console.log('   - Login: /login');
+  console.log('   - Dashboard: /');
+  console.log('   - Clients: /clients');
+  console.log('   - Labs: /labs');
+  console.log('   - Protocols: /protocols');
+  console.log('   - Knowledge Base: /kb-admin');
+  console.log('   - Admin: /admin');
+  console.log('\n' + '═'.repeat(50) + '\n');
+});
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('SIGTERM received, shutting down gracefully...');
+  process.exit(0);
+});
+
+process.on('SIGINT', () => {
+  console.log('\nSIGINT received, shutting down gracefully...');
+  process.exit(0);
+});

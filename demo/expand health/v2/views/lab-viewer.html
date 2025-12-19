@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>View Lab Result - ExpandHealth</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/lab-viewer.css?v=2">
+  <link rel="stylesheet" href="/css/chat-widget.css">
+  <!-- PDF.js for high-quality PDF rendering -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo-small">
+          <span class="logo-icon">✦</span>
+          <span class="logo-text">ExpandHealth</span>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <p class="nav-section-title">CLIENT ZONE</p>
+          <a href="/clients" class="nav-item">
+            <span class="nav-icon">👥</span>
+            <span class="nav-text">Clients</span>
+          </a>
+          <a href="/forms" class="nav-item">
+            <span class="nav-icon">📋</span>
+            <span class="nav-text">Forms</span>
+          </a>
+          <a href="/protocol-templates" class="nav-item">
+            <span class="nav-icon">📄</span>
+            <span class="nav-text">Protocol Templates</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <p class="nav-section-title">ADMIN</p>
+          <a href="/staff" class="nav-item">
+            <span class="nav-icon">👨‍⚕️</span>
+            <span class="nav-text">Staff</span>
+          </a>
+          <a href="/kb-admin" class="nav-item">
+            <span class="nav-icon">📚</span>
+            <span class="nav-text">AI Knowledge Base</span>
+          </a>
+        </div>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button class="ask-ai-btn" onclick="window.chatWidget && window.chatWidget.toggleChat()">
+          <span>✨</span>
+          <span>Ask AI</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Header -->
+      <header class="header">
+        <div class="header-left">
+          <h1 id="pageTitle">Lab Result</h1>
+          <p class="breadcrumb">
+            <a href="/labs">Labs & Tests</a> → <span id="breadcrumbTitle">View Lab</span>
+          </p>
+        </div>
+        <div class="header-right">
+          <button class="icon-btn">🔔</button>
+          <div class="user-menu">
+            <img src="https://ui-avatars.com/api/?name=Admin+User&background=0F766E&color=fff" alt="User" class="user-avatar">
+            <div class="user-info">
+              <p class="user-name" id="userName">Loading...</p>
+              <p class="user-role" id="userRole">Admin</p>
+            </div>
+            <button class="icon-btn" onclick="window.auth.logout()">🚪</button>
+          </div>
+        </div>
+      </header>
+
+      <!-- Lab Viewer Content -->
+      <div class="content">
+        <!-- Loading State -->
+        <div id="loadingState" class="loading-container">
+          <div class="loader"></div>
+          <p>Loading lab result...</p>
+        </div>
+
+        <!-- Error State -->
+        <div id="errorState" class="error-container" style="display: none;">
+          <div class="error-icon">⚠️</div>
+          <h3>Error Loading Lab</h3>
+          <p id="errorMessage">Something went wrong</p>
+          <button onclick="window.location.href='/labs'" class="btn-secondary">Back to Labs</button>
+        </div>
+
+        <!-- Lab View -->
+        <div id="labView" style="display: none;">
+          <!-- Lab Info Card -->
+          <div class="info-card">
+            <div class="info-header">
+              <div>
+                <h2 id="labTitle">Lab Title</h2>
+                <p class="info-subtitle">
+                  <a href="#" id="clientLink" class="client-link">Client Name</a> •
+                  <span id="labType">Type</span> •
+                  <span id="testDate">Date</span>
+                </p>
+              </div>
+              <div class="info-actions">
+                <button id="generateSummaryBtn" class="btn-ai">
+                  <span>✨</span>
+                  <span>Generate AI Summary</span>
+                </button>
+                <button id="deleteBtn" class="btn-danger">Delete</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Two Column Layout -->
+          <div class="viewer-layout">
+            <!-- PDF Viewer Column -->
+            <div class="pdf-column">
+              <div class="pdf-card">
+                <div class="pdf-header">
+                  <h3>PDF Document</h3>
+                  <div class="pdf-controls">
+                    <button id="zoomOutBtn" class="zoom-btn" title="Zoom Out">−</button>
+                    <span id="zoomLevel" class="zoom-level">100%</span>
+                    <button id="zoomInBtn" class="zoom-btn" title="Zoom In">+</button>
+                    <button id="fitWidthBtn" class="zoom-btn" title="Fit Width">↔</button>
+                    <span class="controls-separator"></span>
+                    <button id="prevPageBtn" class="nav-btn" title="Previous Page">◀</button>
+                    <span id="pageInfo" class="page-info">1 / 1</span>
+                    <button id="nextPageBtn" class="nav-btn" title="Next Page">▶</button>
+                  </div>
+                  <div class="pdf-actions">
+                    <a id="downloadBtn" href="#" download class="icon-btn" title="Download">⬇️</a>
+                    <button id="fullscreenBtn" class="icon-btn" title="Fullscreen">⛶</button>
+                  </div>
+                </div>
+                <div class="pdf-viewer" id="pdfViewer">
+                  <div id="pdfContainer" class="pdf-canvas-container">
+                    <canvas id="pdfCanvas"></canvas>
+                  </div>
+                  <!-- Fallback iframe for browsers that don't support PDF.js -->
+                  <iframe id="pdfFrame" title="Lab Result PDF" style="display: none;"></iframe>
+                </div>
+              </div>
+            </div>
+
+            <!-- AI Summary Column -->
+            <div class="summary-column">
+              <!-- AI Summary Card -->
+              <div class="summary-card" id="summaryCard">
+                <div class="summary-header">
+                  <h3>✨ AI Summary</h3>
+                  <span class="summary-badge" id="summaryBadge">Not Generated</span>
+                </div>
+
+                <div id="summaryLoading" class="summary-loading" style="display: none;">
+                  <div class="mini-loader"></div>
+                  <p>Generating AI summary...</p>
+                </div>
+
+                <div id="summaryEmpty" class="summary-empty">
+                  <p>No AI summary available yet.</p>
+                  <p class="summary-hint">Click "Generate AI Summary" to analyze this lab result with AI.</p>
+                </div>
+
+                <div id="summaryContent" class="summary-content" style="display: none;">
+                  <!-- Summary will be injected here -->
+                </div>
+              </div>
+
+              <!-- Lab Details Card -->
+              <div class="details-card">
+                <h3>Lab Details</h3>
+                <div class="detail-row">
+                  <span class="detail-label">File Size:</span>
+                  <span class="detail-value" id="fileSize">-</span>
+                </div>
+                <div class="detail-row">
+                  <span class="detail-label">Uploaded:</span>
+                  <span class="detail-value" id="uploadedDate">-</span>
+                </div>
+                <div class="detail-row">
+                  <span class="detail-label">Uploaded By:</span>
+                  <span class="detail-value" id="uploadedBy">-</span>
+                </div>
+                <div class="detail-row">
+                  <span class="detail-label">Lab ID:</span>
+                  <span class="detail-value" id="labId">-</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="/js/dashboard.js"></script>
+  <script src="/js/lab-viewer.js"></script>
+  <script src="/js/chat-widget.js"></script>
+</body>
+</html>

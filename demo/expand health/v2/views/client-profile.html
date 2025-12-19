@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Client Profile - ExpandHealth</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/client-profile.css">
+  <link rel="stylesheet" href="/css/chat-widget.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo-small">
+          <span class="logo-icon">✦</span>
+          <span class="logo-text">ExpandHealth</span>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <p class="nav-section-title">CLIENT ZONE</p>
+          <a href="/clients" class="nav-item active">
+            <span class="nav-icon">👥</span>
+            <span class="nav-text">Clients</span>
+          </a>
+          <a href="/forms" class="nav-item">
+            <span class="nav-icon">📋</span>
+            <span class="nav-text">Forms</span>
+          </a>
+          <a href="/protocol-templates" class="nav-item">
+            <span class="nav-icon">📄</span>
+            <span class="nav-text">Protocol Templates</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <p class="nav-section-title">ADMIN</p>
+          <a href="/staff" class="nav-item">
+            <span class="nav-icon">👨‍⚕️</span>
+            <span class="nav-text">Staff</span>
+          </a>
+          <a href="/kb-admin" class="nav-item">
+            <span class="nav-icon">📚</span>
+            <span class="nav-text">AI Knowledge Base</span>
+          </a>
+        </div>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button class="ask-ai-btn" onclick="window.chatWidget && window.chatWidget.toggleChat()">
+          <span>✨</span>
+          <span>Ask AI</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Header -->
+      <header class="header">
+        <div class="header-left">
+          <h1 id="clientName">Loading...</h1>
+          <p class="breadcrumb">
+            <a href="/clients">Clients</a> → <span id="breadcrumbName">Client Profile</span>
+          </p>
+        </div>
+        <div class="header-right">
+          <button class="icon-btn">🔔</button>
+          <div class="user-menu">
+            <img src="https://ui-avatars.com/api/?name=Admin+User&background=0F766E&color=fff" alt="User" class="user-avatar">
+            <div class="user-info">
+              <p class="user-name" id="userName">Loading...</p>
+              <p class="user-role" id="userRole">Admin</p>
+            </div>
+            <button class="icon-btn" onclick="window.auth.logout()">🚪</button>
+          </div>
+        </div>
+      </header>
+
+      <!-- Profile Content -->
+      <div class="content">
+        <!-- Loading State -->
+        <div id="loadingState" class="loading-container">
+          <div class="loader"></div>
+          <p>Loading client profile...</p>
+        </div>
+
+        <!-- Error State -->
+        <div id="errorState" class="error-container" style="display: none;">
+          <div class="error-icon">⚠️</div>
+          <h3>Failed to Load Client</h3>
+          <p id="errorMessage">An error occurred while loading the client profile.</p>
+          <button class="btn-primary" onclick="window.location.href='/clients'">
+            Back to Clients
+          </button>
+        </div>
+
+        <!-- Profile View -->
+        <div id="profileView" style="display: none;">
+          <!-- Action Buttons -->
+          <div class="profile-actions">
+            <button class="btn-secondary" onclick="window.location.href='/clients'">
+              ← Back to Clients
+            </button>
+            <div class="action-group">
+              <button class="btn-primary" id="editBtn">
+                ✏️ Edit Profile
+              </button>
+              <button class="btn-danger" id="archiveBtn">
+                🗄️ Archive Client
+              </button>
+            </div>
+          </div>
+
+          <!-- Status Badge -->
+          <div class="status-container">
+            <span class="status-badge" id="statusBadge">Active</span>
+          </div>
+
+          <!-- Profile Grid -->
+          <div class="profile-grid">
+            <!-- Basic Information -->
+            <div class="profile-card">
+              <h3 class="card-title">Basic Information</h3>
+              <div class="info-grid">
+                <div class="info-item">
+                  <label>First Name</label>
+                  <p id="firstName">-</p>
+                </div>
+                <div class="info-item">
+                  <label>Last Name</label>
+                  <p id="lastName">-</p>
+                </div>
+                <div class="info-item">
+                  <label>Email</label>
+                  <p id="email">-</p>
+                </div>
+                <div class="info-item">
+                  <label>Phone</label>
+                  <p id="phone">-</p>
+                </div>
+                <div class="info-item">
+                  <label>Date of Birth</label>
+                  <p id="dateOfBirth">-</p>
+                </div>
+                <div class="info-item">
+                  <label>Gender</label>
+                  <p id="gender">-</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Address -->
+            <div class="profile-card">
+              <h3 class="card-title">Address</h3>
+              <div class="info-grid">
+                <div class="info-item full-width">
+                  <label>Street Address</label>
+                  <p id="address">-</p>
+                </div>
+                <div class="info-item">
+                  <label>City</label>
+                  <p id="city">-</p>
+                </div>
+                <div class="info-item">
+                  <label>State</label>
+                  <p id="state">-</p>
+                </div>
+                <div class="info-item">
+                  <label>ZIP Code</label>
+                  <p id="zipCode">-</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Emergency Contact -->
+            <div class="profile-card">
+              <h3 class="card-title">Emergency Contact</h3>
+              <div class="info-grid">
+                <div class="info-item">
+                  <label>Contact Name</label>
+                  <p id="emergencyContactName">-</p>
+                </div>
+                <div class="info-item">
+                  <label>Contact Phone</label>
+                  <p id="emergencyContactPhone">-</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Medical Information -->
+            <div class="profile-card full-width">
+              <h3 class="card-title">Medical Information</h3>
+              <div class="info-grid">
+                <div class="info-item full-width">
+                  <label>Medical History</label>
+                  <p id="medicalHistory" class="multiline">-</p>
+                </div>
+                <div class="info-item full-width">
+                  <label>Current Medications</label>
+                  <p id="currentMedications" class="multiline">-</p>
+                </div>
+                <div class="info-item full-width">
+                  <label>Allergies</label>
+                  <p id="allergies" class="multiline">-</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Metadata -->
+            <div class="profile-card">
+              <h3 class="card-title">Account Information</h3>
+              <div class="info-grid">
+                <div class="info-item">
+                  <label>Client ID</label>
+                  <p id="clientId">-</p>
+                </div>
+                <div class="info-item">
+                  <label>Created</label>
+                  <p id="createdAt">-</p>
+                </div>
+                <div class="info-item">
+                  <label>Last Updated</label>
+                  <p id="updatedAt">-</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="/js/dashboard.js"></script>
+  <script src="/js/client-profile.js"></script>
+  <script src="/js/chat-widget.js"></script>
+</body>
+</html>
