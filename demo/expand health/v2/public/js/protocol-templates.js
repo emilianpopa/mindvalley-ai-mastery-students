@@ -187,14 +187,14 @@ function updatePagination(data) {
 function updateStats(templates) {
   totalTemplatesEl.textContent = templates.length;
 
-  // Calculate active protocols (sum of usage_count)
-  const totalUsage = templates.reduce((sum, t) => sum + (t.usage_count || 0), 0);
+  // Calculate active protocols (sum of usage_count) - parse as int since DB returns string
+  const totalUsage = templates.reduce((sum, t) => sum + (parseInt(t.usage_count) || 0), 0);
   activeProtocolsEl.textContent = totalUsage;
 
   // Find most used template
   if (templates.length > 0) {
     const mostUsed = templates.reduce((max, t) =>
-      (t.usage_count || 0) > (max.usage_count || 0) ? t : max
+      (parseInt(t.usage_count) || 0) > (parseInt(max.usage_count) || 0) ? t : max
     );
     mostUsedTemplateEl.textContent = mostUsed.name;
   } else {

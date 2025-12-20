@@ -23,7 +23,8 @@ document.addEventListener('DOMContentLoaded', () => {
 // Load form template
 async function loadForm(formId) {
   try {
-    const response = await fetch(`${API_BASE}/api/forms/templates/${formId}`);
+    // Use public endpoint (no auth required)
+    const response = await fetch(`${API_BASE}/api/forms/public/${formId}`);
 
     if (!response.ok) {
       throw new Error('Form not found');

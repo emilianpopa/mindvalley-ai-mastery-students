@@ -403,6 +403,12 @@
   margin: 4px 0;
 }
 
+/* Dropdown opens upward when near bottom of viewport */
+.more-menu.open-upward {
+  top: auto;
+  bottom: calc(100% + 4px);
+}
+
 /* Loading State */
 .loading-state {
   display: flex;

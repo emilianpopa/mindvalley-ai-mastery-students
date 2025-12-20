@@ -115,7 +115,7 @@ router.get('/templates', authenticateToken, async (req, res, next) => {
         modules,
         created_at,
         updated_at,
-        (SELECT COUNT(*) FROM protocols WHERE template_id = protocol_templates.id) as usage_count
+        (SELECT COUNT(DISTINCT client_id) FROM protocols WHERE template_id = protocol_templates.id) as usage_count
       FROM protocol_templates
       ${whereClause}
       ORDER BY ${sortColumn} ${order}
@@ -147,7 +147,7 @@ router.get('/templates/:id', authenticateToken, async (req, res, next) => {
     const result = await db.query(
       `SELECT
         pt.*,
-        (SELECT COUNT(*) FROM protocols WHERE template_id = pt.id) as usage_count,
+        (SELECT COUNT(DISTINCT client_id) FROM protocols WHERE template_id = pt.id) as usage_count,
         (SELECT json_agg(json_build_object(
           'client_id', p.client_id,
           'client_name', c.first_name || ' ' || c.last_name,
@@ -390,6 +390,53 @@ router.get('/', authenticateToken, async (req, res, next) => {
   }
 });
 
+// ========================================
+// GET PROTOCOLS BY CLIENT (must be before /:id to avoid route conflict)
+// ========================================
+
+// Get all protocols for a specific client
+router.get('/client/:clientId', authenticateToken, async (req, res, next) => {
+  try {
+    const { clientId } = req.params;
+
+    const result = await db.query(
+      `SELECT p.*, pt.name as template_name, pt.category as template_category
+       FROM protocols p
+       LEFT JOIN protocol_templates pt ON p.template_id = pt.id
+       WHERE p.client_id = $1
+       ORDER BY p.created_at DESC`,
+      [clientId]
+    );
+
+    // Transform the data to include title from notes field
+    const protocols = result.rows.map(row => {
+      // Extract title from notes field (format: "Title: xxx\n\n...")
+      const titleMatch = row.notes?.match(/^Title:\s*(.+?)(?:\n|$)/);
+      const title = titleMatch ? titleMatch[1] : row.template_name || 'Custom Protocol';
+
+      return {
+        id: row.id,
+        client_id: row.client_id,
+        title: title,
+        status: row.status,
+        template_name: row.template_name,
+        template_category: row.template_category,
+        modules: row.modules,
+        ai_recommendations: row.ai_recommendations,
+        start_date: row.start_date,
+        end_date: row.end_date,
+        created_at: row.created_at,
+        updated_at: row.updated_at
+      };
+    });
+
+    res.json({ protocols });
+  } catch (error) {
+    console.error('Error fetching protocols for client:', error);
+    next(error);
+  }
+});
+
 // Get single client protocol by ID
 router.get('/:id', authenticateToken, async (req, res, next) => {
   try {
@@ -416,7 +463,63 @@ router.get('/:id', authenticateToken, async (req, res, next) => {
       return res.status(404).json({ error: 'Protocol not found' });
     }
 
-    res.json({ protocol: result.rows[0] });
+    const row = result.rows[0];
+
+    // Extract title from notes field (format: "Title: xxx\n\n...") - same as client list endpoint
+    const titleMatch = row.notes?.match(/^Title:\s*(.+?)(?:\n|$)/);
+    const title = titleMatch ? titleMatch[1] : row.template_name || 'Custom Protocol';
+
+    // Generate content from modules if available, otherwise use notes
+    let content = '';
+    if (row.modules && Array.isArray(row.modules) && row.modules.length > 0) {
+      // Format modules into readable protocol content
+      content = row.modules.map((module, index) => {
+        let moduleContent = `## ${module.name || module.title || `Module ${index + 1}`}\n`;
+        if (module.description) moduleContent += `${module.description}\n`;
+        if (module.goal) moduleContent += `**Goal:** ${module.goal}\n`;
+
+        if (module.items && Array.isArray(module.items)) {
+          moduleContent += '\n';
+          module.items.forEach(item => {
+            moduleContent += `### ${item.name}\n`;
+            if (item.description) moduleContent += `${item.description}\n`;
+            if (item.dosage) moduleContent += `- **Dosage:** ${item.dosage}\n`;
+            if (item.timing) moduleContent += `- **Timing:** ${item.timing}\n`;
+            if (item.duration) moduleContent += `- **Duration:** ${item.duration}\n`;
+            if (item.frequency) moduleContent += `- **Frequency:** ${item.frequency}\n`;
+            if (item.notes) moduleContent += `- **Notes:** ${item.notes}\n`;
+            moduleContent += '\n';
+          });
+        }
+        return moduleContent;
+      }).join('\n---\n\n');
+    } else if (row.notes && row.notes !== 'n/a') {
+      // Fallback to notes content
+      const contentMatch = row.notes.match(/^Title:\s*.+?\n\n([\s\S]*)/);
+      content = contentMatch ? contentMatch[1] : row.notes;
+    }
+
+    const protocol = {
+      id: row.id,
+      client_id: row.client_id,
+      title: title,
+      content: content,
+      status: row.status,
+      template_name: row.template_name,
+      template_category: row.template_category,
+      template_description: row.template_description,
+      modules: row.modules,
+      ai_recommendations: row.ai_recommendations,
+      start_date: row.start_date,
+      end_date: row.end_date,
+      created_at: row.created_at,
+      updated_at: row.updated_at,
+      client_name: row.client_name,
+      client_email: row.client_email,
+      client_phone: row.client_phone
+    };
+
+    res.json({ protocol });
 
   } catch (error) {
     next(error);
@@ -664,53 +767,6 @@ To enable full AI recommendations:
 });
 
 // ========================================
-// GET PROTOCOLS BY CLIENT
-// ========================================
-
-// Get all protocols for a specific client
-router.get('/client/:clientId', authenticateToken, async (req, res, next) => {
-  try {
-    const { clientId } = req.params;
-
-    const result = await db.query(
-      `SELECT p.*, pt.name as template_name, pt.category as template_category
-       FROM protocols p
-       LEFT JOIN protocol_templates pt ON p.template_id = pt.id
-       WHERE p.client_id = $1
-       ORDER BY p.created_at DESC`,
-      [clientId]
-    );
-
-    // Transform the data to include title from notes field
-    const protocols = result.rows.map(row => {
-      // Extract title from notes field (format: "Title: xxx\n\n...")
-      const titleMatch = row.notes?.match(/^Title:\s*(.+?)(?:\n|$)/);
-      const title = titleMatch ? titleMatch[1] : row.template_name || 'Custom Protocol';
-
-      return {
-        id: row.id,
-        client_id: row.client_id,
-        title: title,
-        status: row.status,
-        template_name: row.template_name,
-        template_category: row.template_category,
-        modules: row.modules,
-        ai_recommendations: row.ai_recommendations,
-        start_date: row.start_date,
-        end_date: row.end_date,
-        created_at: row.created_at,
-        updated_at: row.updated_at
-      };
-    });
-
-    res.json({ protocols });
-  } catch (error) {
-    console.error('Error fetching protocols for client:', error);
-    next(error);
-  }
-});
-
-// ========================================
 // AI PROTOCOL GENERATION
 // ========================================
 
@@ -754,24 +810,127 @@ router.post('/generate', authenticateToken, async (req, res, next) => {
       return res.status(404).json({ error: 'Client not found' });
     }
 
-    // Get notes content if note_ids provided
+    // ========================================
+    // FETCH ALL CLIENT DATA AUTOMATICALLY
+    // ========================================
+
+    // Get ALL notes for this client (not just selected ones)
     let notesContent = '';
-    if (note_ids.length > 0) {
-      try {
-        const notesResult = await db.query(
-          `SELECT content, note_type, created_at FROM notes
-           WHERE id = ANY($1) AND client_id = $2
-           ORDER BY created_at DESC`,
-          [note_ids, client_id]
-        );
-        if (notesResult.rows.length > 0) {
-          notesContent = notesResult.rows.map(note =>
-            `[${note.note_type || 'Note'} - ${new Date(note.created_at).toLocaleDateString()}]:\n${note.content}`
-          ).join('\n\n');
-        }
-      } catch (dbError) {
-        console.error('[Protocol Generate] Error fetching notes:', dbError.message);
+    try {
+      const notesResult = await db.query(
+        `SELECT content, note_type, created_at, is_consultation FROM notes
+         WHERE client_id = $1
+         ORDER BY created_at DESC
+         LIMIT 20`,
+        [client_id]
+      );
+      if (notesResult.rows.length > 0) {
+        notesContent = notesResult.rows.map(note =>
+          `[${note.is_consultation ? 'Consultation' : (note.note_type || 'Note')} - ${new Date(note.created_at).toLocaleDateString()}]:\n${note.content}`
+        ).join('\n\n');
+        console.log(`[Protocol Generate] Found ${notesResult.rows.length} notes for client`);
       }
+    } catch (dbError) {
+      console.error('[Protocol Generate] Error fetching notes:', dbError.message);
+    }
+
+    // Get ALL lab results for this client
+    let labsContent = '';
+    try {
+      const labsResult = await db.query(
+        `SELECT title, lab_type, test_date, ai_summary, extracted_data
+         FROM labs
+         WHERE client_id = $1
+         ORDER BY test_date DESC NULLS LAST
+         LIMIT 10`,
+        [client_id]
+      );
+      if (labsResult.rows.length > 0) {
+        labsContent = labsResult.rows.map(lab => {
+          let labText = `[${lab.lab_type || 'Lab'} - ${lab.title}`;
+          if (lab.test_date) {
+            labText += ` - ${new Date(lab.test_date).toLocaleDateString()}`;
+          }
+          labText += ']:\n';
+
+          // Include AI summary if available
+          if (lab.ai_summary) {
+            labText += `AI Summary: ${lab.ai_summary.substring(0, 1000)}...\n`;
+          }
+
+          // Include extracted markers if available
+          if (lab.extracted_data) {
+            try {
+              const data = typeof lab.extracted_data === 'string'
+                ? JSON.parse(lab.extracted_data)
+                : lab.extracted_data;
+              if (data.markers && data.markers.length > 0) {
+                labText += 'Key Markers:\n';
+                data.markers.forEach(m => {
+                  const flag = m.flag ? ` [${m.flag.toUpperCase()}]` : '';
+                  labText += `  - ${m.name}: ${m.value} ${m.unit || ''} (Ref: ${m.range || 'N/A'})${flag}\n`;
+                });
+              }
+              if (data.interpretation) {
+                labText += `Interpretation: ${data.interpretation}\n`;
+              }
+            } catch (e) {
+              // Skip if can't parse
+            }
+          }
+          return labText;
+        }).join('\n\n');
+        console.log(`[Protocol Generate] Found ${labsResult.rows.length} labs for client`);
+      }
+    } catch (dbError) {
+      console.error('[Protocol Generate] Error fetching labs:', dbError.message);
+    }
+
+    // Get ALL form submissions for this client
+    let formsContent = '';
+    try {
+      const formsResult = await db.query(
+        `SELECT fs.*, ft.name as form_name, ft.category as form_category
+         FROM form_submissions fs
+         LEFT JOIN form_templates ft ON fs.form_template_id = ft.id
+         WHERE fs.client_id = $1
+         ORDER BY fs.submitted_at DESC
+         LIMIT 10`,
+        [client_id]
+      );
+      if (formsResult.rows.length > 0) {
+        formsContent = formsResult.rows.map(form => {
+          let formText = `[Form: ${form.form_name || 'Intake Form'} - ${new Date(form.submitted_at).toLocaleDateString()}]:\n`;
+
+          // Include AI summary if available
+          if (form.ai_summary) {
+            formText += `AI Summary: ${form.ai_summary.substring(0, 1000)}\n`;
+          }
+
+          // Include form responses
+          if (form.responses) {
+            try {
+              const responses = typeof form.responses === 'string'
+                ? JSON.parse(form.responses)
+                : form.responses;
+              formText += 'Responses:\n';
+              Object.entries(responses).forEach(([key, value]) => {
+                if (value && typeof value !== 'object') {
+                  formText += `  - ${key.replace(/_/g, ' ')}: ${value}\n`;
+                } else if (value && typeof value === 'object') {
+                  formText += `  - ${key.replace(/_/g, ' ')}: ${JSON.stringify(value)}\n`;
+                }
+              });
+            } catch (e) {
+              // Skip if can't parse
+            }
+          }
+          return formText;
+        }).join('\n\n');
+        console.log(`[Protocol Generate] Found ${formsResult.rows.length} form submissions for client`);
+      }
+    } catch (dbError) {
+      console.error('[Protocol Generate] Error fetching forms:', dbError.message);
     }
 
     // Map template codes to full names and database IDs
@@ -842,11 +1001,17 @@ CLIENT INFORMATION:
 
 SELECTED PROTOCOL TEMPLATES: ${selectedTemplateNames || 'None - custom protocol'}
 
-${notesContent ? `RELEVANT CLINICAL NOTES:\n${notesContent}\n` : ''}
+${labsContent ? `LABORATORY RESULTS:\nThe following lab results are from the client's medical records. Use these findings to personalize the protocol:\n\n${labsContent}\n` : ''}
+
+${formsContent ? `INTAKE FORMS & QUESTIONNAIRES:\nThe client has submitted the following health assessments:\n\n${formsContent}\n` : ''}
+
+${notesContent ? `CLINICAL NOTES:\nThe following notes have been documented for this client:\n\n${notesContent}\n` : ''}
 
 ${kbContext ? `KNOWLEDGE BASE RECOMMENDATIONS:\nThe following evidence-based recommendations are from the ExpandHealth clinical knowledge base:\n\n${kbContext}\n\nUse these recommendations to inform your protocol. Prioritize KB recommendations when they provide specific dosages or protocols.\n` : ''}
 
 USER REQUEST: ${prompt}
+
+IMPORTANT: Base your protocol on ALL the client data provided above (labs, forms, notes). The protocol should be specifically tailored to address any abnormal lab values, symptoms mentioned in forms, and clinical observations in notes.
 
 IMPORTANT REQUIREMENTS:
 1. For ALL supplements, you MUST include specific therapeutic dosages (e.g., "5g", "500mg", "10 billion CFU")
@@ -1599,6 +1764,85 @@ Return ONLY valid JSON. No markdown, no code blocks.`;
 
   } catch (error) {
     console.error('[Engagement Plan] Error:', error);
+    next(error);
+  }
+});
+
+// Debug endpoint to check and fix protocol data
+router.post('/debug/fix-empty-protocols', authenticateToken, async (req, res, next) => {
+  try {
+    // Get all protocols with empty or null notes
+    const result = await db.query(`
+      SELECT p.id, p.client_id, p.status, p.notes, p.ai_recommendations,
+             pt.name as template_name,
+             c.first_name, c.last_name
+      FROM protocols p
+      JOIN clients c ON p.client_id = c.id
+      LEFT JOIN protocol_templates pt ON p.template_id = pt.id
+      WHERE p.notes IS NULL OR p.notes = ''
+      ORDER BY p.created_at DESC
+    `);
+
+    console.log('[Debug] Found', result.rows.length, 'protocols with empty notes');
+
+    const updated = [];
+    for (const row of result.rows) {
+      const dummyTitle = row.template_name || 'Health Optimization Protocol';
+      const dummyContent = `Title: ${dummyTitle}
+
+This protocol is designed to support optimal health and wellness for ${row.first_name} ${row.last_name}.
+
+## Overview
+A comprehensive approach to improving overall health through targeted interventions, lifestyle modifications, and personalized recommendations.
+
+## Key Focus Areas
+1. Nutritional optimization
+2. Sleep quality improvement
+3. Stress management techniques
+4. Physical activity guidance
+5. Supplement recommendations
+
+## Implementation Timeline
+- Week 1-2: Assessment and baseline establishment
+- Week 3-4: Initial interventions and monitoring
+- Week 5-8: Optimization and adjustment phase
+
+## Expected Outcomes
+- Improved energy levels
+- Better sleep quality
+- Enhanced mental clarity
+- Reduced inflammation markers
+
+## Notes
+This is a sample protocol content. Edit to customize for the client's specific needs.`;
+
+      await db.query(
+        'UPDATE protocols SET notes = $1 WHERE id = $2',
+        [dummyContent, row.id]
+      );
+      updated.push({ id: row.id, title: dummyTitle });
+    }
+
+    res.json({
+      message: `Updated ${updated.length} protocols with sample content`,
+      updated
+    });
+  } catch (error) {
+    console.error('[Debug] Error:', error);
+    next(error);
+  }
+});
+
+// Debug endpoint to view protocol raw data
+router.get('/debug/:id', authenticateToken, async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const result = await db.query('SELECT * FROM protocols WHERE id = $1', [id]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Protocol not found' });
+    }
+    res.json({ protocol: result.rows[0] });
+  } catch (error) {
     next(error);
   }
 });

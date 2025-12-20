@@ -5,6 +5,32 @@
 
 const API_BASE = window.location.origin;
 
+// ========== User Menu Functions ==========
+
+// Toggle user dropdown menu
+function toggleUserMenu() {
+  const dropdown = document.getElementById('userDropdown');
+  dropdown.classList.toggle('active');
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', function(event) {
+  const dropdown = document.getElementById('userDropdown');
+  const wrapper = document.querySelector('.user-menu-wrapper');
+  if (dropdown && wrapper && !wrapper.contains(event.target)) {
+    dropdown.classList.remove('active');
+  }
+});
+
+// Handle Logout
+function handleLogout() {
+  if (confirm('Are you sure you want to log out?')) {
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('user');
+    window.location.href = '/login';
+  }
+}
+
 // Get client ID from URL
 const pathParts = window.location.pathname.split('/');
 const clientId = pathParts[pathParts.length - 1];
@@ -788,8 +814,26 @@ async function loadLabPdfWithPdfJs(url) {
     container.innerHTML = '<div class="pdf-loading-indicator"><div class="mini-loader"></div><p>Loading PDF with high quality...</p></div><canvas id="labPdfCanvas"></canvas><iframe id="labPdfFrame" src="" frameborder="0" style="display: none;"></iframe>';
 
     console.log('🔷 Loading PDF document...');
+
+    // Fetch PDF with auth headers for API endpoints
+    let pdfData;
+    if (url.startsWith('/api/')) {
+      const token = localStorage.getItem('auth_token');
+      console.log('🔷 Fetching PDF with auth token');
+      const response = await fetch(url, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to fetch PDF: ${response.status} ${response.statusText}`);
+      }
+      const arrayBuffer = await response.arrayBuffer();
+      pdfData = { data: arrayBuffer };
+    } else {
+      pdfData = url;
+    }
+
     // Load the PDF document
-    const loadingTask = pdfjsLib.getDocument(url);
+    const loadingTask = pdfjsLib.getDocument(pdfData);
     labPdfDoc = await loadingTask.promise;
     labPdfTotalPages = labPdfDoc.numPages;
     labPdfCurrentPage = 1;
@@ -815,7 +859,20 @@ async function loadLabPdfWithPdfJs(url) {
 
   } catch (error) {
     console.error('Error loading PDF with PDF.js:', error);
-    useLabPdfFallbackIframe(url);
+    // Show error message instead of trying iframe (which won't have auth)
+    const container = document.getElementById('labPdfContainer');
+    container.innerHTML = `
+      <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; padding: 40px; text-align: center; color: #6b7280;">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom: 16px;">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <line x1="12" y1="18" x2="12" y2="12"/>
+          <line x1="9" y1="15" x2="15" y2="15"/>
+        </svg>
+        <p style="font-size: 16px; margin-bottom: 8px; font-weight: 500; color: #374151;">PDF Not Available</p>
+        <p style="font-size: 14px; max-width: 300px;">This lab result needs to be re-uploaded. The PDF file was not stored in the database.</p>
+      </div>
+    `;
   }
 }
 
@@ -974,9 +1031,11 @@ async function viewLab(labId) {
   const uploadDate = new Date(lab.uploaded_date || lab.created_at);
   document.getElementById('labSidebarDate').textContent = uploadDate.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '.');
 
-  // Load PDF with simple iframe (clearer than PDF.js canvas rendering)
-  const pdfFrame = document.getElementById('labPdfFrame');
-  pdfFrame.src = lab.file_url;
+  // Always use API endpoint for PDF (ensures auth headers are used)
+  const pdfUrl = `/api/labs/${labId}/file`;
+
+  // Load PDF with PDF.js (with auth headers)
+  loadLabPdfWithPdfJs(pdfUrl);
 
   // Update AI Summary
   const summaryContainer = document.getElementById('labAiSummary');
@@ -1236,6 +1295,7 @@ async function deleteLab(labId) {
 
   try {
     const token = localStorage.getItem('auth_token');
+    console.log('Deleting lab:', labId);
     const response = await fetch(`${API_BASE}/api/labs/${labId}`, {
       method: 'DELETE',
       headers: {
@@ -1243,8 +1303,12 @@ async function deleteLab(labId) {
       }
     });
 
+    console.log('Delete response:', response.status);
+
     if (!response.ok) {
-      throw new Error('Failed to delete lab');
+      const errorData = await response.json().catch(() => ({}));
+      console.error('Delete error:', errorData);
+      throw new Error(errorData.error || 'Failed to delete lab');
     }
 
     loadClientLabs();

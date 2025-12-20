@@ -95,6 +95,10 @@ function formatFileSize(bytes) {
 function displayLab(lab) {
   currentLab = lab;
 
+  // Normalize file URL - always use API endpoint based on lab ID
+  // This ensures auth headers are always sent, regardless of what's stored in DB
+  const pdfUrl = `/api/labs/${lab.id}/file`;
+
   // Update page title
   const title = lab.title || `${lab.client_name} - ${lab.lab_type}`;
   document.title = `${title} - ExpandHealth`;
@@ -114,12 +118,12 @@ function displayLab(lab) {
   document.getElementById('uploadedBy').textContent = 'Admin'; // TODO: Get actual uploader name
   document.getElementById('labId').textContent = lab.id;
 
-  // Set download button click handler (for API endpoints that need auth)
+  // Set download button click handler (always use authenticated API endpoint)
   downloadBtn.onclick = async (e) => {
     e.preventDefault();
-    if (lab.file_url.startsWith('/api/')) {
-      const token = localStorage.getItem('auth_token');
-      const response = await fetch(lab.file_url, {
+    const token = localStorage.getItem('auth_token');
+    try {
+      const response = await fetch(pdfUrl, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (response.ok) {
@@ -132,14 +136,17 @@ function displayLab(lab) {
         a.click();
         document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
+      } else {
+        alert('PDF file not available. It may need to be re-uploaded.');
       }
-    } else {
-      window.open(lab.file_url, '_blank');
+    } catch (error) {
+      console.error('Download error:', error);
+      alert('Error downloading PDF');
     }
   };
 
   // Load PDF with PDF.js for high-quality rendering
-  loadPdfWithPdfJs(lab.file_url);
+  loadPdfWithPdfJs(pdfUrl);
 
   // Handle AI summary
   if (lab.ai_summary) {
@@ -212,7 +219,19 @@ async function loadPdfWithPdfJs(url) {
     if (currentLab && currentLab.extracted_data) {
       showExtractedDataView();
     } else {
-      useFallbackIframe(url);
+      // Show helpful error message - PDF not in database
+      pdfContainer.innerHTML = `
+        <div style="padding: 40px; text-align: center; color: #6b7280;">
+          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin: 0 auto 16px; display: block;">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="12" y1="18" x2="12" y2="12"/>
+            <line x1="9" y1="15" x2="15" y2="15"/>
+          </svg>
+          <p style="font-size: 16px; margin-bottom: 8px; font-weight: 500;">PDF Not Available</p>
+          <p style="font-size: 14px; max-width: 400px; margin: 0 auto;">This lab result needs to be re-uploaded. The PDF file was not stored in the database.</p>
+        </div>
+      `;
     }
   }
 }

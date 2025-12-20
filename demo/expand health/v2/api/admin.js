@@ -606,7 +606,8 @@ router.post('/users/invite', requireClinicAdmin, async (req, res, next) => {
     await logAdminAction(req.user.id, req.tenant?.id, 'send_invitation', 'invitation', null, null, { email, role }, req);
 
     // In production, send email with invitation link
-    const inviteUrl = `${process.env.APP_URL || 'http://localhost:3001'}/accept-invite?token=${token}`;
+    const baseUrl = process.env.APP_URL || (process.env.RAILWAY_PUBLIC_DOMAIN ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` : 'http://localhost:3001');
+    const inviteUrl = `${baseUrl}/accept-invite?token=${token}`;
 
     res.status(201).json({
       message: 'Invitation sent successfully',

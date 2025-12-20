@@ -40,10 +40,18 @@ app.use(helmet({
 // CORS configuration
 app.use(cors({
   origin: process.env.NODE_ENV === 'production'
-    ? ['https://app.expandhealth.io', 'https://expandhealth-ai-copilot-production.up.railway.app']
+    ? ['https://app.expandhealth.ai', 'https://app.expandhealth.io', 'https://expandhealth-ai-copilot-production.up.railway.app']
     : ['http://localhost:3001', 'http://127.0.0.1:3001'],
   credentials: true
 }));
+
+// Redirect .io to .ai domain
+app.use((req, res, next) => {
+  if (req.hostname === 'app.expandhealth.io') {
+    return res.redirect(301, `https://app.expandhealth.ai${req.originalUrl}`);
+  }
+  next();
+});
 
 // Body parsers
 app.use(express.json({ limit: '10mb' }));

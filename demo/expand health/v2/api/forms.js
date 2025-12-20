@@ -603,7 +603,7 @@ router.post('/links', authenticateToken, async (req, res) => {
         [form_id, client_id || null, linkToken, linkType, expiresAt, req.user.id]
       );
 
-      const baseUrl = process.env.APP_URL || `http://localhost:${process.env.PORT || 3001}`;
+      const baseUrl = process.env.APP_URL || (process.env.RAILWAY_PUBLIC_DOMAIN ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` : `http://localhost:${process.env.PORT || 3001}`);
       const formUrl = `${baseUrl}/f/${form_id}?token=${linkToken}`;
 
       res.status(201).json({
@@ -617,7 +617,7 @@ router.post('/links', authenticateToken, async (req, res) => {
     } catch (dbError) {
       // If form_links table doesn't exist, fall back to simple URL
       console.log('form_links table may not exist, using simple URL');
-      const baseUrl = process.env.APP_URL || `http://localhost:${process.env.PORT || 3001}`;
+      const baseUrl = process.env.APP_URL || (process.env.RAILWAY_PUBLIC_DOMAIN ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` : `http://localhost:${process.env.PORT || 3001}`);
       const formUrl = client_id
         ? `${baseUrl}/f/${form_id}?cid=${client_id}`
         : `${baseUrl}/f/${form_id}`;

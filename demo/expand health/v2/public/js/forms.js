@@ -281,13 +281,28 @@ function toggleDropdown(event, formId) {
   event.stopPropagation();
 
   const dropdown = document.getElementById(`dropdown-${formId}`);
+  const button = event.target.closest('.more-btn');
 
   // Close all other open menus
   document.querySelectorAll('.more-menu.active').forEach(menu => {
     if (menu.id !== `dropdown-${formId}`) {
       menu.classList.remove('active');
+      menu.classList.remove('open-upward');
     }
   });
+
+  // Check if dropdown would go below viewport
+  if (button) {
+    const buttonRect = button.getBoundingClientRect();
+    const dropdownHeight = 200; // Approximate height of dropdown
+    const spaceBelow = window.innerHeight - buttonRect.bottom;
+
+    if (spaceBelow < dropdownHeight) {
+      dropdown.classList.add('open-upward');
+    } else {
+      dropdown.classList.remove('open-upward');
+    }
+  }
 
   dropdown.classList.toggle('active');
   currentDropdown = dropdown.classList.contains('active') ? dropdown : null;
