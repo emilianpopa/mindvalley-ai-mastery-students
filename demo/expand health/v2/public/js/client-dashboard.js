@@ -880,15 +880,80 @@ function closeLabViewerModal() {
 
 // Download lab PDF
 function downloadLabPdf() {
-  if (!currentViewingLab) return;
-  window.open(currentViewingLab.file_url, '_blank');
+  if (!currentViewingLab) {
+    console.log('No lab selected for download');
+    return;
+  }
+
+  console.log('Downloading lab:', currentViewingLab.title, currentViewingLab.file_url);
+
+  // Create a temporary link and trigger download
+  const link = document.createElement('a');
+  link.href = currentViewingLab.file_url;
+  link.download = currentViewingLab.title || 'lab-result.pdf';
+  link.target = '_blank';
+
+  // For demo labs without real files, show a message
+  if (currentViewingLab.file_url && currentViewingLab.file_url.includes('/demo-')) {
+    alert('This is a demo lab without an actual PDF file. In production, the PDF would download here.');
+    return;
+  }
+
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 }
 
 // Print lab PDF
 function printLabPdf() {
-  if (!currentViewingLab) return;
+  if (!currentViewingLab) {
+    console.log('No lab selected for print');
+    return;
+  }
+
+  console.log('Printing lab:', currentViewingLab.title);
+
+  // For demo labs without real files, show a message
+  if (currentViewingLab.file_url && currentViewingLab.file_url.includes('/demo-')) {
+    alert('This is a demo lab without an actual PDF file. In production, the PDF would print here.');
+    return;
+  }
+
   const iframe = document.getElementById('labPdfFrame');
-  iframe.contentWindow.print();
+  if (iframe && iframe.contentWindow) {
+    try {
+      iframe.contentWindow.print();
+    } catch (e) {
+      console.error('Print failed:', e);
+      // Fallback: open in new tab for printing
+      window.open(currentViewingLab.file_url, '_blank');
+    }
+  }
+}
+
+// Show more options menu for lab
+function showLabMoreOptions() {
+  // For now, show a simple alert with options
+  const options = [
+    'Delete this lab',
+    'View full screen',
+    'Share with patient',
+    'Add to protocol'
+  ];
+
+  const choice = prompt('More Options:\\n1. Delete this lab\\n2. View full screen\\n3. Share with patient\\n4. Add to protocol\\n\\nEnter option number (or cancel):');
+
+  if (choice === '1') {
+    if (confirm('Are you sure you want to delete this lab?')) {
+      deleteLab(currentViewingLab.id);
+    }
+  } else if (choice === '2') {
+    window.open(`/labs/${currentViewingLab.id}`, '_blank');
+  } else if (choice === '3') {
+    alert('Share functionality coming soon!');
+  } else if (choice === '4') {
+    alert('Add to protocol functionality coming soon!');
+  }
 }
 
 // Generate AI summary
@@ -2025,6 +2090,7 @@ window.viewLab = viewLab;
 window.closeLabViewerModal = closeLabViewerModal;
 window.downloadLabPdf = downloadLabPdf;
 window.printLabPdf = printLabPdf;
+window.showLabMoreOptions = showLabMoreOptions;
 window.generateLabSummary = generateLabSummary;
 window.addLabNote = addLabNote;
 window.deleteLab = deleteLab;
