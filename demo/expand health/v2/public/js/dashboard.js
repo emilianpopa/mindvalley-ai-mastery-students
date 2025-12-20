@@ -80,6 +80,12 @@ function updateDashboardStats(stats) {
   if (kbStatEl) {
     kbStatEl.textContent = stats.kbDocuments;
   }
+
+  // Update Engagement Plans
+  const engagementPlansStatEl = document.getElementById('statEngagementPlans');
+  if (engagementPlansStatEl) {
+    engagementPlansStatEl.textContent = stats.engagementPlans?.total || 0;
+  }
 }
 
 // Update welcome message with user name

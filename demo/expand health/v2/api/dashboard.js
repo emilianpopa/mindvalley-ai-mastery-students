@@ -52,6 +52,13 @@ router.get('/stats', authenticateToken, async (req, res, next) => {
       FROM protocols
     `);
 
+    // Get engagement plans count (protocols with ai_recommendations)
+    const engagementPlansResult = await db.query(`
+      SELECT COUNT(*) as total_engagement_plans
+      FROM protocols
+      WHERE ai_recommendations IS NOT NULL AND TRIM(ai_recommendations) != ''
+    `);
+
     // Get KB documents count (5 sample + uploaded)
     const uploadedDocuments = loadUploadedDocuments();
     const kbDocumentsCount = 5 + uploadedDocuments.length;
@@ -77,6 +84,9 @@ router.get('/stats', authenticateToken, async (req, res, next) => {
         protocols: {
           total: parseInt(protocolsResult.rows[0].total_protocols) || 0,
           active: parseInt(protocolsResult.rows[0].active_protocols) || 0
+        },
+        engagementPlans: {
+          total: parseInt(engagementPlansResult.rows[0].total_engagement_plans) || 0
         },
         kbDocuments: kbDocumentsCount
       },
