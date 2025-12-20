@@ -190,8 +190,9 @@ async function generateSummary() {
 
     if (response.ok) {
       const data = await response.json();
-      submissionData.ai_summary = data.ai_summary;
-      container.innerHTML = formatAISummary(data.ai_summary);
+      const summary = data.ai_summary || data.summary;
+      submissionData.ai_summary = summary;
+      container.innerHTML = formatAISummary(summary);
     } else {
       container.innerHTML = '<p class="summary-placeholder">Could not generate summary. Please try again.</p>';
     }

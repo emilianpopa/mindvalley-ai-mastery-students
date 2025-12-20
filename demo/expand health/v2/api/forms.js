@@ -1581,7 +1581,8 @@ router.post('/submissions/:id/regenerate-summary', authenticateToken, async (req
 
     res.json({
       success: true,
-      summary: summary
+      summary: summary,
+      ai_summary: summary  // Also include as ai_summary for frontend compatibility
     });
   } catch (error) {
     console.error('Error regenerating summary:', error);
