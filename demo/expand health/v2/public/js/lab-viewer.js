@@ -136,6 +136,13 @@ function displayLab(lab) {
 
 // Load PDF using PDF.js for high-quality rendering
 async function loadPdfWithPdfJs(url) {
+  // Check if this is a demo/placeholder URL (no real PDF file)
+  if (url && url.includes('/demo-') && currentLab && currentLab.extracted_data) {
+    console.log('Demo lab detected, showing extracted data view');
+    showExtractedDataView();
+    return;
+  }
+
   if (!window.pdfjsLib) {
     console.warn('PDF.js not available, falling back to iframe');
     useFallbackIframe(url);
@@ -165,8 +172,84 @@ async function loadPdfWithPdfJs(url) {
 
   } catch (error) {
     console.error('Error loading PDF with PDF.js:', error);
-    useFallbackIframe(url);
+    // If PDF fails to load and we have extracted data, show that instead
+    if (currentLab && currentLab.extracted_data) {
+      showExtractedDataView();
+    } else {
+      useFallbackIframe(url);
+    }
   }
+}
+
+// Show extracted data when PDF is not available (demo labs)
+function showExtractedDataView() {
+  const extractedData = typeof currentLab.extracted_data === 'string'
+    ? JSON.parse(currentLab.extracted_data)
+    : currentLab.extracted_data;
+
+  // Hide PDF controls
+  const controls = document.querySelector('.pdf-controls');
+  if (controls) {
+    controls.style.display = 'none';
+  }
+
+  // Hide download button for demo labs
+  if (downloadBtn) {
+    downloadBtn.style.display = 'none';
+  }
+
+  // Build the extracted data view
+  let html = `
+    <div class="extracted-data-view">
+      <div class="demo-notice">
+        <span class="demo-icon">📊</span>
+        <span>Demo Lab Results - Extracted Data View</span>
+      </div>
+      <div class="markers-grid">
+  `;
+
+  if (extractedData.markers && Array.isArray(extractedData.markers)) {
+    extractedData.markers.forEach(marker => {
+      const statusClass = marker.flag === 'abnormal' ? 'status-abnormal' :
+                          marker.flag === 'warning' ? 'status-warning' : 'status-normal';
+      const statusIcon = marker.flag === 'abnormal' ? '🔴' :
+                         marker.flag === 'warning' ? '🟡' : '🟢';
+
+      html += `
+        <div class="marker-card ${statusClass}">
+          <div class="marker-header">
+            <span class="marker-name">${marker.name}</span>
+            <span class="marker-status">${statusIcon}</span>
+          </div>
+          <div class="marker-value">
+            <span class="value">${marker.value}</span>
+            <span class="unit">${marker.unit || ''}</span>
+          </div>
+          <div class="marker-range">
+            Reference: ${marker.range || 'N/A'}
+          </div>
+          ${marker.note ? `<div class="marker-note">${marker.note}</div>` : ''}
+        </div>
+      `;
+    });
+  }
+
+  html += `
+      </div>
+      ${extractedData.interpretation ? `
+        <div class="interpretation-box">
+          <h4>Clinical Interpretation</h4>
+          <p>${extractedData.interpretation}</p>
+        </div>
+      ` : ''}
+    </div>
+  `;
+
+  pdfContainer.innerHTML = html;
+  pdfContainer.style.display = 'block';
+  pdfContainer.style.overflow = 'auto';
+  pdfContainer.style.padding = '20px';
+  pdfFrame.style.display = 'none';
 }
 
 // Calculate scale to fit container width
