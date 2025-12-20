@@ -1,0 +1,45 @@
+{
+  "name": "Gemini File Search - Upload Document v2 (FIXED - fileSearchStores)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "kb-upload-document",
+        "responseMode": "lastNode",
+        "options": {
+          "responseData": "firstEntryJson"
+        }
+      },
+      "id": "Webhook",
+      "name": "Webhook /kb-upload-document",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [280, 300]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const { apiKey, storeId, fileName, mimeType, content } = $json;\nif (!apiKey) return [{ json: { status: 'ERROR', error: 'apiKey required' } }];\nif (!storeId) return [{ json: { status: 'ERROR', error: 'storeId required' } }];\nif (!fileName) return [{ json: { status: 'ERROR', error: 'fileName required' } }];\nif (!content) return [{ json: { status: 'ERROR', error: 'content (base64) required' } }];\n\n// Extract store ID from full name format (e.g., \"fileSearchStores/abc123\" -> \"abc123\")\nconst extractedStoreId = storeId.includes('/') ? storeId.split('/').pop() : storeId;\n\nconst buffer = Buffer.from(content, 'base64');\nconst contentLength = buffer.length;\n\nasync function upload() {\n  // Step 1: Initiate resumable upload using uploadToFileSearchStore endpoint\n  const start = await this.helpers.httpRequest({\n    method: 'POST',\n    url: `https://generativelanguage.googleapis.com/upload/v1beta/fileSearchStores/${extractedStoreId}:uploadToFileSearchStore?key=${apiKey}`,\n    headers: {\n      'X-Goog-Upload-Protocol': 'resumable',\n      'X-Goog-Upload-Command': 'start',\n      'X-Goog-Upload-Header-Content-Length': contentLength.toString(),\n      'X-Goog-Upload-Header-Content-Type': mimeType || 'text/plain',\n      'Content-Type': 'application/json'\n    },\n    body: { displayName: fileName, mimeType: mimeType || 'text/plain' },\n    json: true,\n    resolveWithFullResponse: true,\n    simple: false\n  });\n\n  if (!start.headers || !start.headers['x-goog-upload-url']) {\n    return [{ json: { status: 'ERROR', error: 'Upload initiation failed', response: start.body } }];\n  }\n\n  const uploadUrl = Array.isArray(start.headers['x-goog-upload-url']) ? start.headers['x-goog-upload-url'][0] : start.headers['x-goog-upload-url'];\n\n  // Step 2: Upload and finalize\n  const uploaded = await this.helpers.httpRequest({\n    method: 'POST',\n    url: uploadUrl,\n    headers: {\n      'Content-Length': contentLength.toString(),\n      'X-Goog-Upload-Offset': '0',\n      'X-Goog-Upload-Command': 'upload, finalize'\n    },\n    body: buffer,\n    encoding: null,\n    resolveWithFullResponse: true,\n    simple: false\n  });\n\n  const responseBody = uploaded.body ? (() => { try { return JSON.parse(uploaded.body); } catch { return {}; } })() : {};\n  if (uploaded.statusCode && uploaded.statusCode >= 400) {\n    return [{ json: { status: 'ERROR', error: `Upload failed (${uploaded.statusCode})`, body: responseBody } }];\n  }\n\n  // Extract operation/document ID from response\n  const operationId = responseBody.name;\n  \n  return [{ json: { status: 'SUCCESS', operationId: operationId, fileName: fileName, operation: responseBody } }];\n}\n\nreturn upload.call(this);"
+      },
+      "id": "Upload",
+      "name": "Upload to Gemini",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [560, 300],
+      "notes": "FIXED: Uses new fileSearchStores endpoint instead of corpora"
+    }
+  ],
+  "connections": {
+    "Webhook /kb-upload-document": {
+      "main": [
+        [
+          {
+            "node": "Upload to Gemini",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

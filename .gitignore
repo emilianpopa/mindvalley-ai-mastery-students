@@ -1,0 +1,25 @@
+# Environment variables (contains API keys)
+.env
+.env.local
+.env.*.local
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Node modules
+node_modules/
+
+# Logs
+*.log
+logs/
+
+# Local configuration
+.claude/settings.local.json

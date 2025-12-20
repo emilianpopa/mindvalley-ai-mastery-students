@@ -1,17 +1,17 @@
 {
-  "name": "Gemini File Search - List Documents (Webhook)",
+  "name": "Gemini File Search - List Stores (Webhook)",
   "nodes": [
     {
       "parameters": {
         "httpMethod": "POST",
-        "path": "kb-list-documents",
+        "path": "kb-list-stores",
         "responseMode": "lastNode",
         "options": {
           "responseData": "firstEntryJson"
         }
       },
       "id": "Webhook",
-      "name": "Webhook /kb-list-documents",
+      "name": "Webhook /kb-list-stores",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1,
       "position": [280, 300]
@@ -19,7 +19,7 @@
     {
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "const { apiKey, storeId } = $json.body;\nif (!apiKey) {\n  return [{ json: { status: 'ERROR', error: 'apiKey required' } }];\n}\nif (!storeId) {\n  return [{ json: { status: 'ERROR', error: 'storeId required' } }];\n}\nreturn [{ json: { apiKey, storeId } }];"
+        "jsCode": "const { apiKey } = $json.body;\nif (!apiKey || apiKey.length < 20) {\n  return [{ json: { status: 'ERROR', error: 'API key is required' } }];\n}\nreturn [{ json: { apiKey } }];"
       },
       "id": "Validate",
       "name": "Validate Input",
@@ -29,21 +29,30 @@
     },
     {
       "parameters": {
-        "url": "=https://generativelanguage.googleapis.com/v1beta/{{$json.storeId}}/documents?key={{$json.apiKey}}",
+        "url": "https://generativelanguage.googleapis.com/v1beta/corpora",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "key",
+              "value": "={{ $json.apiKey }}"
+            }
+          ]
+        },
         "responseFormat": "json",
         "options": {}
       },
       "id": "Http Request",
-      "name": "Fetch Documents",
+      "name": "Fetch Stores",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [760, 300],
-      "notes": "Lists documents in the given File Search corpus."
+      "notes": "Lists File Search corpora for the provided API key."
     },
     {
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "const res = $json;\nif (res.statusCode && res.statusCode !== 200) {\n  return [{ json: { status: 'ERROR', error: `Gemini returned ${res.statusCode}`, body: res.body || res } }];\n}\nconst body = res.body || res;\nreturn [{ json: { status: 'SUCCESS', documents: body.documents || body.files || [] } }];"
+        "jsCode": "const res = $json;\nif (res.statusCode && res.statusCode !== 200) {\n  return [{ json: { status: 'ERROR', error: `Gemini returned ${res.statusCode}`, body: res.body || res } }];\n}\nreturn [{ json: { status: 'SUCCESS', corpora: res.body?.corpora || res.corpora || [] } }];"
       },
       "id": "Return",
       "name": "Format Response",
@@ -53,7 +62,7 @@
     }
   ],
   "connections": {
-    "Webhook /kb-list-documents": {
+    "Webhook /kb-list-stores": {
       "main": [
         [
           {
@@ -68,14 +77,14 @@
       "main": [
         [
           {
-            "node": "Fetch Documents",
+            "node": "Fetch Stores",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Fetch Documents": {
+    "Fetch Stores": {
       "main": [
         [
           {

@@ -1,23 +1,56 @@
-# Hattie B's Hot Chicken - FAQ Draft
+# Expand Health – Frequently Asked Questions
 
-## FAQ: Heat Levels
+## FAQ: Getting Started
 
-**Q: What heat levels do you offer and which one should I try first?**
+**Q: How do I begin my longevity journey with Expand Health?**
 
-A: We offer six heat levels: Southern (no heat), Mild, Medium, Hot, Damn Hot, and Shut the Cluck Up. If you're new to Nashville hot chicken, we recommend starting with Medium - it has great flavor with a manageable kick. You can always go hotter next time!
+A: Every client begins with a Health Insights assessment, which includes Oligoscan, InBody composition, BioWell energy assessment, and lifestyle intake. This gives us a clear understanding of your biology. From there, we create a personalized protocol tailored to your goals—whether that's foundational recovery, metabolic optimization, or advanced regeneration.
 
-## FAQ: Ordering
+## FAQ: Locations & Access
 
-**Q: Do you take reservations or is it first-come, first-served?**
+**Q: Where are your clinics located?**
 
-A: We do not take reservations - it's first-come, first-served at all locations. The wait is part of the experience! Pro tip: weekday lunches typically have shorter wait times than weekend dinners.
+A: We currently operate two longevity hubs:
+- **Cape Town, South Africa** – De Waterkant (HBOT, IV therapy, red light, PEMF, cryo, sauna, medical consultations, coaching)
+- **Bucharest, Romania** – Aviatorilor Boulevard (longevity medical, esthetics, diagnostics, biohacking, IV therapy)
 
-## FAQ: Dietary
+Additional territories in Asia and the Middle East are under development.
 
-**Q: Do you have any gluten-free or vegetarian options?**
+## FAQ: Protocol Options
 
-A: Our sides like coleslaw, baked beans, and banana pudding are vegetarian-friendly. For gluten-free guests, our chicken is naturally gluten-free (we use no breading), but it is cooked in shared fryers. Please inform our staff of any allergies when ordering.
+**Q: What are the different protocol tiers and how do I choose?**
+
+A: We offer three tiers based on your goals and time commitment:
+- **Restore** (1-2 sessions/week): Foundational recovery, detox, sleep, energy
+- **Revitalize** (2-3 sessions/week): Adds IV therapy, HBOT, health coaching for metabolic health and inflammation
+- **Regenerate** (3-4 sessions/week): Advanced medical therapies, peptides, neurotherapies for performance and accelerated recovery
+
+Your protocol is personalized based on your diagnostics and consultation with our clinicians.
+
+## FAQ: Medical Oversight
+
+**Q: Are your treatments medically supervised?**
+
+A: Yes. All medical procedures are supervised by licensed physicians. We follow IFM (Institute for Functional Medicine) standards and conventional medical safety norms. Diagnostic interpretation is conducted only by qualified clinicians, and informed consent is mandatory before any medical intervention.
+
+## FAQ: Technology & AI
+
+**Q: How does Expand Labs AI work?**
+
+A: Expand Labs is our proprietary AI platform that powers diagnostic interpretation, generates personalized protocols, manages patient engagement, and runs clinic operations (CRM, bookings, workflows). The AI analyzes your diagnostic data and creates actionable health insights, which are then reviewed and refined by our medical team.
+
+## FAQ: Booking & Contact
+
+**Q: How do I book an assessment or session?**
+
+A: Contact us directly:
+- **Cape Town:** capetown@expand.health
+- **Bucharest:** bucharest@expand.health
+- **General inquiries:** info@expand.health
+- **Website:** https://expand.health
+
+Membership clients receive priority scheduling and support.
 
 ---
 
-*Generated for AI Mastery bridge test - customize with your real business content in class.*
+*Expand Health knowledge base – Updated for AI customer service system*

@@ -1,0 +1,30 @@
+{
+  "name": "expandhealth-ai-copilot",
+  "version": "1.0.0",
+  "description": "ExpandHealth AI Copilot - Production-ready treatment plan generator",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "NODE_ENV=development node server.js",
+    "prod": "NODE_ENV=production node server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "expandhealth",
+    "ai",
+    "copilot",
+    "treatment-plans",
+    "gemini",
+    "healthcare"
+  ],
+  "author": "ExpandHealth",
+  "license": "UNLICENSED",
+  "private": true,
+  "dependencies": {
+    "formidable": "^3.5.1"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  }
+}

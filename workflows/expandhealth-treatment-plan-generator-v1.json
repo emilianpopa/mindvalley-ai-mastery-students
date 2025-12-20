@@ -1,0 +1,266 @@
+{
+  "name": "ExpandHealth Treatment Plan Generator v1",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "expandhealth-generate-plan",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook - Treatment Plan Request",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [
+        240,
+        300
+      ],
+      "webhookId": "expandhealth-plan"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combinationMode": "mergeByPosition",
+        "options": {}
+      },
+      "id": "merge-data",
+      "name": "Merge Patient Data",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2.1,
+      "position": [
+        460,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "patient-context",
+              "name": "patientContext",
+              "value": "={{ $json.body.patientTranscript || 'No transcript provided' }}",
+              "type": "string"
+            },
+            {
+              "id": "lab-results",
+              "name": "labResults",
+              "value": "={{ $json.body.labResults || 'No lab results provided' }}",
+              "type": "string"
+            },
+            {
+              "id": "patient-name",
+              "name": "patientName",
+              "value": "={{ $json.body.patientName || 'Patient' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "extract-input",
+      "name": "Extract Input Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [
+        680,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "anthropicApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "={{ $credentials.apiKey }}"
+            },
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "claude-sonnet-4-20250514"
+            },
+            {
+              "name": "max_tokens",
+              "value": "8000"
+            },
+            {
+              "name": "system",
+              "value": "You are SUGAR, the clinical intelligence agent for ExpandHealth longevity clinics. Generate comprehensive, evidence-based treatment plans that integrate ExpandHealth therapies (HBOT, IV nutrients, NAD+, red light, sauna, peptides). Use the ExpandHealth brand voice: clear, warm, confident, and empowering. Always explain the 'why' behind recommendations."
+            },
+            {
+              "name": "messages",
+              "value": "=[\n  {\n    \"role\": \"user\",\n    \"content\": \"Generate a comprehensive treatment plan for this patient.\\n\\n## PATIENT CONVERSATION:\\n{{ $json.patientContext }}\\n\\n## LAB RESULTS:\\n{{ $json.labResults }}\\n\\n## PROTOCOLS TO REFERENCE:\\n\\n### Metabolic Syndrome Protocol\\nKey interventions: Mediterranean diet, berberine 500mg 2x/day, omega-3 2-4g/day, CoQ10 200mg/day, magnesium 400-600mg/day, vitamin D 4000 IU/day.\\n\\nHBOT: 20 sessions over 6-10 weeks (2-3x/week) at 1.5-2.0 ATA for 60-90 min. Improves insulin sensitivity, reduces inflammation, enhances mitochondrial function.\\n\\nNAD+ IV: Weekly for 4 weeks (250-500mg), then maintenance every 2-4 weeks. Supports cellular energy, DNA repair, metabolic optimization.\\n\\nExpected outcomes: 4-week targets - energy +30-50%, weight loss 2-4kg, glucose reduction 10-20 mg/dL. 12-week targets - HbA1c <6.0%, LDL reduction 20-30%, reversal of metabolic syndrome.\\n\\n### Chronic Fatigue Protocol\\nCore supplements: CoQ10 200-400mg/day, L-Carnitine 1500-3000mg/day, PQQ 20mg/day, Rhodiola 300-600mg/day, vitamin D 4000-10,000 IU/day, magnesium 400-600mg/day.\\n\\nNAD+ IV (PRIMARY): Weekly for 4-6 weeks, then every 2-4 weeks. Rapidly improves ATP production, cellular energy.\\n\\nHBOT: 10-20 sessions over 4-8 weeks. Enhances mitochondrial ATP, reduces neuroinflammation, improves cognitive function.\\n\\nRed Light Therapy: Daily 15-20 min (660nm + 850nm). Increases mitochondrial ATP, reduces oxidative stress, improves mood.\\n\\nSauna: 3-5x/week, 20-30 min. Cardiovascular conditioning, detox support, stress reduction.\\n\\nExpected outcomes: Week 2-4 energy +10-20%, Week 6-8 energy +30-50%, Week 12 energy 60-80% of normal.\\n\\n### Cardiovascular Health Protocol\\nMediterranean diet (PREDIMED study: 30% reduction in CV events), omega-3 2-4g/day (reduces triglycerides 20-30%), CoQ10 100-300mg/day, magnesium 400-600mg/day, vitamin K2 100-200mcg/day.\\n\\nSauna (HIGHLY RECOMMENDED): 4-7x/week, 20-30 min. Finnish studies show 4-7 sessions/week reduce CVD mortality by 50% vs <1 session/week.\\n\\nHBOT: 20-40 sessions for cardiovascular optimization. Improves endothelial function, reduces inflammation, supports angiogenesis.\\n\\nExercise: 150-300 min/week moderate or 75-150 min vigorous. Zone 2 training + 1-2x/week HIIT.\\n\\nTargets: 3-month - LDL reduction 10-20%, BP reduction 5-10 mmHg, hsCRP <1.0 mg/L. 6-month - LDL at target, BP <120/80, 10-year CVD risk reduced 20-50%.\\n\\n---\\n\\nGenerate the treatment plan using this structure:\\n\\n# PATIENT ANALYSIS: {{ $json.patientName }}\\n\\n## CLINICAL SUMMARY\\n[Chief complaints, key lab findings, diagnoses, patient goals]\\n\\n## KEY CORRELATIONS & INSIGHTS\\n[Synthesize conversation + labs, identify patterns]\\n\\n## TREATMENT PLAN\\n\\n### PHASE 1: FOUNDATION (Weeks 0-4)\\n#### Nutrition Protocol\\n[Specific dietary approach personalized to patient]\\n\\n#### Core Supplement Stack\\n[Organized by category with dosing, rationale, evidence]\\n\\n#### Exercise Protocol\\n[Graduated plan based on patient's current capacity]\\n\\n#### Lifestyle Optimization\\n[Sleep, stress management]\\n\\n### PHASE 2: ADVANCED THERAPIES (Weeks 4-12)\\n[For each recommended ExpandHealth therapy: HBOT, NAD+ IV, Red Light, Sauna, etc.]\\n\\n**[Therapy Name]**\\n- Recommendation: [Protocol details]\\n- Rationale: [Why for this patient]\\n- Expected Outcomes: [What they'll notice]\\n- Why This is Right for You: [Personalize with patient quotes/context]\\n\\n### PHASE 3: OPTIMIZATION & MAINTENANCE (Weeks 12+)\\n[Long-term plan, lab retesting schedule]\\n\\n## EXPECTED OUTCOMES\\n[4-week, 12-week, 24-week targets]\\n\\n## PATIENT EDUCATION & NEXT STEPS\\n[Key concepts, immediate actions]\\n\\n## CLINICAL NOTES (Doctor's Private Section)\\n[Risk stratification, follow-up priorities, red flags]\\n\\nUse ExpandHealth brand voice: clear, warm, empowering. Include patient quotes for personalization. Explain the 'why' behind each recommendation.\"\n  }\n]"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "claude-generate-plan",
+      "name": "Claude - Generate Treatment Plan",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        900,
+        300
+      ],
+      "credentials": {
+        "anthropicApi": {
+          "id": "anthropic-credentials",
+          "name": "Anthropic API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "treatment-plan",
+              "name": "treatmentPlan",
+              "value": "={{ $json.content[0].text }}",
+              "type": "string"
+            },
+            {
+              "id": "patient-name-output",
+              "name": "patientName",
+              "value": "={{ $('Extract Input Data').item.json.patientName }}",
+              "type": "string"
+            },
+            {
+              "id": "generated-at",
+              "name": "generatedAt",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            },
+            {
+              "id": "status",
+              "name": "status",
+              "value": "success",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "format-output",
+      "name": "Format Output",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [
+        1120,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { status: $json.status, patientName: $json.patientName, treatmentPlan: $json.treatmentPlan, generatedAt: $json.generatedAt } }}",
+        "options": {}
+      },
+      "id": "respond-success",
+      "name": "Respond - Treatment Plan",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1340,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { status: 'error', message: $json.error.message || 'Failed to generate treatment plan', error: $json.error } }}",
+        "options": {
+          "responseCode": 500
+        }
+      },
+      "id": "respond-error",
+      "name": "Respond - Error",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1120,
+        480
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook - Treatment Plan Request": {
+      "main": [
+        [
+          {
+            "node": "Extract Input Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Input Data": {
+      "main": [
+        [
+          {
+            "node": "Claude - Generate Treatment Plan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude - Generate Treatment Plan": {
+      "main": [
+        [
+          {
+            "node": "Format Output",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond - Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Output": {
+      "main": [
+        [
+          {
+            "node": "Respond - Treatment Plan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1",
+  "id": "expandhealth-v1",
+  "meta": {
+    "instanceId": "your-instance-id"
+  },
+  "tags": []
+}

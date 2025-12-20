@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Upload</title>
+</head>
+<body>
+    <h1>Test PDF Upload</h1>
+    <input type="file" id="fileInput" multiple accept=".pdf">
+    <button onclick="testUpload()">Upload</button>
+    <pre id="result"></pre>
+
+    <script>
+        async function testUpload() {
+            const files = document.getElementById('fileInput').files;
+            const formData = new FormData();
+
+            for (let i = 0; i < files.length; i++) {
+                formData.append('pdfs', files[i]);
+            }
+
+            try {
+                const response = await fetch('http://localhost:3000/api/upload-pdfs', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+                document.getElementById('result').textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                document.getElementById('result').textContent = 'Error: ' + error.message;
+            }
+        }
+    </script>
+</body>
+</html>

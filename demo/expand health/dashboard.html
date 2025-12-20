@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ExpandHealth AI Copilot</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+            font-size: 0.95rem;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-family: inherit;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-group textarea {
+            min-height: 150px;
+            resize: vertical;
+        }
+
+        .file-upload {
+            border: 2px dashed #667eea;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #f8f9ff;
+        }
+
+        .file-upload:hover {
+            background: #eef1ff;
+            border-color: #5568d3;
+        }
+
+        .file-upload input {
+            display: none;
+        }
+
+        .file-upload-label {
+            color: #667eea;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .file-name {
+            margin-top: 10px;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            width: 100%;
+        }
+
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .result {
+            display: none;
+        }
+
+        .result.active {
+            display: block;
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .download-btn {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .treatment-plan {
+            background: #f9fafb;
+            border-radius: 8px;
+            padding: 25px;
+            line-height: 1.7;
+            white-space: pre-wrap;
+            font-family: 'Georgia', serif;
+            color: #1f2937;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .quick-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .quick-action-btn {
+            flex: 1;
+            background: #f3f4f6;
+            border: 2px solid #e5e7eb;
+            padding: 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+
+        .quick-action-btn:hover {
+            background: #e5e7eb;
+            border-color: #667eea;
+        }
+
+        .example-note {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div>
+                <h1>🏥 ExpandHealth AI Copilot</h1>
+                <p>Generate personalized treatment plans in seconds</p>
+            </div>
+            <div style="display: flex; gap: 15px;">
+                <a href="/patients" style="padding: 10px 20px; background: #667eea; color: white; text-decoration: none; border-radius: 6px; font-weight: 500;">👥 View Patients</a>
+                <a href="/kb-admin" style="padding: 10px 20px; background: #667eea; color: white; text-decoration: none; border-radius: 6px; font-weight: 500;">📚 Knowledge Base</a>
+            </div>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-value">15s</div>
+                <div class="stat-label">Generation Time</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">75%</div>
+                <div class="stat-label">Time Saved</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">$1-2</div>
+                <div class="stat-label">Cost Per Patient</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="example-note">
+                <strong>💡 Try it now!</strong> Click "Load John Smith Example" to test with a sample patient, or upload your own blood test PDF!
+            </div>
+
+            <form id="patientForm">
+                <div class="form-group">
+                    <label for="patientName">Patient Name</label>
+                    <input type="text" id="patientName" placeholder="e.g., John Smith" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="conversation">Patient Conversation / Clinical Notes</label>
+                    <textarea id="conversation" placeholder="Paste doctor-patient conversation or clinical notes..." required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>📄 Upload Blood Test PDFs (Optional - Multiple Files Supported)</label>
+                    <div class="file-upload" onclick="document.getElementById('pdfUpload').click()">
+                        <input type="file" id="pdfUpload" accept=".pdf" multiple onchange="handlePDFUpload(event)">
+                        <div class="file-upload-label">
+                            📎 Click to upload blood test PDFs (can select multiple)
+                        </div>
+                        <div class="file-name" id="fileName"></div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="labs">Lab Results (or auto-filled from PDF)</label>
+                    <textarea id="labs" placeholder="Paste lab results or upload PDF above..." required></textarea>
+                </div>
+
+                <div class="quick-actions">
+                    <button type="button" class="quick-action-btn" onclick="loadJohnSmithExample()">
+                        📋 Load Example
+                    </button>
+                    <button type="button" class="quick-action-btn" onclick="clearForm()">
+                        🗑️ Clear Form
+                    </button>
+                </div>
+
+                <button type="submit" class="button" id="generateBtn">
+                    ✨ Generate Treatment Plan
+                </button>
+            </form>
+        </div>
+
+        <div class="card loading" id="loading">
+            <div class="spinner"></div>
+            <p style="color: #666; font-size: 1.1rem;" id="loadingText">Analyzing patient data...</p>
+        </div>
+
+        <div class="card result" id="result">
+            <div class="result-header">
+                <h2>📄 Treatment Plan Generated</h2>
+                <button class="download-btn" onclick="downloadPlan()">⬇️ Download</button>
+            </div>
+            <div class="treatment-plan" id="treatmentPlan"></div>
+        </div>
+    </div>
+
+    <script>
+        let currentPlan = '';
+        let currentPatientName = '';
+
+        function loadJohnSmithExample() {
+            document.getElementById('patientName').value = 'John Smith';
+            document.getElementById('conversation').value = `Dr. Sarah: Hi John, welcome to Expand Health. What brings you in today?
+
+John: I've been exhausted for about six months now. I used to run half marathons, but now I can barely make it through the workday without feeling like I need to collapse.
+
+Dr. Sarah: Tell me more about this fatigue. When do you notice it the most?
+
+John: It's constant. I wake up tired even after 7-8 hours in bed. I wake up 2-3 times a night. By 2pm at work, I'm struggling to keep my eyes open.
+
+Dr. Sarah: How's your sleep quality? Any snoring?
+
+John: My wife says I snore loudly. I'm tossing and turning a lot.
+
+Dr. Sarah: Any other symptoms? Brain fog, weight changes?
+
+John: Brain fog for sure. I'm forgetting meetings, struggling to focus. I've put on about 15 kilos in two years, mostly around my belly. I snack a lot at night.
+
+Dr. Sarah: How are your stress levels?
+
+John: Through the roof. I'm working 60-hour weeks minimum. I feel guilty I'm not present for my wife and kids.
+
+Dr. Sarah: What are your main goals?
+
+John: I want my energy back. I want to play soccer with my kids without feeling like I'm going to keel over. I want to lose this belly fat. I don't want to end up like my dad—he's on 10 different medications for diabetes and heart disease. I'm ready to do whatever it takes.`;
+
+            document.getElementById('labs').value = `Fasting Glucose: 108 mg/dL (Ref: 70-99) - ELEVATED
+HbA1c: 6.3% (Ref: <5.7%) - PREDIABETES
+Fasting Insulin: 18 µIU/mL - HIGH
+HOMA-IR: 4.8 - INSULIN RESISTANT
+
+LDL: 165 mg/dL - ELEVATED
+HDL: 38 mg/dL - LOW
+Triglycerides: 235 mg/dL - ELEVATED
+
+hsCRP: 4.8 mg/L - HIGH INFLAMMATION
+
+Vitamin D: 24 ng/mL - DEFICIENT
+Vitamin B12: 320 pg/mL - LOW-NORMAL
+
+TSH: 2.8 - NORMAL
+Free T3: 2.9 - LOW-NORMAL
+
+BP: 138/88 mmHg - STAGE 1 HYPERTENSION
+Waist: 108 cm - ELEVATED`;
+        }
+
+        function clearForm() {
+            document.getElementById('patientForm').reset();
+            document.getElementById('fileName').textContent = '';
+
+            // Clear treatment plan result section
+            document.getElementById('result').classList.remove('active');
+            document.getElementById('treatmentPlan').textContent = '';
+            currentPlan = '';
+            currentPatientName = '';
+        }
+
+        async function handlePDFUpload(event) {
+            const files = event.target.files;
+            if (!files || files.length === 0) return;
+
+            const fileNames = Array.from(files).map(f => f.name).join(', ');
+            document.getElementById('fileName').textContent = `Uploading ${files.length} file(s): ${fileNames}...`;
+            document.getElementById('loadingText').textContent = `Processing ${files.length} PDF(s) and extracting lab results...`;
+            document.getElementById('loading').classList.add('active');
+
+            try {
+                const formData = new FormData();
+                for (let i = 0; i < files.length; i++) {
+                    formData.append('pdfs', files[i]);
+                }
+
+                const response = await fetch('http://localhost:3000/api/upload-pdfs', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Append new results instead of overwriting
+                    const currentLabs = document.getElementById('labs').value;
+                    const separator = currentLabs.trim() ? '\n\n' : '';
+                    document.getElementById('labs').value = currentLabs + separator + data.labResults;
+
+                    const successMsg = `✅ Processed ${data.processedCount}/${data.totalCount} files successfully`;
+                    if (data.failedFiles && data.failedFiles.length > 0) {
+                        document.getElementById('fileName').textContent = `${successMsg}\n⚠️ Failed: ${data.failedFiles.join(', ')}`;
+                    } else {
+                        document.getElementById('fileName').textContent = successMsg;
+                    }
+                } else {
+                    alert('Failed to process PDFs: ' + data.error);
+                    document.getElementById('fileName').textContent = `❌ Failed to process PDFs`;
+                }
+            } catch (error) {
+                alert('Error uploading PDFs: ' + error.message + '\n\nMake sure the server is running: node server.js');
+                document.getElementById('fileName').textContent = `❌ Upload failed`;
+            } finally {
+                document.getElementById('loading').classList.remove('active');
+            }
+        }
+
+        document.getElementById('patientForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const patientName = document.getElementById('patientName').value;
+            const conversation = document.getElementById('conversation').value;
+            const labs = document.getElementById('labs').value;
+
+            document.getElementById('loadingText').textContent = 'Generating treatment plan... (15-30 seconds)';
+            document.getElementById('loading').classList.add('active');
+            document.getElementById('result').classList.remove('active');
+            document.getElementById('generateBtn').disabled = true;
+
+            try {
+                const response = await fetch('http://localhost:3000/api/generate-plan', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        patientName,
+                        conversation,
+                        labs
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    currentPlan = data.treatmentPlan;
+                    currentPatientName = patientName;
+
+                    document.getElementById('treatmentPlan').textContent = data.treatmentPlan;
+                    document.getElementById('result').classList.add('active');
+                    document.getElementById('result').scrollIntoView({ behavior: 'smooth' });
+
+                    // Save patient record to database
+                    await savePatientRecord(patientName, conversation, labs, data.treatmentPlan);
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (error) {
+                alert('Error generating plan: ' + error.message + '\n\nMake sure the server is running: node server.js');
+            } finally {
+                document.getElementById('generateBtn').disabled = false;
+                document.getElementById('loading').classList.remove('active');
+            }
+        });
+
+        async function savePatientRecord(patientName, conversation, labs, treatmentPlan) {
+            try {
+                const response = await fetch('http://localhost:3000/api/patients/save', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        patientName,
+                        conversation,
+                        labs,
+                        treatmentPlan
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    console.log('Patient record saved successfully:', data.patient.id);
+                } else {
+                    console.error('Failed to save patient record:', data.error);
+                }
+            } catch (error) {
+                console.error('Error saving patient record:', error);
+            }
+        }
+
+        function downloadPlan() {
+            const blob = new Blob([currentPlan], { type: 'text/markdown' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `treatment-plan-${currentPatientName.replace(/\s+/g, '-')}-${Date.now()}.md`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>

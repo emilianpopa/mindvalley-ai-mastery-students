@@ -19,7 +19,7 @@
     {
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "const { apiKey, documentId } = $json;\nif (!apiKey) return [{ json: { status: 'ERROR', error: 'apiKey required' } }];\nif (!documentId) return [{ json: { status: 'ERROR', error: 'documentId required' } }];\nreturn [{ json: { apiKey, documentId } }];"
+        "jsCode": "const { apiKey, documentId } = $json.body;\nif (!apiKey) return [{ json: { status: 'ERROR', error: 'apiKey required' } }];\nif (!documentId) return [{ json: { status: 'ERROR', error: 'documentId required' } }];\nreturn [{ json: { apiKey, documentId } }];"
       },
       "id": "Validate",
       "name": "Validate Input",

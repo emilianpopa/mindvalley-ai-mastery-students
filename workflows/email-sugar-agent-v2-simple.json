@@ -1,0 +1,148 @@
+{
+  "name": "Email SUGAR Agent v2",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "process-email",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "webhook",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "email_from",
+              "name": "emailFrom",
+              "value": "={{ $json.emailFrom }}",
+              "type": "string"
+            },
+            {
+              "id": "email_subject",
+              "name": "emailSubject",
+              "value": "={{ $json.emailSubject }}",
+              "type": "string"
+            },
+            {
+              "id": "email_body",
+              "name": "emailBody",
+              "value": "={{ $json.emailBody }}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "id": "extract",
+      "name": "Extract Email Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openRouterApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ \n  {\n    \"model\": \"anthropic/claude-3.5-sonnet\",\n    \"temperature\": 0.2,\n    \"messages\": [\n      {\n        \"role\": \"system\",\n        \"content\": \"You are Emilian's email assistant using the SUGAR framework (Situation, Understanding, Guidance, Action, Reassurance).\\n\\nYour brand voice:\\n- Professional yet approachable (formality: 4.5/10)\\n- Concise and direct - respect others' time\\n- Detail-oriented with structured bullet points\\n- Ask smart questions before prescribing solutions\\n- Data-grounded, no hype or buzzwords\\n- Sign with 'Thanks, Emilian' or just 'Emilian'\\n\\nExpand Health voice:\\n- Evidence-based longevity and health optimization\\n- Accessible explanations of complex health concepts\\n- Focus on actionable protocols and measurable results\\n\\nDraft a response following SUGAR:\\nS - Acknowledge their situation\\nU - Show understanding of their needs\\nG - Provide clear, structured guidance\\nA - Specify next steps\\nR - Close with reassurance and availability\\n\\nOutput ONLY the email draft, ready to send.\"\n      },\n      {\n        \"role\": \"user\",\n        \"content\": \"Draft a response to this email:\\n\\nFrom: \" + $json.emailFrom + \"\\nSubject: \" + $json.emailSubject + \"\\n\\nBody:\\n\" + $json.emailBody\n      }\n    ]\n  }\n}}",
+        "options": {}
+      },
+      "id": "openrouter",
+      "name": "Call OpenRouter",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "status",
+              "name": "status",
+              "value": "SUCCESS",
+              "type": "string"
+            },
+            {
+              "id": "draft",
+              "name": "draftedResponse",
+              "value": "={{ $json.choices[0].message.content }}",
+              "type": "string"
+            },
+            {
+              "id": "model",
+              "name": "model",
+              "value": "={{ $json.model }}",
+              "type": "string"
+            },
+            {
+              "id": "tokens",
+              "name": "tokensUsed",
+              "value": "={{ $json.usage.total_tokens }}",
+              "type": "number"
+            }
+          ]
+        }
+      },
+      "id": "format",
+      "name": "Format Output",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [900, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Extract Email Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Email Data": {
+      "main": [
+        [
+          {
+            "node": "Call OpenRouter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call OpenRouter": {
+      "main": [
+        [
+          {
+            "node": "Format Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {}
+}

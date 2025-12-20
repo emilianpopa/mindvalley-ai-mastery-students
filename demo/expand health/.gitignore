@@ -1,0 +1,25 @@
+# Environment variables
+.env
+
+# Patient data (sensitive - don't commit to git)
+patients.json
+
+# Knowledge base config (contains documents - don't commit to git)
+kb-config.json
+
+# Node modules
+node_modules/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo

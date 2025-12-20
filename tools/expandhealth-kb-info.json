@@ -1,0 +1,16 @@
+{
+  "corpusId": "corpora/expandhealthknowledgebase-3ke5n7lg98rg",
+  "geminiApiKey": "AIzaSyBzKRDUkk-xmwAEh1UHN6e__buHsjbZroM",
+  "files": [
+    "expand brand-voice.md",
+    "expand faq.md",
+    "expand locations.md",
+    "expand menu.md",
+    "expand policies.md",
+    "protocol-cardiovascular-health.md",
+    "protocol-chronic-fatigue.md",
+    "protocol-metabolic-syndrome.md"
+  ],
+  "created": "2025-12-13T17:09:32.013Z",
+  "note": "Using simplified approach - protocols loaded directly in N8N workflows"
+}

@@ -1,0 +1,23 @@
+{
+  "name": "expandhealth-ai-copilot",
+  "version": "1.0.0",
+  "description": "ExpandHealth AI Copilot - Treatment plan generation with knowledge base",
+  "main": "server-simple.js",
+  "scripts": {
+    "start": "node server-simple.js",
+    "dev": "node server-simple.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "formidable": "^3.5.4"
+  },
+  "keywords": [
+    "healthcare",
+    "ai",
+    "treatment-planning"
+  ],
+  "author": "ExpandHealth",
+  "license": "MIT"
+}

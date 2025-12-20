@@ -1,17 +1,17 @@
 {
-  "name": "Gemini File Search - List Documents (Webhook)",
+  "name": "Gemini File Search - Create Store (Webhook)",
   "nodes": [
     {
       "parameters": {
         "httpMethod": "POST",
-        "path": "kb-list-documents",
+        "path": "kb-create-store",
         "responseMode": "lastNode",
         "options": {
           "responseData": "firstEntryJson"
         }
       },
       "id": "Webhook",
-      "name": "Webhook /kb-list-documents",
+      "name": "Webhook /kb-create-store",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1,
       "position": [280, 300]
@@ -19,7 +19,7 @@
     {
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "const { apiKey, storeId } = $json.body;\nif (!apiKey) {\n  return [{ json: { status: 'ERROR', error: 'apiKey required' } }];\n}\nif (!storeId) {\n  return [{ json: { status: 'ERROR', error: 'storeId required' } }];\n}\nreturn [{ json: { apiKey, storeId } }];"
+        "jsCode": "const { apiKey, displayName } = $json.body;\nif (!apiKey) return [{ json: { status: 'ERROR', error: 'apiKey required' } }];\nif (!displayName) return [{ json: { status: 'ERROR', error: 'displayName required' } }];\nreturn [{ json: { apiKey, displayName } }];"
       },
       "id": "Validate",
       "name": "Validate Input",
@@ -29,21 +29,25 @@
     },
     {
       "parameters": {
-        "url": "=https://generativelanguage.googleapis.com/v1beta/{{$json.storeId}}/documents?key={{$json.apiKey}}",
+        "method": "POST",
+        "url": "=https://generativelanguage.googleapis.com/v1beta/corpora?key={{$json.apiKey}}",
         "responseFormat": "json",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={ \"displayName\": \"{{ $json.displayName }}\" }",
         "options": {}
       },
       "id": "Http Request",
-      "name": "Fetch Documents",
+      "name": "Create Store",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [760, 300],
-      "notes": "Lists documents in the given File Search corpus."
+      "notes": "Creates a new File Search corpus with the provided display name."
     },
     {
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "const res = $json;\nif (res.statusCode && res.statusCode !== 200) {\n  return [{ json: { status: 'ERROR', error: `Gemini returned ${res.statusCode}`, body: res.body || res } }];\n}\nconst body = res.body || res;\nreturn [{ json: { status: 'SUCCESS', documents: body.documents || body.files || [] } }];"
+        "jsCode": "const res = $json;\nif (res.statusCode && res.statusCode >= 400) {\n  return [{ json: { status: 'ERROR', error: `Gemini returned ${res.statusCode}`, body: res.body || res } }];\n}\nreturn [{ json: { status: 'SUCCESS', store: res.body || res } }];"
       },
       "id": "Return",
       "name": "Format Response",
@@ -53,7 +57,7 @@
     }
   ],
   "connections": {
-    "Webhook /kb-list-documents": {
+    "Webhook /kb-create-store": {
       "main": [
         [
           {
@@ -68,14 +72,14 @@
       "main": [
         [
           {
-            "node": "Fetch Documents",
+            "node": "Create Store",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Fetch Documents": {
+    "Create Store": {
       "main": [
         [
           {
