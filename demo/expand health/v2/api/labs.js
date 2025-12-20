@@ -10,6 +10,15 @@ const path = require('path');
 const fs = require('fs').promises;
 const { authenticateToken } = require('../middleware/auth');
 const db = require('../db');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
+
+// Initialize Gemini AI
+let genAI = null;
+let geminiModel = null;
+if (process.env.GEMINI_API_KEY) {
+  genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+  geminiModel = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-001' });
+}
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
@@ -378,9 +387,13 @@ router.post('/:id/generate-summary', authenticateToken, async (req, res, next) =
   try {
     const { id } = req.params;
 
-    // Get lab data
+    // Get lab data with client info
     const labResult = await db.query(
-      'SELECT * FROM labs WHERE id = $1',
+      `SELECT l.*, c.first_name, c.last_name, c.date_of_birth, c.gender,
+              c.medical_history, c.current_medications
+       FROM labs l
+       LEFT JOIN clients c ON l.client_id = c.id
+       WHERE l.id = $1`,
       [id]
     );
 
@@ -390,38 +403,92 @@ router.post('/:id/generate-summary', authenticateToken, async (req, res, next) =
 
     const lab = labResult.rows[0];
 
-    // Check if GEMINI_API_KEY is configured
-    if (!process.env.GEMINI_API_KEY) {
+    // Check if Gemini is configured
+    if (!geminiModel) {
       return res.status(500).json({
         error: 'Gemini API key not configured',
         summary: 'AI summary generation is not available. Please configure GEMINI_API_KEY in environment variables.'
       });
     }
 
-    // For MVP: Generate a placeholder summary
-    // In production, you would:
-    // 1. Extract text from PDF using pdf-parse or similar
-    // 2. Send to Gemini API for analysis
-    // 3. Store the summary in database
+    let pdfText = '';
+    let extractedData = null;
 
-    const summary = `**Lab Result Analysis**
+    // Try to extract text from PDF if file exists
+    try {
+      const pdfParse = require('pdf-parse');
+      const filePath = path.join(__dirname, '..', lab.file_url);
+      const dataBuffer = await fs.readFile(filePath);
+      const pdfData = await pdfParse(dataBuffer);
+      pdfText = pdfData.text;
+      console.log(`Extracted ${pdfText.length} characters from PDF`);
+    } catch (pdfError) {
+      console.log('Could not extract PDF text:', pdfError.message);
+      // Check if we have extracted_data in the database
+      if (lab.extracted_data) {
+        extractedData = typeof lab.extracted_data === 'string'
+          ? JSON.parse(lab.extracted_data)
+          : lab.extracted_data;
+      }
+    }
 
-This is a placeholder AI summary for ${lab.title || 'the lab result'}.
+    // Build context for the AI
+    const clientInfo = lab.first_name ? `
+Patient: ${lab.first_name} ${lab.last_name}
+Gender: ${lab.gender || 'Not specified'}
+Date of Birth: ${lab.date_of_birth ? new Date(lab.date_of_birth).toLocaleDateString() : 'Not specified'}
+Medical History: ${lab.medical_history || 'Not provided'}
+Current Medications: ${lab.current_medications || 'Not provided'}
+` : '';
 
-**Key Findings:**
-- Lab type: ${lab.lab_type || 'General'}
-- Test date: ${lab.test_date ? new Date(lab.test_date).toLocaleDateString() : 'Not specified'}
-- File size: ${(lab.file_size / 1024).toFixed(2)} KB
+    // Build the prompt
+    let prompt = `You are a clinical laboratory analyst assistant for a longevity and functional medicine practice. Analyze the following lab results and provide a comprehensive clinical summary.
 
-**Note:** Full AI analysis requires Gemini API integration and PDF text extraction. This is a demonstration of the summary feature.
+${clientInfo}
+Lab Type: ${lab.lab_type || 'General'}
+Test Date: ${lab.test_date ? new Date(lab.test_date).toLocaleDateString() : 'Not specified'}
+Lab Title: ${lab.title || 'Lab Result'}
+`;
 
-**Next Steps:**
-To enable full AI summaries:
-1. Ensure GEMINI_API_KEY is set in environment
-2. Install pdf-parse: npm install pdf-parse
-3. Implement PDF text extraction
-4. Send extracted text to Gemini API
-5. Parse and format the response`;
+    if (pdfText) {
+      prompt += `\n\nLab Report Text:\n${pdfText.substring(0, 15000)}\n`;
+    } else if (extractedData && extractedData.markers) {
+      prompt += `\n\nExtracted Lab Markers:\n`;
+      extractedData.markers.forEach(m => {
+        prompt += `- ${m.name}: ${m.value} ${m.unit || ''} (Reference: ${m.range || 'N/A'}) ${m.flag ? `[${m.flag.toUpperCase()}]` : ''}\n`;
+      });
+      if (extractedData.interpretation) {
+        prompt += `\nPrevious Interpretation: ${extractedData.interpretation}\n`;
+      }
+    } else {
+      prompt += `\n\nNote: No lab data text could be extracted. Please provide a general analysis based on the lab type.\n`;
+    }
+
+    prompt += `
+Please provide your analysis in the following format:
+
+**Clinical Summary**
+[2-3 sentence overview of the key findings]
+
+**Key Findings**
+[List the most significant abnormal or notable values with clinical context]
+
+**Clinical Implications**
+[What do these results suggest about the patient's health?]
+
+**Recommendations**
+[Suggested follow-up tests, lifestyle modifications, or treatment considerations]
+
+**Priority Level**
+[Routine / Attention Needed / Urgent - with brief explanation]
+
+Keep the analysis professional, clinically relevant, and actionable for a healthcare practitioner.`;
+
+    // Call Gemini API
+    console.log('Calling Gemini API for lab summary...');
+    const result = await geminiModel.generateContent(prompt);
+    const summary = result.response.text();
+    console.log('Gemini response received, length:', summary.length);
 
     // Update lab with summary
     await db.query(
@@ -436,6 +503,15 @@ To enable full AI summaries:
 
   } catch (error) {
     console.error('Error generating summary:', error);
+
+    // Return a helpful error message
+    if (error.message?.includes('API key')) {
+      return res.status(500).json({
+        error: 'Gemini API configuration error',
+        details: error.message
+      });
+    }
+
     next(error);
   }
 });
