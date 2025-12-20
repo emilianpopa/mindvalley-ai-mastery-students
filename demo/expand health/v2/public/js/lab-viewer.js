@@ -114,9 +114,29 @@ function displayLab(lab) {
   document.getElementById('uploadedBy').textContent = 'Admin'; // TODO: Get actual uploader name
   document.getElementById('labId').textContent = lab.id;
 
-  // Set download link
-  downloadBtn.href = lab.file_url;
-  downloadBtn.download = lab.title || 'lab-result.pdf';
+  // Set download button click handler (for API endpoints that need auth)
+  downloadBtn.onclick = async (e) => {
+    e.preventDefault();
+    if (lab.file_url.startsWith('/api/')) {
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch(lab.file_url, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = lab.title || 'lab-result.pdf';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      }
+    } else {
+      window.open(lab.file_url, '_blank');
+    }
+  };
 
   // Load PDF with PDF.js for high-quality rendering
   loadPdfWithPdfJs(lab.file_url);
@@ -153,8 +173,24 @@ async function loadPdfWithPdfJs(url) {
     // Show loading indicator in PDF area
     pdfContainer.innerHTML = '<div class="pdf-loading"><div class="mini-loader"></div><p>Loading PDF...</p></div>';
 
+    // For API endpoints that require auth, fetch with token first
+    let pdfData;
+    if (url.startsWith('/api/')) {
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch(url, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch PDF from API');
+      }
+      const arrayBuffer = await response.arrayBuffer();
+      pdfData = { data: arrayBuffer };
+    } else {
+      pdfData = url;
+    }
+
     // Load the PDF document
-    const loadingTask = pdfjsLib.getDocument(url);
+    const loadingTask = pdfjsLib.getDocument(pdfData);
     pdfDoc = await loadingTask.promise;
     totalPages = pdfDoc.numPages;
 

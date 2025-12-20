@@ -77,6 +77,136 @@ const sampleActivities = [
 let currentClient = null;
 let savedNotes = []; // Store notes in memory for demo
 
+// ========== Card Menu (Kebab/3-dot menu) Functions ==========
+
+// Toggle card menu visibility
+function toggleCardMenu(event, menuId) {
+  event.stopPropagation();
+  const menu = document.getElementById(menuId);
+  const wasOpen = menu.classList.contains('show');
+
+  // Close all other menus first
+  closeAllCardMenus();
+
+  // Toggle this menu
+  if (!wasOpen) {
+    menu.classList.add('show');
+  }
+}
+
+// Close all card menus
+function closeAllCardMenus() {
+  document.querySelectorAll('.card-menu-dropdown').forEach(menu => {
+    menu.classList.remove('show');
+  });
+}
+
+// Close menus when clicking outside
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.card-menu-container')) {
+    closeAllCardMenus();
+  }
+});
+
+// Delete protocol
+async function deleteProtocol(protocolId) {
+  if (!confirm('Are you sure you want to delete this protocol? This action cannot be undone.')) {
+    return;
+  }
+
+  const token = localStorage.getItem('auth_token');
+  try {
+    const response = await fetch(`${API_BASE}/api/protocols/${protocolId}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+
+    if (response.ok) {
+      showNotification('Protocol deleted successfully', 'success');
+      loadProtocols(); // Refresh the list
+    } else {
+      const data = await response.json();
+      showNotification(data.error || 'Failed to delete protocol', 'error');
+    }
+  } catch (error) {
+    console.error('Error deleting protocol:', error);
+    showNotification('Error deleting protocol', 'error');
+  }
+}
+
+// Delete engagement plan
+async function deleteEngagementPlan(planId) {
+  if (!confirm('Are you sure you want to delete this engagement plan? This action cannot be undone.')) {
+    return;
+  }
+
+  const token = localStorage.getItem('auth_token');
+  try {
+    const response = await fetch(`${API_BASE}/api/protocols/engagement-plans/${planId}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+
+    if (response.ok) {
+      showNotification('Engagement plan deleted successfully', 'success');
+      loadEngagementPlans(); // Refresh the list
+    } else {
+      const data = await response.json();
+      showNotification(data.error || 'Failed to delete engagement plan', 'error');
+    }
+  } catch (error) {
+    console.error('Error deleting engagement plan:', error);
+    showNotification('Error deleting engagement plan', 'error');
+  }
+}
+
+// Print engagement plan by ID (opens view modal and prints)
+async function printEngagementPlanById(planId) {
+  const token = localStorage.getItem('auth_token');
+  try {
+    const response = await fetch(`${API_BASE}/api/protocols/${planId}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      const protocol = data.protocol;
+      const engagementPlan = protocol.engagement_plan || '';
+
+      const printWindow = window.open('', '_blank');
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Engagement Plan - ${protocol.title || 'ExpandHealth'}</title>
+          <style>
+            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 40px; line-height: 1.6; }
+            h1 { color: #0F766E; margin-bottom: 8px; }
+            h2 { color: #374151; font-size: 18px; margin-bottom: 20px; }
+            .content { white-space: pre-wrap; }
+            @media print { body { padding: 20px; } }
+          </style>
+        </head>
+        <body>
+          <h1>ExpandHealth</h1>
+          <h2>${protocol.title || 'Engagement Plan'}</h2>
+          <div class="content">${engagementPlan.replace(/\n/g, '<br>')}</div>
+        </body>
+        </html>
+      `);
+      printWindow.document.close();
+      printWindow.print();
+    } else {
+      showNotification('Failed to load engagement plan for printing', 'error');
+    }
+  } catch (error) {
+    console.error('Error printing engagement plan:', error);
+    showNotification('Error printing engagement plan', 'error');
+  }
+}
+
+// ========== End Card Menu Functions ==========
+
 // Initialize dashboard
 document.addEventListener('DOMContentLoaded', () => {
   if (!clientId || clientId === 'new') {
@@ -120,6 +250,13 @@ function setupTabNavigation() {
       }
       if (targetTab === 'notes') {
         loadClientNotes();
+      }
+      if (targetTab === 'protocol') {
+        loadProtocols();
+      }
+      if (targetTab === 'engagement') {
+        console.log('[Tab Switch] Engagement tab clicked, calling loadEngagementPlans');
+        loadEngagementPlans();
       }
     });
   });
@@ -1946,19 +2083,19 @@ function renderNoteCard(note) {
   const date = formatDateTime(note.created_at);
   const noteType = note.is_consultation ? 'Consultation' :
                    note.note_type === 'quick_note' ? 'Quick Note' :
-                   note.note_type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+                   note.note_type ? note.note_type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'Note';
 
   // Extract title if it exists (for consultation notes with ## Title format)
   let title = '';
-  let content = note.content;
-  if (content.startsWith('## ')) {
+  let content = note.content || '';
+  if (content && content.startsWith('## ')) {
     const lines = content.split('\n');
     title = lines[0].replace('## ', '');
     content = lines.slice(1).join('\n').trim();
   }
 
   // Truncate content for preview
-  const preview = content.length > 200 ? content.substring(0, 200) + '...' : content;
+  const preview = content && content.length > 200 ? content.substring(0, 200) + '...' : (content || '');
 
   return `
     <div class="note-card" data-note-id="${note.id}">
@@ -2713,6 +2850,19 @@ function formatDate(dateString) {
   }).replace(/\//g, '.');
 }
 
+// Format date and time for display
+function formatDateTime(dateString) {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-GB', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  }).replace(/\//g, '.');
+}
+
 // Export functions
 window.loadClientForms = loadClientForms;
 window.viewFormSubmission = viewFormSubmission;
@@ -2760,9 +2910,20 @@ function closeProtocolBuilder() {
     selectedTemplates = [];
     selectedNotes = [];
     currentProtocolData = null;
+    window.currentEditingProtocolId = null;
 
     // Reset template checkboxes
     document.querySelectorAll('.template-checkbox').forEach(cb => cb.checked = false);
+
+    // Reset view - show builder steps, hide editor
+    const builderMain = document.querySelector('.protocol-builder-main-v2');
+    if (builderMain) {
+      builderMain.style.display = '';
+    }
+    const editorContent = document.getElementById('protocolEditorContent');
+    if (editorContent) {
+      editorContent.style.display = 'none';
+    }
   }
 }
 
@@ -3337,6 +3498,8 @@ function sendAIChat() {
 function switchEditorTab(tabName) {
   const protocolContent = document.getElementById('protocolEditorContent');
   const engagementContent = document.getElementById('engagementPlanContent');
+  const protocolActions = document.getElementById('protocolTabActions');
+  const engagementActions = document.getElementById('engagementTabActions');
 
   // Update tab buttons
   document.querySelectorAll('.protocol-editor-header .header-tab').forEach(tab => {
@@ -3346,13 +3509,17 @@ function switchEditorTab(tabName) {
     }
   });
 
-  // Show/hide content
+  // Show/hide content and action buttons based on tab
   if (tabName === 'protocol') {
     if (protocolContent) protocolContent.style.display = 'block';
     if (engagementContent) engagementContent.style.display = 'none';
+    if (protocolActions) protocolActions.style.display = 'flex';
+    if (engagementActions) engagementActions.style.display = 'none';
   } else if (tabName === 'engagement-plan') {
     if (protocolContent) protocolContent.style.display = 'none';
     if (engagementContent) engagementContent.style.display = 'block';
+    if (protocolActions) protocolActions.style.display = 'none';
+    if (engagementActions) engagementActions.style.display = 'flex';
   }
 }
 
@@ -3382,6 +3549,12 @@ async function generateEngagementPlan() {
       tab.classList.add('active');
     }
   });
+
+  // Switch action buttons
+  const protocolActions = document.getElementById('protocolTabActions');
+  const engagementActions = document.getElementById('engagementTabActions');
+  if (protocolActions) protocolActions.style.display = 'none';
+  if (engagementActions) engagementActions.style.display = 'flex';
 
   // Get the body container for content
   const bodyContainer = document.getElementById('engagementPlanBody');
@@ -3602,6 +3775,355 @@ function addEngagementPhase() {
   phasesContainer.insertBefore(newPhase, addBtn);
 }
 
+// Save engagement plan
+async function saveEngagementPlan() {
+  const engagementContent = document.getElementById('engagementPlanBody');
+  if (!engagementContent) {
+    showNotification('No engagement plan to save', 'error');
+    return;
+  }
+
+  const protocolId = generatedProtocolData?.protocol?.id || generatedProtocolData?.id;
+  if (!protocolId) {
+    showNotification('Please save the protocol first before saving the engagement plan', 'warning');
+    return;
+  }
+
+  try {
+    const token = localStorage.getItem('auth_token');
+    const engagementHtml = engagementContent.innerHTML;
+
+    // Update the protocol with engagement plan content
+    const response = await fetch(`${API_BASE}/api/protocols/${protocolId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        ai_recommendations: engagementHtml
+      })
+    });
+
+    if (response.ok) {
+      showNotification('Engagement plan saved successfully!', 'success');
+    } else {
+      throw new Error('Failed to save engagement plan');
+    }
+  } catch (error) {
+    console.error('Error saving engagement plan:', error);
+    showNotification('Error saving engagement plan', 'error');
+  }
+}
+
+// Share engagement plan with client
+function shareEngagementPlanWithClient() {
+  // Open share modal with engagement plan specific content
+  const modal = document.getElementById('shareClientModal');
+  if (!modal) {
+    // Create share modal if it doesn't exist
+    showEngagementShareOptions();
+    return;
+  }
+
+  // Update modal title for engagement plan
+  const modalTitle = modal.querySelector('h2');
+  if (modalTitle) {
+    modalTitle.textContent = 'Share Engagement Plan with Client';
+  }
+
+  modal.style.display = 'flex';
+}
+
+// Show engagement plan share options
+function showEngagementShareOptions() {
+  const clientName = currentClient?.first_name || 'Client';
+  const clientEmail = currentClient?.email || '';
+  const clientPhone = currentClient?.phone || '';
+
+  // Create a simple share modal
+  const existingModal = document.getElementById('engagementShareModal');
+  if (existingModal) existingModal.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'engagementShareModal';
+  modal.className = 'modal';
+  modal.style.display = 'flex';
+  modal.innerHTML = `
+    <div class="modal-content share-modal-content">
+      <div class="modal-header">
+        <h2>Share Engagement Plan with ${clientName}</h2>
+        <button class="modal-close" onclick="closeEngagementShareModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="share-description">Choose how you'd like to share the engagement plan:</p>
+
+        <div class="share-options">
+          <button class="share-option-btn" onclick="shareEngagementViaEmail()">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+              <polyline points="22,6 12,13 2,6"/>
+            </svg>
+            <span>Email</span>
+            <small>${clientEmail || 'No email on file'}</small>
+          </button>
+
+          <button class="share-option-btn" onclick="shareEngagementViaWhatsApp()">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+            </svg>
+            <span>WhatsApp</span>
+            <small>${clientPhone || 'No phone on file'}</small>
+          </button>
+
+          <button class="share-option-btn" onclick="generateEngagementShareLink()">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+            </svg>
+            <span>Copy Link</span>
+            <small>Generate shareable link</small>
+          </button>
+
+          <button class="share-option-btn" onclick="downloadEngagementPlanPDF()">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            <span>Download PDF</span>
+            <small>Save as PDF file</small>
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  // Close when clicking outside
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) closeEngagementShareModal();
+  });
+}
+
+// Close engagement share modal
+function closeEngagementShareModal() {
+  const modal = document.getElementById('engagementShareModal');
+  if (modal) modal.remove();
+}
+
+// Share engagement plan via email
+function shareEngagementViaEmail() {
+  const clientEmail = currentClient?.email;
+  const clientName = currentClient?.first_name || 'Client';
+  const engagementContent = document.getElementById('engagementPlanBody');
+
+  if (!clientEmail) {
+    showNotification('No email address on file for this client', 'warning');
+    return;
+  }
+
+  const subject = encodeURIComponent(`Your Personalized Engagement Plan - ExpandHealth`);
+  const body = encodeURIComponent(`Hi ${clientName},\n\nI've prepared a personalized engagement plan for you based on your wellness protocol. This plan outlines the phased approach we'll take to help you achieve your health goals.\n\nPlease review the attached plan and let me know if you have any questions.\n\nBest regards,\nYour ExpandHealth Team`);
+
+  window.open(`mailto:${clientEmail}?subject=${subject}&body=${body}`, '_blank');
+  closeEngagementShareModal();
+  showNotification('Opening email client...', 'success');
+}
+
+// Share engagement plan via WhatsApp
+function shareEngagementViaWhatsApp() {
+  const clientPhone = currentClient?.phone;
+  const clientName = currentClient?.first_name || 'there';
+
+  if (!clientPhone) {
+    showNotification('No phone number on file for this client', 'warning');
+    return;
+  }
+
+  // Clean phone number
+  const cleanPhone = clientPhone.replace(/\D/g, '');
+
+  const message = encodeURIComponent(`Hi ${clientName}! I've prepared your personalized engagement plan based on your wellness protocol. This phased approach will help you achieve your health goals step by step. Let me know when you'd like to discuss it!`);
+
+  window.open(`https://wa.me/${cleanPhone}?text=${message}`, '_blank');
+  closeEngagementShareModal();
+  showNotification('Opening WhatsApp...', 'success');
+}
+
+// Generate shareable link for engagement plan
+function generateEngagementShareLink() {
+  const protocolId = generatedProtocolData?.protocol?.id || generatedProtocolData?.id;
+  if (!protocolId) {
+    showNotification('Please save the protocol first', 'warning');
+    return;
+  }
+
+  const shareLink = `${window.location.origin}/client-portal/engagement/${protocolId}`;
+
+  navigator.clipboard.writeText(shareLink).then(() => {
+    showNotification('Link copied to clipboard!', 'success');
+    closeEngagementShareModal();
+  }).catch(() => {
+    // Fallback
+    prompt('Copy this link:', shareLink);
+  });
+}
+
+// Download engagement plan as PDF
+async function downloadEngagementPlanPDF() {
+  const protocolId = window.currentShareProtocolId;
+  if (!protocolId) {
+    showNotification('No engagement plan selected', 'error');
+    return;
+  }
+
+  closeEngagementShareModal();
+  showNotification('Generating PDF...', 'info');
+
+  try {
+    const token = localStorage.getItem('auth_token');
+    const response = await fetch(`${API_BASE}/api/protocols/${protocolId}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      const protocol = data.protocol;
+      const clientName = currentClient ? `${currentClient.first_name} ${currentClient.last_name}` : 'Client';
+      const engagementContent = protocol.ai_recommendations || 'No engagement plan content available.';
+
+      // Format the content with simple markdown-like rendering
+      const formattedContent = engagementContent
+        .replace(/^## (.+)$/gm, '<h2 style="color: #0F766E; border-bottom: 2px solid #0F766E; padding-bottom: 8px; margin-top: 28px; margin-bottom: 16px;">$1</h2>')
+        .replace(/^### (.+)$/gm, '<h3 style="color: #374151; margin-top: 20px; margin-bottom: 12px;">$1</h3>')
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/^- (.+)$/gm, '<li style="margin-bottom: 6px;">$1</li>')
+        .replace(/\n\n/g, '</p><p style="margin: 12px 0;">')
+        .replace(/\n/g, '<br>');
+
+      // Create print window
+      const printWindow = window.open('', '_blank');
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Engagement Plan - ${clientName}</title>
+          <style>
+            @media print {
+              body { padding: 0; margin: 20px; }
+              .no-print { display: none; }
+            }
+            body {
+              font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+              padding: 40px;
+              max-width: 800px;
+              margin: 0 auto;
+              color: #1f2937;
+              line-height: 1.6;
+            }
+            .header {
+              border-bottom: 3px solid #0F766E;
+              padding-bottom: 20px;
+              margin-bottom: 30px;
+            }
+            .logo {
+              color: #0F766E;
+              font-size: 24px;
+              font-weight: 700;
+              margin-bottom: 8px;
+            }
+            h1 {
+              color: #1f2937;
+              margin: 0 0 8px;
+              font-size: 28px;
+            }
+            .meta {
+              color: #6b7280;
+              font-size: 14px;
+            }
+            .content {
+              margin-top: 20px;
+            }
+            h2 {
+              color: #0F766E;
+              border-bottom: 2px solid #0F766E;
+              padding-bottom: 8px;
+              margin-top: 28px;
+              margin-bottom: 16px;
+            }
+            h3 {
+              color: #374151;
+              margin-top: 20px;
+              margin-bottom: 12px;
+            }
+            ul {
+              padding-left: 24px;
+              margin: 12px 0;
+            }
+            li {
+              margin-bottom: 6px;
+            }
+            .footer {
+              margin-top: 50px;
+              padding-top: 20px;
+              border-top: 1px solid #e5e7eb;
+              color: #6b7280;
+              font-size: 12px;
+              text-align: center;
+            }
+            .print-btn {
+              background: #0F766E;
+              color: white;
+              border: none;
+              padding: 12px 24px;
+              border-radius: 8px;
+              cursor: pointer;
+              font-size: 14px;
+              margin-bottom: 20px;
+            }
+            .print-btn:hover {
+              background: #0D5D56;
+            }
+          </style>
+        </head>
+        <body>
+          <button class="print-btn no-print" onclick="window.print()">Print / Save as PDF</button>
+
+          <div class="header">
+            <div class="logo">ExpandHealth</div>
+            <h1>Personalized Engagement Plan</h1>
+            <div class="meta">
+              <strong>Client:</strong> ${clientName}<br>
+              <strong>Protocol:</strong> ${protocol.title || 'Health Optimization'}<br>
+              <strong>Created:</strong> ${formatDate(protocol.created_at)}
+            </div>
+          </div>
+
+          <div class="content">
+            ${formattedContent}
+          </div>
+
+          <div class="footer">
+            <p>Generated by ExpandHealth • ${new Date().toLocaleDateString()}</p>
+            <p>This engagement plan is personalized for ${clientName} and should be reviewed with your healthcare provider.</p>
+          </div>
+        </body>
+        </html>
+      `);
+      printWindow.document.close();
+
+      showNotification('PDF ready - click "Print / Save as PDF" in the new window', 'success');
+    } else {
+      showNotification('Failed to load engagement plan', 'error');
+    }
+  } catch (error) {
+    console.error('Error generating PDF:', error);
+    showNotification('Error generating PDF', 'error');
+  }
+}
+
 // Preview protocol
 function previewProtocol() {
   alert('Protocol preview will open in a new window/PDF format.');
@@ -3666,9 +4188,17 @@ async function loadProtocols() {
   const token = localStorage.getItem('auth_token');
   const currentClientId = clientId || new URLSearchParams(window.location.search).get('id');
 
+  console.log('[loadProtocols] Starting, clientId:', currentClientId);
+
   const emptyState = document.getElementById('protocolEmpty');
   const listContainer = document.getElementById('protocolList');
   const loadingState = document.getElementById('protocolLoading');
+
+  console.log('[loadProtocols] Elements found:', {
+    emptyState: !!emptyState,
+    listContainer: !!listContainer,
+    loadingState: !!loadingState
+  });
 
   // Show loading
   if (loadingState) loadingState.style.display = 'flex';
@@ -3676,15 +4206,21 @@ async function loadProtocols() {
   if (listContainer) listContainer.style.display = 'none';
 
   try {
-    const response = await fetch(`${API_BASE}/api/protocols/client/${currentClientId}`, {
+    const url = `${API_BASE}/api/protocols/client/${currentClientId}`;
+    console.log('[loadProtocols] Fetching:', url);
+
+    const response = await fetch(url, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
 
+    console.log('[loadProtocols] Response status:', response.status);
     if (loadingState) loadingState.style.display = 'none';
 
     if (response.ok) {
       const data = await response.json();
       const protocols = data.protocols || [];
+
+      console.log('[loadProtocols] Got protocols:', protocols.length);
 
       if (protocols.length === 0) {
         if (emptyState) emptyState.style.display = 'flex';
@@ -3693,11 +4229,12 @@ async function loadProtocols() {
         if (listContainer) listContainer.style.display = 'block';
       }
     } else {
+      console.error('[loadProtocols] Response not OK:', response.status);
       // API might not exist yet, show empty state
       if (emptyState) emptyState.style.display = 'flex';
     }
   } catch (error) {
-    console.error('Error loading protocols:', error);
+    console.error('[loadProtocols] Error:', error);
     if (loadingState) loadingState.style.display = 'none';
     if (emptyState) emptyState.style.display = 'flex';
   }
@@ -3705,11 +4242,49 @@ async function loadProtocols() {
 
 // Display protocols in the list
 function displayProtocols(protocols) {
+  console.log('[displayProtocols] Called with', protocols.length, 'protocols');
   const container = document.getElementById('protocolListContent');
-  if (!container) return;
+  if (!container) {
+    console.error('[displayProtocols] Container not found!');
+    return;
+  }
+  console.log('[displayProtocols] Rendering protocols...');
 
   container.innerHTML = protocols.map(protocol => `
     <div class="protocol-card" data-protocol-id="${protocol.id}">
+      <div class="card-menu-container">
+        <button class="card-menu-trigger" onclick="toggleCardMenu(event, 'protocol-menu-${protocol.id}')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="5" r="1.5"/>
+            <circle cx="12" cy="12" r="1.5"/>
+            <circle cx="12" cy="19" r="1.5"/>
+          </svg>
+        </button>
+        <div class="card-menu-dropdown" id="protocol-menu-${protocol.id}">
+          <button class="card-menu-item" onclick="viewProtocol(${protocol.id}); closeAllCardMenus();">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            View
+          </button>
+          <button class="card-menu-item" onclick="editProtocol(${protocol.id}); closeAllCardMenus();">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            Edit
+          </button>
+          <div class="card-menu-divider"></div>
+          <button class="card-menu-item" onclick="shareProtocol(${protocol.id}); closeAllCardMenus();">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+            Share
+          </button>
+          <button class="card-menu-item" onclick="printProtocol(${protocol.id}); closeAllCardMenus();">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+            Print
+          </button>
+          <div class="card-menu-divider"></div>
+          <button class="card-menu-item danger" onclick="deleteProtocol(${protocol.id}); closeAllCardMenus();">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            Delete
+          </button>
+        </div>
+      </div>
       <div class="protocol-card-header">
         <div>
           <h4 class="protocol-card-title">${protocol.title || 'Untitled Protocol'}</h4>
@@ -3720,24 +4295,677 @@ function displayProtocols(protocols) {
       <div class="protocol-card-templates">
         ${(protocol.templates || []).map(t => `<span class="protocol-template-tag">${t}</span>`).join('')}
       </div>
-      <div class="protocol-card-actions">
-        <button class="btn-secondary" onclick="viewProtocol(${protocol.id})">View</button>
-        <button class="btn-primary" onclick="editProtocol(${protocol.id})">Edit</button>
-      </div>
     </div>
   `).join('');
 }
 
 // View protocol
-function viewProtocol(protocolId) {
+async function viewProtocol(protocolId) {
   console.log('View protocol:', protocolId);
-  // Would open protocol viewer
+  const token = localStorage.getItem('auth_token');
+
+  try {
+    const response = await fetch(`${API_BASE}/api/protocols/${protocolId}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      const protocol = data.protocol;
+      showProtocolViewModal(protocol);
+    } else {
+      alert('Failed to load protocol');
+    }
+  } catch (error) {
+    console.error('Error loading protocol:', error);
+    alert('Error loading protocol');
+  }
 }
 
-// Edit protocol
-function editProtocol(protocolId) {
+// Show protocol view modal
+function showProtocolViewModal(protocol) {
+  const existingModal = document.getElementById('protocolViewModal');
+  if (existingModal) existingModal.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'protocolViewModal';
+  modal.className = 'modal-overlay';
+  modal.style.cssText = 'display: flex; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;';
+
+  const protocolContent = protocol.content || '';
+  const hasContent = protocolContent.length > 0;
+
+  // Build content sections - View Protocol only shows protocol content, NOT engagement plan
+  let contentHtml = '';
+
+  if (hasContent) {
+    // Simple markdown-like rendering for protocol content
+    const formattedContent = escapeHtml(protocolContent)
+      .replace(/^## (.+)$/gm, '<h2 style="font-size: 18px; font-weight: 600; color: #0F766E; margin: 20px 0 10px; border-bottom: 1px solid #e5e7eb; padding-bottom: 8px;">$1</h2>')
+      .replace(/^### (.+)$/gm, '<h3 style="font-size: 16px; font-weight: 600; color: #374151; margin: 16px 0 8px;">$1</h3>')
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/^- (.+)$/gm, '<li style="margin-left: 20px; margin-bottom: 4px;">$1</li>')
+      .replace(/---/g, '<hr style="margin: 20px 0; border: none; border-top: 1px solid #e5e7eb;">')
+      .replace(/\n\n/g, '</p><p style="margin: 8px 0;">')
+      .replace(/\n/g, '<br>');
+
+    contentHtml = `
+      <h3 style="font-size: 16px; font-weight: 600; color: #374151; margin-bottom: 12px;">Protocol Content</h3>
+      <div style="background: #f9fafb; border-radius: 8px; padding: 20px; font-size: 14px; line-height: 1.6;">${formattedContent}</div>
+    `;
+  } else {
+    contentHtml = `
+      <div style="text-align: center; padding: 40px;">
+        <p style="color: #6b7280; font-size: 16px; margin-bottom: 16px;">No protocol content yet.</p>
+        <p style="color: #9ca3af; font-size: 14px;">Click "Edit Protocol" to add content.</p>
+      </div>
+    `;
+  }
+
+  modal.innerHTML = `
+    <div class="modal-content" style="background: white; border-radius: 16px; max-width: 900px; width: 95%; max-height: 90vh; overflow: hidden; display: flex; flex-direction: column;">
+      <div class="modal-header" style="padding: 20px 24px; border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center;">
+        <h2 style="margin: 0; font-size: 20px; color: #1f2937;">${protocol.title || 'Protocol'}</h2>
+        <button onclick="closeProtocolViewModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #6b7280;">&times;</button>
+      </div>
+      <div class="modal-body" style="padding: 24px; overflow-y: auto; flex: 1;">
+        <div style="display: flex; gap: 12px; margin-bottom: 20px;">
+          <span style="padding: 4px 12px; background: ${protocol.status === 'active' ? '#DEF7EC' : '#FEF3C7'}; color: ${protocol.status === 'active' ? '#03543F' : '#92400E'}; border-radius: 20px; font-size: 12px; font-weight: 500;">${protocol.status || 'draft'}</span>
+          <span style="color: #6b7280; font-size: 14px;">Created: ${formatDate(protocol.created_at)}</span>
+        </div>
+        ${contentHtml}
+      </div>
+      <div class="modal-footer" style="padding: 16px 24px; border-top: 1px solid #e5e7eb; display: flex; justify-content: flex-end; gap: 12px;">
+        <button onclick="closeProtocolViewModal()" class="btn-secondary" style="padding: 10px 20px;">Close</button>
+        <button onclick="closeProtocolViewModal(); editProtocol(${protocol.id})" class="btn-primary" style="padding: 10px 20px;">Edit Protocol</button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+  document.body.style.overflow = 'hidden';
+
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) closeProtocolViewModal();
+  });
+}
+
+// Switch tabs in view modal
+function switchViewTab(tab) {
+  const protocolContent = document.getElementById('viewProtocolContent');
+  const engagementContent = document.getElementById('viewEngagementContent');
+  const protocolBtn = document.getElementById('viewTabProtocol');
+  const engagementBtn = document.getElementById('viewTabEngagement');
+
+  if (tab === 'protocol') {
+    if (protocolContent) protocolContent.style.display = 'block';
+    if (engagementContent) engagementContent.style.display = 'none';
+    if (protocolBtn) { protocolBtn.style.background = '#0F766E'; protocolBtn.style.color = 'white'; }
+    if (engagementBtn) { engagementBtn.style.background = '#e5e7eb'; engagementBtn.style.color = '#374151'; }
+  } else {
+    if (protocolContent) protocolContent.style.display = 'none';
+    if (engagementContent) engagementContent.style.display = 'block';
+    if (engagementBtn) { engagementBtn.style.background = '#0F766E'; engagementBtn.style.color = 'white'; }
+    if (protocolBtn) { protocolBtn.style.background = '#e5e7eb'; protocolBtn.style.color = '#374151'; }
+  }
+}
+
+function closeProtocolViewModal() {
+  const modal = document.getElementById('protocolViewModal');
+  if (modal) {
+    modal.remove();
+    document.body.style.overflow = '';
+  }
+}
+
+// Edit protocol - open dedicated edit modal
+async function editProtocol(protocolId) {
   console.log('Edit protocol:', protocolId);
-  // Would open protocol builder with existing data
+  const token = localStorage.getItem('auth_token');
+
+  try {
+    const response = await fetch(`${API_BASE}/api/protocols/${protocolId}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      const protocol = data.protocol;
+
+      // Store the protocol ID for saving
+      window.currentEditingProtocolId = protocolId;
+
+      // Show edit modal
+      showProtocolEditModal(protocol);
+    } else {
+      alert('Failed to load protocol for editing');
+    }
+  } catch (error) {
+    console.error('Error loading protocol:', error);
+    alert('Error loading protocol');
+  }
+}
+
+// Show protocol edit modal - Protocol only, no engagement plan
+function showProtocolEditModal(protocol) {
+  const existingModal = document.getElementById('protocolEditModal');
+  if (existingModal) existingModal.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'protocolEditModal';
+  modal.style.cssText = 'display: flex; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;';
+
+  const protocolContent = protocol.content || '';
+  const clientName = currentClient ? `${currentClient.first_name} ${currentClient.last_name}` : 'Client';
+
+  modal.innerHTML = `
+    <div style="background: white; border-radius: 16px; width: 95%; max-width: 1000px; max-height: 95vh; overflow: hidden; display: flex; flex-direction: column;">
+      <div style="padding: 20px 24px; border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <h2 style="margin: 0; font-size: 20px; color: #1f2937;">Edit Protocol</h2>
+          <p style="margin: 4px 0 0; font-size: 13px; color: #6b7280;">For ${clientName} • Created: ${formatDate(protocol.created_at)}</p>
+        </div>
+        <button onclick="closeProtocolEditModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #6b7280;">&times;</button>
+      </div>
+
+      <div style="padding: 24px; flex: 1; overflow-y: auto;">
+        <label style="display: block; margin-bottom: 8px; font-weight: 500; color: #374151;">Protocol Title</label>
+        <input type="text" id="editProtocolTitle" value="${escapeHtml(protocol.title || '')}" style="width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; margin-bottom: 16px;" placeholder="Protocol title...">
+
+        <label style="display: block; margin-bottom: 8px; font-weight: 500; color: #374151;">Protocol Content</label>
+        <textarea id="editProtocolContent" style="width: 100%; height: 400px; padding: 16px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; line-height: 1.6; resize: vertical; font-family: inherit;" placeholder="Protocol content...">${escapeHtml(protocolContent)}</textarea>
+      </div>
+
+      <div style="padding: 16px 24px; border-top: 1px solid #e5e7eb; display: flex; justify-content: flex-end; gap: 12px;">
+        <button onclick="closeProtocolEditModal()" class="btn-secondary" style="padding: 10px 20px;">Cancel</button>
+        <button onclick="saveProtocolChanges(${protocol.id})" class="btn-primary" style="padding: 10px 24px;">Save Changes</button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+  document.body.style.overflow = 'hidden';
+
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) closeProtocolEditModal();
+  });
+}
+
+// Switch tabs in edit modal
+function switchEditTab(tab) {
+  const protocolTab = document.getElementById('editProtocolTab');
+  const engagementTab = document.getElementById('editEngagementTab');
+  const protocolBtn = document.getElementById('editTabProtocol');
+  const engagementBtn = document.getElementById('editTabEngagement');
+
+  if (tab === 'protocol') {
+    protocolTab.style.display = 'block';
+    engagementTab.style.display = 'none';
+    protocolBtn.style.background = '#f0fdfa';
+    protocolBtn.style.color = '#0F766E';
+    protocolBtn.style.borderBottom = '2px solid #0F766E';
+    engagementBtn.style.background = 'white';
+    engagementBtn.style.color = '#6b7280';
+    engagementBtn.style.borderBottom = '2px solid transparent';
+  } else {
+    protocolTab.style.display = 'none';
+    engagementTab.style.display = 'block';
+    engagementBtn.style.background = '#f0fdfa';
+    engagementBtn.style.color = '#0F766E';
+    engagementBtn.style.borderBottom = '2px solid #0F766E';
+    protocolBtn.style.background = 'white';
+    protocolBtn.style.color = '#6b7280';
+    protocolBtn.style.borderBottom = '2px solid transparent';
+  }
+}
+
+// Close protocol edit modal
+function closeProtocolEditModal() {
+  const modal = document.getElementById('protocolEditModal');
+  if (modal) {
+    modal.remove();
+    document.body.style.overflow = '';
+  }
+  window.currentEditingProtocolId = null;
+}
+
+// Save protocol changes
+async function saveProtocolChanges(protocolId) {
+  const token = localStorage.getItem('auth_token');
+  const title = document.getElementById('editProtocolTitle')?.value || '';
+  const content = document.getElementById('editProtocolContent')?.value || '';
+  const engagementPlan = document.getElementById('editEngagementContent')?.value || '';
+
+  try {
+    const response = await fetch(`${API_BASE}/api/protocols/${protocolId}`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        notes: `Title: ${title}`,
+        ai_recommendations: engagementPlan
+      })
+    });
+
+    if (response.ok) {
+      closeProtocolEditModal();
+      showNotification('Protocol saved successfully', 'success');
+      loadProtocols(); // Refresh the list
+    } else {
+      alert('Failed to save protocol');
+    }
+  } catch (error) {
+    console.error('Error saving protocol:', error);
+    alert('Error saving protocol');
+  }
+}
+
+// Share protocol with client
+async function shareProtocol(protocolId) {
+  const token = localStorage.getItem('auth_token');
+
+  try {
+    const response = await fetch(`${API_BASE}/api/protocols/${protocolId}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      const protocol = data.protocol;
+      const clientName = currentClient ? `${currentClient.first_name} ${currentClient.last_name}` : 'Client';
+      const clientEmail = currentClient?.email || '';
+
+      // Create share modal
+      const modal = document.createElement('div');
+      modal.id = 'shareProtocolModal';
+      modal.style.cssText = 'display: flex; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;';
+
+      modal.innerHTML = `
+        <div style="background: white; border-radius: 16px; width: 95%; max-width: 500px; padding: 24px;">
+          <h2 style="margin: 0 0 8px; font-size: 20px; color: #1f2937;">Share Protocol</h2>
+          <p style="margin: 0 0 20px; color: #6b7280; font-size: 14px;">Send "${protocol.title || 'Protocol'}" to ${clientName}</p>
+
+          <label style="display: block; margin-bottom: 8px; font-weight: 500; color: #374151;">Email Address</label>
+          <input type="email" id="shareEmail" value="${clientEmail}" style="width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; margin-bottom: 16px;" placeholder="client@email.com">
+
+          <label style="display: block; margin-bottom: 8px; font-weight: 500; color: #374151;">Message (optional)</label>
+          <textarea id="shareMessage" style="width: 100%; height: 100px; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; resize: vertical;" placeholder="Add a personal message...">Hi ${currentClient?.first_name || 'there'},\n\nPlease find attached your personalized health protocol.\n\nBest regards</textarea>
+
+          <div style="display: flex; gap: 12px; margin-top: 20px; justify-content: flex-end;">
+            <button onclick="document.getElementById('shareProtocolModal').remove()" class="btn-secondary" style="padding: 10px 20px;">Cancel</button>
+            <button onclick="sendProtocolEmail(${protocolId})" class="btn-primary" style="padding: 10px 20px;">Send Email</button>
+          </div>
+        </div>
+      `;
+
+      document.body.appendChild(modal);
+      modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+    }
+  } catch (error) {
+    console.error('Error loading protocol for sharing:', error);
+    alert('Error loading protocol');
+  }
+}
+
+// Send protocol email
+async function sendProtocolEmail(protocolId) {
+  const email = document.getElementById('shareEmail')?.value;
+  const message = document.getElementById('shareMessage')?.value;
+
+  if (!email) {
+    alert('Please enter an email address');
+    return;
+  }
+
+  // For now, open email client with pre-filled content
+  const subject = encodeURIComponent('Your Personalized Health Protocol - ExpandHealth');
+  const body = encodeURIComponent(message + '\n\n[Protocol details will be attached]');
+  window.open(`mailto:${email}?subject=${subject}&body=${body}`);
+
+  document.getElementById('shareProtocolModal')?.remove();
+  showNotification('Opening email client...', 'success');
+}
+
+// Print protocol
+async function printProtocol(protocolId) {
+  const token = localStorage.getItem('auth_token');
+
+  try {
+    const response = await fetch(`${API_BASE}/api/protocols/${protocolId}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      const protocol = data.protocol;
+      const clientName = currentClient ? `${currentClient.first_name} ${currentClient.last_name}` : 'Client';
+
+      // Create print window
+      const printWindow = window.open('', '_blank');
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>${protocol.title || 'Protocol'} - ExpandHealth</title>
+          <style>
+            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 40px; max-width: 800px; margin: 0 auto; color: #1f2937; }
+            h1 { color: #0F766E; margin-bottom: 8px; }
+            .meta { color: #6b7280; margin-bottom: 24px; }
+            .content { white-space: pre-wrap; line-height: 1.8; }
+            h2 { color: #0F766E; border-bottom: 2px solid #0F766E; padding-bottom: 8px; margin-top: 32px; }
+            h3 { color: #374151; margin-top: 24px; }
+            ul { padding-left: 20px; }
+            li { margin-bottom: 8px; }
+            .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb; color: #6b7280; font-size: 12px; }
+            @media print { body { padding: 20px; } }
+          </style>
+        </head>
+        <body>
+          <h1>${protocol.title || 'Health Protocol'}</h1>
+          <div class="meta">
+            <strong>Client:</strong> ${clientName}<br>
+            <strong>Date:</strong> ${formatDate(protocol.created_at)}<br>
+            <strong>Status:</strong> ${protocol.status || 'draft'}
+          </div>
+          <div class="content">${(protocol.content || 'No content available').replace(/\n/g, '<br>').replace(/## /g, '</p><h2>').replace(/### /g, '</p><h3>').replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/^- /gm, '• ')}</div>
+          <div class="footer">
+            Generated by ExpandHealth • ${new Date().toLocaleDateString()}
+          </div>
+        </body>
+        </html>
+      `);
+      printWindow.document.close();
+      printWindow.print();
+    }
+  } catch (error) {
+    console.error('Error loading protocol for printing:', error);
+    alert('Error loading protocol');
+  }
+}
+
+// Load engagement plans for the client
+async function loadEngagementPlans() {
+  const token = localStorage.getItem('auth_token');
+  const currentClientId = clientId || new URLSearchParams(window.location.search).get('id');
+
+  console.log('[loadEngagementPlans] Starting, clientId:', currentClientId);
+
+  const emptyState = document.getElementById('engagementEmpty');
+  const listContainer = document.getElementById('engagementList');
+  const loadingState = document.getElementById('engagementLoading');
+
+  console.log('[loadEngagementPlans] Elements:', { emptyState: !!emptyState, listContainer: !!listContainer, loadingState: !!loadingState });
+
+  // Show loading
+  if (loadingState) loadingState.style.display = 'flex';
+  if (emptyState) emptyState.style.display = 'none';
+  if (listContainer) listContainer.style.display = 'none';
+
+  try {
+    // Fetch protocols that have engagement plans (ai_recommendations field)
+    const url = `${API_BASE}/api/protocols/client/${currentClientId}`;
+    console.log('[loadEngagementPlans] Fetching:', url);
+
+    const response = await fetch(url, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+
+    console.log('[loadEngagementPlans] Response status:', response.status);
+    if (loadingState) loadingState.style.display = 'none';
+
+    if (response.ok) {
+      const data = await response.json();
+      console.log('[loadEngagementPlans] Got protocols:', data.protocols?.length);
+
+      // Filter protocols that have engagement plans (any non-empty ai_recommendations)
+      const engagementPlans = (data.protocols || []).filter(p => p.ai_recommendations && p.ai_recommendations.trim().length > 0);
+      console.log('[loadEngagementPlans] Engagement plans with content:', engagementPlans.length);
+
+      // Debug: log first plan's ai_recommendations
+      if (data.protocols?.length > 0) {
+        console.log('[loadEngagementPlans] First protocol ai_recommendations:', data.protocols[0].ai_recommendations?.substring(0, 100));
+      }
+
+      if (engagementPlans.length === 0) {
+        console.log('[loadEngagementPlans] No engagement plans found, showing empty state');
+        if (emptyState) emptyState.style.display = 'flex';
+        if (listContainer) listContainer.style.display = 'none';
+      } else {
+        console.log('[loadEngagementPlans] Displaying', engagementPlans.length, 'engagement plans');
+        if (emptyState) emptyState.style.display = 'none';
+        displayEngagementPlans(engagementPlans);
+        if (listContainer) listContainer.style.display = 'block';
+      }
+    } else {
+      console.error('[loadEngagementPlans] Response not OK:', response.status);
+      if (emptyState) emptyState.style.display = 'flex';
+    }
+  } catch (error) {
+    console.error('[loadEngagementPlans] Error:', error);
+    if (loadingState) loadingState.style.display = 'none';
+    if (emptyState) emptyState.style.display = 'flex';
+  }
+}
+
+// Display engagement plans in the list
+function displayEngagementPlans(plans) {
+  const container = document.getElementById('engagementListContent');
+  if (!container) return;
+
+  container.innerHTML = plans.map(plan => `
+    <div class="protocol-card engagement-card" data-protocol-id="${plan.id}">
+      <div class="card-menu-container">
+        <button class="card-menu-trigger" onclick="toggleCardMenu(event, 'engagement-menu-${plan.id}')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="5" r="1.5"/>
+            <circle cx="12" cy="12" r="1.5"/>
+            <circle cx="12" cy="19" r="1.5"/>
+          </svg>
+        </button>
+        <div class="card-menu-dropdown" id="engagement-menu-${plan.id}">
+          <button class="card-menu-item" onclick="viewEngagementPlan(${plan.id}); closeAllCardMenus();">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            View
+          </button>
+          <div class="card-menu-divider"></div>
+          <button class="card-menu-item" onclick="shareEngagementPlanById(${plan.id}); closeAllCardMenus();">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+            Share
+          </button>
+          <button class="card-menu-item" onclick="printEngagementPlanById(${plan.id}); closeAllCardMenus();">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+            Print
+          </button>
+          <div class="card-menu-divider"></div>
+          <button class="card-menu-item danger" onclick="deleteEngagementPlan(${plan.id}); closeAllCardMenus();">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            Delete
+          </button>
+        </div>
+      </div>
+      <div class="protocol-card-header">
+        <div>
+          <h4 class="protocol-card-title">${plan.title || 'Untitled'}</h4>
+          <p class="protocol-card-date">${formatDate(plan.created_at)}</p>
+        </div>
+        <span class="protocol-card-status engagement">${plan.status || 'active'}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+// View engagement plan
+function viewEngagementPlan(protocolId) {
+  console.log('View engagement plan:', protocolId);
+  // Fetch the protocol and show engagement plan in a modal
+  viewEngagementPlanModal(protocolId);
+}
+
+// View engagement plan in modal
+async function viewEngagementPlanModal(protocolId) {
+  const token = localStorage.getItem('auth_token');
+
+  try {
+    const response = await fetch(`${API_BASE}/api/protocols/${protocolId}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      const protocol = data.protocol;
+
+      // Create and show modal with engagement plan content
+      showEngagementPlanViewModal(protocol);
+    }
+  } catch (error) {
+    console.error('Error loading engagement plan:', error);
+    showNotification('Error loading engagement plan', 'error');
+  }
+}
+
+// Show engagement plan view modal
+function showEngagementPlanViewModal(protocol) {
+  const existingModal = document.getElementById('viewEngagementModal');
+  if (existingModal) existingModal.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'viewEngagementModal';
+  modal.className = 'modal';
+  modal.style.cssText = 'display: flex; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;';
+
+  const title = protocol.title || 'Engagement Plan';
+  const content = protocol.ai_recommendations || '<p>No engagement plan content available.</p>';
+
+  modal.innerHTML = `
+    <div class="modal-content" style="background: white; border-radius: 16px; max-width: 900px; width: 95%; max-height: 90vh; overflow: hidden; display: flex; flex-direction: column;">
+      <div class="modal-header" style="padding: 20px 24px; border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <h2 style="margin: 0; font-size: 20px; color: #1f2937;">${title} - Engagement Plan</h2>
+          <p style="margin: 4px 0 0; font-size: 13px; color: #6b7280;">Created: ${formatDate(protocol.created_at)}</p>
+        </div>
+        <button onclick="closeViewEngagementModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #6b7280;">&times;</button>
+      </div>
+      <div id="engagementPrintContent" class="modal-body" style="padding: 24px; overflow-y: auto; flex: 1;">
+        <div style="background: #f0fdfa; border-radius: 12px; padding: 20px; white-space: pre-wrap; font-size: 14px; line-height: 1.7; color: #374151;">${escapeHtml(content)}</div>
+      </div>
+      <div class="modal-footer" style="padding: 16px 24px; border-top: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center;">
+        <div style="display: flex; gap: 8px;">
+          <button class="btn-secondary" onclick="printEngagementPlan()" style="padding: 10px 16px; display: flex; align-items: center; gap: 6px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 6 2 18 2 18 9"/>
+              <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+              <rect x="6" y="14" width="12" height="8"/>
+            </svg>
+            Print
+          </button>
+          <button class="btn-secondary" onclick="downloadEngagementPlan(${protocol.id})" style="padding: 10px 16px; display: flex; align-items: center; gap: 6px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            Download
+          </button>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn-secondary" onclick="closeViewEngagementModal()" style="padding: 10px 20px;">Close</button>
+          <button class="btn-primary" onclick="shareEngagementPlanById(${protocol.id}); closeViewEngagementModal();" style="padding: 10px 20px; display: flex; align-items: center; gap: 6px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="18" cy="5" r="3"/>
+              <circle cx="6" cy="12" r="3"/>
+              <circle cx="18" cy="19" r="3"/>
+              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+            </svg>
+            Share with Client
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+  document.body.style.overflow = 'hidden';
+
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) closeViewEngagementModal();
+  });
+}
+
+// Print engagement plan
+function printEngagementPlan() {
+  const content = document.getElementById('engagementPrintContent');
+  if (!content) return;
+
+  const printWindow = window.open('', '_blank');
+  printWindow.document.write(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Engagement Plan - ExpandHealth</title>
+      <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 40px; line-height: 1.6; }
+        h1 { color: #0F766E; margin-bottom: 20px; }
+        .content { white-space: pre-wrap; }
+        @media print { body { padding: 20px; } }
+      </style>
+    </head>
+    <body>
+      <h1>ExpandHealth - Engagement Plan</h1>
+      <div class="content">${content.innerHTML}</div>
+    </body>
+    </html>
+  `);
+  printWindow.document.close();
+  printWindow.print();
+}
+
+// Download engagement plan as text file
+async function downloadEngagementPlan(protocolId) {
+  const token = localStorage.getItem('auth_token');
+
+  try {
+    const response = await fetch(`${API_BASE}/api/protocols/${protocolId}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      const protocol = data.protocol;
+      const content = protocol.ai_recommendations || 'No content';
+      const title = protocol.title || 'Engagement Plan';
+
+      const blob = new Blob([`${title} - Engagement Plan\n\n${content}`], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${title.replace(/[^a-z0-9]/gi, '_')}_engagement_plan.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+  } catch (error) {
+    console.error('Error downloading engagement plan:', error);
+  }
+}
+
+// Close view engagement modal
+function closeViewEngagementModal() {
+  const modal = document.getElementById('viewEngagementModal');
+  if (modal) {
+    modal.remove();
+    document.body.style.overflow = '';
+  }
+}
+
+// Share engagement plan by ID
+function shareEngagementPlanById(protocolId) {
+  // Store the protocol ID for sharing
+  window.currentShareProtocolId = protocolId;
+  showEngagementShareOptions();
 }
 
 // Reference tab switching
@@ -5965,6 +7193,16 @@ window.saveAsTemplate = saveAsTemplate;
 window.loadProtocols = loadProtocols;
 window.viewProtocol = viewProtocol;
 window.editProtocol = editProtocol;
+window.shareProtocol = shareProtocol;
+window.printProtocol = printProtocol;
+window.sendProtocolEmail = sendProtocolEmail;
+window.showProtocolViewModal = showProtocolViewModal;
+window.closeProtocolViewModal = closeProtocolViewModal;
+window.switchViewTab = switchViewTab;
+window.showProtocolEditModal = showProtocolEditModal;
+window.closeProtocolEditModal = closeProtocolEditModal;
+window.switchEditTab = switchEditTab;
+window.saveProtocolChanges = saveProtocolChanges;
 window.generateProtocol = generateProtocol;
 
 // Protocol editor functions
@@ -5995,6 +7233,22 @@ window.shareViaWhatsApp = shareViaWhatsApp;
 window.generateShareLink = generateShareLink;
 window.shareToClientApp = shareToClientApp;
 window.openProtocolAIAssistant = openProtocolAIAssistant;
+window.saveEngagementPlan = saveEngagementPlan;
+window.shareEngagementPlanWithClient = shareEngagementPlanWithClient;
+window.closeEngagementShareModal = closeEngagementShareModal;
+window.shareEngagementViaEmail = shareEngagementViaEmail;
+window.shareEngagementViaWhatsApp = shareEngagementViaWhatsApp;
+window.generateEngagementShareLink = generateEngagementShareLink;
+window.downloadEngagementPlanPDF = downloadEngagementPlanPDF;
+window.loadEngagementPlans = loadEngagementPlans;
+window.displayEngagementPlans = displayEngagementPlans;
+window.viewEngagementPlan = viewEngagementPlan;
+window.viewEngagementPlanModal = viewEngagementPlanModal;
+window.showEngagementPlanViewModal = showEngagementPlanViewModal;
+window.closeViewEngagementModal = closeViewEngagementModal;
+window.shareEngagementPlanById = shareEngagementPlanById;
+window.printEngagementPlan = printEngagementPlan;
+window.downloadEngagementPlan = downloadEngagementPlan;
 window.openAIChatModal = openAIChatModal;
 window.closeAIChatModal = closeAIChatModal;
 window.sendAIChatMessage = sendAIChatMessage;

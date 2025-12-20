@@ -1,6 +1,7 @@
 /**
  * Labs & Tests API Routes
  * Handles PDF uploads, viewing, and AI summaries
+ * PDFs are stored in PostgreSQL database to persist across Railway deployments
  */
 
 const express = require('express');
@@ -20,25 +21,10 @@ if (process.env.GEMINI_API_KEY) {
   geminiModel = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-001' });
 }
 
-// Configure multer for file uploads
-const storage = multer.diskStorage({
-  destination: async (req, file, cb) => {
-    const uploadDir = path.join(__dirname, '..', 'uploads', 'labs');
-    try {
-      await fs.mkdir(uploadDir, { recursive: true });
-      cb(null, uploadDir);
-    } catch (error) {
-      cb(error);
-    }
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, uniqueSuffix + path.extname(file.originalname));
-  }
-});
-
+// Configure multer for file uploads - use memory storage to store in database
+// This ensures PDFs persist across Railway deployments (ephemeral filesystem)
 const upload = multer({
-  storage: storage,
+  storage: multer.memoryStorage(),
   limits: {
     fileSize: 10 * 1024 * 1024 // 10MB limit
   },
@@ -78,7 +64,7 @@ router.get('/', authenticateToken, async (req, res, next) => {
     const countResult = await db.query(countQuery, queryParams);
     const totalCount = parseInt(countResult.rows[0].count);
 
-    // Get labs with client info
+    // Get labs with client info (exclude file_data to reduce payload)
     const validSortColumns = ['uploaded_date', 'test_date', 'title', 'created_at'];
     const sortColumn = validSortColumns.includes(sortBy) ? sortBy : 'uploaded_date';
     const order = sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
@@ -88,7 +74,10 @@ router.get('/', authenticateToken, async (req, res, next) => {
 
     const labsQuery = `
       SELECT
-        l.*,
+        l.id, l.client_id, l.title, l.lab_type, l.file_url, l.file_size,
+        l.uploaded_date, l.test_date, l.ai_summary, l.extracted_data,
+        l.created_at, l.uploaded_by, l.original_filename, l.file_mime_type,
+        CASE WHEN l.file_data IS NOT NULL THEN true ELSE false END as has_file_data,
         c.first_name || ' ' || c.last_name as client_name,
         c.email as client_email
       FROM labs l
@@ -120,10 +109,13 @@ router.get('/client/:clientId', authenticateToken, async (req, res, next) => {
   try {
     const { clientId } = req.params;
 
-    // Get labs for this client
+    // Get labs for this client (exclude file_data to reduce payload)
     const labsResult = await db.query(
       `SELECT
-        l.*,
+        l.id, l.client_id, l.title, l.lab_type, l.file_url, l.file_size,
+        l.uploaded_date, l.test_date, l.ai_summary, l.extracted_data,
+        l.created_at, l.uploaded_by, l.original_filename, l.file_mime_type,
+        CASE WHEN l.file_data IS NOT NULL THEN true ELSE false END as has_file_data,
         c.first_name || ' ' || c.last_name as client_name
       FROM labs l
       LEFT JOIN clients c ON l.client_id = c.id
@@ -141,14 +133,49 @@ router.get('/client/:clientId', authenticateToken, async (req, res, next) => {
   }
 });
 
-// Get single lab by ID
+// Serve PDF file from database
+router.get('/:id/file', authenticateToken, async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const result = await db.query(
+      'SELECT file_data, file_mime_type, original_filename, title FROM labs WHERE id = $1',
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Lab not found' });
+    }
+
+    const lab = result.rows[0];
+
+    if (!lab.file_data) {
+      return res.status(404).json({ error: 'PDF file not found in database' });
+    }
+
+    // Set headers for PDF
+    res.setHeader('Content-Type', lab.file_mime_type || 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename="${lab.original_filename || lab.title || 'lab-result'}.pdf"`);
+
+    // Send the binary data
+    res.send(lab.file_data);
+
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Get single lab by ID (exclude file_data to reduce payload)
 router.get('/:id', authenticateToken, async (req, res, next) => {
   try {
     const { id } = req.params;
 
     const result = await db.query(
       `SELECT
-        l.*,
+        l.id, l.client_id, l.title, l.lab_type, l.file_url, l.file_size,
+        l.uploaded_date, l.test_date, l.ai_summary, l.extracted_data,
+        l.created_at, l.uploaded_by, l.original_filename, l.file_mime_type,
+        CASE WHEN l.file_data IS NOT NULL THEN true ELSE false END as has_file_data,
         c.first_name || ' ' || c.last_name as client_name,
         c.email as client_email
       FROM labs l
@@ -191,24 +218,38 @@ router.post('/upload', authenticateToken, upload.single('file'), async (req, res
       return res.status(404).json({ error: 'Client not found' });
     }
 
-    // Store file info in database
+    // Store file in database with binary data
     const result = await db.query(
       `INSERT INTO labs (
         client_id, title, lab_type, file_url, file_size,
-        test_date, uploaded_by
+        test_date, uploaded_by, file_data, file_mime_type, original_filename
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
-      RETURNING *`,
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      RETURNING id, client_id, title, lab_type, file_url, file_size,
+                uploaded_date, test_date, ai_summary, extracted_data,
+                created_at, uploaded_by, original_filename, file_mime_type`,
       [
         client_id,
         title || req.file.originalname,
         lab_type || 'General',
-        `/uploads/labs/${req.file.filename}`,
+        '/api/labs/temp/file', // Will be updated after insert
         req.file.size,
         test_date || null,
-        req.user.userId
+        req.user.userId,
+        req.file.buffer, // Store the PDF binary data
+        req.file.mimetype,
+        req.file.originalname
       ]
     );
+
+    // Update file_url with actual lab ID
+    const labId = result.rows[0].id;
+    await db.query(
+      'UPDATE labs SET file_url = $1 WHERE id = $2',
+      [`/api/labs/${labId}/file`, labId]
+    );
+
+    result.rows[0].file_url = `/api/labs/${labId}/file`;
 
     res.status(201).json({
       message: 'Lab uploaded successfully',
@@ -216,14 +257,6 @@ router.post('/upload', authenticateToken, upload.single('file'), async (req, res
     });
 
   } catch (error) {
-    // Clean up uploaded file if database insert fails
-    if (req.file) {
-      try {
-        await fs.unlink(req.file.path);
-      } catch (unlinkError) {
-        console.error('Error deleting file:', unlinkError);
-      }
-    }
     next(error);
   }
 });
@@ -233,9 +266,9 @@ router.delete('/:id', authenticateToken, async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    // Get file path before deleting
+    // Check if lab exists
     const labResult = await db.query(
-      'SELECT file_url FROM labs WHERE id = $1',
+      'SELECT id FROM labs WHERE id = $1',
       [id]
     );
 
@@ -243,18 +276,8 @@ router.delete('/:id', authenticateToken, async (req, res, next) => {
       return res.status(404).json({ error: 'Lab not found' });
     }
 
-    const filePath = path.join(__dirname, '..', labResult.rows[0].file_url);
-
-    // Delete from database
+    // Delete from database (file_data is deleted with the row)
     await db.query('DELETE FROM labs WHERE id = $1', [id]);
-
-    // Delete file from filesystem
-    try {
-      await fs.unlink(filePath);
-    } catch (fileError) {
-      console.error('Error deleting file:', fileError);
-      // Continue even if file deletion fails
-    }
 
     res.json({ message: 'Lab deleted successfully' });
 
@@ -276,7 +299,9 @@ router.put('/:id', authenticateToken, async (req, res, next) => {
         test_date = COALESCE($3, test_date),
         ai_summary = COALESCE($4, ai_summary)
       WHERE id = $5
-      RETURNING *`,
+      RETURNING id, client_id, title, lab_type, file_url, file_size,
+                uploaded_date, test_date, ai_summary, extracted_data,
+                created_at, uploaded_by, original_filename, file_mime_type`,
       [title, lab_type, test_date, ai_summary, id]
     );
 
@@ -387,7 +412,7 @@ router.post('/:id/generate-summary', authenticateToken, async (req, res, next) =
   try {
     const { id } = req.params;
 
-    // Get lab data with client info
+    // Get lab data with client info (including file_data for PDF parsing)
     const labResult = await db.query(
       `SELECT l.*, c.first_name, c.last_name, c.date_of_birth, c.gender,
               c.medical_history, c.current_medications
@@ -414,11 +439,22 @@ router.post('/:id/generate-summary', authenticateToken, async (req, res, next) =
     let pdfText = '';
     let extractedData = null;
 
-    // Try to extract text from PDF if file exists
+    // Try to extract text from PDF - first from database, then from file system
     try {
       const pdfParse = require('pdf-parse');
-      const filePath = path.join(__dirname, '..', lab.file_url);
-      const dataBuffer = await fs.readFile(filePath);
+      let dataBuffer;
+
+      // First try to get PDF from database
+      if (lab.file_data) {
+        dataBuffer = lab.file_data;
+        console.log('Using PDF data from database');
+      } else {
+        // Fallback to file system for old uploads
+        const filePath = path.join(__dirname, '..', lab.file_url);
+        dataBuffer = await fs.readFile(filePath);
+        console.log('Using PDF data from file system');
+      }
+
       const pdfData = await pdfParse(dataBuffer);
       pdfText = pdfData.text;
       console.log(`Extracted ${pdfText.length} characters from PDF`);

@@ -1482,6 +1482,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  background: rgba(0, 0, 0, 0.5);
 }
 
 .modal-overlay {
@@ -1744,6 +1745,98 @@
 .share-option-desc {
   font-size: 13px;
   color: #6B7280;
+}
+
+/* Engagement Share Modal */
+.share-option-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 20px 16px;
+  background: white;
+  border: 1px solid #E5E7EB;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 120px;
+}
+
+.share-option-btn:hover {
+  background: #F0FDF4;
+  border-color: #0F766E;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(15, 118, 110, 0.1);
+}
+
+.share-option-btn svg {
+  color: #0F766E;
+}
+
+.share-option-btn span {
+  font-weight: 600;
+  color: #1F2937;
+  font-size: 14px;
+}
+
+.share-option-btn small {
+  font-size: 11px;
+  color: #6B7280;
+  text-align: center;
+}
+
+.share-description {
+  color: #6B7280;
+  margin-bottom: 20px;
+}
+
+/* Share Modal Content Container */
+.share-modal-content {
+  background: white;
+  border-radius: 16px;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+.share-modal-content .modal-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid #E5E7EB;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.share-modal-content .modal-header h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1F2937;
+}
+
+.share-modal-content .modal-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #6B7280;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.share-modal-content .modal-close:hover {
+  color: #1F2937;
+}
+
+.share-modal-content .modal-body {
+  padding: 24px;
+}
+
+.share-modal-content .share-options {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
 }
 
 /* Note Modal Specific Styles */
@@ -2423,6 +2516,8 @@
   border-radius: 8px;
   border-left: 3px solid #0F766E;
   min-height: 80px;
+  max-height: 300px;
+  overflow-y: auto;
 }
 
 .lab-summary-content .summary-placeholder {
@@ -3294,6 +3389,8 @@
   padding: 14px;
   margin-bottom: 12px;
   min-height: 80px;
+  max-height: 300px;
+  overflow-y: auto;
   font-size: 14px;
   line-height: 1.6;
   color: #374151;
@@ -4115,6 +4212,50 @@
   color: #6366F1;
 }
 
+.protocol-card-status.engagement {
+  background: rgba(15, 118, 110, 0.15);
+  color: #0F766E;
+}
+
+.engagement-card {
+  border-left: 3px solid #0F766E;
+}
+
+.engagement-plan-view {
+  padding: 20px;
+}
+
+.engagement-plan-view .engagement-phase {
+  margin-bottom: 24px;
+  padding: 16px;
+  background: #F9FAFB;
+  border-radius: 8px;
+}
+
+.engagement-plan-view .phase-header h2 {
+  font-size: 18px;
+  color: #0F766E;
+  margin: 0 0 8px 0;
+}
+
+.engagement-plan-view .phase-items {
+  margin: 12px 0;
+  padding-left: 20px;
+}
+
+.engagement-plan-view .phase-items li {
+  margin-bottom: 8px;
+  color: #374151;
+}
+
+.engagement-plan-view .progress-goal {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #E5E7EB;
+  color: #6B7280;
+  font-size: 14px;
+}
+
 .protocol-card-templates {
   display: flex;
   flex-wrap: wrap;
@@ -4130,16 +4271,104 @@
   color: var(--text-muted);
 }
 
-.protocol-card-actions {
-  display: flex;
-  gap: 8px;
-  margin-top: 16px;
+/* Kebab Menu (3-dot menu) for cards */
+.card-menu-container {
+  position: absolute;
+  top: 12px;
+  right: 12px;
 }
 
-.protocol-card-actions button {
-  flex: 1;
-  padding: 8px 12px;
+.card-menu-trigger {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease;
+}
+
+.card-menu-trigger:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.card-menu-trigger svg {
+  width: 20px;
+  height: 20px;
+  color: #6B7280;
+}
+
+.card-menu-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: white;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  min-width: 150px;
+  z-index: 1000;
+  display: none;
+  overflow: hidden;
+}
+
+.card-menu-dropdown.show {
+  display: block;
+}
+
+.card-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
   font-size: 13px;
+  color: #374151;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+}
+
+.card-menu-item:hover {
+  background: #F3F4F6;
+}
+
+.card-menu-item svg {
+  width: 16px;
+  height: 16px;
+  color: #6B7280;
+}
+
+.card-menu-item.danger {
+  color: #DC2626;
+}
+
+.card-menu-item.danger svg {
+  color: #DC2626;
+}
+
+.card-menu-item.danger:hover {
+  background: #FEF2F2;
+}
+
+.card-menu-divider {
+  height: 1px;
+  background: #E5E7EB;
+  margin: 4px 0;
+}
+
+/* Protocol card with menu - adjust layout */
+.protocol-card {
+  position: relative;
+}
+
+/* Hide old button styles */
+.protocol-card-actions {
+  display: none;
 }
 
 /* ============================================
