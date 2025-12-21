@@ -469,7 +469,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   loadClientData();
   setupTabNavigation();
-  renderActivityFeed();
+  loadClientActivity(); // Load real activity data from API
   loadSavedNotes();
   initFormsSearch();
 });
@@ -495,6 +495,9 @@ function setupTabNavigation() {
       });
 
       // Load data for specific tabs
+      if (targetTab === 'dashboard') {
+        loadClientActivity(); // Refresh activity when switching to Dashboard
+      }
       if (targetTab === 'labs') {
         loadClientLabs();
       }
@@ -593,33 +596,189 @@ function calculateAge(dateOfBirth) {
   return age;
 }
 
-// Render activity feed
-function renderActivityFeed() {
+// Load and render activity feed from real data
+async function loadClientActivity() {
   const activityFeed = document.getElementById('activityFeed');
+  if (!activityFeed || !clientId) return;
 
-  const activitiesHtml = sampleActivities.map(activity => `
+  activityFeed.innerHTML = '<div class="loading-activity"><p>Loading activity...</p></div>';
+
+  try {
+    const token = localStorage.getItem('auth_token');
+    const activities = [];
+
+    // Fetch labs
+    try {
+      const labsResponse = await fetch(`${API_BASE}/api/labs/client/${clientId}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (labsResponse.ok) {
+        const labsData = await labsResponse.json();
+        (labsData.labs || []).forEach(lab => {
+          activities.push({
+            id: `lab-${lab.id}`,
+            type: 'lab',
+            title: lab.title || 'Lab Result',
+            date: lab.created_at,
+            icon: '📄',
+            iconBg: '#FEE2E2',
+            tag: 'Labs & Tests',
+            tagColor: '#EF4444'
+          });
+        });
+      }
+    } catch (e) { console.log('Labs fetch error:', e); }
+
+    // Fetch notes
+    try {
+      const notesResponse = await fetch(`${API_BASE}/api/notes/client/${clientId}?limit=20`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (notesResponse.ok) {
+        const notesData = await notesResponse.json();
+        (notesData.notes || []).forEach(note => {
+          activities.push({
+            id: `note-${note.id}`,
+            type: 'note',
+            title: note.is_consultation ? 'Consultation Note' : 'Quick Note',
+            date: note.created_at,
+            icon: '📝',
+            iconBg: '#FEF3C7',
+            tag: 'Notes',
+            tagColor: '#F59E0B'
+          });
+        });
+      }
+    } catch (e) { console.log('Notes fetch error:', e); }
+
+    // Fetch protocols
+    try {
+      const protocolsResponse = await fetch(`${API_BASE}/api/protocols/client/${clientId}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (protocolsResponse.ok) {
+        const protocolsData = await protocolsResponse.json();
+        (protocolsData.protocols || []).forEach(protocol => {
+          activities.push({
+            id: `protocol-${protocol.id}`,
+            type: 'protocol',
+            title: protocol.template_name || 'Protocol Activated',
+            date: protocol.created_at,
+            icon: '📋',
+            iconBg: '#DBEAFE',
+            tag: 'Protocol',
+            tagColor: '#3B82F6'
+          });
+        });
+      }
+    } catch (e) { console.log('Protocols fetch error:', e); }
+
+    // Fetch form submissions
+    try {
+      const formsResponse = await fetch(`${API_BASE}/api/forms/client/${clientId}/submissions`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (formsResponse.ok) {
+        const formsData = await formsResponse.json();
+        (formsData.submissions || []).forEach(submission => {
+          activities.push({
+            id: `form-${submission.id}`,
+            type: 'form',
+            title: submission.form_name || 'Form Completed',
+            date: submission.submitted_at || submission.created_at,
+            icon: '📋',
+            iconBg: '#D1FAE5',
+            tag: 'Forms',
+            tagColor: '#10B981'
+          });
+        });
+      }
+    } catch (e) { console.log('Forms fetch error:', e); }
+
+    // Sort by date descending
+    activities.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    // Update the global sampleActivities for compatibility
+    sampleActivities.length = 0;
+    activities.forEach(a => sampleActivities.push(a));
+
+    // Render the activities
+    renderActivityFeed(activities);
+
+  } catch (error) {
+    console.error('Error loading client activity:', error);
+    activityFeed.innerHTML = '<p class="empty-message">Error loading activity</p>';
+  }
+}
+
+// Render activity feed
+function renderActivityFeed(activities) {
+  const activityFeed = document.getElementById('activityFeed');
+  if (!activityFeed) return;
+
+  // Use passed activities or fall back to sampleActivities
+  const activityList = activities || sampleActivities;
+
+  if (activityList.length === 0) {
+    activityFeed.innerHTML = '<p class="empty-message">No activity yet</p>';
+    return;
+  }
+
+  const activitiesHtml = activityList.map((activity, index) => `
     <div class="activity-item">
-      <div class="activity-timeline ${activity.id === 1 ? 'completed' : ''}">
-        ${activity.id === 1 ? '✓' : '○'}
+      <div class="activity-timeline ${index === 0 ? 'completed' : ''}">
+        ${index === 0 ? '✓' : '○'}
       </div>
       <div class="activity-icon" style="background: ${activity.iconBg};">
         ${activity.icon}
       </div>
       <div class="activity-info">
         <p class="activity-title">${activity.title}</p>
-        <p class="activity-date">${activity.date}</p>
+        <p class="activity-date">${formatActivityDate(activity.date)}</p>
       </div>
       <div class="activity-tag" style="background: ${activity.tagColor}20; color: ${activity.tagColor};">
         ${activity.tag}
       </div>
       <div class="activity-actions">
-        <button class="activity-btn" title="View">👁️</button>
+        <button class="activity-btn" title="View" onclick="viewActivityItem('${activity.type}', '${activity.id}')">👁️</button>
         <button class="activity-btn" title="More">⋯</button>
       </div>
     </div>
   `).join('');
 
   activityFeed.innerHTML = activitiesHtml;
+}
+
+// Format activity date
+function formatActivityDate(dateString) {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-US', {
+    month: '2-digit',
+    day: '2-digit',
+    year: 'numeric'
+  });
+}
+
+// View activity item
+function viewActivityItem(type, id) {
+  const actualId = id.replace(`${type}-`, '');
+  switch(type) {
+    case 'lab':
+      viewLab(actualId);
+      break;
+    case 'note':
+      viewNoteDetail(actualId);
+      break;
+    case 'protocol':
+      // Switch to protocol tab
+      document.querySelector('[data-tab="protocol"]')?.click();
+      break;
+    case 'form':
+      // Switch to forms tab
+      document.querySelector('[data-tab="forms"]')?.click();
+      break;
+  }
 }
 
 // Refresh AI Summary
@@ -865,32 +1024,52 @@ function closeUploadLabModal() {
   clearFileSelection();
 }
 
+// Track if file upload zone is already setup
+let fileUploadZoneInitialized = false;
+
 // Setup file upload drag and drop
 function setupFileUploadZone() {
   const zone = document.getElementById('fileUploadZone');
   const input = document.getElementById('labFileInput');
 
-  // Click to upload
-  zone.onclick = () => input.click();
+  if (!zone || !input) {
+    console.error('File upload zone elements not found');
+    return;
+  }
+
+  // Only setup once to avoid duplicate event listeners
+  if (fileUploadZoneInitialized) {
+    return;
+  }
+  fileUploadZoneInitialized = true;
+
+  // Click to upload - use onclick to ensure it's not duplicated
+  zone.onclick = function(e) {
+    // Don't trigger if clicking on the file input itself or the preview area
+    if (e.target === input || e.target.closest('#uploadPreview')) {
+      return;
+    }
+    input.click();
+  };
 
   // Handle file selection
-  input.onchange = (e) => {
+  input.onchange = function(e) {
     if (e.target.files && e.target.files[0]) {
       handleFileSelection(e.target.files[0]);
     }
   };
 
   // Drag and drop
-  zone.ondragover = (e) => {
+  zone.ondragover = function(e) {
     e.preventDefault();
     zone.classList.add('drag-over');
   };
 
-  zone.ondragleave = () => {
+  zone.ondragleave = function() {
     zone.classList.remove('drag-over');
   };
 
-  zone.ondrop = (e) => {
+  zone.ondrop = function(e) {
     e.preventDefault();
     zone.classList.remove('drag-over');
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
@@ -1725,7 +1904,7 @@ function extractKeyPhrase(text, type) {
   return randomSentence || 'Not specified';
 }
 
-function saveNote() {
+async function saveNote() {
   const title = document.getElementById('noteTitle').value.trim();
   const type = document.getElementById('noteType').value;
   const content = document.getElementById('noteContent').value.trim();
@@ -1741,43 +1920,98 @@ function saveNote() {
     return;
   }
 
+  if (!currentClient?.id) {
+    alert('No client selected');
+    return;
+  }
+
   // Generate AI summary if requested
   let aiSummary = null;
   if (generateSummary) {
     aiSummary = generateSimpleAISummary(content);
   }
 
-  const noteData = {
-    id: Date.now(),
-    clientId: currentClient?.id,
-    clientName: currentClient ? `${currentClient.first_name} ${currentClient.last_name}` : 'Unknown',
-    title,
-    type,
-    content,
-    aiSummary,
-    createdAt: new Date().toISOString()
+  // Build the full content with title and AI summary
+  let fullContent = content;
+  if (aiSummary) {
+    fullContent += `\n\n---\n**AI Summary:**\n`;
+    if (aiSummary.keyPoints && aiSummary.keyPoints.length > 0) {
+      aiSummary.keyPoints.forEach(point => {
+        fullContent += `• ${point}\n`;
+      });
+    }
+  }
+
+  // Map UI note types to API note types
+  const noteTypeMap = {
+    'Consultation': 'consultation',
+    'Follow-up': 'follow_up',
+    'Lab Notes': 'lab_note',
+    'General': 'quick_note'
   };
+  const apiNoteType = noteTypeMap[type] || 'quick_note';
+  const isConsultation = type === 'Consultation' || type === 'Follow-up';
 
-  // Save to memory
-  savedNotes.unshift(noteData); // Add to beginning of array
+  try {
+    const token = localStorage.getItem('auth_token');
+    const response = await fetch(`${API_BASE}/api/notes`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        client_id: currentClient.id,
+        content: fullContent,
+        title: title,
+        note_type: apiNoteType,
+        is_consultation: isConsultation,
+        consultation_date: isConsultation ? new Date().toISOString() : null
+      })
+    });
 
-  console.log('Saving note:', noteData);
+    if (response.ok) {
+      const savedNote = await response.json();
+      console.log('Note saved to database:', savedNote);
 
-  alert(
-    `Note Saved Successfully!\n\n` +
-    `Title: ${title}\n` +
-    `Type: ${type}\n` +
-    `Client: ${noteData.clientName}\n\n` +
-    `${generateSummary ? 'AI summary generated and attached to note.' : 'Note saved without AI summary.'}`
-  );
+      // Also save to local memory for immediate display
+      const noteData = {
+        id: savedNote.id,
+        clientId: currentClient.id,
+        clientName: `${currentClient.first_name} ${currentClient.last_name}`,
+        title,
+        type,
+        content,
+        aiSummary,
+        createdAt: savedNote.created_at
+      };
+      savedNotes.unshift(noteData);
 
-  closeNewNoteModal();
+      alert(
+        `Note Saved Successfully!\n\n` +
+        `Title: ${title}\n` +
+        `Type: ${type}\n` +
+        `Client: ${noteData.clientName}\n\n` +
+        `${generateSummary ? 'AI summary generated and attached to note.' : 'Note saved without AI summary.'}`
+      );
 
-  // Refresh notes display
-  loadSavedNotes();
+      closeNewNoteModal();
 
-  // Add to activity feed
-  addNoteToActivityFeed(noteData);
+      // Refresh notes display
+      loadSavedNotes();
+      loadClientNotes(); // Refresh from API
+
+      // Add to activity feed
+      addNoteToActivityFeed(noteData);
+    } else {
+      const errorData = await response.json().catch(() => ({}));
+      console.error('Failed to save note:', response.status, errorData);
+      alert('Failed to save note: ' + (errorData.error || response.statusText));
+    }
+  } catch (error) {
+    console.error('Error saving note:', error);
+    alert('Failed to save note: ' + error.message);
+  }
 }
 
 // Generate simple AI summary for demo
@@ -2385,8 +2619,41 @@ function renderNoteCard(note) {
     content = lines.slice(1).join('\n').trim();
   }
 
-  // Truncate content for preview
-  const preview = content && content.length > 200 ? content.substring(0, 200) + '...' : (content || '');
+  // Extract AI Summary from content if present
+  let mainContent = content;
+  let aiSummaryHtml = '';
+
+  const aiSummaryPatterns = [
+    /---\s*\n\*\*AI Summary:\*\*\n?([\s\S]*?)$/i,
+    /\*\*AI Summary:\*\*\n?([\s\S]*?)$/i,
+    /✨?\s*AI Summary:?\s*\n?([\s\S]*?)$/i
+  ];
+
+  for (const pattern of aiSummaryPatterns) {
+    const match = content.match(pattern);
+    if (match) {
+      const summaryText = match[1].trim();
+      mainContent = content.replace(match[0], '').replace(/---\s*$/, '').trim();
+
+      // Format bullet points
+      const bulletPoints = summaryText.split(/\n/).filter(line => line.trim().startsWith('•') || line.trim().startsWith('-') || line.trim().startsWith('*'));
+      if (bulletPoints.length > 0) {
+        aiSummaryHtml = `
+          <div class="note-card-ai-summary">
+            <div class="ai-summary-label-small">✨ AI Summary</div>
+            <ul class="ai-summary-bullets">
+              ${bulletPoints.slice(0, 3).map(point => `<li>${escapeHtml(point.replace(/^[•\-\*]\s*/, '').trim())}</li>`).join('')}
+              ${bulletPoints.length > 3 ? `<li class="more-items">+${bulletPoints.length - 3} more...</li>` : ''}
+            </ul>
+          </div>
+        `;
+      }
+      break;
+    }
+  }
+
+  // Truncate main content for preview
+  const preview = mainContent && mainContent.length > 100 ? mainContent.substring(0, 100) + '...' : (mainContent || '');
 
   return `
     <div class="note-card" data-note-id="${note.id}">
@@ -2395,6 +2662,7 @@ function renderNoteCard(note) {
         <span class="note-type-badge ${note.is_consultation ? 'consultation' : note.note_type}">${noteType}</span>
       </div>
       <p class="note-preview">${escapeHtml(preview)}</p>
+      ${aiSummaryHtml}
       <div class="note-card-footer">
         <div class="note-meta">
           <span class="note-author">${note.author}</span>
@@ -2419,17 +2687,152 @@ function renderNoteCard(note) {
   `;
 }
 
-// View note detail
+// View note detail in a modal
 function viewNoteDetail(noteId) {
   const note = clientNotes.find(n => n.id === noteId);
   if (!note) return;
 
-  // For now, just show an alert. Later this could open a modal.
-  let content = note.content;
+  // Extract title if it exists
+  let title = note.title || '';
+  let content = note.content || '';
   if (content.startsWith('## ')) {
-    content = content.replace(/^## .+\n\n?/, '');
+    const lines = content.split('\n');
+    title = lines[0].replace('## ', '');
+    content = lines.slice(1).join('\n').trim();
   }
-  alert(`Note by ${note.author}\n${formatDateTime(note.created_at)}\n\n${content}`);
+
+  const noteType = note.is_consultation ? 'Consultation' :
+                   note.note_type === 'quick_note' ? 'Quick Note' :
+                   note.note_type ? note.note_type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'Note';
+
+  // Check if there's an AI Summary section in the content
+  let mainContent = content;
+  let aiSummary = '';
+
+  // Try to find AI Summary in the content (multiple patterns)
+  // Pattern 1: **AI Summary:** followed by bullet points
+  // Pattern 2: ✨ AI Summary: followed by content
+  // Pattern 3: --- separator followed by AI Summary
+  const aiSummaryPatterns = [
+    /---\s*\n\*\*AI Summary:\*\*\n?([\s\S]*?)$/i,
+    /\*\*AI Summary:\*\*\n?([\s\S]*?)$/i,
+    /✨?\s*AI Summary:?\s*\n?([\s\S]*?)$/i
+  ];
+
+  for (const pattern of aiSummaryPatterns) {
+    const match = content.match(pattern);
+    if (match) {
+      aiSummary = match[1].trim();
+      mainContent = content.replace(match[0], '').trim();
+      // Remove trailing separator if present
+      mainContent = mainContent.replace(/---\s*$/, '').trim();
+      break;
+    }
+  }
+
+  // Create modal HTML
+  const modalHtml = `
+    <div class="note-detail-modal-overlay" id="noteDetailModal" onclick="closeNoteDetailModal(event)">
+      <div class="note-detail-modal" onclick="event.stopPropagation()">
+        <div class="note-detail-header">
+          <div class="note-detail-title-section">
+            ${title ? `<h2 class="note-detail-title">${escapeHtml(title)}</h2>` : ''}
+            <div class="note-detail-meta">
+              <span class="note-type-badge ${note.is_consultation ? 'consultation' : note.note_type}">${noteType}</span>
+              <span class="note-detail-date">${formatDateTime(note.created_at)}</span>
+              <span class="note-detail-author">by ${note.author}</span>
+            </div>
+          </div>
+          <button class="note-detail-close" onclick="closeNoteDetailModal()">&times;</button>
+        </div>
+
+        ${aiSummary ? `
+        <div class="note-detail-ai-summary">
+          <div class="ai-summary-header">
+            <span class="ai-summary-icon">✨</span>
+            <span class="ai-summary-label">AI Summary</span>
+          </div>
+          <div class="ai-summary-content">
+            ${formatAISummaryForModal(aiSummary)}
+          </div>
+        </div>
+        ` : ''}
+
+        <div class="note-detail-content">
+          <h3 class="note-content-label">Full Note</h3>
+          <div class="note-content-text">
+            ${formatNoteContent(mainContent)}
+          </div>
+        </div>
+
+        <div class="note-detail-footer">
+          <button class="btn-secondary" onclick="closeNoteDetailModal()">Close</button>
+          <button class="btn-danger" onclick="deleteClientNote(${note.id}); closeNoteDetailModal();">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="3 6 5 6 21 6"/>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+            </svg>
+            Delete Note
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Remove existing modal if any
+  const existingModal = document.getElementById('noteDetailModal');
+  if (existingModal) {
+    existingModal.remove();
+  }
+
+  // Add modal to page
+  document.body.insertAdjacentHTML('beforeend', modalHtml);
+  document.body.style.overflow = 'hidden';
+}
+
+// Format AI summary for modal display
+function formatAISummaryForModal(summary) {
+  // Split by bullet points or line breaks
+  const lines = summary.split(/\n|(?=[•\-\*])/g).filter(line => line.trim());
+
+  if (lines.length === 0) return `<p>${escapeHtml(summary)}</p>`;
+
+  let html = '<ul class="ai-summary-list">';
+  lines.forEach(line => {
+    const cleaned = line.replace(/^[•\-\*]\s*/, '').trim();
+    if (cleaned) {
+      html += `<li>${escapeHtml(cleaned)}</li>`;
+    }
+  });
+  html += '</ul>';
+  return html;
+}
+
+// Format note content for display
+function formatNoteContent(content) {
+  if (!content) return '<p class="empty-content">No content</p>';
+
+  // Convert markdown-style content to HTML
+  let html = escapeHtml(content);
+
+  // Convert line breaks to paragraphs
+  html = html.split('\n\n').map(para => `<p>${para}</p>`).join('');
+
+  // Convert single line breaks within paragraphs
+  html = html.replace(/\n/g, '<br>');
+
+  return html;
+}
+
+// Close note detail modal
+function closeNoteDetailModal(event) {
+  if (event && event.target !== event.currentTarget) return;
+
+  const modal = document.getElementById('noteDetailModal');
+  if (modal) {
+    modal.remove();
+    document.body.style.overflow = '';
+  }
 }
 
 // Delete client note
@@ -2505,9 +2908,12 @@ window.deleteQuickNote = deleteQuickNote;
 window.loadQuickNotes = loadQuickNotes;
 window.loadClientNotes = loadClientNotes;
 window.viewNoteDetail = viewNoteDetail;
+window.closeNoteDetailModal = closeNoteDetailModal;
 window.deleteClientNote = deleteClientNote;
 window.regenerateSummary = regenerateSummary;
 window.regeneratePersonalityInsights = regeneratePersonalityInsights;
+window.loadClientActivity = loadClientActivity;
+window.viewActivityItem = viewActivityItem;
 
 // Labs & Tests functions
 window.openUploadLabModal = openUploadLabModal;

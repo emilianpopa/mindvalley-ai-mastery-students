@@ -85,6 +85,7 @@ function displayClients(clients) {
     const programStatus = client.status === 'active';
     const bioClockEnabled = client.bio_clock_integration !== false;
     const dateCreated = formatDateShort(client.created_at);
+    const dateUpdated = formatDateShort(client.updated_at);
     const lastLogin = client.last_login ? formatRelativeTime(client.last_login) : '-';
 
     return `
@@ -111,6 +112,7 @@ function displayClients(clients) {
           </span>
         </td>
         <td>${dateCreated}</td>
+        <td>${dateUpdated}</td>
         <td>${lastLogin}</td>
         <td>
           <div class="action-buttons" onclick="event.stopPropagation();">
