@@ -3775,12 +3775,28 @@ function displayRefNotes(notes) {
     return;
   }
 
-  container.innerHTML = notes.map(note => `
-    <div class="ref-item" onclick="viewRefNote(${note.id})">
-      <p class="ref-item-title">${note.note_type === 'consultation' ? 'Consultation Note' : 'Quick Note'}</p>
-      <p class="ref-item-date">${formatDate(note.created_at)} - ${note.author || 'Unknown'}</p>
-    </div>
-  `).join('');
+  container.innerHTML = notes.map(note => {
+    // Determine note title based on type
+    let noteTitle = 'Quick Note';
+    if (note.is_consultation) {
+      // Extract title from consultation notes (format: ## Title\n\nContent)
+      if (note.content && note.content.startsWith('## ')) {
+        const titleMatch = note.content.match(/^## (.+?)(\n|$)/);
+        noteTitle = titleMatch ? titleMatch[1] : 'Consultation Note';
+      } else {
+        noteTitle = 'Consultation Note';
+      }
+    } else if (note.note_type && note.note_type !== 'quick_note') {
+      noteTitle = note.note_type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    }
+
+    return `
+      <div class="ref-item ${note.is_consultation ? 'consultation-note' : ''}" onclick="viewRefNote(${note.id})">
+        <p class="ref-item-title">${noteTitle}</p>
+        <p class="ref-item-date">${formatDate(note.created_at)} - ${note.author || 'Unknown'}</p>
+      </div>
+    `;
+  }).join('');
 }
 
 // Display forms in reference sidebar
