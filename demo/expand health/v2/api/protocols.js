@@ -1048,6 +1048,11 @@ router.post('/generate', authenticateToken, async (req, res, next) => {
       kbContext = kbResults.filter(r => r).join('\n\n---\n\n');
       if (kbContext) {
         console.log('[Protocol Generate] KB context retrieved successfully');
+        console.log(`[Protocol Generate] KB context length: ${kbContext.length} characters`);
+        // Log first 500 chars of KB context for debugging
+        console.log('[Protocol Generate] KB context preview:', kbContext.substring(0, 500));
+      } else {
+        console.log('[Protocol Generate] WARNING: No KB context retrieved from any queries');
       }
     } catch (kbError) {
       console.error('[Protocol Generate] KB query error:', kbError.message);
@@ -1094,21 +1099,24 @@ IMPORTANT REQUIREMENTS:
 2. For ALL supplements, you MUST include precise timing (e.g., "With breakfast", "30 min before bed", "Between meals on empty stomach")
 3. Include clinical notes explaining WHY each supplement is recommended and any special instructions
 
-*** CLINIC MODALITIES - CRITICAL ***
-ExpandHealth offers advanced therapeutic modalities. Based on the Knowledge Base content above, you MUST include a "Clinic Treatments" module with relevant modalities such as:
-- HBOT (Hyperbaric Oxygen Therapy) - for tissue healing, brain health, recovery
-- Red Light Therapy / Photobiomodulation - for cellular energy, skin health, pain
-- Cold Plunge / Cryotherapy - for inflammation, recovery, metabolic health
-- IV Therapy - NAD+, glutathione, vitamin C, Myers cocktail for nutrient delivery
-- Peptide Therapy - BPC-157, thymosin, GHK-Cu for healing and regeneration
-- Ozone Therapy / EBOO - blood ozonation for immune support and detox
-- Infrared Sauna - for detoxification, relaxation, cardiovascular health
+*** CLINIC MODALITIES - ABSOLUTELY REQUIRED (DO NOT SKIP) ***
+ExpandHealth is a clinic that offers IN-PERSON therapeutic modalities. EVERY protocol MUST include a "Clinic Treatments" module as the LAST module.
 
-For each clinic modality, include:
-- Specific treatment frequency (e.g., "2x per week for 6 weeks")
-- Session duration if applicable
-- Why it's recommended for this client
-- Any contraindications or precautions from the KB
+YOU MUST ALWAYS include AT LEAST 3-4 of these clinic treatments in EVERY protocol:
+1. HBOT (Hyperbaric Oxygen Therapy) - 60-90 min sessions, 2x/week for tissue healing, brain health, recovery
+2. Red Light Therapy / Photobiomodulation - 15-20 min sessions, 3x/week for cellular energy, skin health, pain
+3. Cold Plunge / Cryotherapy - 3-5 min sessions, 2-3x/week for inflammation, recovery, metabolic health
+4. IV Therapy - NAD+, glutathione, vitamin C, Myers cocktail - weekly infusions for nutrient delivery
+5. Infrared Sauna - 30-45 min sessions, 2-3x/week for detoxification, cardiovascular health
+6. PEMF Therapy - 20-30 min sessions for circulation, cellular energy, pain support
+
+For each clinic modality, ALWAYS include:
+- Name of the treatment
+- Specific frequency (e.g., "2x per week")
+- Duration per session (e.g., "60 minutes")
+- Clinical notes explaining WHY this treatment benefits this specific client
+
+FAILURE TO INCLUDE A "Clinic Treatments" MODULE WILL MAKE THIS PROTOCOL INCOMPLETE.
 
 Generate a detailed protocol with this EXACT JSON structure:
 {
