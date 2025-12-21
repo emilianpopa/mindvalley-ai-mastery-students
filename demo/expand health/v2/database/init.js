@@ -92,6 +92,55 @@ async function initAuditLogs() {
 }
 
 /**
+ * Initialize encryption support for PHI fields
+ */
+async function initEncryption() {
+  const addColumnsSQL = `
+    ALTER TABLE clients ADD COLUMN IF NOT EXISTS dob_hash VARCHAR(64);
+    ALTER TABLE clients ADD COLUMN IF NOT EXISTS emergency_phone_hash VARCHAR(64);
+  `;
+
+  const createIndexesSQL = `
+    CREATE INDEX IF NOT EXISTS idx_clients_dob_hash ON clients(dob_hash);
+    CREATE INDEX IF NOT EXISTS idx_clients_emergency_phone_hash ON clients(emergency_phone_hash);
+  `;
+
+  const createMetadataSQL = `
+    CREATE TABLE IF NOT EXISTS encryption_metadata (
+        id SERIAL PRIMARY KEY,
+        key_version INTEGER DEFAULT 1,
+        algorithm VARCHAR(50) DEFAULT 'aes-256-gcm',
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        rotated_at TIMESTAMP WITH TIME ZONE,
+        notes TEXT
+    );
+  `;
+
+  const insertMetadataSQL = `
+    INSERT INTO encryption_metadata (key_version, notes)
+    SELECT 1, 'Initial encryption key'
+    WHERE NOT EXISTS (SELECT 1 FROM encryption_metadata WHERE key_version = 1);
+  `;
+
+  try {
+    await db.query(addColumnsSQL);
+    console.log('✅ Encryption columns ready');
+
+    await db.query(createIndexesSQL);
+    console.log('✅ Encryption indexes ready');
+
+    await db.query(createMetadataSQL);
+    await db.query(insertMetadataSQL);
+    console.log('✅ Encryption metadata ready');
+
+    return true;
+  } catch (error) {
+    console.error('❌ Failed to initialize encryption:', error.message);
+    return false;
+  }
+}
+
+/**
  * Run all database initializations
  */
 async function initDatabase() {
@@ -100,6 +149,9 @@ async function initDatabase() {
   try {
     // Initialize audit logs table
     await initAuditLogs();
+
+    // Initialize encryption support
+    await initEncryption();
 
     console.log('✅ Database initialization complete\n');
     return true;
@@ -111,5 +163,6 @@ async function initDatabase() {
 
 module.exports = {
   initDatabase,
-  initAuditLogs
+  initAuditLogs,
+  initEncryption
 };
