@@ -6,15 +6,10 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../database/db');
-const { authenticateToken } = require('./auth');
+const { authenticateToken, requireRole } = require('../middleware/auth');
 
-// Middleware to check admin role
-function requireAdmin(req, res, next) {
-  if (req.user?.role !== 'admin') {
-    return res.status(403).json({ error: 'Admin access required' });
-  }
-  next();
-}
+// Use the existing requireRole middleware for admin access
+const requireAdmin = requireRole('admin');
 
 /**
  * GET /api/audit/logs
