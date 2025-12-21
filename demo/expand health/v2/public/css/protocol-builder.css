@@ -1243,7 +1243,7 @@ textarea.form-input {
   flex-direction: column;
 }
 
-/* Loading State */
+/* Loading State - Progress Modal Style */
 .protocol-editor-loading {
   flex: 1;
   display: flex;
@@ -1251,13 +1251,63 @@ textarea.form-input {
   align-items: center;
   justify-content: center;
   text-align: center;
+  background: #F9FAFB;
+}
+
+.protocol-editor-loading .progress-modal-content {
+  background: white;
+  border-radius: 16px;
+  padding: 48px;
+  max-width: 500px;
+  width: 95%;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.protocol-editor-loading .progress-spinner {
+  margin-bottom: 24px;
+}
+
+.protocol-editor-loading .progress-spinner svg {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 .protocol-editor-loading h2 {
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 600;
-  color: #0D9488;
+  color: #1F2937;
+  margin: 0 0 8px 0;
+}
+
+.protocol-editor-loading .loading-status {
+  color: #6B7280;
   margin: 0 0 24px 0;
+  font-size: 14px;
+}
+
+.protocol-editor-loading .progress-bar-container {
+  background: #E5E7EB;
+  border-radius: 8px;
+  height: 8px;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.protocol-editor-loading .progress-bar {
+  background: linear-gradient(90deg, #0F766E, #8B5CF6);
+  height: 100%;
+  width: 5%;
+  transition: width 0.5s ease;
+}
+
+.protocol-editor-loading .progress-hint {
+  color: #9CA3AF;
+  font-size: 13px;
+  margin: 0;
 }
 
 /* Editor Content */

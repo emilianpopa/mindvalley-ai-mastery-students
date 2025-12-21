@@ -11,6 +11,10 @@ const path = require('path');
 
 // Import middleware
 const errorHandler = require('./middleware/errorHandler');
+const { auditMiddleware, attachAuditHelpers } = require('./middleware/auditMiddleware');
+
+// Import database initialization
+const { initDatabase } = require('./database/init');
 
 // Import API routes
 const authRoutes = require('./api/auth');
@@ -23,6 +27,7 @@ const notesRoutes = require('./api/notes');
 const chatRoutes = require('./api/chat');
 const dashboardRoutes = require('./api/dashboard');
 const adminRoutes = require('./api/admin');
+const auditRoutes = require('./api/audit');
 
 // Initialize Express app
 const app = express();
@@ -71,11 +76,18 @@ if (process.env.NODE_ENV === 'development') {
   });
 }
 
+// HIPAA Audit logging middleware
+// Attach audit helpers to all requests
+app.use(attachAuditHelpers);
+// Auto-log PHI access on API routes
+app.use('/api', auditMiddleware);
+
 // ============================================
 // API ROUTES
 // ============================================
 
 app.use('/api/auth', authRoutes);
+app.use('/api/audit', auditRoutes);
 app.use('/api/clients', clientsRoutes);
 app.use('/api/labs', labsRoutes);
 app.use('/api/protocols', protocolsRoutes);
@@ -225,21 +237,34 @@ app.use(errorHandler);
 // START SERVER
 // ============================================
 
-app.listen(PORT, '0.0.0.0', () => {
-  console.log('\n🚀 ExpandHealth V2 Server');
-  console.log('═'.repeat(50));
-  console.log(`\n✅ Server running on port: ${PORT}`);
-  console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🌐 URL: http://localhost:${PORT}`);
-  console.log('\n📋 Available endpoints:');
-  console.log('   - Login: /login');
-  console.log('   - Dashboard: /');
-  console.log('   - Clients: /clients');
-  console.log('   - Labs: /labs');
-  console.log('   - Protocols: /protocols');
-  console.log('   - Knowledge Base: /kb-admin');
-  console.log('   - Admin: /admin');
-  console.log('\n' + '═'.repeat(50) + '\n');
+// Start server with database initialization
+async function startServer() {
+  // Initialize database schema
+  await initDatabase();
+
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log('\n🚀 ExpandHealth V2 Server');
+    console.log('═'.repeat(50));
+    console.log(`\n✅ Server running on port: ${PORT}`);
+    console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`🌐 URL: http://localhost:${PORT}`);
+    console.log('\n📋 Available endpoints:');
+    console.log('   - Login: /login');
+    console.log('   - Dashboard: /');
+    console.log('   - Clients: /clients');
+    console.log('   - Labs: /labs');
+    console.log('   - Protocols: /protocols');
+    console.log('   - Knowledge Base: /kb-admin');
+    console.log('   - Admin: /admin');
+    console.log('   - Audit Logs: /api/audit (admin)');
+    console.log('\n🔒 HIPAA audit logging: ENABLED');
+    console.log('\n' + '═'.repeat(50) + '\n');
+  });
+}
+
+startServer().catch(err => {
+  console.error('Failed to start server:', err);
+  process.exit(1);
 });
 
 // Graceful shutdown

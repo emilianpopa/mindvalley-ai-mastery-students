@@ -692,13 +692,13 @@ router.post('/:id/generate-recommendations', authenticateToken, async (req, res,
       `SELECT
         p.*,
         c.first_name || ' ' || c.last_name as client_name,
-        c.health_conditions,
-        c.medications,
-        c.health_goals,
+        cm.medical_history,
+        cm.lifestyle_notes,
         pt.name as template_name,
         pt.category as template_category
       FROM protocols p
       LEFT JOIN clients c ON p.client_id = c.id
+      LEFT JOIN client_metadata cm ON c.id = cm.client_id
       LEFT JOIN protocol_templates pt ON p.template_id = pt.id
       WHERE p.id = $1`,
       [id]
@@ -731,9 +731,8 @@ router.post('/:id/generate-recommendations', authenticateToken, async (req, res,
 **Status:** ${protocol.status}
 
 **Personalized Suggestions:**
-- Based on client health goals: ${protocol.health_goals || 'Not specified'}
-- Consider health conditions: ${protocol.health_conditions || 'None reported'}
-- Current medications: ${protocol.medications || 'None reported'}
+- Based on client lifestyle: ${protocol.lifestyle_notes || 'Not specified'}
+- Medical history: ${protocol.medical_history ? JSON.stringify(protocol.medical_history) : 'None on file'}
 
 **Optimization Opportunities:**
 1. Review supplement timing for better absorption
@@ -1537,10 +1536,11 @@ router.post('/:id/generate-engagement-plan', authenticateToken, async (req, res,
       `SELECT
         p.*,
         c.first_name, c.last_name, c.email, c.phone,
-        c.medical_history, c.health_goals,
+        cm.medical_history, cm.lifestyle_notes,
         pt.name as template_name, pt.category as template_category
       FROM protocols p
       LEFT JOIN clients c ON p.client_id = c.id
+      LEFT JOIN client_metadata cm ON c.id = cm.client_id
       LEFT JOIN protocol_templates pt ON p.template_id = pt.id
       WHERE p.id = $1`,
       [id]
@@ -1575,7 +1575,7 @@ router.post('/:id/generate-engagement-plan', authenticateToken, async (req, res,
       ];
 
       const kbResults = await Promise.all(
-        engagementQueries.map(q => queryKnowledgeBase(q, `Protocol: ${protocol.template_name}, Client goals: ${protocol.health_goals || 'general wellness'}`))
+        engagementQueries.map(q => queryKnowledgeBase(q, `Protocol: ${protocol.template_name}, Client notes: ${protocol.lifestyle_notes || 'general wellness'}`))
       );
       kbEngagementContext = kbResults.filter(r => r).join('\n\n');
       if (kbEngagementContext) {
@@ -1590,7 +1590,7 @@ router.post('/:id/generate-engagement-plan', authenticateToken, async (req, res,
 
 PATIENT INFORMATION:
 - Name: ${clientName}
-- Health Goals: ${protocol.health_goals || 'Not specified'}
+- Lifestyle Notes: ${protocol.lifestyle_notes || 'Not specified'}
 - Personality Type: ${personality_type || 'Not specified'}
 - Communication Preferences: ${communication_preferences || 'Standard'}
 
@@ -1606,7 +1606,7 @@ ${kbEngagementContext ? `KNOWLEDGE BASE ENGAGEMENT STRATEGIES:\n${kbEngagementCo
 
 Create a 4-phase engagement plan with this EXACT JSON structure:
 {
-  "title": "${protocol.template_name || 'Wellness'} Engagement Plan",
+  "title": "Engagement Plan for ${clientName}",
   "summary": "A 2-3 sentence overview of the engagement approach tailored to this patient",
   "total_weeks": 4,
   "phases": [
@@ -1843,6 +1843,197 @@ router.get('/debug/:id', authenticateToken, async (req, res, next) => {
     }
     res.json({ protocol: result.rows[0] });
   } catch (error) {
+    next(error);
+  }
+});
+
+// Edit engagement plan phase using AI
+router.post('/edit-engagement-phase', authenticateToken, async (req, res, next) => {
+  try {
+    const {
+      phase: currentPhase,
+      prompt,
+      action = 'edit' // 'edit', 'add', or 'remove'
+    } = req.body;
+
+    console.log('[Engagement Phase Edit] Request received:', { action, prompt, phaseTitle: currentPhase?.title });
+
+    if (!prompt) {
+      return res.status(400).json({ error: 'Prompt is required' });
+    }
+
+    // For 'add' action, we're creating a new phase
+    if (action === 'add') {
+      const aiPrompt = `You are a patient engagement specialist. Create a NEW engagement plan phase based on this request:
+
+USER REQUEST: ${prompt}
+
+Generate an engagement phase with this EXACT JSON structure:
+{
+  "title": "Phase X: Phase Name (Week X)",
+  "subtitle": "Brief description of this phase's focus",
+  "items": [
+    "Specific action item 1",
+    "Specific action item 2",
+    "Specific action item 3",
+    "Specific action item 4"
+  ],
+  "progress_goal": "What the patient should achieve by the end of this phase",
+  "check_in_prompts": [
+    "Question to ask during check-in 1?",
+    "Question to ask during check-in 2?"
+  ]
+}
+
+Return ONLY valid JSON. No markdown, no code blocks.`;
+
+      const response = await anthropic.messages.create({
+        model: 'claude-sonnet-4-5-20250929',
+        max_tokens: 2048,
+        messages: [{ role: 'user', content: aiPrompt }]
+      });
+
+      const aiResponse = response.content[0].text;
+      let newPhase;
+
+      try {
+        const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          newPhase = JSON.parse(jsonMatch[0]);
+        } else {
+          throw new Error('No JSON found');
+        }
+      } catch (parseError) {
+        // Create a basic phase structure
+        newPhase = {
+          title: 'New Phase',
+          subtitle: prompt,
+          items: ['Action item based on your request'],
+          progress_goal: 'As specified in request',
+          check_in_prompts: ['How are you feeling about this phase?']
+        };
+      }
+
+      console.log('[Engagement Phase Edit] New phase created:', newPhase.title);
+
+      return res.json({
+        success: true,
+        action: 'add',
+        phase: newPhase
+      });
+    }
+
+    // For 'edit' or 'remove' actions, we need the current phase
+    if (!currentPhase) {
+      return res.status(400).json({ error: 'Current phase data is required for edit/remove actions' });
+    }
+
+    const aiPrompt = `You are a patient engagement specialist. Modify this engagement plan phase based on the user's request.
+
+CURRENT PHASE:
+${JSON.stringify(currentPhase, null, 2)}
+
+USER REQUEST: ${prompt}
+
+IMPORTANT INSTRUCTIONS:
+1. If the user asks to REMOVE an item, remove that specific item from the items array
+2. If the user asks to ADD an item, add it to the items array
+3. If the user asks to MODIFY content, update just that specific content
+4. If the user asks to change the progress goal, update it
+5. If the user asks to modify check-in questions, update the check_in_prompts array
+6. Keep all other content unchanged
+7. Maintain the same structure and format
+
+Return the MODIFIED phase as valid JSON with this structure:
+{
+  "title": "Phase title",
+  "subtitle": "Phase subtitle",
+  "items": ["action item 1", "action item 2", ...],
+  "progress_goal": "Goal for this phase",
+  "check_in_prompts": ["question 1", "question 2"]
+}
+
+Return ONLY valid JSON. No markdown, no code blocks, no explanations.`;
+
+    console.log('[Engagement Phase Edit] Calling Claude API...');
+
+    const response = await anthropic.messages.create({
+      model: 'claude-sonnet-4-5-20250929',
+      max_tokens: 2048,
+      messages: [{ role: 'user', content: aiPrompt }]
+    });
+
+    console.log('[Engagement Phase Edit] Claude API response received');
+
+    const aiResponse = response.content[0].text;
+    let updatedPhase;
+
+    try {
+      const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        updatedPhase = JSON.parse(jsonMatch[0]);
+      } else {
+        throw new Error('No JSON found in response');
+      }
+    } catch (parseError) {
+      console.error('[Engagement Phase Edit] Failed to parse response:', parseError.message);
+      return res.status(500).json({
+        error: 'Failed to parse AI response',
+        details: parseError.message
+      });
+    }
+
+    console.log('[Engagement Phase Edit] Phase updated successfully');
+
+    res.json({
+      success: true,
+      action: action,
+      phase: updatedPhase
+    });
+
+  } catch (error) {
+    console.error('[Engagement Phase Edit] Error:', error);
+    next(error);
+  }
+});
+
+// Update engagement plan for a protocol
+router.put('/:id/engagement-plan', authenticateToken, async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { engagement_plan } = req.body;
+
+    console.log('[Update Engagement Plan] Protocol ID:', id);
+
+    // Get the current protocol
+    const protocolResult = await db.query(
+      'SELECT * FROM protocols WHERE id = $1',
+      [id]
+    );
+
+    if (protocolResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Protocol not found' });
+    }
+
+    // Update the ai_recommendations field with the new engagement plan
+    const planJson = typeof engagement_plan === 'string'
+      ? engagement_plan
+      : JSON.stringify(engagement_plan);
+
+    await db.query(
+      'UPDATE protocols SET ai_recommendations = $1, updated_at = NOW() WHERE id = $2',
+      [planJson, id]
+    );
+
+    console.log('[Update Engagement Plan] Updated successfully');
+
+    res.json({
+      success: true,
+      message: 'Engagement plan updated successfully'
+    });
+
+  } catch (error) {
+    console.error('[Update Engagement Plan] Error:', error);
     next(error);
   }
 });

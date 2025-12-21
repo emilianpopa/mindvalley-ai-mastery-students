@@ -160,6 +160,232 @@ async function deleteProtocol(protocolId) {
   }
 }
 
+// Activate protocol (change status from draft to active)
+async function activateProtocol(protocolId) {
+  const token = localStorage.getItem('auth_token');
+  try {
+    const response = await fetch(`${API_BASE}/api/protocols/${protocolId}`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ status: 'active' })
+    });
+
+    if (response.ok) {
+      showNotification('Protocol activated successfully', 'success');
+      loadProtocols(); // Refresh the list
+    } else {
+      const data = await response.json();
+      showNotification(data.error || 'Failed to activate protocol', 'error');
+    }
+  } catch (error) {
+    console.error('Error activating protocol:', error);
+    showNotification('Error activating protocol', 'error');
+  }
+}
+
+// Set protocol back to draft status
+async function setProtocolDraft(protocolId) {
+  const token = localStorage.getItem('auth_token');
+  try {
+    const response = await fetch(`${API_BASE}/api/protocols/${protocolId}`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ status: 'draft' })
+    });
+
+    if (response.ok) {
+      showNotification('Protocol set to draft', 'success');
+      loadProtocols(); // Refresh the list
+    } else {
+      const data = await response.json();
+      showNotification(data.error || 'Failed to update protocol status', 'error');
+    }
+  } catch (error) {
+    console.error('Error updating protocol status:', error);
+    showNotification('Error updating protocol status', 'error');
+  }
+}
+
+// Create engagement plan from an existing protocol
+async function createEngagementPlanFromProtocol(protocolId) {
+  const token = localStorage.getItem('auth_token');
+
+  // Show progress modal
+  showEngagementPlanProgressModal();
+
+  try {
+    updateEngagementPlanProgress('Connecting to AI service...', 10);
+
+    const response = await fetch(`${API_BASE}/api/protocols/${protocolId}/generate-engagement-plan`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        personality_type: null,
+        communication_preferences: 'WhatsApp'
+      })
+    });
+
+    if (response.ok) {
+      updateEngagementPlanProgress('Processing response...', 90);
+      const data = await response.json();
+
+      // Show success in modal
+      showEngagementPlanSuccess(data.engagement_plan);
+
+      // Refresh both protocols and engagement plans lists
+      loadProtocols();
+      loadEngagementPlans();
+    } else {
+      const data = await response.json();
+      showEngagementPlanError(data.error || 'Failed to generate engagement plan');
+    }
+  } catch (error) {
+    console.error('Error creating engagement plan:', error);
+    showEngagementPlanError('Error creating engagement plan: ' + error.message);
+  }
+}
+
+// Show engagement plan generation progress modal
+function showEngagementPlanProgressModal() {
+  // Remove any existing modal
+  const existingModal = document.getElementById('engagementProgressModal');
+  if (existingModal) existingModal.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'engagementProgressModal';
+  modal.style.cssText = 'display: flex; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;';
+
+  modal.innerHTML = `
+    <div class="modal-content" style="background: white; border-radius: 16px; max-width: 500px; width: 95%; padding: 32px; text-align: center;">
+      <div id="progressContent">
+        <div style="margin-bottom: 24px;">
+          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#0F766E" stroke-width="2" style="animation: spin 1s linear infinite;">
+            <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+          </svg>
+        </div>
+        <h2 style="margin: 0 0 8px 0; color: #1F2937; font-size: 20px;">Generating Engagement Plan</h2>
+        <p id="progressStatus" style="color: #6B7280; margin: 0 0 24px 0;">Initializing...</p>
+        <div style="background: #E5E7EB; border-radius: 8px; height: 8px; overflow: hidden; margin-bottom: 16px;">
+          <div id="progressBar" style="background: linear-gradient(90deg, #0F766E, #8B5CF6); height: 100%; width: 5%; transition: width 0.5s ease;"></div>
+        </div>
+        <p style="color: #9CA3AF; font-size: 13px;">This usually takes 15-30 seconds...</p>
+      </div>
+    </div>
+  `;
+
+  // Add spin animation
+  const style = document.createElement('style');
+  style.textContent = '@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }';
+  modal.appendChild(style);
+
+  document.body.appendChild(modal);
+  document.body.style.overflow = 'hidden';
+
+  // Start progress animation
+  simulateProgress();
+}
+
+// Simulate progress while waiting for API
+let progressInterval;
+function simulateProgress() {
+  let progress = 5;
+  progressInterval = setInterval(() => {
+    if (progress < 85) {
+      progress += Math.random() * 10;
+      if (progress > 85) progress = 85;
+      const progressBar = document.getElementById('progressBar');
+      if (progressBar) progressBar.style.width = progress + '%';
+
+      // Update status messages
+      const statusEl = document.getElementById('progressStatus');
+      if (statusEl) {
+        if (progress < 20) statusEl.textContent = 'Analyzing protocol content...';
+        else if (progress < 40) statusEl.textContent = 'Querying knowledge base...';
+        else if (progress < 60) statusEl.textContent = 'Generating personalized phases...';
+        else if (progress < 80) statusEl.textContent = 'Creating action items...';
+        else statusEl.textContent = 'Finalizing engagement plan...';
+      }
+    }
+  }, 800);
+}
+
+// Update progress manually
+function updateEngagementPlanProgress(status, percent) {
+  const progressBar = document.getElementById('progressBar');
+  const statusEl = document.getElementById('progressStatus');
+  if (progressBar) progressBar.style.width = percent + '%';
+  if (statusEl) statusEl.textContent = status;
+}
+
+// Show success result
+function showEngagementPlanSuccess(plan) {
+  clearInterval(progressInterval);
+
+  const progressContent = document.getElementById('progressContent');
+  if (!progressContent) return;
+
+  progressContent.innerHTML = `
+    <div style="margin-bottom: 24px;">
+      <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2">
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+        <polyline points="22 4 12 14.01 9 11.01"/>
+      </svg>
+    </div>
+    <h2 style="margin: 0 0 8px 0; color: #1F2937; font-size: 20px;">Engagement Plan Created!</h2>
+    <p style="color: #6B7280; margin: 0 0 24px 0;">${plan?.title || 'Your engagement plan has been generated successfully.'}</p>
+    <div style="background: #F0FDFA; border-radius: 12px; padding: 16px; margin-bottom: 24px; text-align: left;">
+      <p style="margin: 0 0 8px 0; color: #0F766E; font-weight: 600;">Plan Summary:</p>
+      <p style="margin: 0; color: #374151; font-size: 14px; line-height: 1.6;">${plan?.summary || 'A personalized 4-week engagement plan has been created for this protocol.'}</p>
+      ${plan?.phases ? `<p style="margin: 8px 0 0 0; color: #6B7280; font-size: 13px;">${plan.phases.length} phases created</p>` : ''}
+    </div>
+    <div style="display: flex; gap: 12px; justify-content: center;">
+      <button onclick="closeEngagementProgressModal()" class="btn-secondary" style="padding: 10px 20px;">Close</button>
+      <button onclick="closeEngagementProgressModal(); document.querySelector('[data-tab=\\'engagement\\']')?.click();" class="btn-primary" style="padding: 10px 20px;">View Engagement Plans</button>
+    </div>
+  `;
+}
+
+// Show error
+function showEngagementPlanError(errorMessage) {
+  clearInterval(progressInterval);
+
+  const progressContent = document.getElementById('progressContent');
+  if (!progressContent) return;
+
+  progressContent.innerHTML = `
+    <div style="margin-bottom: 24px;">
+      <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="15" y1="9" x2="9" y2="15"/>
+        <line x1="9" y1="9" x2="15" y2="15"/>
+      </svg>
+    </div>
+    <h2 style="margin: 0 0 8px 0; color: #1F2937; font-size: 20px;">Generation Failed</h2>
+    <p style="color: #6B7280; margin: 0 0 24px 0;">We couldn't generate the engagement plan.</p>
+    <div style="background: #FEF2F2; border-radius: 12px; padding: 16px; margin-bottom: 24px; text-align: left;">
+      <p style="margin: 0; color: #991B1B; font-size: 14px;">${errorMessage}</p>
+    </div>
+    <button onclick="closeEngagementProgressModal()" class="btn-secondary" style="padding: 10px 24px;">Close</button>
+  `;
+}
+
+// Close progress modal
+function closeEngagementProgressModal() {
+  clearInterval(progressInterval);
+  const modal = document.getElementById('engagementProgressModal');
+  if (modal) modal.remove();
+  document.body.style.overflow = '';
+}
+
 // Delete engagement plan (engagement plans are protocols with ai_recommendations)
 async function deleteEngagementPlan(planId) {
   if (!confirm('Are you sure you want to delete this engagement plan? This action cannot be undone.')) {
@@ -4334,6 +4560,21 @@ function displayProtocols(protocols) {
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
             Edit
           </button>
+          ${protocol.status === 'draft' ? `
+          <button class="card-menu-item" onclick="activateProtocol(${protocol.id}); closeAllCardMenus();">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            Activate
+          </button>
+          ` : `
+          <button class="card-menu-item" onclick="setProtocolDraft(${protocol.id}); closeAllCardMenus();">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            Set as Draft
+          </button>
+          `}
+          <button class="card-menu-item" onclick="createEngagementPlanFromProtocol(${protocol.id}); closeAllCardMenus();">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+            Create Engagement Plan
+          </button>
           <div class="card-menu-divider"></div>
           <button class="card-menu-item" onclick="shareProtocol(${protocol.id}); closeAllCardMenus();">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
@@ -4483,7 +4724,7 @@ function closeProtocolViewModal() {
   }
 }
 
-// Edit protocol - open dedicated edit modal
+// Edit protocol - open full-screen structured editor
 async function editProtocol(protocolId) {
   console.log('Edit protocol:', protocolId);
   const token = localStorage.getItem('auth_token');
@@ -4500,8 +4741,19 @@ async function editProtocol(protocolId) {
       // Store the protocol ID for saving
       window.currentEditingProtocolId = protocolId;
 
-      // Show edit modal
-      showProtocolEditModal(protocol);
+      // Parse protocol content into structured modules
+      const modules = parseProtocolContentToModules(protocol);
+
+      // Store in generatedProtocolData for the editor to use
+      generatedProtocolData = {
+        id: protocol.id,
+        protocol: protocol,
+        title: protocol.title || 'Protocol',
+        modules: modules
+      };
+
+      // Open the full-screen structured editor
+      openProtocolEditorForExisting(protocol, modules);
     } else {
       alert('Failed to load protocol for editing');
     }
@@ -4509,6 +4761,715 @@ async function editProtocol(protocolId) {
     console.error('Error loading protocol:', error);
     alert('Error loading protocol');
   }
+}
+
+// Parse protocol content (markdown/text) into structured modules
+function parseProtocolContentToModules(protocol) {
+  const content = protocol.content || protocol.notes || '';
+  const modules = [];
+
+  // If we have modules stored as JSON, use them directly
+  if (protocol.modules && Array.isArray(protocol.modules) && protocol.modules.length > 0) {
+    return protocol.modules;
+  }
+
+  // Parse markdown content into modules
+  // Look for ## headers which indicate module sections
+  const sections = content.split(/^##\s+/m).filter(s => s.trim());
+
+  sections.forEach((section, index) => {
+    const lines = section.split('\n');
+    const name = lines[0]?.trim() || `Module ${index + 1}`;
+
+    // Extract goal if present
+    let goal = '';
+    const goalMatch = section.match(/\*\*Goal:?\*\*\s*(.+)/i);
+    if (goalMatch) {
+      goal = goalMatch[1].trim();
+    }
+
+    // Extract items (look for ### headers or bullet points)
+    const items = [];
+    const subSections = section.split(/^###\s+/m);
+
+    if (subSections.length > 1) {
+      // Has ### subsections - these are individual items
+      subSections.slice(1).forEach(subSection => {
+        const subLines = subSection.split('\n');
+        const itemName = subLines[0]?.trim() || '';
+        if (!itemName) return;
+
+        const item = { name: itemName };
+
+        // Extract dosage, timing, notes from bullet points
+        subLines.slice(1).forEach(line => {
+          const dosageMatch = line.match(/\*\*Dosage:?\*\*\s*(.+)/i);
+          const timingMatch = line.match(/\*\*Timing:?\*\*\s*(.+)/i);
+          const notesMatch = line.match(/\*\*Notes?:?\*\*\s*(.+)/i);
+
+          if (dosageMatch) item.dosage = dosageMatch[1].trim();
+          if (timingMatch) item.timing = timingMatch[1].trim();
+          if (notesMatch) item.notes = notesMatch[1].trim();
+        });
+
+        items.push(item);
+      });
+    } else {
+      // No ### subsections - extract bullet points as items
+      const bulletPoints = section.match(/^[-*]\s+(.+)$/gm);
+      if (bulletPoints) {
+        bulletPoints.forEach(bp => {
+          const text = bp.replace(/^[-*]\s+/, '').trim();
+          if (text && !text.startsWith('**')) {
+            items.push({ name: text });
+          }
+        });
+      }
+    }
+
+    if (name && !name.startsWith('Title:')) {
+      modules.push({
+        name: name,
+        goal: goal,
+        items: items.length > 0 ? items : [{ name: 'No items defined' }]
+      });
+    }
+  });
+
+  // If no modules were parsed, create a default one
+  if (modules.length === 0 && content.trim()) {
+    modules.push({
+      name: 'Protocol Content',
+      goal: '',
+      items: [{ name: content.substring(0, 200) + '...' }]
+    });
+  }
+
+  return modules;
+}
+
+// Open full-screen protocol editor for existing protocol
+function openProtocolEditorForExisting(protocol, modules) {
+  // Remove any existing editor
+  const existingEditor = document.getElementById('existingProtocolEditorView');
+  if (existingEditor) existingEditor.remove();
+
+  const editorView = document.createElement('div');
+  editorView.id = 'existingProtocolEditorView';
+  editorView.className = 'protocol-editor-view';
+  editorView.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #F8FAFB; z-index: 2000; display: flex; flex-direction: column;';
+
+  const clientName = currentClient ? `${currentClient.first_name} ${currentClient.last_name}` : 'Client';
+  const protocolTitle = protocol.title || 'Protocol';
+
+  editorView.innerHTML = `
+    <!-- Header -->
+    <div class="protocol-editor-header">
+      <button class="back-btn" onclick="closeExistingProtocolEditor()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+        Back to Client
+      </button>
+
+      <div class="header-tabs">
+        <button class="header-tab active" data-tab="protocol" onclick="switchExistingEditorTab('protocol')">Protocol</button>
+        ${protocol.ai_recommendations ? `<button class="header-tab" data-tab="engagement" onclick="switchExistingEditorTab('engagement')">Engagement Plan</button>` : ''}
+      </div>
+
+      <div class="header-actions" style="display: flex; gap: 12px;">
+        <button class="btn-secondary" onclick="printExistingProtocol()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6 9 6 2 18 2 18 9"/>
+            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+            <rect x="6" y="14" width="12" height="8"/>
+          </svg>
+          Print
+        </button>
+        <button class="btn-primary" onclick="saveExistingProtocolEditor()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+            <polyline points="17 21 17 13 7 13 7 21"/>
+            <polyline points="7 3 7 8 15 8"/>
+          </svg>
+          Save Protocol
+        </button>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="protocol-editor-layout" style="display: flex; flex: 1; overflow: hidden;">
+      <!-- Left Sidebar -->
+      <div class="protocol-editor-sidebar">
+        ${modules.map((m, i) => `
+          <button class="sidebar-icon ${i === 0 ? 'active' : ''}" title="${escapeHtml(m.name)}" onclick="scrollToProtocolSection(${i})">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+            </svg>
+          </button>
+        `).join('')}
+      </div>
+
+      <!-- Main Editor Area -->
+      <div class="protocol-editor-main" style="flex: 1; overflow-y: auto;">
+        <div class="protocol-document" style="max-width: 900px; margin: 0 auto; padding: 40px;">
+          <!-- Title -->
+          <h1 class="protocol-title" contenteditable="true" id="existingProtocolTitle">${escapeHtml(protocolTitle)}</h1>
+
+          <!-- Metadata -->
+          <div class="protocol-metadata">
+            <div class="meta-row">
+              <span class="meta-label">Client</span>
+              <span class="meta-value">${escapeHtml(clientName)}</span>
+            </div>
+            <div class="meta-row">
+              <span class="meta-label">Created</span>
+              <span class="meta-value">${formatDate(protocol.created_at)}</span>
+            </div>
+            <div class="meta-row">
+              <span class="meta-label">Status</span>
+              <span class="meta-value" style="text-transform: capitalize;">${protocol.status || 'draft'}</span>
+            </div>
+          </div>
+
+          <!-- Protocol Sections -->
+          <div id="existingProtocolSections" class="protocol-sections">
+            ${renderExistingProtocolSections(modules)}
+          </div>
+
+          <!-- Add Module Button -->
+          <div class="add-module-container" style="padding: 24px; border-top: 1px dashed #E5E7EB; margin-top: 20px;">
+            <button class="btn-add-module" onclick="addModuleToExistingProtocol()">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="16"/>
+                <line x1="8" y1="12" x2="16" y2="12"/>
+              </svg>
+              Add New Module
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer with AI Input -->
+    <div class="protocol-editor-footer">
+      <div id="existingSelectedSectionTag" class="selected-section-tag" style="display: none;">
+        <span id="existingSelectedSectionName">Section selected</span>
+        <button onclick="clearExistingProtocolSelection()">&times;</button>
+      </div>
+      <div class="ai-input-container protocol-ai-input-wrapper">
+        <input type="text" id="existingProtocolAIInput" placeholder="Ask AI to modify the protocol (e.g., 'add a stress management module')" onkeypress="handleExistingProtocolAI(event)">
+        <button class="ai-submit-btn" onclick="submitExistingProtocolAI()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="22" y1="2" x2="11" y2="13"/>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(editorView);
+  document.body.style.overflow = 'hidden';
+}
+
+// Render existing protocol sections
+function renderExistingProtocolSections(modules) {
+  if (!modules || modules.length === 0) {
+    return '<p style="color: #6B7280; text-align: center; padding: 40px;">No modules yet. Click "Add New Module" to create one.</p>';
+  }
+
+  return modules.map((module, index) => {
+    const sectionType = getSectionType(module.name);
+    let sectionContent = '';
+
+    if (sectionType === 'supplements' && module.items) {
+      sectionContent = renderSupplementTable(module.items);
+    } else if (module.items) {
+      sectionContent = renderSectionList(module.items);
+    }
+
+    return `
+      <div class="protocol-section" data-section-index="${index}" data-section-type="${sectionType}" onclick="selectExistingSection(${index}, event)">
+        <input type="checkbox" class="section-checkbox" onclick="event.stopPropagation(); toggleExistingSectionCheckbox(${index})">
+        <h2 class="section-title">
+          <span class="drag-handle">⋮⋮</span>
+          <span contenteditable="true" class="module-title-text" data-index="${index}">${escapeHtml(module.name)}</span>
+        </h2>
+        ${module.goal ? `<p class="section-goal"><strong>Goal:</strong> <span contenteditable="true" class="module-goal-text" data-index="${index}">${escapeHtml(module.goal)}</span></p>` : ''}
+        ${sectionContent}
+
+        <!-- Per-module AI input -->
+        <div class="section-input" style="margin-top: 16px;">
+          <input type="text" placeholder="Ask AI to modify this module..." onkeypress="handleExistingModuleInput(event, ${index})">
+          <button onclick="submitExistingModuleInput(${index})">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="22" y1="2" x2="11" y2="13"/>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Delete Module Button -->
+        <button onclick="deleteExistingModule(${index}); event.stopPropagation();"
+          style="position: absolute; top: 16px; right: 48px; background: none; border: none; color: #9CA3AF; cursor: pointer; padding: 4px;"
+          title="Delete Module">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="3 6 5 6 21 6"/>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+          </svg>
+        </button>
+      </div>
+    `;
+  }).join('');
+}
+
+// Select existing protocol section
+function selectExistingSection(index, event) {
+  if (event.target.tagName === 'INPUT' || event.target.tagName === 'BUTTON' ||
+      event.target.closest('.section-input') || event.target.contentEditable === 'true') {
+    return;
+  }
+
+  const sections = document.querySelectorAll('#existingProtocolSections .protocol-section');
+  sections.forEach((section, i) => {
+    if (i === index) {
+      section.classList.toggle('selected');
+      selectedProtocolSection = section.classList.contains('selected') ? index : null;
+    } else {
+      section.classList.remove('selected');
+    }
+  });
+
+  const tagEl = document.getElementById('existingSelectedSectionTag');
+  const nameEl = document.getElementById('existingSelectedSectionName');
+  if (tagEl) {
+    tagEl.style.display = selectedProtocolSection !== null ? 'flex' : 'none';
+    if (nameEl && selectedProtocolSection !== null) {
+      nameEl.textContent = generatedProtocolData.modules[index]?.name || `Module ${index + 1}`;
+    }
+  }
+
+  if (selectedProtocolSection !== null) {
+    showNotification(`Module "${generatedProtocolData.modules[index]?.name || `Module ${index + 1}`}" selected`, 'info');
+  }
+}
+
+// Toggle existing section checkbox
+function toggleExistingSectionCheckbox(index) {
+  const sections = document.querySelectorAll('#existingProtocolSections .protocol-section');
+  const section = sections[index];
+  if (section) {
+    const checkbox = section.querySelector('.section-checkbox');
+    section.classList.toggle('selected', checkbox?.checked);
+    selectedProtocolSection = checkbox?.checked ? index : null;
+
+    const tagEl = document.getElementById('existingSelectedSectionTag');
+    if (tagEl) {
+      tagEl.style.display = selectedProtocolSection !== null ? 'flex' : 'none';
+    }
+  }
+}
+
+// Clear existing protocol selection
+function clearExistingProtocolSelection() {
+  const sections = document.querySelectorAll('#existingProtocolSections .protocol-section');
+  sections.forEach(section => {
+    section.classList.remove('selected');
+    const checkbox = section.querySelector('.section-checkbox');
+    if (checkbox) checkbox.checked = false;
+  });
+  selectedProtocolSection = null;
+
+  const tagEl = document.getElementById('existingSelectedSectionTag');
+  if (tagEl) tagEl.style.display = 'none';
+}
+
+// Handle per-module AI input for existing protocol
+function handleExistingModuleInput(event, index) {
+  if (event.key === 'Enter') {
+    submitExistingModuleInput(index);
+  }
+}
+
+// Submit per-module AI edit for existing protocol
+async function submitExistingModuleInput(moduleIndex) {
+  const section = document.querySelectorAll('#existingProtocolSections .protocol-section')[moduleIndex];
+  if (!section) return;
+
+  const input = section.querySelector('.section-input input');
+  const prompt = input?.value?.trim();
+  if (!prompt) return;
+
+  input.value = '';
+
+  const currentModule = generatedProtocolData.modules[moduleIndex];
+  if (!currentModule) {
+    showNotification('Module not found', 'error');
+    return;
+  }
+
+  section.classList.add('loading');
+  const originalContent = section.innerHTML;
+  section.innerHTML = `
+    <div class="section-loading">
+      <div class="loading-spinner"></div>
+      <p>AI is modifying "${currentModule.name}"...</p>
+    </div>
+  `;
+
+  try {
+    const token = localStorage.getItem('auth_token');
+    const response = await fetch(`${API_BASE}/api/protocols/edit-module`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        module: currentModule,
+        prompt: prompt,
+        action: 'edit'
+      })
+    });
+
+    const data = await response.json();
+
+    if (data.success && data.module) {
+      generatedProtocolData.modules[moduleIndex] = data.module;
+      rerenderExistingProtocolSections();
+      showNotification(`Module updated successfully!`, 'success');
+    } else {
+      throw new Error(data.error || 'Failed to update module');
+    }
+  } catch (error) {
+    console.error('Error updating module:', error);
+    section.innerHTML = originalContent;
+    section.classList.remove('loading');
+    showNotification(`Error: ${error.message}`, 'error');
+  }
+}
+
+// Handle global AI input for existing protocol
+function handleExistingProtocolAI(event) {
+  if (event.key === 'Enter') {
+    submitExistingProtocolAI();
+  }
+}
+
+// Submit global AI command for existing protocol
+async function submitExistingProtocolAI() {
+  const input = document.getElementById('existingProtocolAIInput');
+  const prompt = input?.value?.trim();
+  if (!prompt) return;
+
+  input.value = '';
+
+  if (selectedProtocolSection !== null) {
+    // Edit selected module
+    const currentModule = generatedProtocolData.modules[selectedProtocolSection];
+    if (!currentModule) {
+      showNotification('Module not found', 'error');
+      return;
+    }
+
+    showNotification(`AI is modifying "${currentModule.name}"...`, 'info');
+
+    try {
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch(`${API_BASE}/api/protocols/edit-module`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          module: currentModule,
+          prompt: prompt,
+          action: 'edit'
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.success && data.module) {
+        generatedProtocolData.modules[selectedProtocolSection] = data.module;
+        rerenderExistingProtocolSections();
+        clearExistingProtocolSelection();
+        showNotification(`Module updated successfully!`, 'success');
+      } else {
+        throw new Error(data.error || 'Failed to update module');
+      }
+    } catch (error) {
+      console.error('Error updating module:', error);
+      showNotification(`Error: ${error.message}`, 'error');
+    }
+  } else {
+    // Add new module
+    await addModuleToExistingProtocolWithAI(prompt);
+  }
+}
+
+// Add module with AI to existing protocol
+async function addModuleToExistingProtocolWithAI(prompt) {
+  showNotification('AI is generating a new module...', 'info');
+
+  try {
+    const token = localStorage.getItem('auth_token');
+    const response = await fetch(`${API_BASE}/api/protocols/edit-module`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        prompt: prompt,
+        action: 'add'
+      })
+    });
+
+    const data = await response.json();
+
+    if (data.success && data.module) {
+      if (!generatedProtocolData.modules) {
+        generatedProtocolData.modules = [];
+      }
+      generatedProtocolData.modules.push(data.module);
+      rerenderExistingProtocolSections();
+      showNotification(`New module "${data.module.name}" added!`, 'success');
+
+      setTimeout(() => {
+        const sections = document.querySelectorAll('#existingProtocolSections .protocol-section');
+        const lastSection = sections[sections.length - 1];
+        if (lastSection) {
+          lastSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          lastSection.style.backgroundColor = '#E0F2F1';
+          setTimeout(() => { lastSection.style.backgroundColor = ''; }, 2000);
+        }
+      }, 100);
+    } else {
+      throw new Error(data.error || 'Failed to generate module');
+    }
+  } catch (error) {
+    console.error('Error generating module:', error);
+    showNotification(`Error: ${error.message}`, 'error');
+  }
+}
+
+// Add blank module to existing protocol
+function addModuleToExistingProtocol() {
+  const moduleCount = (generatedProtocolData.modules || []).length + 1;
+  const newModule = {
+    name: `New Module ${moduleCount}`,
+    goal: 'Define the goal for this module',
+    items: [{ name: 'Add item here', dosage: '', timing: '', notes: '' }]
+  };
+
+  if (!generatedProtocolData.modules) {
+    generatedProtocolData.modules = [];
+  }
+  generatedProtocolData.modules.push(newModule);
+  rerenderExistingProtocolSections();
+
+  setTimeout(() => {
+    const sections = document.querySelectorAll('#existingProtocolSections .protocol-section');
+    const lastSection = sections[sections.length - 1];
+    if (lastSection) {
+      lastSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, 100);
+}
+
+// Delete module from existing protocol
+function deleteExistingModule(index) {
+  if (!confirm('Are you sure you want to delete this module?')) return;
+
+  generatedProtocolData.modules.splice(index, 1);
+  rerenderExistingProtocolSections();
+  showNotification('Module deleted', 'success');
+}
+
+// Re-render existing protocol sections
+function rerenderExistingProtocolSections() {
+  const container = document.getElementById('existingProtocolSections');
+  if (container) {
+    container.innerHTML = renderExistingProtocolSections(generatedProtocolData.modules || []);
+  }
+}
+
+// Scroll to protocol section
+function scrollToProtocolSection(index) {
+  const sections = document.querySelectorAll('#existingProtocolSections .protocol-section');
+  if (sections[index]) {
+    sections[index].scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+
+// Save existing protocol from editor
+async function saveExistingProtocolEditor() {
+  if (!window.currentEditingProtocolId || !generatedProtocolData) {
+    showNotification('No protocol to save', 'error');
+    return;
+  }
+
+  // Collect updated title
+  const titleEl = document.getElementById('existingProtocolTitle');
+  const newTitle = titleEl?.textContent?.trim() || generatedProtocolData.title;
+
+  // Collect updated module data from contenteditable elements
+  document.querySelectorAll('.module-title-text').forEach((el, i) => {
+    if (generatedProtocolData.modules[i]) {
+      generatedProtocolData.modules[i].name = el.textContent.trim();
+    }
+  });
+
+  document.querySelectorAll('.module-goal-text').forEach((el) => {
+    const index = parseInt(el.dataset.index);
+    if (generatedProtocolData.modules[index]) {
+      generatedProtocolData.modules[index].goal = el.textContent.trim();
+    }
+  });
+
+  // Convert modules back to content format
+  const content = modulesToContent(generatedProtocolData.modules);
+
+  try {
+    const token = localStorage.getItem('auth_token');
+    const response = await fetch(`${API_BASE}/api/protocols/${window.currentEditingProtocolId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        title: newTitle,
+        content: content,
+        modules: generatedProtocolData.modules,
+        notes: `Title: ${newTitle}\n\n${content}`
+      })
+    });
+
+    if (response.ok) {
+      showNotification('Protocol saved successfully!', 'success');
+      loadProtocols();
+    } else {
+      const data = await response.json();
+      throw new Error(data.error || 'Failed to save');
+    }
+  } catch (error) {
+    console.error('Error saving protocol:', error);
+    showNotification(`Error saving: ${error.message}`, 'error');
+  }
+}
+
+// Convert modules to markdown content
+function modulesToContent(modules) {
+  if (!modules || modules.length === 0) return '';
+
+  return modules.map(module => {
+    let content = `## ${module.name}\n`;
+    if (module.goal) {
+      content += `**Goal:** ${module.goal}\n\n`;
+    }
+
+    if (module.items && module.items.length > 0) {
+      module.items.forEach(item => {
+        if (typeof item === 'string') {
+          content += `- ${item}\n`;
+        } else {
+          content += `### ${item.name}\n`;
+          if (item.dosage) content += `- **Dosage:** ${item.dosage}\n`;
+          if (item.timing) content += `- **Timing:** ${item.timing}\n`;
+          if (item.notes) content += `- **Notes:** ${item.notes}\n`;
+          content += '\n';
+        }
+      });
+    }
+
+    return content;
+  }).join('\n');
+}
+
+// Print existing protocol from editor
+function printExistingProtocol() {
+  if (!generatedProtocolData) return;
+
+  const clientName = currentClient ? `${currentClient.first_name} ${currentClient.last_name}` : 'Client';
+  const printWindow = window.open('', '_blank');
+  printWindow.document.write(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>${generatedProtocolData.title || 'Protocol'}</title>
+      <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 40px; line-height: 1.6; max-width: 800px; margin: 0 auto; }
+        h1 { color: #0F766E; }
+        h2 { color: #374151; margin-top: 24px; border-bottom: 1px solid #E5E7EB; padding-bottom: 8px; }
+        h3 { color: #4B5563; }
+        .module { margin-bottom: 24px; }
+        table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+        th, td { border: 1px solid #E5E7EB; padding: 8px 12px; text-align: left; }
+        th { background: #F9FAFB; }
+        @media print { body { padding: 20px; } }
+      </style>
+    </head>
+    <body>
+      <h1>${escapeHtml(generatedProtocolData.title || 'Protocol')}</h1>
+      <p style="color: #6B7280;">Client: ${escapeHtml(clientName)}</p>
+
+      ${(generatedProtocolData.modules || []).map(module => `
+        <div class="module">
+          <h2>${escapeHtml(module.name)}</h2>
+          ${module.goal ? `<p><strong>Goal:</strong> ${escapeHtml(module.goal)}</p>` : ''}
+          ${module.items && module.items.length > 0 ? `
+            <table>
+              <thead><tr><th>Item</th><th>Dosage</th><th>Timing</th><th>Notes</th></tr></thead>
+              <tbody>
+                ${module.items.map(item => `
+                  <tr>
+                    <td>${escapeHtml(typeof item === 'string' ? item : item.name || '')}</td>
+                    <td>${escapeHtml(item.dosage || '-')}</td>
+                    <td>${escapeHtml(item.timing || '-')}</td>
+                    <td>${escapeHtml(item.notes || '-')}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          ` : ''}
+        </div>
+      `).join('')}
+    </body>
+    </html>
+  `);
+  printWindow.document.close();
+  printWindow.print();
+}
+
+// Switch tabs in existing protocol editor
+function switchExistingEditorTab(tabName) {
+  // For now, just show a notification - engagement plan tab would show engagement content
+  if (tabName === 'engagement') {
+    showNotification('Switching to engagement plan view...', 'info');
+    // Could open engagement plan editor here
+    const protocolId = window.currentEditingProtocolId;
+    if (protocolId) {
+      closeExistingProtocolEditor();
+      openEngagementPlanEditor(protocolId);
+    }
+  }
+}
+
+// Close existing protocol editor
+function closeExistingProtocolEditor() {
+  const editor = document.getElementById('existingProtocolEditorView');
+  if (editor) {
+    editor.remove();
+  }
+  document.body.style.overflow = '';
+  window.currentEditingProtocolId = null;
+  selectedProtocolSection = null;
 }
 
 // Show protocol edit modal - Protocol only, no engagement plan
@@ -4853,7 +5814,7 @@ function displayEngagementPlans(plans) {
       <div class="protocol-card-header">
         <div>
           <h4 class="protocol-card-title">${plan.title || 'Untitled'}</h4>
-          <p class="protocol-card-date">${formatDate(plan.created_at)}</p>
+          <p class="protocol-card-date">${formatDate(plan.updated_at || plan.created_at)}</p>
         </div>
         <span class="protocol-card-status engagement">${plan.status || 'active'}</span>
       </div>
@@ -4861,14 +5822,14 @@ function displayEngagementPlans(plans) {
   `).join('');
 }
 
-// View engagement plan
+// View engagement plan - opens the editor view
 function viewEngagementPlan(protocolId) {
-  console.log('View engagement plan:', protocolId);
-  // Fetch the protocol and show engagement plan in a modal
-  viewEngagementPlanModal(protocolId);
+  console.log('View/Edit engagement plan:', protocolId);
+  // Open the engagement plan editor
+  openEngagementPlanEditor(protocolId);
 }
 
-// View engagement plan in modal
+// View engagement plan in modal (fallback for simple view)
 async function viewEngagementPlanModal(protocolId) {
   const token = localStorage.getItem('auth_token');
 
@@ -4890,6 +5851,990 @@ async function viewEngagementPlanModal(protocolId) {
   }
 }
 
+// ========== Engagement Plan Editor ==========
+
+// Global state for engagement plan editor
+let currentEngagementPlanData = null;
+let currentEngagementProtocolId = null;
+let selectedEngagementPhase = null;
+
+// Open engagement plan editor
+async function openEngagementPlanEditor(protocolId) {
+  const token = localStorage.getItem('auth_token');
+
+  try {
+    const response = await fetch(`${API_BASE}/api/protocols/${protocolId}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to load engagement plan');
+    }
+
+    const data = await response.json();
+    const protocol = data.protocol;
+
+    // Parse the engagement plan data
+    let planData = null;
+    if (protocol.ai_recommendations) {
+      const rawContent = protocol.ai_recommendations;
+      try {
+        // Try to find JSON in the content
+        const jsonMatch = rawContent.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          planData = JSON.parse(jsonMatch[0]);
+        }
+      } catch (e) {
+        console.error('Error parsing engagement plan:', e);
+      }
+    }
+
+    if (!planData) {
+      showNotification('No structured engagement plan data found', 'error');
+      return;
+    }
+
+    currentEngagementPlanData = planData;
+    currentEngagementProtocolId = protocolId;
+
+    // Show the editor
+    showEngagementPlanEditorView(protocol, planData);
+
+  } catch (error) {
+    console.error('Error opening engagement plan editor:', error);
+    showNotification('Error opening engagement plan editor', 'error');
+  }
+}
+
+// Show the engagement plan editor view
+function showEngagementPlanEditorView(protocol, planData) {
+  // Remove any existing editor
+  const existingEditor = document.getElementById('engagementPlanEditorView');
+  if (existingEditor) existingEditor.remove();
+
+  const editorView = document.createElement('div');
+  editorView.id = 'engagementPlanEditorView';
+  editorView.className = 'protocol-editor-view';
+  editorView.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #F8FAFB; z-index: 2000; display: flex; flex-direction: column;';
+
+  const clientName = currentClient ? `${currentClient.first_name} ${currentClient.last_name}` : 'Client';
+
+  editorView.innerHTML = `
+    <!-- Header -->
+    <div class="protocol-editor-header">
+      <button class="back-btn" onclick="closeEngagementPlanEditor()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+        Back to Client
+      </button>
+
+      <div class="header-actions" style="display: flex; gap: 12px;">
+        <button class="btn-secondary" onclick="shareEngagementPlan()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="18" cy="5" r="3"/>
+            <circle cx="6" cy="12" r="3"/>
+            <circle cx="18" cy="19" r="3"/>
+            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+          </svg>
+          Share
+        </button>
+        <button class="btn-secondary" onclick="printEngagementPlanFromEditor()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6 9 6 2 18 2 18 9"/>
+            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+            <rect x="6" y="14" width="12" height="8"/>
+          </svg>
+          Print
+        </button>
+        <button class="btn-primary" onclick="saveEngagementPlanFromEditor()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+            <polyline points="17 21 17 13 7 13 7 21"/>
+            <polyline points="7 3 7 8 15 8"/>
+          </svg>
+          Save Changes
+        </button>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="protocol-editor-layout" style="display: flex; flex: 1; overflow: hidden;">
+      <!-- Left Sidebar -->
+      <div class="protocol-editor-sidebar">
+        <button class="sidebar-icon active" title="Phases">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+          </svg>
+        </button>
+        <button class="sidebar-icon" title="Communication" onclick="scrollToEngagementSection('communication')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+          </svg>
+        </button>
+        <button class="sidebar-icon" title="Metrics" onclick="scrollToEngagementSection('metrics')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 20V10M18 20V4M6 20v-4"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Main Editor Area -->
+      <div class="protocol-editor-main" style="flex: 1; overflow-y: auto;">
+        <div class="protocol-document" style="max-width: 900px; margin: 0 auto; padding: 40px;">
+          <!-- Title -->
+          <h1 class="protocol-title" contenteditable="true" id="engagementPlanTitle">${escapeHtml(planData.title || 'Engagement Plan')}</h1>
+
+          <!-- Metadata -->
+          <div class="protocol-metadata">
+            <div class="meta-row">
+              <span class="meta-label">Client</span>
+              <span class="meta-value">${escapeHtml(clientName)}</span>
+            </div>
+            <div class="meta-row">
+              <span class="meta-label">Created</span>
+              <span class="meta-value">${formatDate(protocol.updated_at || protocol.created_at)}</span>
+            </div>
+          </div>
+
+          <!-- Summary Section -->
+          <div class="engagement-summary" style="background: #FEF9C3; border-radius: 12px; padding: 20px; margin-bottom: 32px;">
+            <h3 style="margin: 0 0 8px 0; color: #713F12; font-size: 14px; font-weight: 600;">Summary</h3>
+            <p contenteditable="true" id="engagementPlanSummary" style="margin: 0; color: #713F12; font-size: 14px; line-height: 1.6;">${escapeHtml(planData.summary || 'Click to add a summary...')}</p>
+          </div>
+
+          <!-- Phases -->
+          <div id="engagementPhasesContainer" class="protocol-sections">
+            ${renderEngagementPhases(planData.phases || [])}
+          </div>
+
+          <!-- Add Phase Button -->
+          <div class="add-module-container" style="padding: 24px; border-top: 1px dashed #E5E7EB; margin-top: 20px;">
+            <button class="btn-add-module" onclick="addNewEngagementPhase()">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="16"/>
+                <line x1="8" y1="12" x2="16" y2="12"/>
+              </svg>
+              Add New Phase
+            </button>
+          </div>
+
+          <!-- Communication Schedule -->
+          ${planData.communication_schedule ? `
+          <div id="communicationSection" class="engagement-communication" style="background: white; border: 1px solid #E5E7EB; border-radius: 12px; padding: 24px; margin-top: 32px;">
+            <h3 style="font-size: 16px; font-weight: 600; color: #111827; margin: 0 0 16px 0;">Communication Schedule</h3>
+            <div class="comm-details" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+              <div>
+                <label style="font-size: 12px; color: #6B7280; display: block; margin-bottom: 4px;">Check-in Frequency</label>
+                <input type="text" id="commFrequency" value="${escapeHtml(planData.communication_schedule.check_in_frequency || '')}"
+                  style="width: 100%; padding: 8px 12px; border: 1px solid #E5E7EB; border-radius: 6px; font-size: 14px;"
+                  placeholder="e.g., Weekly">
+              </div>
+              <div>
+                <label style="font-size: 12px; color: #6B7280; display: block; margin-bottom: 4px;">Preferred Channel</label>
+                <input type="text" id="commChannel" value="${escapeHtml(planData.communication_schedule.preferred_channel || '')}"
+                  style="width: 100%; padding: 8px 12px; border: 1px solid #E5E7EB; border-radius: 6px; font-size: 14px;"
+                  placeholder="e.g., WhatsApp">
+              </div>
+              <div>
+                <label style="font-size: 12px; color: #6B7280; display: block; margin-bottom: 4px;">Message Tone</label>
+                <input type="text" id="commTone" value="${escapeHtml(planData.communication_schedule.message_tone || '')}"
+                  style="width: 100%; padding: 8px 12px; border: 1px solid #E5E7EB; border-radius: 6px; font-size: 14px;"
+                  placeholder="e.g., Supportive and encouraging">
+              </div>
+            </div>
+          </div>
+          ` : ''}
+
+          <!-- Success Metrics -->
+          ${planData.success_metrics && planData.success_metrics.length > 0 ? `
+          <div id="metricsSection" class="engagement-metrics" style="background: white; border: 1px solid #E5E7EB; border-radius: 12px; padding: 24px; margin-top: 24px;">
+            <h3 style="font-size: 16px; font-weight: 600; color: #111827; margin: 0 0 16px 0;">Success Metrics</h3>
+            <ul id="successMetricsList" style="margin: 0; padding-left: 20px;">
+              ${planData.success_metrics.map((metric, i) => `
+                <li style="margin-bottom: 8px;">
+                  <span contenteditable="true" class="success-metric-item" data-index="${i}">${escapeHtml(metric)}</span>
+                </li>
+              `).join('')}
+            </ul>
+            <button onclick="addSuccessMetric()" style="margin-top: 12px; padding: 8px 16px; background: #F0FDFA; border: 1px dashed #0F766E; border-radius: 6px; color: #0F766E; font-size: 13px; cursor: pointer;">
+              + Add Metric
+            </button>
+          </div>
+          ` : ''}
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer with AI Input -->
+    <div class="protocol-editor-footer">
+      <div id="selectedPhaseTag" class="selected-section-tag" style="display: none;">
+        <span id="selectedPhaseName">Phase selected</span>
+        <button onclick="clearEngagementPhaseSelection()">&times;</button>
+      </div>
+      <div class="ai-input-container protocol-ai-input-wrapper">
+        <input type="text" id="engagementAIInput" placeholder="Ask AI to modify the engagement plan (e.g., 'add a week 5 phase for maintenance')" onkeypress="handleEngagementAI(event)">
+        <button class="ai-submit-btn" onclick="submitEngagementAI()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="22" y1="2" x2="11" y2="13"/>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(editorView);
+  document.body.style.overflow = 'hidden';
+}
+
+// Render engagement phases as editable sections
+function renderEngagementPhases(phases) {
+  if (!phases || phases.length === 0) {
+    return '<p style="color: #6B7280; text-align: center; padding: 40px;">No phases yet. Click "Add New Phase" to create one.</p>';
+  }
+
+  return phases.map((phase, index) => `
+    <div class="protocol-section engagement-phase-section" data-phase-index="${index}" onclick="selectEngagementPhase(${index}, event)">
+      <input type="checkbox" class="section-checkbox" onclick="toggleEngagementPhaseCheckbox(${index})" />
+
+      <h2 class="section-title">
+        <span class="drag-handle">⋮⋮</span>
+        <span contenteditable="true" class="phase-title-text" data-index="${index}">${escapeHtml(phase.title || `Phase ${index + 1}`)}</span>
+      </h2>
+
+      ${phase.subtitle ? `<p class="section-goal" contenteditable="true" data-index="${index}">${escapeHtml(phase.subtitle)}</p>` : ''}
+
+      <!-- Phase Items -->
+      <ul class="section-list phase-items-list" data-index="${index}">
+        ${(phase.items || []).map((item, itemIndex) => `
+          <li contenteditable="true" data-phase="${index}" data-item="${itemIndex}">${escapeHtml(item)}</li>
+        `).join('')}
+      </ul>
+
+      <!-- Add Item Button -->
+      <button onclick="addPhaseItem(${index}); event.stopPropagation();" style="margin: 8px 0 16px 24px; padding: 6px 12px; background: #F9FAFB; border: 1px dashed #D1D5DB; border-radius: 4px; color: #6B7280; font-size: 12px; cursor: pointer;">
+        + Add Item
+      </button>
+
+      ${phase.progress_goal ? `
+      <div style="background: #F0FDFA; padding: 12px; border-radius: 8px; margin-bottom: 12px;">
+        <strong style="color: #0F766E; font-size: 12px;">Progress Goal:</strong>
+        <p contenteditable="true" class="phase-progress-goal" data-index="${index}" style="margin: 4px 0 0 0; color: #374151; font-size: 14px;">${escapeHtml(phase.progress_goal)}</p>
+      </div>
+      ` : ''}
+
+      ${phase.check_in_prompts && phase.check_in_prompts.length > 0 ? `
+      <div class="check-in-prompts" style="background: #FEF3C7; padding: 12px; border-radius: 8px; border-left: 3px solid #F59E0B;">
+        <strong style="color: #92400E; font-size: 12px;">Check-in Questions:</strong>
+        <ul class="prompts-list" style="margin: 8px 0 0 0; padding-left: 20px;">
+          ${phase.check_in_prompts.map((prompt, pi) => `
+            <li contenteditable="true" data-phase="${index}" data-prompt="${pi}" style="color: #78350F; font-size: 13px; margin-bottom: 4px;">${escapeHtml(prompt)}</li>
+          `).join('')}
+        </ul>
+      </div>
+      ` : ''}
+
+      <!-- Per-phase AI input -->
+      <div class="section-input" style="margin-top: 16px;">
+        <input type="text" placeholder="Ask AI to modify this phase..." onkeypress="handleEngagementPhaseInput(event, ${index})">
+        <button onclick="submitEngagementPhaseInput(${index})">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="22" y1="2" x2="11" y2="13"/>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Delete Phase Button -->
+      <button onclick="deleteEngagementPhase(${index}); event.stopPropagation();"
+        style="position: absolute; top: 16px; right: 48px; background: none; border: none; color: #9CA3AF; cursor: pointer; padding: 4px;"
+        title="Delete Phase">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="3 6 5 6 21 6"/>
+          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+        </svg>
+      </button>
+    </div>
+  `).join('');
+}
+
+// Select an engagement phase
+function selectEngagementPhase(index, event) {
+  // Don't select if clicking on input, button, or contenteditable
+  if (event.target.tagName === 'INPUT' || event.target.tagName === 'BUTTON' ||
+      event.target.closest('.section-input') || event.target.contentEditable === 'true') {
+    return;
+  }
+
+  const sections = document.querySelectorAll('.engagement-phase-section');
+  sections.forEach((section, i) => {
+    if (i === index) {
+      section.classList.toggle('selected');
+      selectedEngagementPhase = section.classList.contains('selected') ? index : null;
+    } else {
+      section.classList.remove('selected');
+    }
+  });
+
+  // Update tag visibility
+  const tagEl = document.getElementById('selectedPhaseTag');
+  const nameEl = document.getElementById('selectedPhaseName');
+  if (tagEl) {
+    tagEl.style.display = selectedEngagementPhase !== null ? 'flex' : 'none';
+    if (nameEl && selectedEngagementPhase !== null) {
+      nameEl.textContent = currentEngagementPlanData.phases[index]?.title || `Phase ${index + 1}`;
+    }
+  }
+
+  if (selectedEngagementPhase !== null) {
+    showNotification(`Phase "${currentEngagementPlanData.phases[index]?.title || `Phase ${index + 1}`}" selected`, 'info');
+  }
+}
+
+// Toggle engagement phase checkbox
+function toggleEngagementPhaseCheckbox(index) {
+  const sections = document.querySelectorAll('.engagement-phase-section');
+  const section = sections[index];
+  if (section) {
+    const checkbox = section.querySelector('.section-checkbox');
+    section.classList.toggle('selected', checkbox?.checked);
+    selectedEngagementPhase = checkbox?.checked ? index : null;
+
+    const tagEl = document.getElementById('selectedPhaseTag');
+    if (tagEl) {
+      tagEl.style.display = selectedEngagementPhase !== null ? 'flex' : 'none';
+    }
+  }
+}
+
+// Clear engagement phase selection
+function clearEngagementPhaseSelection() {
+  const sections = document.querySelectorAll('.engagement-phase-section');
+  sections.forEach(section => {
+    section.classList.remove('selected');
+    const checkbox = section.querySelector('.section-checkbox');
+    if (checkbox) checkbox.checked = false;
+  });
+  selectedEngagementPhase = null;
+
+  const tagEl = document.getElementById('selectedPhaseTag');
+  if (tagEl) tagEl.style.display = 'none';
+}
+
+// Handle per-phase AI input
+function handleEngagementPhaseInput(event, index) {
+  if (event.key === 'Enter') {
+    submitEngagementPhaseInput(index);
+  }
+}
+
+// Submit per-phase AI edit
+async function submitEngagementPhaseInput(phaseIndex) {
+  const section = document.querySelectorAll('.engagement-phase-section')[phaseIndex];
+  if (!section) return;
+
+  const input = section.querySelector('.section-input input');
+  const prompt = input?.value?.trim();
+  if (!prompt) return;
+
+  input.value = '';
+
+  const currentPhase = currentEngagementPlanData.phases[phaseIndex];
+  if (!currentPhase) {
+    showNotification('Phase not found', 'error');
+    return;
+  }
+
+  // Show loading
+  section.classList.add('loading');
+  const originalContent = section.innerHTML;
+  section.innerHTML = `
+    <div class="section-loading">
+      <div class="loading-spinner"></div>
+      <p>AI is modifying "${currentPhase.title || `Phase ${phaseIndex + 1}`}"...</p>
+    </div>
+  `;
+
+  try {
+    const token = localStorage.getItem('auth_token');
+    const response = await fetch(`${API_BASE}/api/protocols/edit-engagement-phase`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        phase: currentPhase,
+        prompt: prompt,
+        action: 'edit'
+      })
+    });
+
+    const data = await response.json();
+
+    if (data.success && data.phase) {
+      currentEngagementPlanData.phases[phaseIndex] = data.phase;
+      rerenderEngagementPhases();
+      showNotification(`Phase updated successfully!`, 'success');
+    } else {
+      throw new Error(data.error || 'Failed to update phase');
+    }
+  } catch (error) {
+    console.error('Error updating phase:', error);
+    section.innerHTML = originalContent;
+    section.classList.remove('loading');
+    showNotification(`Error updating phase: ${error.message}`, 'error');
+  }
+}
+
+// Handle global AI input for engagement plan
+function handleEngagementAI(event) {
+  if (event.key === 'Enter') {
+    submitEngagementAI();
+  }
+}
+
+// Submit global AI command for engagement plan
+async function submitEngagementAI() {
+  const input = document.getElementById('engagementAIInput');
+  const prompt = input?.value?.trim();
+  if (!prompt) return;
+
+  input.value = '';
+
+  // If a phase is selected, edit that specific phase
+  if (selectedEngagementPhase !== null) {
+    const currentPhase = currentEngagementPlanData.phases[selectedEngagementPhase];
+    if (!currentPhase) {
+      showNotification('Phase not found', 'error');
+      return;
+    }
+
+    showNotification(`AI is modifying "${currentPhase.title || `Phase ${selectedEngagementPhase + 1}`}"...`, 'info');
+
+    try {
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch(`${API_BASE}/api/protocols/edit-engagement-phase`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          phase: currentPhase,
+          prompt: prompt,
+          action: 'edit'
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.success && data.phase) {
+        currentEngagementPlanData.phases[selectedEngagementPhase] = data.phase;
+        rerenderEngagementPhases();
+        clearEngagementPhaseSelection();
+        showNotification(`Phase updated successfully!`, 'success');
+      } else {
+        throw new Error(data.error || 'Failed to update phase');
+      }
+    } catch (error) {
+      console.error('Error updating phase:', error);
+      showNotification(`Error: ${error.message}`, 'error');
+    }
+  } else {
+    // No phase selected - add a new phase based on the prompt
+    await addNewEngagementPhaseWithAI(prompt);
+  }
+}
+
+// Add new phase with AI
+async function addNewEngagementPhaseWithAI(prompt) {
+  showNotification('AI is generating a new phase...', 'info');
+
+  try {
+    const token = localStorage.getItem('auth_token');
+    const response = await fetch(`${API_BASE}/api/protocols/edit-engagement-phase`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        prompt: prompt,
+        action: 'add'
+      })
+    });
+
+    const data = await response.json();
+
+    if (data.success && data.phase) {
+      if (!currentEngagementPlanData.phases) {
+        currentEngagementPlanData.phases = [];
+      }
+      currentEngagementPlanData.phases.push(data.phase);
+      rerenderEngagementPhases();
+      showNotification(`New phase "${data.phase.title}" added!`, 'success');
+
+      // Scroll to new phase
+      setTimeout(() => {
+        const sections = document.querySelectorAll('.engagement-phase-section');
+        const lastSection = sections[sections.length - 1];
+        if (lastSection) {
+          lastSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          lastSection.style.backgroundColor = '#E0F2F1';
+          setTimeout(() => { lastSection.style.backgroundColor = ''; }, 2000);
+        }
+      }, 100);
+    } else {
+      throw new Error(data.error || 'Failed to generate phase');
+    }
+  } catch (error) {
+    console.error('Error generating phase:', error);
+    showNotification(`Error: ${error.message}`, 'error');
+  }
+}
+
+// Add new blank phase manually
+function addNewEngagementPhase() {
+  const phaseCount = (currentEngagementPlanData.phases || []).length + 1;
+  const newPhase = {
+    title: `Phase ${phaseCount}: New Phase (Week ${phaseCount})`,
+    subtitle: 'Description of this phase',
+    items: ['Add action item here'],
+    progress_goal: 'Define the goal for this phase',
+    check_in_prompts: ['How are you progressing?']
+  };
+
+  if (!currentEngagementPlanData.phases) {
+    currentEngagementPlanData.phases = [];
+  }
+  currentEngagementPlanData.phases.push(newPhase);
+  rerenderEngagementPhases();
+
+  // Scroll to new phase
+  setTimeout(() => {
+    const sections = document.querySelectorAll('.engagement-phase-section');
+    const lastSection = sections[sections.length - 1];
+    if (lastSection) {
+      lastSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, 100);
+}
+
+// Delete an engagement phase
+function deleteEngagementPhase(index) {
+  if (!confirm('Are you sure you want to delete this phase?')) return;
+
+  currentEngagementPlanData.phases.splice(index, 1);
+  rerenderEngagementPhases();
+  showNotification('Phase deleted', 'success');
+}
+
+// Add item to a phase
+function addPhaseItem(phaseIndex) {
+  if (!currentEngagementPlanData.phases[phaseIndex]) return;
+
+  if (!currentEngagementPlanData.phases[phaseIndex].items) {
+    currentEngagementPlanData.phases[phaseIndex].items = [];
+  }
+  currentEngagementPlanData.phases[phaseIndex].items.push('New action item');
+  rerenderEngagementPhases();
+}
+
+// Add success metric
+function addSuccessMetric() {
+  if (!currentEngagementPlanData.success_metrics) {
+    currentEngagementPlanData.success_metrics = [];
+  }
+  currentEngagementPlanData.success_metrics.push('New success metric');
+
+  const list = document.getElementById('successMetricsList');
+  if (list) {
+    const li = document.createElement('li');
+    li.style.marginBottom = '8px';
+    li.innerHTML = `<span contenteditable="true" class="success-metric-item" data-index="${currentEngagementPlanData.success_metrics.length - 1}">New success metric</span>`;
+    list.appendChild(li);
+  }
+}
+
+// Re-render engagement phases
+function rerenderEngagementPhases() {
+  const container = document.getElementById('engagementPhasesContainer');
+  if (container) {
+    container.innerHTML = renderEngagementPhases(currentEngagementPlanData.phases || []);
+  }
+}
+
+// Scroll to engagement section
+function scrollToEngagementSection(sectionId) {
+  const section = document.getElementById(sectionId + 'Section');
+  if (section) {
+    section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+
+// Save engagement plan from editor
+async function saveEngagementPlanFromEditor() {
+  if (!currentEngagementProtocolId || !currentEngagementPlanData) {
+    showNotification('No engagement plan to save', 'error');
+    return;
+  }
+
+  // Collect updated data from the editor
+  const titleEl = document.getElementById('engagementPlanTitle');
+  const summaryEl = document.getElementById('engagementPlanSummary');
+
+  if (titleEl) currentEngagementPlanData.title = titleEl.textContent.trim();
+  if (summaryEl) currentEngagementPlanData.summary = summaryEl.textContent.trim();
+
+  // Collect phase data from contenteditable elements
+  document.querySelectorAll('.phase-title-text').forEach((el, i) => {
+    if (currentEngagementPlanData.phases[i]) {
+      currentEngagementPlanData.phases[i].title = el.textContent.trim();
+    }
+  });
+
+  document.querySelectorAll('.phase-progress-goal').forEach((el) => {
+    const index = parseInt(el.dataset.index);
+    if (currentEngagementPlanData.phases[index]) {
+      currentEngagementPlanData.phases[index].progress_goal = el.textContent.trim();
+    }
+  });
+
+  // Collect items from lists
+  document.querySelectorAll('.phase-items-list').forEach((list) => {
+    const phaseIndex = parseInt(list.dataset.index);
+    if (currentEngagementPlanData.phases[phaseIndex]) {
+      const items = [];
+      list.querySelectorAll('li').forEach(li => {
+        const text = li.textContent.trim();
+        if (text) items.push(text);
+      });
+      currentEngagementPlanData.phases[phaseIndex].items = items;
+    }
+  });
+
+  // Collect success metrics
+  const metricItems = document.querySelectorAll('.success-metric-item');
+  if (metricItems.length > 0) {
+    currentEngagementPlanData.success_metrics = [];
+    metricItems.forEach(item => {
+      const text = item.textContent.trim();
+      if (text) currentEngagementPlanData.success_metrics.push(text);
+    });
+  }
+
+  // Collect communication schedule
+  const freqEl = document.getElementById('commFrequency');
+  const channelEl = document.getElementById('commChannel');
+  const toneEl = document.getElementById('commTone');
+  if (freqEl || channelEl || toneEl) {
+    currentEngagementPlanData.communication_schedule = {
+      check_in_frequency: freqEl?.value || '',
+      preferred_channel: channelEl?.value || '',
+      message_tone: toneEl?.value || ''
+    };
+  }
+
+  try {
+    const token = localStorage.getItem('auth_token');
+    const response = await fetch(`${API_BASE}/api/protocols/${currentEngagementProtocolId}/engagement-plan`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        engagement_plan: currentEngagementPlanData
+      })
+    });
+
+    if (response.ok) {
+      showNotification('Engagement plan saved successfully!', 'success');
+      loadEngagementPlans(); // Refresh the list
+    } else {
+      const data = await response.json();
+      throw new Error(data.error || 'Failed to save');
+    }
+  } catch (error) {
+    console.error('Error saving engagement plan:', error);
+    showNotification(`Error saving: ${error.message}`, 'error');
+  }
+}
+
+// Share engagement plan
+function shareEngagementPlan() {
+  if (!currentEngagementPlanData) {
+    showNotification('No engagement plan data to share', 'error');
+    return;
+  }
+
+  const clientName = currentClient ? `${currentClient.first_name} ${currentClient.last_name}` : 'Client';
+  const title = currentEngagementPlanData.title || 'Engagement Plan';
+
+  // Create share modal
+  const existingModal = document.getElementById('shareEngagementModal');
+  if (existingModal) existingModal.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'shareEngagementModal';
+  modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 3000;';
+
+  modal.innerHTML = `
+    <div style="background: white; border-radius: 16px; max-width: 500px; width: 95%; padding: 24px;">
+      <h3 style="margin: 0 0 8px 0; color: #1F2937;">Share Engagement Plan</h3>
+      <p style="color: #6B7280; margin: 0 0 20px 0; font-size: 14px;">Choose how you'd like to share "${escapeHtml(title)}"</p>
+
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        <button onclick="shareEngagementViaEmail()" style="display: flex; align-items: center; gap: 12px; padding: 16px; background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 10px; cursor: pointer; text-align: left;">
+          <div style="width: 40px; height: 40px; background: #EEF2FF; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6366F1" stroke-width="2">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+              <polyline points="22,6 12,13 2,6"/>
+            </svg>
+          </div>
+          <div>
+            <div style="font-weight: 600; color: #1F2937;">Email</div>
+            <div style="font-size: 12px; color: #6B7280;">Send via email client</div>
+          </div>
+        </button>
+
+        <button onclick="shareEngagementViaWhatsApp()" style="display: flex; align-items: center; gap: 12px; padding: 16px; background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 10px; cursor: pointer; text-align: left;">
+          <div style="width: 40px; height: 40px; background: #DCFCE7; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="#22C55E">
+              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+            </svg>
+          </div>
+          <div>
+            <div style="font-weight: 600; color: #1F2937;">WhatsApp</div>
+            <div style="font-size: 12px; color: #6B7280;">Share via WhatsApp</div>
+          </div>
+        </button>
+
+        <button onclick="copyEngagementPlanLink()" style="display: flex; align-items: center; gap: 12px; padding: 16px; background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 10px; cursor: pointer; text-align: left;">
+          <div style="width: 40px; height: 40px; background: #F0FDFA; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0F766E" stroke-width="2">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>
+          </div>
+          <div>
+            <div style="font-weight: 600; color: #1F2937;">Copy Text</div>
+            <div style="font-size: 12px; color: #6B7280;">Copy plan as formatted text</div>
+          </div>
+        </button>
+      </div>
+
+      <button onclick="closeShareEngagementModal()" style="width: 100%; margin-top: 16px; padding: 12px; background: #E5E7EB; border: none; border-radius: 8px; color: #374151; font-weight: 500; cursor: pointer;">
+        Cancel
+      </button>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  // Close on backdrop click
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) closeShareEngagementModal();
+  });
+}
+
+function closeShareEngagementModal() {
+  const modal = document.getElementById('shareEngagementModal');
+  if (modal) modal.remove();
+}
+
+function getEngagementPlanText() {
+  if (!currentEngagementPlanData) return '';
+
+  let text = `${currentEngagementPlanData.title || 'Engagement Plan'}\n\n`;
+
+  if (currentEngagementPlanData.summary) {
+    text += `${currentEngagementPlanData.summary}\n\n`;
+  }
+
+  (currentEngagementPlanData.phases || []).forEach(phase => {
+    text += `${phase.title}\n`;
+    if (phase.subtitle) text += `${phase.subtitle}\n`;
+    text += '\n';
+
+    if (phase.items && phase.items.length > 0) {
+      phase.items.forEach(item => {
+        text += `• ${item}\n`;
+      });
+      text += '\n';
+    }
+
+    if (phase.progress_goal) {
+      text += `Goal: ${phase.progress_goal}\n\n`;
+    }
+  });
+
+  return text;
+}
+
+function shareEngagementViaEmail() {
+  const text = getEngagementPlanText();
+  const subject = encodeURIComponent(currentEngagementPlanData?.title || 'Engagement Plan');
+  const body = encodeURIComponent(text);
+  window.open(`mailto:?subject=${subject}&body=${body}`);
+  closeShareEngagementModal();
+}
+
+function shareEngagementViaWhatsApp() {
+  const text = getEngagementPlanText();
+  const encoded = encodeURIComponent(text);
+  window.open(`https://wa.me/?text=${encoded}`);
+  closeShareEngagementModal();
+}
+
+function copyEngagementPlanLink() {
+  const text = getEngagementPlanText();
+  navigator.clipboard.writeText(text).then(() => {
+    showNotification('Engagement plan copied to clipboard!', 'success');
+    closeShareEngagementModal();
+  }).catch(err => {
+    console.error('Failed to copy:', err);
+    showNotification('Failed to copy to clipboard', 'error');
+  });
+}
+
+// Print engagement plan from editor
+function printEngagementPlanFromEditor() {
+  if (!currentEngagementPlanData) return;
+
+  const printWindow = window.open('', '_blank');
+  printWindow.document.write(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>${currentEngagementPlanData.title || 'Engagement Plan'}</title>
+      <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 40px; line-height: 1.6; max-width: 800px; margin: 0 auto; }
+        h1 { color: #0F766E; }
+        h2 { color: #374151; margin-top: 24px; }
+        .phase { background: #F9FAFB; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #0F766E; }
+        .phase h3 { margin-top: 0; color: #1F2937; }
+        ul { padding-left: 20px; }
+        li { margin-bottom: 8px; }
+        .goal { background: #E0F2F1; padding: 12px; border-radius: 6px; margin-top: 12px; }
+        @media print { body { padding: 20px; } }
+      </style>
+    </head>
+    <body>
+      <h1>${escapeHtml(currentEngagementPlanData.title || 'Engagement Plan')}</h1>
+      ${currentEngagementPlanData.summary ? `<p style="color: #6B7280;">${escapeHtml(currentEngagementPlanData.summary)}</p>` : ''}
+
+      ${(currentEngagementPlanData.phases || []).map(phase => `
+        <div class="phase">
+          <h3>${escapeHtml(phase.title)}</h3>
+          ${phase.subtitle ? `<p style="font-style: italic; color: #6B7280;">${escapeHtml(phase.subtitle)}</p>` : ''}
+          ${phase.items && phase.items.length > 0 ? `
+            <ul>${phase.items.map(item => `<li>${escapeHtml(item)}</li>`).join('')}</ul>
+          ` : ''}
+          ${phase.progress_goal ? `<div class="goal"><strong>Progress Goal:</strong> ${escapeHtml(phase.progress_goal)}</div>` : ''}
+        </div>
+      `).join('')}
+    </body>
+    </html>
+  `);
+  printWindow.document.close();
+  printWindow.print();
+}
+
+// Close engagement plan editor
+function closeEngagementPlanEditor() {
+  const editor = document.getElementById('engagementPlanEditorView');
+  if (editor) {
+    editor.remove();
+  }
+  document.body.style.overflow = '';
+  currentEngagementPlanData = null;
+  currentEngagementProtocolId = null;
+  selectedEngagementPhase = null;
+}
+
+// Format engagement plan JSON data into readable HTML
+function formatEngagementPlanHtml(planData) {
+  let html = '';
+
+  // Title and summary
+  if (planData.title) {
+    html += `<h2 style="color: #0F766E; margin: 0 0 16px 0; font-size: 22px;">${planData.title}</h2>`;
+  }
+  if (planData.summary) {
+    html += `<p style="color: #374151; margin-bottom: 24px; font-size: 15px; line-height: 1.6;">${planData.summary}</p>`;
+  }
+
+  // Phases
+  if (planData.phases && Array.isArray(planData.phases)) {
+    planData.phases.forEach(phase => {
+      html += `
+        <div style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 16px; border-left: 4px solid #0F766E;">
+          <h3 style="color: #1F2937; margin: 0 0 4px 0; font-size: 17px;">${phase.title || `Phase ${phase.phase_number}`}</h3>
+          ${phase.subtitle ? `<p style="color: #6B7280; margin: 0 0 16px 0; font-size: 13px; font-style: italic;">${phase.subtitle}</p>` : ''}
+
+          ${phase.items && phase.items.length > 0 ? `
+            <ul style="margin: 0 0 16px 0; padding-left: 20px;">
+              ${phase.items.map(item => `<li style="color: #374151; margin-bottom: 8px; line-height: 1.5;">${item}</li>`).join('')}
+            </ul>
+          ` : ''}
+
+          ${phase.progress_goal ? `
+            <div style="background: #F0FDFA; padding: 12px; border-radius: 8px; margin-bottom: 12px;">
+              <strong style="color: #0F766E; font-size: 12px; text-transform: uppercase;">Progress Goal:</strong>
+              <p style="color: #374151; margin: 4px 0 0 0; font-size: 14px;">${phase.progress_goal}</p>
+            </div>
+          ` : ''}
+
+          ${phase.check_in_prompts && phase.check_in_prompts.length > 0 ? `
+            <div style="background: #FEF3C7; padding: 12px; border-radius: 8px;">
+              <strong style="color: #92400E; font-size: 12px; text-transform: uppercase;">Check-in Questions:</strong>
+              <ul style="margin: 8px 0 0 0; padding-left: 20px;">
+                ${phase.check_in_prompts.map(q => `<li style="color: #78350F; margin-bottom: 4px; font-size: 13px;">${q}</li>`).join('')}
+              </ul>
+            </div>
+          ` : ''}
+        </div>
+      `;
+    });
+  }
+
+  // Communication schedule
+  if (planData.communication_schedule) {
+    const comm = planData.communication_schedule;
+    html += `
+      <div style="background: #EDE9FE; border-radius: 12px; padding: 20px; margin-bottom: 16px;">
+        <h3 style="color: #6D28D9; margin: 0 0 12px 0; font-size: 16px;">Communication Schedule</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px;">
+          ${comm.check_in_frequency ? `<div><strong style="color: #7C3AED; font-size: 12px;">Frequency:</strong><br><span style="color: #374151;">${comm.check_in_frequency}</span></div>` : ''}
+          ${comm.preferred_channel ? `<div><strong style="color: #7C3AED; font-size: 12px;">Channel:</strong><br><span style="color: #374151;">${comm.preferred_channel}</span></div>` : ''}
+          ${comm.message_tone ? `<div><strong style="color: #7C3AED; font-size: 12px;">Tone:</strong><br><span style="color: #374151;">${comm.message_tone}</span></div>` : ''}
+        </div>
+      </div>
+    `;
+  }
+
+  // Success metrics
+  if (planData.success_metrics && planData.success_metrics.length > 0) {
+    html += `
+      <div style="background: #ECFDF5; border-radius: 12px; padding: 20px;">
+        <h3 style="color: #065F46; margin: 0 0 12px 0; font-size: 16px;">Success Metrics</h3>
+        <ul style="margin: 0; padding-left: 20px;">
+          ${planData.success_metrics.map(m => `<li style="color: #047857; margin-bottom: 6px;">${m}</li>`).join('')}
+        </ul>
+      </div>
+    `;
+  }
+
+  return html || '<p>No engagement plan content available.</p>';
+}
+
 // Show engagement plan view modal
 function showEngagementPlanViewModal(protocol) {
   const existingModal = document.getElementById('viewEngagementModal');
@@ -4901,14 +6846,58 @@ function showEngagementPlanViewModal(protocol) {
   modal.style.cssText = 'display: flex; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;';
 
   const title = protocol.title || 'Engagement Plan';
-  const content = protocol.ai_recommendations || '<p>No engagement plan content available.</p>';
+
+  // Extract and format engagement plan content
+  let content = '<p>No engagement plan content available.</p>';
+  if (protocol.ai_recommendations) {
+    const rawContent = protocol.ai_recommendations;
+
+    // Check if there's an engagement plan JSON after the separator
+    const engagementPlanMatch = rawContent.match(/---\s*ENGAGEMENT PLAN\s*---\s*([\s\S]*)/i);
+    if (engagementPlanMatch) {
+      try {
+        // Extract JSON from the content (find the first { to last })
+        const jsonText = engagementPlanMatch[1].trim();
+        const jsonMatch = jsonText.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          const planData = JSON.parse(jsonMatch[0]);
+          content = formatEngagementPlanHtml(planData);
+        } else {
+          content = jsonText.replace(/\n/g, '<br>');
+        }
+      } catch (e) {
+        console.error('Error parsing engagement plan JSON:', e);
+        // If not valid JSON, just use the text after the separator
+        content = engagementPlanMatch[1].trim().replace(/\n/g, '<br>');
+      }
+    } else {
+      // Try to find JSON anywhere in the content
+      try {
+        const jsonMatch = rawContent.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          const planData = JSON.parse(jsonMatch[0]);
+          if (planData.title || planData.phases || planData.overview || planData.summary) {
+            content = formatEngagementPlanHtml(planData);
+          } else {
+            content = rawContent.replace(/\n/g, '<br>');
+          }
+        } else {
+          content = rawContent.replace(/\n/g, '<br>');
+        }
+      } catch (e) {
+        console.error('Error parsing raw content as JSON:', e);
+        // Not JSON, just display as HTML
+        content = rawContent.replace(/\n/g, '<br>');
+      }
+    }
+  }
 
   modal.innerHTML = `
     <div class="modal-content" style="background: white; border-radius: 16px; max-width: 900px; width: 95%; max-height: 90vh; overflow: hidden; display: flex; flex-direction: column;">
       <div class="modal-header" style="padding: 20px 24px; border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center;">
         <div>
-          <h2 style="margin: 0; font-size: 20px; color: #1f2937;">${title} - Engagement Plan</h2>
-          <p style="margin: 4px 0 0; font-size: 13px; color: #6b7280;">Created: ${formatDate(protocol.created_at)}</p>
+          <h2 style="margin: 0; font-size: 20px; color: #1f2937;">Engagement Plan</h2>
+          <p style="margin: 4px 0 0; font-size: 13px; color: #6b7280;">Created: ${formatDate(protocol.updated_at || protocol.created_at)}</p>
         </div>
         <button onclick="closeViewEngagementModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #6b7280;">&times;</button>
       </div>
@@ -5466,7 +7455,10 @@ function openProtocolAIChat() {
 // PROTOCOL EDITOR FUNCTIONS (Document Style)
 // ============================================
 
-// Show the protocol editor view
+// Protocol generation progress tracking
+let protocolProgressInterval;
+
+// Show the protocol editor view with progress animation
 function showProtocolEditor() {
   console.log('[Protocol Editor] showProtocolEditor called');
   const editorView = document.getElementById('protocolEditorView');
@@ -5483,6 +7475,10 @@ function showProtocolEditor() {
   if (loading) loading.style.display = 'flex';
   if (content) content.style.display = 'none';
 
+  // Reset progress bar
+  const progressBar = document.getElementById('protocolProgressBar');
+  if (progressBar) progressBar.style.width = '5%';
+
   // Show the editor view
   if (editorView) {
     editorView.style.display = 'flex';
@@ -5490,13 +7486,62 @@ function showProtocolEditor() {
 
     // Initialize reference panel
     loadReferencePanelData();
+
+    // Start progress animation
+    startProtocolProgressAnimation();
   } else {
     console.error('[Protocol Editor] Editor view element not found!');
   }
 }
 
+// Start the protocol generation progress animation
+function startProtocolProgressAnimation() {
+  let progress = 5;
+
+  // Clear any existing interval
+  if (protocolProgressInterval) {
+    clearInterval(protocolProgressInterval);
+  }
+
+  protocolProgressInterval = setInterval(() => {
+    if (progress < 85) {
+      progress += Math.random() * 10;
+      if (progress > 85) progress = 85;
+
+      const progressBar = document.getElementById('protocolProgressBar');
+      if (progressBar) progressBar.style.width = progress + '%';
+
+      // Update status messages based on progress
+      const statusEl = document.getElementById('editorLoadingStatus');
+      if (statusEl) {
+        if (progress < 15) statusEl.textContent = 'Analyzing client data...';
+        else if (progress < 30) statusEl.textContent = 'Reviewing clinical notes...';
+        else if (progress < 45) statusEl.textContent = 'Consulting knowledge base...';
+        else if (progress < 60) statusEl.textContent = 'Generating protocol sections...';
+        else if (progress < 75) statusEl.textContent = 'Creating supplement recommendations...';
+        else statusEl.textContent = 'Finalizing protocol...';
+      }
+    }
+  }, 800);
+}
+
+// Stop the protocol progress animation
+function stopProtocolProgressAnimation() {
+  if (protocolProgressInterval) {
+    clearInterval(protocolProgressInterval);
+    protocolProgressInterval = null;
+  }
+
+  // Complete the progress bar
+  const progressBar = document.getElementById('protocolProgressBar');
+  if (progressBar) progressBar.style.width = '100%';
+}
+
 // Close the protocol editor
 function closeProtocolEditor() {
+  // Stop any running progress animation
+  stopProtocolProgressAnimation();
+
   const editorView = document.getElementById('protocolEditorView');
   if (editorView) editorView.style.display = 'none';
   selectedProtocolSection = null;
@@ -5512,6 +7557,10 @@ function updateEditorLoadingStatus(message) {
 // Display protocol in editor view
 function displayProtocolInEditor(data, templates, noteIds) {
   console.log('[Protocol Editor] displayProtocolInEditor called with data:', data);
+
+  // Stop the progress animation
+  stopProtocolProgressAnimation();
+
   const loading = document.getElementById('protocolEditorLoading');
   const content = document.getElementById('protocolEditorContent');
 
@@ -7258,6 +9307,11 @@ window.saveAsTemplate = saveAsTemplate;
 window.loadProtocols = loadProtocols;
 window.viewProtocol = viewProtocol;
 window.editProtocol = editProtocol;
+window.activateProtocol = activateProtocol;
+window.setProtocolDraft = setProtocolDraft;
+window.deleteProtocol = deleteProtocol;
+window.createEngagementPlanFromProtocol = createEngagementPlanFromProtocol;
+window.closeEngagementProgressModal = closeEngagementProgressModal;
 window.shareProtocol = shareProtocol;
 window.printProtocol = printProtocol;
 window.sendProtocolEmail = sendProtocolEmail;
@@ -7314,6 +9368,56 @@ window.closeViewEngagementModal = closeViewEngagementModal;
 window.shareEngagementPlanById = shareEngagementPlanById;
 window.printEngagementPlan = printEngagementPlan;
 window.downloadEngagementPlan = downloadEngagementPlan;
+
+// Engagement Plan Editor functions
+window.openEngagementPlanEditor = openEngagementPlanEditor;
+window.showEngagementPlanEditorView = showEngagementPlanEditorView;
+window.renderEngagementPhases = renderEngagementPhases;
+window.selectEngagementPhase = selectEngagementPhase;
+window.toggleEngagementPhaseCheckbox = toggleEngagementPhaseCheckbox;
+window.clearEngagementPhaseSelection = clearEngagementPhaseSelection;
+window.handleEngagementPhaseInput = handleEngagementPhaseInput;
+window.submitEngagementPhaseInput = submitEngagementPhaseInput;
+window.handleEngagementAI = handleEngagementAI;
+window.submitEngagementAI = submitEngagementAI;
+window.addNewEngagementPhaseWithAI = addNewEngagementPhaseWithAI;
+window.addNewEngagementPhase = addNewEngagementPhase;
+window.deleteEngagementPhase = deleteEngagementPhase;
+window.addPhaseItem = addPhaseItem;
+window.addSuccessMetric = addSuccessMetric;
+window.rerenderEngagementPhases = rerenderEngagementPhases;
+window.scrollToEngagementSection = scrollToEngagementSection;
+window.saveEngagementPlanFromEditor = saveEngagementPlanFromEditor;
+window.printEngagementPlanFromEditor = printEngagementPlanFromEditor;
+window.shareEngagementPlan = shareEngagementPlan;
+window.closeShareEngagementModal = closeShareEngagementModal;
+window.shareEngagementViaEmail = shareEngagementViaEmail;
+window.shareEngagementViaWhatsApp = shareEngagementViaWhatsApp;
+window.copyEngagementPlanLink = copyEngagementPlanLink;
+window.closeEngagementPlanEditor = closeEngagementPlanEditor;
+
+// Existing Protocol Editor functions
+window.parseProtocolContentToModules = parseProtocolContentToModules;
+window.openProtocolEditorForExisting = openProtocolEditorForExisting;
+window.renderExistingProtocolSections = renderExistingProtocolSections;
+window.selectExistingSection = selectExistingSection;
+window.toggleExistingSectionCheckbox = toggleExistingSectionCheckbox;
+window.clearExistingProtocolSelection = clearExistingProtocolSelection;
+window.handleExistingModuleInput = handleExistingModuleInput;
+window.submitExistingModuleInput = submitExistingModuleInput;
+window.handleExistingProtocolAI = handleExistingProtocolAI;
+window.submitExistingProtocolAI = submitExistingProtocolAI;
+window.addModuleToExistingProtocolWithAI = addModuleToExistingProtocolWithAI;
+window.addModuleToExistingProtocol = addModuleToExistingProtocol;
+window.deleteExistingModule = deleteExistingModule;
+window.rerenderExistingProtocolSections = rerenderExistingProtocolSections;
+window.scrollToProtocolSection = scrollToProtocolSection;
+window.saveExistingProtocolEditor = saveExistingProtocolEditor;
+window.modulesToContent = modulesToContent;
+window.printExistingProtocol = printExistingProtocol;
+window.switchExistingEditorTab = switchExistingEditorTab;
+window.closeExistingProtocolEditor = closeExistingProtocolEditor;
+
 window.openAIChatModal = openAIChatModal;
 window.closeAIChatModal = closeAIChatModal;
 window.sendAIChatMessage = sendAIChatMessage;

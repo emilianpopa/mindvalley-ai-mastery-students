@@ -8,6 +8,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const db = require('../database/db');
 const { authenticateToken } = require('../middleware/auth');
+const auditLogger = require('../services/auditLogger');
 
 const router = express.Router();
 
@@ -91,6 +92,8 @@ router.post('/login', async (req, res, next) => {
     );
 
     if (result.rows.length === 0) {
+      // Log failed login attempt (user not found)
+      await auditLogger.logLogin(req, null, email.toLowerCase(), false, 'User not found');
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
@@ -105,6 +108,8 @@ router.post('/login', async (req, res, next) => {
     const validPassword = await bcrypt.compare(password, user.password_hash);
 
     if (!validPassword) {
+      // Log failed login attempt
+      await auditLogger.logLogin(req, null, email.toLowerCase(), false, 'Invalid password');
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
@@ -113,6 +118,9 @@ router.post('/login', async (req, res, next) => {
       'UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = $1',
       [user.id]
     );
+
+    // Log successful login
+    await auditLogger.logLogin(req, user.id, user.email, true);
 
     // Get user roles
     const rolesResult = await db.query(`
