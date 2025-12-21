@@ -985,25 +985,58 @@ router.post('/generate', authenticateToken, async (req, res, next) => {
     // Query Knowledge Base for relevant protocol information
     console.log('[Protocol Generate] Querying Knowledge Base...');
     const kbQueries = [];
+    const promptLower = prompt.toLowerCase();
+    const medicalHistoryLower = (clientData.medical_history || '').toLowerCase();
 
     // Build context-aware KB queries based on templates and prompt
-    if (templates.includes('gut') || prompt.toLowerCase().includes('gut')) {
+    if (templates.includes('gut') || promptLower.includes('gut') || promptLower.includes('digest')) {
       kbQueries.push('gut healing protocols, L-glutamine dosing, probiotic recommendations, digestive enzyme protocols');
     }
-    if (templates.includes('sleep') || prompt.toLowerCase().includes('sleep') || prompt.toLowerCase().includes('fatigue')) {
+    if (templates.includes('sleep') || promptLower.includes('sleep') || promptLower.includes('fatigue') || promptLower.includes('energy')) {
       kbQueries.push('sleep optimization protocols, magnesium supplementation, circadian rhythm support, melatonin alternatives');
     }
-    if (templates.includes('adrenal') || prompt.toLowerCase().includes('stress') || prompt.toLowerCase().includes('adrenal')) {
+    if (templates.includes('adrenal') || promptLower.includes('stress') || promptLower.includes('adrenal') || promptLower.includes('cortisol')) {
       kbQueries.push('adrenal support protocols, adaptogen recommendations, cortisol management, ashwagandha dosing');
     }
-    if (templates.includes('immune') || prompt.toLowerCase().includes('immune')) {
+    if (templates.includes('immune') || promptLower.includes('immune') || promptLower.includes('inflammation')) {
       kbQueries.push('immune support protocols, vitamin D dosing, zinc protocols, immune-boosting supplements');
     }
-    if (templates.includes('weight') || prompt.toLowerCase().includes('weight') || prompt.toLowerCase().includes('metabolic')) {
+    if (templates.includes('weight') || promptLower.includes('weight') || promptLower.includes('metabolic') || promptLower.includes('blood sugar')) {
       kbQueries.push('metabolic support protocols, blood sugar management, weight management supplements');
     }
 
-    // Always query for general best practices
+    // =====================================================
+    // CLINIC MODALITIES - Always query for available treatments
+    // =====================================================
+    // These are the key therapeutic modalities offered at ExpandHealth
+    // Query KB to bring in specific protocols for each modality
+
+    kbQueries.push('HBOT hyperbaric oxygen therapy protocols indications benefits treatment schedule');
+    kbQueries.push('red light therapy photobiomodulation protocols wavelength dosing treatment frequency');
+    kbQueries.push('cold plunge cryotherapy cold exposure protocols benefits timing');
+    kbQueries.push('IV therapy intravenous nutrient protocols NAD glutathione vitamin C Myers cocktail');
+    kbQueries.push('peptide therapy BPC-157 thymosin alpha GHK-Cu protocols dosing');
+    kbQueries.push('ozone therapy blood ozonation EBOO MAH protocols indications');
+    kbQueries.push('infrared sauna detox protocols heat therapy benefits');
+
+    // Query based on specific conditions mentioned
+    if (promptLower.includes('detox') || medicalHistoryLower.includes('toxin') || medicalHistoryLower.includes('heavy metal')) {
+      kbQueries.push('detoxification protocols chelation IV glutathione sauna ozone');
+    }
+    if (promptLower.includes('recovery') || promptLower.includes('injury') || promptLower.includes('heal')) {
+      kbQueries.push('tissue repair protocols HBOT red light peptides BPC-157 recovery');
+    }
+    if (promptLower.includes('longevity') || promptLower.includes('anti-aging') || promptLower.includes('aging')) {
+      kbQueries.push('longevity protocols NAD peptides hyperbaric oxygen cellular regeneration');
+    }
+    if (promptLower.includes('brain') || promptLower.includes('cognitive') || promptLower.includes('neuro')) {
+      kbQueries.push('brain optimization HBOT red light nootropics cognitive protocols');
+    }
+    if (promptLower.includes('autoimmune') || medicalHistoryLower.includes('autoimmune')) {
+      kbQueries.push('autoimmune protocols ozone therapy IV therapy peptides inflammation');
+    }
+
+    // Always query for general best practices with the user's specific request
     kbQueries.push(`best practices for ${prompt}`);
 
     // Execute KB queries in parallel
@@ -1061,6 +1094,22 @@ IMPORTANT REQUIREMENTS:
 2. For ALL supplements, you MUST include precise timing (e.g., "With breakfast", "30 min before bed", "Between meals on empty stomach")
 3. Include clinical notes explaining WHY each supplement is recommended and any special instructions
 
+*** CLINIC MODALITIES - CRITICAL ***
+ExpandHealth offers advanced therapeutic modalities. Based on the Knowledge Base content above, you MUST include a "Clinic Treatments" module with relevant modalities such as:
+- HBOT (Hyperbaric Oxygen Therapy) - for tissue healing, brain health, recovery
+- Red Light Therapy / Photobiomodulation - for cellular energy, skin health, pain
+- Cold Plunge / Cryotherapy - for inflammation, recovery, metabolic health
+- IV Therapy - NAD+, glutathione, vitamin C, Myers cocktail for nutrient delivery
+- Peptide Therapy - BPC-157, thymosin, GHK-Cu for healing and regeneration
+- Ozone Therapy / EBOO - blood ozonation for immune support and detox
+- Infrared Sauna - for detoxification, relaxation, cardiovascular health
+
+For each clinic modality, include:
+- Specific treatment frequency (e.g., "2x per week for 6 weeks")
+- Session duration if applicable
+- Why it's recommended for this client
+- Any contraindications or precautions from the KB
+
 Generate a detailed protocol with this EXACT JSON structure:
 {
   "title": "Protocol title",
@@ -1116,6 +1165,31 @@ Generate a detailed protocol with this EXACT JSON structure:
           "description": "Consistent sleep/wake times, no screens 1hr before bed, cool dark room",
           "frequency": "Daily",
           "notes": "This amplifies supplement effectiveness significantly"
+        }
+      ]
+    },
+    {
+      "name": "Clinic Treatments",
+      "description": "In-clinic therapeutic modalities to accelerate healing",
+      "goal": "Enhance protocol outcomes through advanced therapies",
+      "items": [
+        {
+          "name": "HBOT (Hyperbaric Oxygen Therapy)",
+          "frequency": "2x per week",
+          "duration": "60 minutes at 1.5 ATA",
+          "notes": "Increases oxygen delivery to tissues, supports mitochondrial function. Recommended for 10-20 sessions."
+        },
+        {
+          "name": "Red Light Therapy",
+          "frequency": "3x per week",
+          "duration": "15-20 minutes",
+          "notes": "Near-infrared and red light for cellular energy (ATP) production. Target treatment areas based on symptoms."
+        },
+        {
+          "name": "IV Therapy - NAD+",
+          "frequency": "Weekly for 4 weeks, then monthly",
+          "duration": "2-4 hours infusion",
+          "notes": "Supports cellular energy, brain function, and anti-aging. Start with 250mg and titrate up."
         }
       ]
     }
@@ -1607,15 +1681,23 @@ router.post('/:id/generate-engagement-plan', authenticateToken, async (req, res,
       console.error('[Engagement Plan] Error parsing modules:', e.message);
     }
 
-    // Query KB for engagement strategies
-    console.log('[Engagement Plan] Querying KB for engagement strategies...');
+    // Query KB for engagement strategies AND clinic modalities
+    console.log('[Engagement Plan] Querying KB for engagement strategies and modalities...');
     let kbEngagementContext = '';
     try {
       const engagementQueries = [
         'patient engagement strategies functional medicine',
         'phased protocol delivery best practices',
         'behavior change techniques wellness coaching',
-        `engagement strategies for ${protocol.template_category || 'wellness'} protocols`
+        `engagement strategies for ${protocol.template_category || 'wellness'} protocols`,
+        // Clinic modalities - to include treatment scheduling in engagement plan
+        'HBOT hyperbaric oxygen therapy session scheduling frequency treatment plan',
+        'red light therapy treatment schedule photobiomodulation sessions',
+        'IV therapy treatment schedule infusion frequency protocols',
+        'cold plunge cryotherapy treatment schedule timing protocols',
+        'peptide therapy treatment protocol schedule administration',
+        'ozone therapy EBOO MAH treatment schedule sessions',
+        'infrared sauna treatment protocol schedule sessions'
       ];
 
       const kbResults = await Promise.all(
@@ -1623,7 +1705,7 @@ router.post('/:id/generate-engagement-plan', authenticateToken, async (req, res,
       );
       kbEngagementContext = kbResults.filter(r => r).join('\n\n');
       if (kbEngagementContext) {
-        console.log('[Engagement Plan] KB engagement context retrieved');
+        console.log('[Engagement Plan] KB engagement context retrieved with clinic modalities');
       }
     } catch (kbError) {
       console.error('[Engagement Plan] KB query error:', kbError.message);
@@ -1693,6 +1775,21 @@ IMPORTANT GUIDELINES:
 6. Include specific items from the protocol modules in each phase
 7. Make action items concrete and actionable (not vague)
 8. Include check-in prompts to gather patient feedback
+
+*** CLINIC MODALITIES - CRITICAL ***
+ExpandHealth offers in-clinic therapeutic modalities. You MUST incorporate clinic treatment scheduling into the engagement plan phases:
+- HBOT (Hyperbaric Oxygen Therapy) - schedule 2x/week sessions
+- Red Light Therapy - schedule 3x/week sessions
+- Cold Plunge / Cryotherapy - introduce in Phase 2 or 3
+- IV Therapy (NAD+, glutathione, vitamin C) - weekly sessions
+- Peptide Therapy - as prescribed by practitioner
+- Ozone Therapy / EBOO - weekly or bi-weekly
+- Infrared Sauna - 2-3x per week
+
+Include specific clinic appointments in phase items, e.g.:
+- "Schedule first HBOT session at clinic"
+- "Begin red light therapy 3x/week at clinic"
+- "IV NAD+ infusion this week"
 
 Return ONLY valid JSON. No markdown, no code blocks.`;
 
