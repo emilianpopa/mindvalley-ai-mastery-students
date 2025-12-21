@@ -809,10 +809,11 @@ router.post('/generate', authenticateToken, async (req, res, next) => {
       client_id,
       prompt,
       templates = [],
-      note_ids = []
+      note_ids = [],
+      lab_ids = []
     } = req.body;
 
-    console.log('[Protocol Generate] Request received:', { client_id, prompt, templates, note_ids });
+    console.log('[Protocol Generate] Request received:', { client_id, prompt, templates, note_ids, lab_ids });
 
     // Validation
     if (!client_id || !prompt) {
@@ -866,17 +867,24 @@ router.post('/generate', authenticateToken, async (req, res, next) => {
       console.error('[Protocol Generate] Error fetching notes:', dbError.message);
     }
 
-    // Get ALL lab results for this client
+    // Get lab results for this client (filtered by lab_ids if provided)
     let labsContent = '';
     try {
-      const labsResult = await db.query(
-        `SELECT title, lab_type, test_date, ai_summary, extracted_data
+      let labsQuery = `SELECT id, title, lab_type, test_date, ai_summary, extracted_data
          FROM labs
-         WHERE client_id = $1
-         ORDER BY test_date DESC NULLS LAST
-         LIMIT 10`,
-        [client_id]
-      );
+         WHERE client_id = $1`;
+      const labsParams = [client_id];
+
+      // If specific lab_ids are provided, filter to only those
+      if (lab_ids && lab_ids.length > 0) {
+        labsQuery += ` AND id = ANY($2)`;
+        labsParams.push(lab_ids.map(id => parseInt(id)));
+        console.log(`[Protocol Generate] Filtering to ${lab_ids.length} selected labs`);
+      }
+
+      labsQuery += ` ORDER BY test_date DESC NULLS LAST LIMIT 10`;
+
+      const labsResult = await db.query(labsQuery, labsParams);
       if (labsResult.rows.length > 0) {
         labsContent = labsResult.rows.map(lab => {
           let labText = `[${lab.lab_type || 'Lab'} - ${lab.title}`;
@@ -1224,10 +1232,10 @@ Return ONLY valid JSON. No markdown, no code blocks, no explanation outside the 
 
     console.log('[Protocol Generate] Calling Claude API...');
 
-    // Call Claude API
+    // Call Claude API with increased max_tokens to prevent truncation
     const response = await anthropic.messages.create({
       model: 'claude-sonnet-4-5-20250929',
-      max_tokens: 4096,
+      max_tokens: 8192,  // Increased from 4096 to prevent response truncation
       messages: [{
         role: 'user',
         content: aiPrompt
@@ -1319,6 +1327,96 @@ Return ONLY valid JSON. No markdown, no code blocks, no explanation outside the 
           { name: 'Stress management practice', description: '10-15 minutes daily of meditation, breathwork, or gentle yoga', notes: 'Stress directly impairs gut function via vagus nerve' },
           { name: 'Gentle movement', description: '30 minutes daily walking or light exercise', notes: 'Avoid intense exercise initially as it can stress the body' }
         ]
+      });
+    }
+
+    // =====================================================
+    // POST-PROCESSING: Ensure Clinic Treatments module exists
+    // =====================================================
+    // This is CRITICAL - every ExpandHealth protocol MUST include clinic modalities
+    const hasClinicTreatments = protocolData.modules?.some(m =>
+      m.name?.toLowerCase().includes('clinic') ||
+      m.name?.toLowerCase().includes('in-clinic') ||
+      m.name?.toLowerCase().includes('therapeutic modalities')
+    );
+
+    if (!hasClinicTreatments && protocolData.modules) {
+      console.log('[Protocol Generate] Adding Clinic Treatments module (was missing from AI response)');
+
+      // Determine which treatments to recommend based on client data and prompt
+      const clinicTreatments = [];
+      const promptLower = prompt.toLowerCase();
+      const medicalHistoryLower = (clientData.medical_history || '').toLowerCase();
+
+      // HBOT - recommended for most protocols
+      clinicTreatments.push({
+        name: 'HBOT (Hyperbaric Oxygen Therapy)',
+        frequency: '2x per week',
+        duration: '60 minutes at 1.5 ATA',
+        notes: 'Increases oxygen delivery to tissues, supports mitochondrial function and cellular repair. Recommended for 10-20 sessions initial course.'
+      });
+
+      // Red Light Therapy - recommended for most protocols
+      clinicTreatments.push({
+        name: 'Red Light Therapy / Photobiomodulation',
+        frequency: '3x per week',
+        duration: '15-20 minutes',
+        notes: 'Near-infrared (850nm) and red (630nm) light for cellular energy (ATP) production, reduces inflammation, supports skin and tissue healing.'
+      });
+
+      // IV Therapy - based on needs
+      if (promptLower.includes('energy') || promptLower.includes('fatigue') || promptLower.includes('longevity') || promptLower.includes('detox')) {
+        clinicTreatments.push({
+          name: 'IV Therapy - NAD+',
+          frequency: 'Weekly for 4 weeks, then bi-weekly',
+          duration: '2-4 hours infusion',
+          notes: 'Supports cellular energy, brain function, DNA repair, and longevity pathways. Start with 250mg and titrate up to 500mg based on tolerance.'
+        });
+      } else {
+        clinicTreatments.push({
+          name: 'IV Therapy - Myers Cocktail',
+          frequency: 'Weekly for 4 weeks',
+          duration: '30-45 minutes infusion',
+          notes: 'Blend of B vitamins, vitamin C, magnesium, and minerals for enhanced nutrient absorption and energy support.'
+        });
+      }
+
+      // Infrared Sauna - for detox/metabolic
+      if (promptLower.includes('detox') || promptLower.includes('weight') || promptLower.includes('metabolic') || medicalHistoryLower.includes('toxin')) {
+        clinicTreatments.push({
+          name: 'Infrared Sauna',
+          frequency: '2-3x per week',
+          duration: '30-45 minutes',
+          notes: 'Full-spectrum infrared for deep tissue detoxification, improved circulation, and cardiovascular health. Stay well hydrated.'
+        });
+      }
+
+      // Cold Plunge - for inflammation/recovery
+      if (promptLower.includes('inflammation') || promptLower.includes('recovery') || promptLower.includes('immune') || promptLower.includes('stress')) {
+        clinicTreatments.push({
+          name: 'Cold Plunge / Cryotherapy',
+          frequency: '2-3x per week',
+          duration: '3-5 minutes at 50-55°F',
+          notes: 'Activates cold shock proteins, reduces inflammation, improves stress resilience and metabolic health. Build up tolerance gradually.'
+        });
+      }
+
+      // PEMF - for pain/healing
+      if (promptLower.includes('pain') || promptLower.includes('healing') || promptLower.includes('injury') || promptLower.includes('bone')) {
+        clinicTreatments.push({
+          name: 'PEMF Therapy',
+          frequency: '2-3x per week',
+          duration: '20-30 minutes',
+          notes: 'Pulsed electromagnetic field therapy for enhanced circulation, cellular energy, bone healing, and pain support.'
+        });
+      }
+
+      // Add the Clinic Treatments module at the end
+      protocolData.modules.push({
+        name: 'Clinic Treatments',
+        description: 'In-clinic therapeutic modalities to accelerate healing and optimize protocol outcomes',
+        goal: 'Enhance cellular function, accelerate recovery, and provide advanced therapeutic support',
+        items: clinicTreatments
       });
     }
 

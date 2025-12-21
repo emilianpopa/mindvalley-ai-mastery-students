@@ -3660,10 +3660,13 @@ async function loadProtocolReferenceData() {
 
   console.log('Loading protocol reference data for client:', currentClientId);
 
-  // Load notes into the new Step 2 container
+  // Load notes into the Step 2 container
   await loadNotesForProtocolBuilder(currentClientId, token);
 
-  // Load labs (for sidebar reference if it exists)
+  // Load labs into the Step 3 container (selectable for protocol generation)
+  await loadLabsForProtocolBuilder(currentClientId, token);
+
+  // Also load labs for sidebar reference if it exists
   try {
     const labsResponse = await fetch(`${API_BASE}/api/labs/client/${currentClientId}`, {
       headers: { 'Authorization': `Bearer ${token}` }
@@ -3745,6 +3748,74 @@ async function loadNotesForProtocolBuilder(currentClientId, token) {
     console.error('Error loading notes for protocol builder:', error);
     container.innerHTML = '<div class="notes-empty-state" style="padding: 24px; text-align: center; color: #EF4444;"><p>Error loading notes. Please try again.</p></div>';
   }
+}
+
+// Load labs for the Protocol Builder UI (Step 3)
+async function loadLabsForProtocolBuilder(currentClientId, token) {
+  const container = document.getElementById('labsCardsContainer');
+  if (!container) {
+    console.log('Labs container not found');
+    return;
+  }
+
+  container.innerHTML = '<div class="labs-loading">Loading lab results...</div>';
+
+  try {
+    const response = await fetch(`${API_BASE}/api/labs/client/${currentClientId}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      const labs = data.labs || [];
+
+      if (labs.length === 0) {
+        container.innerHTML = `
+          <div class="labs-empty-state" style="padding: 24px; text-align: center; color: #6B7280;">
+            <p>No lab results available for this client yet.</p>
+            <p style="font-size: 12px; color: #9CA3AF; margin-top: 8px;">Upload lab results to include them in protocol generation.</p>
+          </div>
+        `;
+        return;
+      }
+
+      // Display labs as selectable cards matching the template card style
+      container.innerHTML = labs.map(lab => `
+        <label class="protocol-template-card protocol-lab-card">
+          <input type="checkbox" name="lab" value="${lab.id}" class="lab-checkbox template-checkbox" checked>
+          <div class="template-card-inner">
+            <div class="template-card-header">
+              <span class="template-name">${lab.title || lab.file_name || 'Lab Result'}</span>
+              <div class="template-check">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+              </div>
+            </div>
+            <p class="template-desc">${lab.lab_type || 'Lab'} - ${formatDate(lab.test_date || lab.uploaded_at)}</p>
+            <p class="note-preview-text">${lab.ai_summary ? truncateText(lab.ai_summary, 80) : 'Lab data available'}</p>
+          </div>
+        </label>
+      `).join('');
+
+    } else {
+      container.innerHTML = '<div class="labs-empty-state" style="padding: 24px; text-align: center; color: #EF4444;"><p>Error loading lab results. Please try again.</p></div>';
+    }
+  } catch (error) {
+    console.error('Error loading labs for protocol builder:', error);
+    container.innerHTML = '<div class="labs-empty-state" style="padding: 24px; text-align: center; color: #EF4444;"><p>Error loading lab results. Please try again.</p></div>';
+  }
+}
+
+// Filter labs in protocol builder
+function filterLabs() {
+  const searchTerm = document.getElementById('labsSearch')?.value?.toLowerCase() || '';
+  const cards = document.querySelectorAll('.protocol-lab-card');
+
+  cards.forEach(card => {
+    const text = card.textContent.toLowerCase();
+    card.style.display = text.includes(searchTerm) ? '' : 'none';
+  });
 }
 
 // Display labs in reference sidebar
@@ -7933,10 +8004,14 @@ async function generateProtocolFromPrompt() {
   const selectedNoteInputs = document.querySelectorAll('input.note-checkbox:checked');
   const noteIds = Array.from(selectedNoteInputs).map(cb => cb.value);
 
-  console.log('Generating protocol with:', { prompt, templates, noteIds });
+  // Get selected labs
+  const selectedLabInputs = document.querySelectorAll('input.lab-checkbox:checked');
+  const labIds = Array.from(selectedLabInputs).map(cb => cb.value);
+
+  console.log('Generating protocol with:', { prompt, templates, noteIds, labIds });
 
   // Store context for later use
-  protocolGenerationContext = { prompt, templates, noteIds };
+  protocolGenerationContext = { prompt, templates, noteIds, labIds };
 
   // Show the protocol editor view with loading state
   showProtocolEditor();
@@ -7958,7 +8033,8 @@ async function generateProtocolFromPrompt() {
         client_id: currentClientId,
         prompt: prompt,
         templates: templates,
-        note_ids: noteIds
+        note_ids: noteIds,
+        lab_ids: labIds
       })
     });
 

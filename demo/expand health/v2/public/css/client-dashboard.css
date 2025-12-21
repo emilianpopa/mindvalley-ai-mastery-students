@@ -5895,6 +5895,37 @@
   cursor: pointer;
 }
 
+/* Labs Cards Section */
+.labs-cards-scroll {
+  overflow-x: auto;
+  margin: 0 -8px;
+  padding: 0 8px;
+}
+
+.labs-cards-container {
+  display: flex;
+  gap: 16px;
+  padding-bottom: 8px;
+  min-height: 100px;
+}
+
+.labs-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #9CA3AF;
+  font-size: 14px;
+  width: 100%;
+  min-width: 200px;
+}
+
+/* Lab Card (for selection) */
+.protocol-lab-card {
+  flex-shrink: 0;
+  width: 200px;
+  cursor: pointer;
+}
+
 .protocol-note-card .note-checkbox {
   position: absolute;
   opacity: 0;

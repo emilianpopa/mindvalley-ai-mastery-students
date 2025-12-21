@@ -1207,13 +1207,21 @@
             <div class="step-guide-item">
               <div class="step-number">3</div>
               <div class="step-info">
+                <h4>Select Lab Results</h4>
+                <p>Include lab diagnostics for personalized recommendations.</p>
+              </div>
+            </div>
+
+            <div class="step-guide-item">
+              <div class="step-number">4</div>
+              <div class="step-info">
                 <h4>Write Prompt for Protocol</h4>
                 <p>Use a prompt to generate personalized structure and content for protocol.</p>
               </div>
             </div>
 
             <div class="step-guide-item">
-              <div class="step-number">4</div>
+              <div class="step-number">5</div>
               <div class="step-info">
                 <h4>Complete</h4>
                 <p>Review and finalize your protocol setup.</p>
@@ -1420,10 +1428,32 @@
             </div>
           </div>
 
-          <!-- Step 3: Prompt Input -->
+          <!-- Step 3: Select Labs -->
           <div class="protocol-section">
             <div class="section-label">
               <span class="label-badge">Step - 3</span>
+              <h3>Select Lab Results to Include for Protocol Personalization</h3>
+              <div class="section-search">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="11" cy="11" r="8"/>
+                  <path d="M21 21l-4.35-4.35"/>
+                </svg>
+                <input type="text" id="labsSearch" placeholder="Search Labs" onkeyup="filterLabs()">
+              </div>
+            </div>
+
+            <div class="labs-cards-scroll">
+              <div class="labs-cards-container" id="labsCardsContainer">
+                <!-- Labs will be populated by JavaScript -->
+                <div class="labs-loading">Loading lab results...</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 4: Prompt Input -->
+          <div class="protocol-section">
+            <div class="section-label">
+              <span class="label-badge">Step - 4</span>
               <h3>Enter a Prompt to Get Started with a Protocol</h3>
             </div>
 
