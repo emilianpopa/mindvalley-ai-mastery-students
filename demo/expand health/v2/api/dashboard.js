@@ -63,14 +63,7 @@ router.get('/stats', authenticateToken, async (req, res, next) => {
     const uploadedDocuments = loadUploadedDocuments();
     const kbDocumentsCount = 5 + uploadedDocuments.length;
 
-    // Get user info for welcome message
-    const userResult = await db.query(
-      'SELECT first_name, last_name FROM users WHERE id = $1',
-      [req.user.userId]
-    );
-
-    const user = userResult.rows[0] || { first_name: 'User', last_name: '' };
-
+    // User info is already available from auth middleware
     res.json({
       stats: {
         clients: {
@@ -91,8 +84,8 @@ router.get('/stats', authenticateToken, async (req, res, next) => {
         kbDocuments: kbDocumentsCount
       },
       user: {
-        firstName: user.first_name,
-        lastName: user.last_name
+        firstName: req.user.firstName || 'User',
+        lastName: req.user.lastName || ''
       }
     });
 

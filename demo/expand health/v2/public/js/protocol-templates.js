@@ -138,7 +138,7 @@ async function fetchTemplates() {
 
     const data = await response.json();
     displayTemplates(data.templates, data.pagination);
-    updateStats(data.templates);
+    updateStats(data.templates, data.pagination);
 
   } catch (error) {
     console.error('Error fetching templates:', error);
@@ -184,8 +184,9 @@ function updatePagination(data) {
 }
 
 // Update stats
-function updateStats(templates) {
-  totalTemplatesEl.textContent = templates.length;
+function updateStats(templates, pagination) {
+  // Use total from pagination, not just current page length
+  totalTemplatesEl.textContent = pagination?.total || templates.length;
 
   // Calculate active protocols (sum of usage_count) - parse as int since DB returns string
   const totalUsage = templates.reduce((sum, t) => sum + (parseInt(t.usage_count) || 0), 0);
