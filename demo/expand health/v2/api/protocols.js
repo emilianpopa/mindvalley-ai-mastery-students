@@ -403,7 +403,7 @@ router.get('/client/:clientId', authenticateToken, async (req, res, next) => {
       `SELECT p.*, pt.name as template_name, pt.category as template_category
        FROM protocols p
        LEFT JOIN protocol_templates pt ON p.template_id = pt.id
-       WHERE p.client_id = $1
+       WHERE p.client_id = $1 AND p.status != 'archived'
        ORDER BY p.created_at DESC`,
       [clientId]
     );

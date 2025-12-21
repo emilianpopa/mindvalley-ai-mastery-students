@@ -46,12 +46,13 @@ app.use(cors({
 }));
 
 // Redirect .io to .ai domain
-app.use((req, res, next) => {
-  if (req.hostname === 'app.expandhealth.io') {
-    return res.redirect(301, `https://app.expandhealth.ai${req.originalUrl}`);
-  }
-  next();
-});
+// NOTE: Enable after DNS is configured for app.expandhealth.ai
+// app.use((req, res, next) => {
+//   if (req.hostname === 'app.expandhealth.io') {
+//     return res.redirect(301, `https://app.expandhealth.ai${req.originalUrl}`);
+//   }
+//   next();
+// });
 
 // Body parsers
 app.use(express.json({ limit: '10mb' }));

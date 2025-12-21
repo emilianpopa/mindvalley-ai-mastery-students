@@ -160,7 +160,7 @@ async function deleteProtocol(protocolId) {
   }
 }
 
-// Delete engagement plan
+// Delete engagement plan (engagement plans are protocols with ai_recommendations)
 async function deleteEngagementPlan(planId) {
   if (!confirm('Are you sure you want to delete this engagement plan? This action cannot be undone.')) {
     return;
@@ -168,7 +168,8 @@ async function deleteEngagementPlan(planId) {
 
   const token = localStorage.getItem('auth_token');
   try {
-    const response = await fetch(`${API_BASE}/api/protocols/engagement-plans/${planId}`, {
+    // Engagement plans are stored as protocols, so use the protocols endpoint
+    const response = await fetch(`${API_BASE}/api/protocols/${planId}`, {
       method: 'DELETE',
       headers: { 'Authorization': `Bearer ${token}` }
     });
@@ -4912,7 +4913,7 @@ function showEngagementPlanViewModal(protocol) {
         <button onclick="closeViewEngagementModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #6b7280;">&times;</button>
       </div>
       <div id="engagementPrintContent" class="modal-body" style="padding: 24px; overflow-y: auto; flex: 1;">
-        <div style="background: #f0fdfa; border-radius: 12px; padding: 20px; white-space: pre-wrap; font-size: 14px; line-height: 1.7; color: #374151;">${escapeHtml(content)}</div>
+        <div class="engagement-plan-content" style="background: #f0fdfa; border-radius: 12px; padding: 20px; font-size: 14px; line-height: 1.7; color: #374151;">${content}</div>
       </div>
       <div class="modal-footer" style="padding: 16px 24px; border-top: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center;">
         <div style="display: flex; gap: 8px;">
