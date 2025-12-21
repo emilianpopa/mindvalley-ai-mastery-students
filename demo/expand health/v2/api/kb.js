@@ -179,7 +179,7 @@ router.post('/documents', async (req, res, next) => {
   }
 });
 
-// Query knowledge base
+// Query knowledge base using Semantic Retrieval API
 router.post('/query', async (req, res, next) => {
   try {
     const { query } = req.body;
@@ -194,37 +194,91 @@ router.post('/query', async (req, res, next) => {
       });
     }
 
-    const model = genAI.getGenerativeModel({
-      model: 'gemini-1.5-pro-002'
-    });
+    console.log(`[KB Query] Querying: "${query.substring(0, 50)}..."`);
 
-    const result = await model.generateContent({
-      contents: [{
-        role: 'user',
-        parts: [{
-          text: `Based on the ExpandHealth knowledge base, please answer this question: ${query}\n\nProvide a concise, evidence-based answer citing relevant information from the knowledge base.`
+    // Query the corpus for relevant chunks using Semantic Retrieval API
+    const corpusName = process.env.GEMINI_STORE_ID;
+    const apiKey = process.env.GEMINI_API_KEY;
+
+    const queryResponse = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/${corpusName}:query?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          query: query,
+          resultsCount: 5,
+          metadataFilters: []
+        })
+      }
+    );
+
+    if (!queryResponse.ok) {
+      const errorText = await queryResponse.text();
+      console.error('[KB Query] Query failed:', queryResponse.status, errorText);
+      return res.status(500).json({
+        error: 'Knowledge base query failed',
+        details: errorText
+      });
+    }
+
+    const queryResult = await queryResponse.json();
+
+    // Extract relevant chunks
+    const chunks = (queryResult.relevantChunks || []).map(chunk => ({
+      text: chunk.chunk?.data?.stringValue || '',
+      documentName: chunk.chunk?.name || 'Unknown',
+      relevanceScore: chunk.chunkRelevanceScore || 0
+    }));
+
+    console.log(`[KB Query] Found ${chunks.length} relevant chunks`);
+
+    // If we got chunks, use them to generate an answer with Gemini
+    if (chunks.length > 0) {
+      const contextText = chunks.map((c, i) =>
+        `[Source ${i + 1}]: ${c.text}`
+      ).join('\n\n');
+
+      const model = genAI.getGenerativeModel({
+        model: 'gemini-1.5-flash'
+      });
+
+      const result = await model.generateContent({
+        contents: [{
+          role: 'user',
+          parts: [{
+            text: `Based on the following knowledge base content, answer this question: "${query}"
+
+KNOWLEDGE BASE CONTENT:
+${contextText}
+
+Please provide a clear, evidence-based answer citing the relevant sources.`
+          }]
         }]
-      }],
-      tools: [{
-        googleSearch: {
-          retrieval: {
-            disableAttribution: false,
-            vertexAiSearch: {
-              datastore: process.env.GEMINI_STORE_ID
-            }
-          }
-        }
-      }]
-    });
+      });
 
-    const response = await result.response;
-    const answer = response.text();
+      const response = await result.response;
+      const answer = response.text();
 
-    res.json({
-      query,
-      answer,
-      timestamp: new Date()
-    });
+      res.json({
+        query,
+        answer,
+        sources: chunks.map(c => ({
+          text: c.text.substring(0, 200) + (c.text.length > 200 ? '...' : ''),
+          relevance: Math.round(c.relevanceScore * 100) + '%'
+        })),
+        timestamp: new Date()
+      });
+    } else {
+      res.json({
+        query,
+        answer: 'No relevant information found in the knowledge base for this query.',
+        sources: [],
+        timestamp: new Date()
+      });
+    }
 
   } catch (error) {
     console.error('Error querying KB:', error);

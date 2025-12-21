@@ -28,6 +28,7 @@ const chatRoutes = require('./api/chat');
 const dashboardRoutes = require('./api/dashboard');
 const adminRoutes = require('./api/admin');
 const auditRoutes = require('./api/audit');
+const scheduledMessagesRoutes = require('./api/scheduled-messages');
 
 // Initialize Express app
 const app = express();
@@ -97,6 +98,7 @@ app.use('/api/notes', notesRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/scheduled-messages', scheduledMessagesRoutes);
 
 // ============================================
 // SERVE HTML PAGES

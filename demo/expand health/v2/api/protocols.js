@@ -18,36 +18,69 @@ const anthropic = new Anthropic({
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-// Helper function to query Knowledge Base
+// Helper function to query Knowledge Base using Semantic Retrieval (Corpus API)
 async function queryKnowledgeBase(query, context = '') {
-  if (!process.env.GEMINI_API_KEY) {
-    console.log('[KB Query] No GEMINI_API_KEY configured, skipping KB query');
+  if (!process.env.GEMINI_API_KEY || !process.env.GEMINI_STORE_ID) {
+    console.log('[KB Query] Knowledge base not configured (missing GEMINI_API_KEY or GEMINI_STORE_ID)');
     return null;
   }
 
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro-002' });
+    console.log(`[KB Query] Querying corpus for: "${query.substring(0, 50)}..."`);
 
-    const fullPrompt = `You are a knowledgeable assistant for ExpandHealth, a functional medicine practice.
-${context ? `\nContext: ${context}` : ''}
+    // Step 1: Query the Gemini corpus for relevant chunks using Semantic Retrieval API
+    const corpusName = process.env.GEMINI_STORE_ID;
+    const apiKey = process.env.GEMINI_API_KEY;
 
-Based on ExpandHealth's clinical knowledge and best practices, please provide relevant information for:
-${query}
+    const queryResponse = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/${corpusName}:query?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          query: query,
+          resultsCount: 5,  // Get top 5 relevant chunks
+          metadataFilters: []
+        })
+      }
+    );
 
-Provide specific, evidence-based recommendations including:
-- Therapeutic dosages
-- Timing recommendations
-- Clinical considerations
-- Any relevant protocols or guidelines
+    if (!queryResponse.ok) {
+      const errorText = await queryResponse.text();
+      console.error('[KB Query] Corpus query failed:', queryResponse.status, errorText);
+      return null;
+    }
 
-Be concise but thorough.`;
+    const queryResult = await queryResponse.json();
 
-    const result = await model.generateContent(fullPrompt);
-    const response = await result.response;
-    const text = response.text();
+    if (!queryResult.relevantChunks || queryResult.relevantChunks.length === 0) {
+      console.log('[KB Query] No relevant chunks found in corpus');
+      return null;
+    }
 
-    console.log('[KB Query] Successfully retrieved KB context');
-    return text;
+    console.log(`[KB Query] Found ${queryResult.relevantChunks.length} relevant chunks from corpus`);
+
+    // Step 2: Build context from retrieved chunks
+    let kbContext = '';
+
+    queryResult.relevantChunks.forEach((chunk, index) => {
+      const chunkText = chunk.chunk?.data?.stringValue || '';
+      const documentName = chunk.chunk?.name || 'Unknown Document';
+      const relevanceScore = chunk.chunkRelevanceScore || 0;
+
+      // Extract document title from name (e.g., "corpora/.../documents/pk-protocol/chunks/...")
+      const docMatch = documentName.match(/documents\/([^\/]+)/);
+      const docTitle = docMatch ? docMatch[1].replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : 'Document';
+
+      kbContext += `\n--- From "${docTitle}" (${(relevanceScore * 100).toFixed(0)}% relevant) ---\n`;
+      kbContext += chunkText.trim() + '\n';
+    });
+
+    console.log(`[KB Query] Retrieved ${kbContext.length} characters of KB context`);
+    return kbContext;
+
   } catch (error) {
     console.error('[KB Query] Error querying knowledge base:', error.message);
     return null;
@@ -1006,11 +1039,22 @@ ${formsContent ? `INTAKE FORMS & QUESTIONNAIRES:\nThe client has submitted the f
 
 ${notesContent ? `CLINICAL NOTES:\nThe following notes have been documented for this client:\n\n${notesContent}\n` : ''}
 
-${kbContext ? `KNOWLEDGE BASE RECOMMENDATIONS:\nThe following evidence-based recommendations are from the ExpandHealth clinical knowledge base:\n\n${kbContext}\n\nUse these recommendations to inform your protocol. Prioritize KB recommendations when they provide specific dosages or protocols.\n` : ''}
+${kbContext ? `
+=== KNOWLEDGE BASE PROTOCOLS (CRITICAL - USE THESE) ===
+The following are ACTUAL protocols and recommendations from the ExpandHealth clinical knowledge base. These are your PRIMARY source of truth for treatment approaches:
+
+${kbContext}
+
+*** MANDATORY: You MUST incorporate the specific protocols, dosages, and recommendations from the Knowledge Base above into your generated protocol. Reference them by name (e.g., "Following the PK Protocol guidelines..."). ***
+` : ''}
 
 USER REQUEST: ${prompt}
 
-IMPORTANT: Base your protocol on ALL the client data provided above (labs, forms, notes). The protocol should be specifically tailored to address any abnormal lab values, symptoms mentioned in forms, and clinical observations in notes.
+CRITICAL INSTRUCTIONS:
+1. If Knowledge Base content is provided above, you MUST use it as your primary reference for treatment approaches
+2. Reference specific protocols by name from the KB (e.g., "As per the PK Protocol", "Following the Gut Healing guidelines")
+3. Base your protocol on ALL the client data provided above (labs, forms, notes)
+4. The protocol should be specifically tailored to address any abnormal lab values, symptoms mentioned in forms, and clinical observations in notes
 
 IMPORTANT REQUIREMENTS:
 1. For ALL supplements, you MUST include specific therapeutic dosages (e.g., "5g", "500mg", "10 billion CFU")
@@ -1602,7 +1646,14 @@ PROTOCOL DETAILS:
 PROTOCOL MODULES:
 ${modules.map((m, i) => `${i + 1}. ${m.name}: ${m.items?.length || 0} items`).join('\n')}
 
-${kbEngagementContext ? `KNOWLEDGE BASE ENGAGEMENT STRATEGIES:\n${kbEngagementContext}\n\nIncorporate these evidence-based engagement strategies into the plan.\n` : ''}
+${kbEngagementContext ? `
+=== KNOWLEDGE BASE ENGAGEMENT STRATEGIES (CRITICAL - USE THESE) ===
+The following engagement strategies and protocols are from the ExpandHealth knowledge base. These are your PRIMARY source for structuring the engagement plan:
+
+${kbEngagementContext}
+
+*** MANDATORY: Incorporate the specific strategies, phasing approaches, and recommendations from the Knowledge Base above. Reference them by name when applicable. ***
+` : ''}
 
 Create a 4-phase engagement plan with this EXACT JSON structure:
 {

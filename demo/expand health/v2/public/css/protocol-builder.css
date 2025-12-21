@@ -1641,12 +1641,13 @@ textarea.form-input {
 
 /* Footer */
 .protocol-editor-footer {
-  padding: 12px 24px;
+  padding: 16px 24px;
   background: white;
   border-top: 1px solid #E5E7EB;
   display: flex;
   flex-direction: column;
   gap: 8px;
+  flex-shrink: 0;
 }
 
 .selected-section-tag {
@@ -1681,18 +1682,22 @@ textarea.form-input {
   width: 100%;
   display: flex;
   gap: 8px;
-  padding: 8px 16px;
+  padding: 12px 16px;
   background: #F3F4F6;
   border-radius: 8px;
+  align-items: center;
+  min-height: 52px;
 }
 
 .ai-input-container input {
   flex: 1;
+  min-width: 0;
   background: none;
   border: none;
   font-size: 14px;
   color: #111827;
   outline: none;
+  padding: 8px 0;
 }
 
 .ai-input-container input::placeholder {
@@ -1746,6 +1751,61 @@ textarea.form-input {
 
 .ask-ai-fab svg {
   color: #0D9488;
+}
+
+/* Editor Floating Action Buttons Container */
+.editor-fab-container {
+  position: fixed;
+  bottom: 100px;
+  left: 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  z-index: 2500;
+}
+
+.editor-fab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 18px;
+  background: white;
+  border: 1px solid #E5E7EB;
+  border-radius: 28px;
+  color: #374151;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  transition: all 0.2s;
+}
+
+.editor-fab:hover {
+  background: #F9FAFB;
+  border-color: #0D9488;
+  color: #0D9488;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+}
+
+.editor-fab svg {
+  stroke: #0D9488;
+  flex-shrink: 0;
+}
+
+.editor-fab.ask-ai-fab {
+  background: linear-gradient(135deg, #0F766E 0%, #0D9488 100%);
+  color: white;
+  border-color: #0F766E;
+}
+
+.editor-fab.ask-ai-fab:hover {
+  background: linear-gradient(135deg, #0D5E5A 0%, #0F766E 100%);
+  color: white;
+}
+
+.editor-fab.ask-ai-fab svg {
+  stroke: white;
 }
 
 /* Section Loading State */

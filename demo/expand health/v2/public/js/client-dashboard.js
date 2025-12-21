@@ -2746,22 +2746,24 @@ function viewNoteDetail(noteId) {
           <button class="note-detail-close" onclick="closeNoteDetailModal()">&times;</button>
         </div>
 
-        ${aiSummary ? `
-        <div class="note-detail-ai-summary">
-          <div class="ai-summary-header">
-            <span class="ai-summary-icon">✨</span>
-            <span class="ai-summary-label">AI Summary</span>
+        <div class="note-detail-body">
+          ${aiSummary ? `
+          <div class="note-detail-ai-summary">
+            <div class="ai-summary-header">
+              <span class="ai-summary-icon">✨</span>
+              <span class="ai-summary-label">AI Summary</span>
+            </div>
+            <div class="ai-summary-content">
+              ${formatAISummaryForModal(aiSummary)}
+            </div>
           </div>
-          <div class="ai-summary-content">
-            ${formatAISummaryForModal(aiSummary)}
-          </div>
-        </div>
-        ` : ''}
+          ` : ''}
 
-        <div class="note-detail-content">
-          <h3 class="note-content-label">Full Note</h3>
-          <div class="note-content-text">
-            ${formatNoteContent(mainContent)}
+          <div class="note-detail-content">
+            <h3 class="note-content-label">Full Note</h3>
+            <div class="note-content-text">
+              ${formatNoteContent(mainContent)}
+            </div>
           </div>
         </div>
 
@@ -5280,7 +5282,6 @@ function openProtocolEditorForExisting(protocol, modules) {
 
       <div class="header-tabs">
         <button class="header-tab active" data-tab="protocol" onclick="switchExistingEditorTab('protocol')">Protocol</button>
-        ${protocol.ai_recommendations ? `<button class="header-tab" data-tab="engagement" onclick="switchExistingEditorTab('engagement')">Engagement Plan</button>` : ''}
       </div>
 
       <div class="header-actions" style="display: flex; gap: 12px;">
@@ -5374,6 +5375,25 @@ function openProtocolEditorForExisting(protocol, modules) {
           </svg>
         </button>
       </div>
+    </div>
+
+    <!-- Floating Action Buttons -->
+    <div class="editor-fab-container">
+      <button class="editor-fab ask-ai-fab" onclick="openAIChatModal()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        </svg>
+        <span>Ask AI</span>
+      </button>
+      <button class="editor-fab quick-notes-fab" onclick="openRightPanel()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <line x1="16" y1="13" x2="8" y2="13"/>
+          <line x1="16" y1="17" x2="8" y2="17"/>
+        </svg>
+        <span>Quick Notes</span>
+      </button>
     </div>
   `;
 
@@ -6181,12 +6201,32 @@ async function loadEngagementPlans() {
   }
 }
 
+// Helper to extract engagement plan title from ai_recommendations JSON
+function getEngagementPlanTitle(plan) {
+  // Try to parse the ai_recommendations to get the actual engagement plan title
+  if (plan.ai_recommendations) {
+    try {
+      const engagementData = JSON.parse(plan.ai_recommendations);
+      if (engagementData.title) {
+        return engagementData.title;
+      }
+    } catch (e) {
+      // If JSON parsing fails, fall back to generating a title
+    }
+  }
+  // Fallback: use client name if available, otherwise generic title
+  const clientName = currentClient ? `${currentClient.first_name} ${currentClient.last_name}` : '';
+  return clientName ? `Engagement Plan for ${clientName}` : 'Engagement Plan';
+}
+
 // Display engagement plans in the list
 function displayEngagementPlans(plans) {
   const container = document.getElementById('engagementListContent');
   if (!container) return;
 
-  container.innerHTML = plans.map(plan => `
+  container.innerHTML = plans.map(plan => {
+    const displayTitle = getEngagementPlanTitle(plan);
+    return `
     <div class="protocol-card engagement-card" data-protocol-id="${plan.id}">
       <div class="card-menu-container">
         <button class="card-menu-trigger" onclick="toggleCardMenu(event, 'engagement-menu-${plan.id}')">
@@ -6200,6 +6240,10 @@ function displayEngagementPlans(plans) {
           <button class="card-menu-item" onclick="viewEngagementPlan(${plan.id}); closeAllCardMenus();">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
             View
+          </button>
+          <button class="card-menu-item" onclick="editEngagementPlan(${plan.id}); closeAllCardMenus();">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            Edit
           </button>
           <div class="card-menu-divider"></div>
           <button class="card-menu-item" onclick="shareEngagementPlanById(${plan.id}); closeAllCardMenus();">
@@ -6219,19 +6263,26 @@ function displayEngagementPlans(plans) {
       </div>
       <div class="protocol-card-header">
         <div>
-          <h4 class="protocol-card-title">${plan.title || 'Untitled'}</h4>
+          <h4 class="protocol-card-title">${escapeHtml(displayTitle)}</h4>
           <p class="protocol-card-date">${formatDate(plan.updated_at || plan.created_at)}</p>
         </div>
         <span class="protocol-card-status engagement">${plan.status || 'active'}</span>
       </div>
     </div>
-  `).join('');
+  `}).join('');
 }
 
 // View engagement plan - opens the editor view
 function viewEngagementPlan(protocolId) {
   console.log('View/Edit engagement plan:', protocolId);
   // Open the engagement plan editor
+  openEngagementPlanEditor(protocolId);
+}
+
+// Edit engagement plan - same as view but explicitly for editing
+function editEngagementPlan(protocolId) {
+  console.log('Edit engagement plan:', protocolId);
+  // Open the engagement plan editor (same as view - the editor allows editing)
   openEngagementPlanEditor(protocolId);
 }
 
@@ -6431,26 +6482,66 @@ function showEngagementPlanEditorView(protocol, planData) {
           <!-- Communication Schedule -->
           ${planData.communication_schedule ? `
           <div id="communicationSection" class="engagement-communication" style="background: white; border: 1px solid #E5E7EB; border-radius: 12px; padding: 24px; margin-top: 32px;">
-            <h3 style="font-size: 16px; font-weight: 600; color: #111827; margin: 0 0 16px 0;">Communication Schedule</h3>
+            <h3 style="font-size: 16px; font-weight: 600; color: #111827; margin: 0 0 8px 0;">Communication Schedule</h3>
+            <p style="font-size: 13px; color: #6B7280; margin: 0 0 16px 0;">Plan your client check-ins. These are reminders for you - automated messaging coming soon.</p>
             <div class="comm-details" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
               <div>
                 <label style="font-size: 12px; color: #6B7280; display: block; margin-bottom: 4px;">Check-in Frequency</label>
-                <input type="text" id="commFrequency" value="${escapeHtml(planData.communication_schedule.check_in_frequency || '')}"
-                  style="width: 100%; padding: 8px 12px; border: 1px solid #E5E7EB; border-radius: 6px; font-size: 14px;"
-                  placeholder="e.g., Weekly">
+                <select id="commFrequency" style="width: 100%; padding: 8px 12px; border: 1px solid #E5E7EB; border-radius: 6px; font-size: 14px; background: white;">
+                  <option value="">Select frequency...</option>
+                  <option value="Daily" ${planData.communication_schedule.check_in_frequency === 'Daily' ? 'selected' : ''}>Daily</option>
+                  <option value="Every 2 days" ${planData.communication_schedule.check_in_frequency === 'Every 2 days' ? 'selected' : ''}>Every 2 days</option>
+                  <option value="Every 3 days" ${planData.communication_schedule.check_in_frequency === 'Every 3 days' || planData.communication_schedule.check_in_frequency?.includes('3 days') ? 'selected' : ''}>Every 3 days</option>
+                  <option value="Twice a week" ${planData.communication_schedule.check_in_frequency === 'Twice a week' ? 'selected' : ''}>Twice a week</option>
+                  <option value="Weekly" ${planData.communication_schedule.check_in_frequency === 'Weekly' ? 'selected' : ''}>Weekly</option>
+                  <option value="Bi-weekly" ${planData.communication_schedule.check_in_frequency === 'Bi-weekly' ? 'selected' : ''}>Bi-weekly</option>
+                  <option value="Monthly" ${planData.communication_schedule.check_in_frequency === 'Monthly' ? 'selected' : ''}>Monthly</option>
+                </select>
               </div>
               <div>
                 <label style="font-size: 12px; color: #6B7280; display: block; margin-bottom: 4px;">Preferred Channel</label>
-                <input type="text" id="commChannel" value="${escapeHtml(planData.communication_schedule.preferred_channel || '')}"
-                  style="width: 100%; padding: 8px 12px; border: 1px solid #E5E7EB; border-radius: 6px; font-size: 14px;"
-                  placeholder="e.g., WhatsApp">
+                <select id="commChannel" style="width: 100%; padding: 8px 12px; border: 1px solid #E5E7EB; border-radius: 6px; font-size: 14px; background: white;">
+                  <option value="">Select channel...</option>
+                  <option value="WhatsApp" ${planData.communication_schedule.preferred_channel === 'WhatsApp' ? 'selected' : ''}>WhatsApp</option>
+                  <option value="Email" ${planData.communication_schedule.preferred_channel === 'Email' ? 'selected' : ''}>Email</option>
+                  <option value="SMS" ${planData.communication_schedule.preferred_channel === 'SMS' ? 'selected' : ''}>SMS</option>
+                  <option value="Phone Call" ${planData.communication_schedule.preferred_channel === 'Phone Call' ? 'selected' : ''}>Phone Call</option>
+                  <option value="In-App Message" ${planData.communication_schedule.preferred_channel === 'In-App Message' ? 'selected' : ''}>In-App Message</option>
+                  <option value="Video Call" ${planData.communication_schedule.preferred_channel === 'Video Call' ? 'selected' : ''}>Video Call</option>
+                </select>
               </div>
               <div>
                 <label style="font-size: 12px; color: #6B7280; display: block; margin-bottom: 4px;">Message Tone</label>
-                <input type="text" id="commTone" value="${escapeHtml(planData.communication_schedule.message_tone || '')}"
-                  style="width: 100%; padding: 8px 12px; border: 1px solid #E5E7EB; border-radius: 6px; font-size: 14px;"
-                  placeholder="e.g., Supportive and encouraging">
+                <select id="commTone" style="width: 100%; padding: 8px 12px; border: 1px solid #E5E7EB; border-radius: 6px; font-size: 14px; background: white;">
+                  <option value="">Select tone...</option>
+                  <option value="Encouraging and supportive" ${planData.communication_schedule.message_tone?.includes('Encouraging') || planData.communication_schedule.message_tone?.includes('supportive') ? 'selected' : ''}>Encouraging and supportive</option>
+                  <option value="Professional and informative" ${planData.communication_schedule.message_tone?.includes('Professional') ? 'selected' : ''}>Professional and informative</option>
+                  <option value="Friendly and casual" ${planData.communication_schedule.message_tone?.includes('Friendly') || planData.communication_schedule.message_tone?.includes('casual') ? 'selected' : ''}>Friendly and casual</option>
+                  <option value="Motivational and energetic" ${planData.communication_schedule.message_tone?.includes('Motivational') ? 'selected' : ''}>Motivational and energetic</option>
+                  <option value="Calm and reassuring" ${planData.communication_schedule.message_tone?.includes('Calm') ? 'selected' : ''}>Calm and reassuring</option>
+                  <option value="Direct and concise" ${planData.communication_schedule.message_tone?.includes('Direct') ? 'selected' : ''}>Direct and concise</option>
+                </select>
               </div>
+            </div>
+            <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #E5E7EB;">
+              <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                <button onclick="scheduleCheckInMessages()" class="btn-primary" style="display: flex; align-items: center; gap: 8px; padding: 10px 16px;">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                    <line x1="16" y1="2" x2="16" y2="6"/>
+                    <line x1="8" y1="2" x2="8" y2="6"/>
+                    <line x1="3" y1="10" x2="21" y2="10"/>
+                  </svg>
+                  Schedule Check-in Messages
+                </button>
+                <button onclick="viewScheduledMessages()" class="btn-secondary" style="display: flex; align-items: center; gap: 8px; padding: 10px 16px;">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                  </svg>
+                  View Scheduled Messages
+                </button>
+              </div>
+              <p style="font-size: 12px; color: #6B7280; margin-top: 8px;">Auto-generate and schedule messages based on this plan</p>
             </div>
           </div>
           ` : ''}
@@ -6491,6 +6582,25 @@ function showEngagementPlanEditorView(protocol, planData) {
           </svg>
         </button>
       </div>
+    </div>
+
+    <!-- Floating Action Buttons -->
+    <div class="editor-fab-container">
+      <button class="editor-fab ask-ai-fab" onclick="openAIChatModal()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        </svg>
+        <span>Ask AI</span>
+      </button>
+      <button class="editor-fab quick-notes-fab" onclick="openRightPanel()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <line x1="16" y1="13" x2="8" y2="13"/>
+          <line x1="16" y1="17" x2="8" y2="17"/>
+        </svg>
+        <span>Quick Notes</span>
+      </button>
     </div>
   `;
 
@@ -6970,6 +7080,306 @@ async function saveEngagementPlanFromEditor() {
   } catch (error) {
     console.error('Error saving engagement plan:', error);
     showNotification(`Error saving: ${error.message}`, 'error');
+  }
+}
+
+// Schedule check-in messages based on engagement plan
+function scheduleCheckInMessages() {
+  if (!currentEngagementPlanData || !currentEngagementProtocolId) {
+    showNotification('No engagement plan data available', 'error');
+    return;
+  }
+
+  const clientName = currentClient ? `${currentClient.first_name} ${currentClient.last_name}` : 'Client';
+
+  // Get current values from form
+  const frequency = document.getElementById('commFrequency')?.value || 'Every 3 days';
+  const channel = document.getElementById('commChannel')?.value || 'WhatsApp';
+  const tone = document.getElementById('commTone')?.value || 'Encouraging and supportive';
+
+  // Create scheduling modal
+  const existingModal = document.getElementById('scheduleMessagesModal');
+  if (existingModal) existingModal.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'scheduleMessagesModal';
+  modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 3000;';
+
+  // Calculate estimated number of messages
+  const phases = currentEngagementPlanData.phases || [];
+  const frequencyDays = { 'Daily': 1, 'Every 2 days': 2, 'Every 3 days': 3, 'Twice a week': 3.5, 'Weekly': 7, 'Bi-weekly': 14, 'Monthly': 30 };
+  const days = frequencyDays[frequency] || 3;
+  const messagesPerPhase = Math.ceil(7 / days) + 1; // check-ins + phase start
+  const totalMessages = phases.length * messagesPerPhase;
+
+  modal.innerHTML = `
+    <div style="background: white; border-radius: 16px; max-width: 500px; width: 95%; padding: 24px;">
+      <h3 style="margin: 0 0 8px 0; color: #1F2937;">Schedule Check-in Messages</h3>
+      <p style="color: #6B7280; margin: 0 0 20px 0; font-size: 14px;">
+        Set up automated check-in messages for ${escapeHtml(clientName)}
+      </p>
+
+      <div style="background: #F0FDFA; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0F766E" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M12 6v6l4 2"/>
+          </svg>
+          <span style="font-weight: 600; color: #0F766E;">Schedule Summary</span>
+        </div>
+        <ul style="margin: 0; padding-left: 20px; color: #374151; font-size: 14px;">
+          <li>${phases.length} phases in this plan</li>
+          <li>Check-ins: ${frequency}</li>
+          <li>Channel: ${channel}</li>
+          <li>~${totalMessages} messages will be scheduled</li>
+        </ul>
+      </div>
+
+      <div style="margin-bottom: 20px;">
+        <label style="display: block; font-size: 14px; font-weight: 500; color: #374151; margin-bottom: 6px;">
+          Start Date
+        </label>
+        <input type="date" id="scheduleStartDate"
+          value="${new Date().toISOString().split('T')[0]}"
+          min="${new Date().toISOString().split('T')[0]}"
+          style="width: 100%; padding: 10px 12px; border: 1px solid #E5E7EB; border-radius: 8px; font-size: 14px;">
+      </div>
+
+      <div style="display: flex; gap: 12px; justify-content: flex-end;">
+        <button onclick="closeScheduleMessagesModal()" style="padding: 10px 20px; background: white; border: 1px solid #E5E7EB; border-radius: 8px; cursor: pointer;">
+          Cancel
+        </button>
+        <button onclick="confirmScheduleMessages()" class="btn-primary" style="padding: 10px 20px;">
+          Schedule Messages
+        </button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+  modal.onclick = (e) => {
+    if (e.target === modal) closeScheduleMessagesModal();
+  };
+}
+
+function closeScheduleMessagesModal() {
+  const modal = document.getElementById('scheduleMessagesModal');
+  if (modal) modal.remove();
+}
+
+async function confirmScheduleMessages() {
+  const startDate = document.getElementById('scheduleStartDate')?.value;
+  if (!startDate) {
+    showNotification('Please select a start date', 'error');
+    return;
+  }
+
+  const frequency = document.getElementById('commFrequency')?.value || 'Every 3 days';
+  const channel = document.getElementById('commChannel')?.value || 'whatsapp';
+  const tone = document.getElementById('commTone')?.value || 'Encouraging and supportive';
+
+  try {
+    const token = localStorage.getItem('auth_token');
+    const response = await fetch(`${API_BASE}/api/scheduled-messages/bulk-from-plan`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        client_id: clientId,
+        engagement_plan_id: currentEngagementProtocolId,
+        channel: channel.toLowerCase(),
+        start_date: startDate,
+        check_in_frequency: frequency,
+        message_tone: tone
+      })
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      closeScheduleMessagesModal();
+      showNotification(`Successfully scheduled ${data.messages_created} messages!`, 'success');
+
+      // Show success modal with summary
+      showScheduleSuccessModal(data);
+    } else {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to schedule messages');
+    }
+  } catch (error) {
+    console.error('Error scheduling messages:', error);
+    showNotification(`Error: ${error.message}`, 'error');
+  }
+}
+
+function showScheduleSuccessModal(data) {
+  const existingModal = document.getElementById('scheduleSuccessModal');
+  if (existingModal) existingModal.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'scheduleSuccessModal';
+  modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 3000;';
+
+  modal.innerHTML = `
+    <div style="background: white; border-radius: 16px; max-width: 450px; width: 95%; padding: 32px; text-align: center;">
+      <div style="width: 64px; height: 64px; background: #D1FAE5; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+      </div>
+      <h3 style="margin: 0 0 8px 0; color: #1F2937; font-size: 20px;">Messages Scheduled!</h3>
+      <p style="color: #6B7280; margin: 0 0 24px 0; font-size: 14px;">
+        ${data.messages_created} check-in messages have been scheduled for your client.
+      </p>
+      <div style="display: flex; gap: 12px; justify-content: center;">
+        <button onclick="document.getElementById('scheduleSuccessModal').remove(); viewScheduledMessages();" style="padding: 12px 24px; background: white; border: 1px solid #E5E7EB; border-radius: 8px; cursor: pointer; font-weight: 500;">
+          View Messages
+        </button>
+        <button onclick="document.getElementById('scheduleSuccessModal').remove()" class="btn-primary" style="padding: 12px 24px;">
+          Done
+        </button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+}
+
+// View scheduled messages for current client
+async function viewScheduledMessages() {
+  try {
+    const token = localStorage.getItem('auth_token');
+    const response = await fetch(`${API_BASE}/api/scheduled-messages/client/${clientId}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch scheduled messages');
+    }
+
+    const messages = await response.json();
+
+    // Create messages list modal
+    const existingModal = document.getElementById('scheduledMessagesModal');
+    if (existingModal) existingModal.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'scheduledMessagesModal';
+    modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 3000;';
+
+    const pendingMessages = messages.filter(m => m.status === 'pending');
+    const sentMessages = messages.filter(m => m.status === 'sent');
+
+    modal.innerHTML = `
+      <div style="background: white; border-radius: 16px; max-width: 700px; width: 95%; max-height: 80vh; overflow: hidden; display: flex; flex-direction: column;">
+        <div style="padding: 20px 24px; border-bottom: 1px solid #E5E7EB; display: flex; align-items: center; justify-content: space-between;">
+          <div>
+            <h3 style="margin: 0; color: #1F2937; font-size: 18px;">Scheduled Messages</h3>
+            <p style="margin: 4px 0 0 0; color: #6B7280; font-size: 14px;">
+              ${pendingMessages.length} pending · ${sentMessages.length} sent
+            </p>
+          </div>
+          <button onclick="closeScheduledMessagesModal()" style="background: none; border: none; cursor: pointer; padding: 8px;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+
+        <div style="overflow-y: auto; flex: 1; padding: 16px 24px;">
+          ${messages.length === 0 ? `
+            <div style="text-align: center; padding: 40px 20px; color: #6B7280;">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#D1D5DB" stroke-width="1.5" style="margin-bottom: 12px;">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M12 6v6l4 2"/>
+              </svg>
+              <p style="margin: 0;">No scheduled messages yet</p>
+            </div>
+          ` : messages.map(msg => `
+            <div style="padding: 16px; border: 1px solid #E5E7EB; border-radius: 10px; margin-bottom: 12px; ${msg.status === 'sent' ? 'opacity: 0.6;' : ''}">
+              <div style="display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 8px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span style="padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 500; ${
+                    msg.status === 'pending' ? 'background: #FEF3C7; color: #D97706;' :
+                    msg.status === 'sent' ? 'background: #D1FAE5; color: #059669;' :
+                    msg.status === 'failed' ? 'background: #FEE2E2; color: #DC2626;' :
+                    'background: #E5E7EB; color: #6B7280;'
+                  }">
+                    ${msg.status.charAt(0).toUpperCase() + msg.status.slice(1)}
+                  </span>
+                  <span style="padding: 4px 10px; border-radius: 12px; font-size: 12px; background: #EEF2FF; color: #6366F1;">
+                    ${msg.channel}
+                  </span>
+                  <span style="padding: 4px 10px; border-radius: 12px; font-size: 12px; background: #F3F4F6; color: #6B7280;">
+                    ${msg.message_type.replace('_', ' ')}
+                  </span>
+                </div>
+                ${msg.status === 'pending' ? `
+                  <button onclick="cancelScheduledMessage(${msg.id})" style="background: none; border: none; cursor: pointer; color: #EF4444; font-size: 12px;">
+                    Cancel
+                  </button>
+                ` : ''}
+              </div>
+              <p style="margin: 0 0 8px 0; color: #374151; font-size: 14px; line-height: 1.5;">
+                ${escapeHtml(msg.message_content)}
+              </p>
+              <p style="margin: 0; color: #9CA3AF; font-size: 12px;">
+                ${msg.status === 'sent' ? 'Sent' : 'Scheduled for'}: ${new Date(msg.scheduled_for).toLocaleString()}
+              </p>
+            </div>
+          `).join('')}
+        </div>
+
+        <div style="padding: 16px 24px; border-top: 1px solid #E5E7EB; display: flex; justify-content: flex-end;">
+          <button onclick="closeScheduledMessagesModal()" class="btn-primary" style="padding: 10px 24px;">
+            Close
+          </button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+    modal.onclick = (e) => {
+      if (e.target === modal) closeScheduledMessagesModal();
+    };
+
+  } catch (error) {
+    console.error('Error fetching scheduled messages:', error);
+    showNotification('Failed to load scheduled messages', 'error');
+  }
+}
+
+function closeScheduledMessagesModal() {
+  const modal = document.getElementById('scheduledMessagesModal');
+  if (modal) modal.remove();
+}
+
+async function cancelScheduledMessage(messageId) {
+  if (!confirm('Are you sure you want to cancel this message?')) return;
+
+  try {
+    const token = localStorage.getItem('auth_token');
+    const response = await fetch(`${API_BASE}/api/scheduled-messages/${messageId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
+    if (response.ok) {
+      showNotification('Message cancelled', 'success');
+      // Refresh the list
+      viewScheduledMessages();
+    } else {
+      throw new Error('Failed to cancel message');
+    }
+  } catch (error) {
+    console.error('Error cancelling message:', error);
+    showNotification('Failed to cancel message', 'error');
   }
 }
 
@@ -9768,6 +10178,8 @@ window.downloadEngagementPlanPDF = downloadEngagementPlanPDF;
 window.loadEngagementPlans = loadEngagementPlans;
 window.displayEngagementPlans = displayEngagementPlans;
 window.viewEngagementPlan = viewEngagementPlan;
+window.editEngagementPlan = editEngagementPlan;
+window.getEngagementPlanTitle = getEngagementPlanTitle;
 window.viewEngagementPlanModal = viewEngagementPlanModal;
 window.showEngagementPlanViewModal = showEngagementPlanViewModal;
 window.closeViewEngagementModal = closeViewEngagementModal;
@@ -9852,3 +10264,12 @@ window.closeLabPreview = closeLabPreview;
 window.saveLabNote = saveLabNote;
 window.handleRefAIQuestion = handleRefAIQuestion;
 window.askRefAIQuestion = askRefAIQuestion;
+
+// Scheduled Messages exports
+window.scheduleCheckInMessages = scheduleCheckInMessages;
+window.closeScheduleMessagesModal = closeScheduleMessagesModal;
+window.confirmScheduleMessages = confirmScheduleMessages;
+window.showScheduleSuccessModal = showScheduleSuccessModal;
+window.viewScheduledMessages = viewScheduledMessages;
+window.closeScheduledMessagesModal = closeScheduledMessagesModal;
+window.cancelScheduledMessage = cancelScheduledMessage;

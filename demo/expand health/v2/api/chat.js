@@ -323,41 +323,72 @@ AI Summary: ${lab.ai_summary ? lab.ai_summary.substring(0, 500) + '...' : 'Not y
   `.trim();
 }
 
-// Query Gemini Knowledge Base
+// Query Gemini Knowledge Base using Semantic Retrieval (Corpus API)
 async function queryKnowledgeBase(query) {
   try {
-    if (!process.env.GEMINI_STORE_ID) {
+    if (!process.env.GEMINI_STORE_ID || !process.env.GEMINI_API_KEY) {
+      console.log('[KB Query] Knowledge base not configured');
       return null;
     }
 
-    const model = genAI.getGenerativeModel({
-      model: 'gemini-1.5-pro-002'
+    console.log(`[KB Query] Querying knowledge base with: "${query.substring(0, 50)}..."`);
+
+    // Use Gemini's Semantic Retrieval API to query the corpus
+    const corpusName = process.env.GEMINI_STORE_ID;
+    const apiKey = process.env.GEMINI_API_KEY;
+
+    // Query the corpus for relevant chunks
+    const queryResponse = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/${corpusName}:query?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          query: query,
+          resultsCount: 5,  // Get top 5 relevant chunks
+          metadataFilters: []
+        })
+      }
+    );
+
+    if (!queryResponse.ok) {
+      const errorText = await queryResponse.text();
+      console.error('[KB Query] Corpus query failed:', queryResponse.status, errorText);
+      return null;
+    }
+
+    const queryResult = await queryResponse.json();
+
+    if (!queryResult.relevantChunks || queryResult.relevantChunks.length === 0) {
+      console.log('[KB Query] No relevant chunks found');
+      return null;
+    }
+
+    console.log(`[KB Query] Found ${queryResult.relevantChunks.length} relevant chunks`);
+
+    // Build context from retrieved chunks
+    let kbContext = 'RELEVANT KNOWLEDGE BASE CONTENT:\n\n';
+
+    queryResult.relevantChunks.forEach((chunk, index) => {
+      const chunkText = chunk.chunk?.data?.stringValue || '';
+      const documentName = chunk.chunk?.name || 'Unknown Document';
+      const relevanceScore = chunk.chunkRelevanceScore || 0;
+
+      // Extract document title from name (e.g., "corpora/.../documents/pk-protocol/chunks/...")
+      const docMatch = documentName.match(/documents\/([^\/]+)/);
+      const docTitle = docMatch ? docMatch[1].replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : 'Document';
+
+      kbContext += `--- Source: ${docTitle} (Relevance: ${(relevanceScore * 100).toFixed(0)}%) ---\n`;
+      kbContext += chunkText.trim() + '\n\n';
     });
 
-    const result = await model.generateContent({
-      contents: [{
-        role: 'user',
-        parts: [{
-          text: `Based on the ExpandHealth knowledge base, please answer this question: ${query}\n\nProvide a concise, evidence-based answer citing relevant information from the knowledge base.`
-        }]
-      }],
-      tools: [{
-        googleSearch: {
-          retrieval: {
-            disableAttribution: false,
-            vertexAiSearch: {
-              datastore: process.env.GEMINI_STORE_ID
-            }
-          }
-        }
-      }]
-    });
-
-    const response = await result.response;
-    return response.text();
+    console.log(`[KB Query] Built context with ${kbContext.length} characters`);
+    return kbContext;
 
   } catch (error) {
-    console.error('Gemini KB query error:', error);
+    console.error('[KB Query] Error querying knowledge base:', error);
     return null;
   }
 }
@@ -385,19 +416,28 @@ function getSystemPrompt() {
 3. Helping interpret health data in context
 4. Suggesting treatment approaches based on functional medicine principles
 
-Guidelines:
+CRITICAL GUIDELINES FOR KNOWLEDGE BASE USAGE:
+- **ALWAYS prioritize information from the KNOWLEDGE BASE section when provided**
+- When knowledge base content is included in the context, you MUST incorporate and cite it in your response
+- Cross-reference knowledge base protocols with client data to provide personalized recommendations
+- Explicitly mention which protocols or documents from the knowledge base apply to the question
+- If the knowledge base contains relevant treatment protocols, reference them by name (e.g., "According to the PK Protocol...")
+
+General Guidelines:
 - Be professional, concise, and evidence-based
 - When client health data is provided, use it to give personalized insights
-- Always mention when you're using information from the knowledge base
+- Always cite the specific knowledge base source when using KB information
 - If asked about medical decisions, remind that final decisions should involve the practitioner's clinical judgment
 - Use markdown formatting for better readability
-- Cite relevant research or guidelines when applicable
+- When creating protocols or engagement plans, actively integrate relevant KB content
 
 You have access to:
 - Client health profiles (conditions, medications, goals)
 - Protocol templates and active protocols
 - Lab results and summaries
-- ExpandHealth knowledge base (company policies, protocols, best practices)
+- **ExpandHealth Knowledge Base** (treatment protocols, supplement guidelines, condition-specific approaches)
+
+When the KNOWLEDGE BASE section appears in context, treat it as authoritative clinical reference material that should inform your recommendations.
 
 Always prioritize patient safety and remind practitioners to use their clinical judgment.`;
 }

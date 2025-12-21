@@ -141,6 +141,58 @@ async function initEncryption() {
 }
 
 /**
+ * Initialize scheduled_messages table for client check-ins
+ */
+async function initScheduledMessages() {
+  const createTableSQL = `
+    CREATE TABLE IF NOT EXISTS scheduled_messages (
+        id SERIAL PRIMARY KEY,
+        client_id INTEGER REFERENCES clients(id) ON DELETE CASCADE,
+        channel VARCHAR(20) NOT NULL,
+        message_content TEXT NOT NULL,
+        scheduled_for TIMESTAMP WITH TIME ZONE NOT NULL,
+        message_type VARCHAR(30) DEFAULT 'check_in',
+        engagement_plan_id INTEGER REFERENCES protocols(id) ON DELETE SET NULL,
+        phase_number INTEGER,
+        status VARCHAR(20) DEFAULT 'pending',
+        sent_at TIMESTAMP WITH TIME ZONE,
+        created_by INTEGER REFERENCES users(id),
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        CONSTRAINT scheduled_messages_channel_check CHECK (
+            channel IN ('whatsapp', 'email', 'sms')
+        ),
+        CONSTRAINT scheduled_messages_status_check CHECK (
+            status IN ('pending', 'sent', 'failed', 'cancelled')
+        ),
+        CONSTRAINT scheduled_messages_type_check CHECK (
+            message_type IN ('check_in', 'phase_start', 'reminder', 'follow_up', 'custom')
+        )
+    );
+  `;
+
+  const createIndexesSQL = `
+    CREATE INDEX IF NOT EXISTS idx_scheduled_messages_client ON scheduled_messages(client_id);
+    CREATE INDEX IF NOT EXISTS idx_scheduled_messages_status ON scheduled_messages(status);
+    CREATE INDEX IF NOT EXISTS idx_scheduled_messages_scheduled_for ON scheduled_messages(scheduled_for);
+    CREATE INDEX IF NOT EXISTS idx_scheduled_messages_engagement ON scheduled_messages(engagement_plan_id);
+  `;
+
+  try {
+    await db.query(createTableSQL);
+    console.log('✅ Scheduled messages table ready');
+
+    await db.query(createIndexesSQL);
+    console.log('✅ Scheduled messages indexes ready');
+
+    return true;
+  } catch (error) {
+    console.error('❌ Failed to initialize scheduled_messages:', error.message);
+    return false;
+  }
+}
+
+/**
  * Run all database initializations
  */
 async function initDatabase() {
@@ -153,6 +205,9 @@ async function initDatabase() {
     // Initialize encryption support
     await initEncryption();
 
+    // Initialize scheduled messages table
+    await initScheduledMessages();
+
     console.log('✅ Database initialization complete\n');
     return true;
   } catch (error) {
@@ -164,5 +219,6 @@ async function initDatabase() {
 module.exports = {
   initDatabase,
   initAuditLogs,
-  initEncryption
+  initEncryption,
+  initScheduledMessages
 };
