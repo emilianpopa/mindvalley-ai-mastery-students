@@ -3725,7 +3725,7 @@ async function loadNotesForProtocolBuilder(currentClientId, token) {
       // Display notes as selectable cards matching the template card style
       container.innerHTML = notes.map(note => `
         <label class="protocol-template-card protocol-note-card">
-          <input type="checkbox" name="note" value="${note.id}" class="note-checkbox template-checkbox">
+          <input type="checkbox" name="note" value="${note.id}" class="note-checkbox">
           <div class="template-card-inner">
             <div class="template-card-header">
               <span class="template-name">${note.is_consultation ? 'Consultation Note' : formatNoteType(note.note_type)}</span>
@@ -3782,7 +3782,7 @@ async function loadLabsForProtocolBuilder(currentClientId, token) {
       // Display labs as selectable cards matching the template card style
       container.innerHTML = labs.map(lab => `
         <label class="protocol-template-card protocol-lab-card">
-          <input type="checkbox" name="lab" value="${lab.id}" class="lab-checkbox template-checkbox" checked>
+          <input type="checkbox" name="lab" value="${lab.id}" class="lab-checkbox" checked>
           <div class="template-card-inner">
             <div class="template-card-header">
               <span class="template-name">${lab.title || lab.file_name || 'Lab Result'}</span>
@@ -7996,8 +7996,8 @@ async function generateProtocolFromPrompt() {
     return;
   }
 
-  // Get selected templates
-  const selectedTemplateInputs = document.querySelectorAll('input.template-checkbox:checked');
+  // Get selected templates (only actual protocol templates, not notes or labs)
+  const selectedTemplateInputs = document.querySelectorAll('input[name="template"].template-checkbox:checked');
   const templates = Array.from(selectedTemplateInputs).map(cb => cb.value);
 
   // Get selected notes
