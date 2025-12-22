@@ -6580,70 +6580,176 @@ async function saveProtocolChanges(protocolId) {
   }
 }
 
-// Share protocol with client
+// Share protocol with client - shows share options modal like engagement plan
 async function shareProtocol(protocolId) {
-  const token = localStorage.getItem('auth_token');
+  // Store the protocol ID for sharing functions
+  window.currentShareProtocolId = protocolId;
+  showProtocolShareOptions(protocolId);
+}
 
+// Show protocol share options modal (same UI as engagement plan)
+async function showProtocolShareOptions(protocolId) {
+  const token = localStorage.getItem('auth_token');
+  const clientName = currentClient?.first_name || 'Client';
+  const clientEmail = currentClient?.email || '';
+  const clientPhone = currentClient?.phone || '';
+
+  // Fetch protocol title for display
+  let protocolTitle = 'Protocol';
   try {
     const response = await fetch(`${API_BASE}/api/protocols/${protocolId}`, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
-
     if (response.ok) {
       const data = await response.json();
-      const protocol = data.protocol;
-      const clientName = currentClient ? `${currentClient.first_name} ${currentClient.last_name}` : 'Client';
-      const clientEmail = currentClient?.email || '';
-
-      // Create share modal
-      const modal = document.createElement('div');
-      modal.id = 'shareProtocolModal';
-      modal.style.cssText = 'display: flex; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;';
-
-      modal.innerHTML = `
-        <div style="background: white; border-radius: 16px; width: 95%; max-width: 500px; padding: 24px;">
-          <h2 style="margin: 0 0 8px; font-size: 20px; color: #1f2937;">Share Protocol</h2>
-          <p style="margin: 0 0 20px; color: #6b7280; font-size: 14px;">Send "${protocol.title || 'Protocol'}" to ${clientName}</p>
-
-          <label style="display: block; margin-bottom: 8px; font-weight: 500; color: #374151;">Email Address</label>
-          <input type="email" id="shareEmail" value="${clientEmail}" style="width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; margin-bottom: 16px;" placeholder="client@email.com">
-
-          <label style="display: block; margin-bottom: 8px; font-weight: 500; color: #374151;">Message (optional)</label>
-          <textarea id="shareMessage" style="width: 100%; height: 100px; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; resize: vertical;" placeholder="Add a personal message...">Hi ${currentClient?.first_name || 'there'},\n\nPlease find attached your personalized health protocol.\n\nBest regards</textarea>
-
-          <div style="display: flex; gap: 12px; margin-top: 20px; justify-content: flex-end;">
-            <button onclick="document.getElementById('shareProtocolModal').remove()" class="btn-secondary" style="padding: 10px 20px;">Cancel</button>
-            <button onclick="sendProtocolEmail(${protocolId})" class="btn-primary" style="padding: 10px 20px;">Send Email</button>
-          </div>
-        </div>
-      `;
-
-      document.body.appendChild(modal);
-      modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+      protocolTitle = data.protocol?.title || 'Protocol';
     }
-  } catch (error) {
-    console.error('Error loading protocol for sharing:', error);
-    alert('Error loading protocol');
+  } catch (e) {
+    console.error('Error fetching protocol:', e);
   }
+
+  // Remove existing modal if present
+  const existingModal = document.getElementById('shareProtocolModal');
+  if (existingModal) existingModal.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'shareProtocolModal';
+  modal.className = 'modal';
+  modal.style.display = 'flex';
+  modal.innerHTML = `
+    <div class="modal-content share-modal-content">
+      <div class="modal-header">
+        <h2>Share Protocol with ${clientName}</h2>
+        <button class="modal-close" onclick="closeProtocolShareModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="share-description">Choose how you'd like to share the protocol:</p>
+
+        <div class="share-options">
+          <button class="share-option-btn" onclick="shareProtocolViaEmail()">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+              <polyline points="22,6 12,13 2,6"/>
+            </svg>
+            <span>Email</span>
+            <small>${clientEmail || 'No email on file'}</small>
+          </button>
+
+          <button class="share-option-btn" onclick="shareProtocolViaWhatsApp()">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+            </svg>
+            <span>WhatsApp</span>
+            <small>${clientPhone || 'No phone on file'}</small>
+          </button>
+
+          <button class="share-option-btn" onclick="generateProtocolShareLink()">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+            </svg>
+            <span>Copy Link</span>
+            <small>Generate shareable link</small>
+          </button>
+
+          <button class="share-option-btn" onclick="downloadProtocolPDF()">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            <span>Download PDF</span>
+            <small>Save as PDF file</small>
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  // Close when clicking outside
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) closeProtocolShareModal();
+  });
 }
 
-// Send protocol email
-async function sendProtocolEmail(protocolId) {
-  const email = document.getElementById('shareEmail')?.value;
-  const message = document.getElementById('shareMessage')?.value;
+// Close protocol share modal
+function closeProtocolShareModal() {
+  const modal = document.getElementById('shareProtocolModal');
+  if (modal) modal.remove();
+}
 
-  if (!email) {
-    alert('Please enter an email address');
+// Share protocol via email
+function shareProtocolViaEmail() {
+  const clientEmail = currentClient?.email;
+  const clientName = currentClient?.first_name || 'Client';
+
+  if (!clientEmail) {
+    showNotification('No email address on file for this client', 'warning');
     return;
   }
 
-  // For now, open email client with pre-filled content
-  const subject = encodeURIComponent('Your Personalized Health Protocol - ExpandHealth');
-  const body = encodeURIComponent(message + '\n\n[Protocol details will be attached]');
-  window.open(`mailto:${email}?subject=${subject}&body=${body}`);
+  const subject = encodeURIComponent(`Your Personalized Health Protocol - ExpandHealth`);
+  const body = encodeURIComponent(`Hi ${clientName},\n\nI've prepared a personalized health protocol for you based on your wellness assessment. This protocol outlines the phased approach we'll take to help you achieve your health goals.\n\nPlease review the attached protocol and let me know if you have any questions.\n\nBest regards,\nYour ExpandHealth Team`);
 
-  document.getElementById('shareProtocolModal')?.remove();
+  window.open(`mailto:${clientEmail}?subject=${subject}&body=${body}`, '_blank');
+  closeProtocolShareModal();
   showNotification('Opening email client...', 'success');
+}
+
+// Share protocol via WhatsApp
+function shareProtocolViaWhatsApp() {
+  const clientPhone = currentClient?.phone;
+  const clientName = currentClient?.first_name || 'there';
+
+  if (!clientPhone) {
+    showNotification('No phone number on file for this client', 'warning');
+    return;
+  }
+
+  // Clean phone number
+  const cleanPhone = clientPhone.replace(/\D/g, '');
+
+  const message = encodeURIComponent(`Hi ${clientName}! I've prepared your personalized health protocol based on your wellness assessment. This phased approach will help you achieve your health goals step by step. Let me know when you'd like to discuss it!`);
+
+  window.open(`https://wa.me/${cleanPhone}?text=${message}`, '_blank');
+  closeProtocolShareModal();
+  showNotification('Opening WhatsApp...', 'success');
+}
+
+// Generate shareable link for protocol
+function generateProtocolShareLink() {
+  const protocolId = window.currentShareProtocolId;
+  if (!protocolId) {
+    showNotification('No protocol selected', 'warning');
+    return;
+  }
+
+  const shareLink = `${window.location.origin}/client-portal/protocol/${protocolId}`;
+
+  navigator.clipboard.writeText(shareLink).then(() => {
+    showNotification('Link copied to clipboard!', 'success');
+    closeProtocolShareModal();
+  }).catch(() => {
+    // Fallback
+    prompt('Copy this link:', shareLink);
+  });
+}
+
+// Download protocol as PDF
+async function downloadProtocolPDF() {
+  const protocolId = window.currentShareProtocolId;
+  if (!protocolId) {
+    showNotification('No protocol selected', 'error');
+    return;
+  }
+
+  closeProtocolShareModal();
+  showNotification('Generating PDF...', 'info');
+
+  // Call the existing saveProtocolAsPDF function
+  await saveProtocolAsPDF(protocolId);
 }
 
 // Print protocol
@@ -11244,9 +11350,14 @@ window.deleteProtocol = deleteProtocol;
 window.createEngagementPlanFromProtocol = createEngagementPlanFromProtocol;
 window.closeEngagementProgressModal = closeEngagementProgressModal;
 window.shareProtocol = shareProtocol;
+window.showProtocolShareOptions = showProtocolShareOptions;
+window.closeProtocolShareModal = closeProtocolShareModal;
+window.shareProtocolViaEmail = shareProtocolViaEmail;
+window.shareProtocolViaWhatsApp = shareProtocolViaWhatsApp;
+window.generateProtocolShareLink = generateProtocolShareLink;
+window.downloadProtocolPDF = downloadProtocolPDF;
 window.printProtocol = printProtocol;
 window.saveProtocolAsPDF = saveProtocolAsPDF;
-window.sendProtocolEmail = sendProtocolEmail;
 window.showProtocolViewModal = showProtocolViewModal;
 window.closeProtocolViewModal = closeProtocolViewModal;
 window.switchViewTab = switchViewTab;
