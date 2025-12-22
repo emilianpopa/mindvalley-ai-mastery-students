@@ -1224,7 +1224,7 @@ async function loadLabPdfWithPdfJs(url) {
     // Fetch PDF with auth headers for API endpoints
     let pdfData;
     if (url.startsWith('/api/')) {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('auth_token');
       console.log('🔷 Fetching PDF with auth token:', token ? 'found' : 'MISSING');
       const response = await fetch(url, {
         headers: { 'Authorization': `Bearer ${token}` }
@@ -1556,7 +1556,7 @@ async function downloadLabPdf() {
     // Fetch the file with auth token
     const response = await fetch(`/api/labs/${currentViewingLab.id}/file`, {
       headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
+        'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
       }
     });
 
@@ -1814,7 +1814,7 @@ async function downloadLab(labId) {
     // Fetch the file with auth token
     const response = await fetch(`/api/labs/${labId}/file`, {
       headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
+        'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
       }
     });
 
@@ -4001,7 +4001,7 @@ async function loadNotesForSelection() {
   const container = document.getElementById('notesSelectionList');
   if (!container) return;
 
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem('auth_token');
   const clientId = new URLSearchParams(window.location.search).get('id');
 
   try {
@@ -4466,7 +4466,7 @@ async function generateEngagementPlan() {
   }
 
   try {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('auth_token');
     const response = await fetch(`${API_BASE}/api/protocols/${protocolId}/generate-engagement-plan`, {
       method: 'POST',
       headers: {
@@ -5023,7 +5023,7 @@ function previewProtocol() {
 
 // Save protocol
 async function saveProtocol() {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem('auth_token');
   const clientId = new URLSearchParams(window.location.search).get('id');
 
   const protocolTitle = document.getElementById('protocolTitle')?.value || 'Untitled Protocol';
