@@ -318,6 +318,57 @@ router.delete('/templates/:id', authenticateToken, async (req, res, next) => {
   }
 });
 
+// Seed clinical protocol templates
+router.post('/templates/seed', authenticateToken, async (req, res, next) => {
+  try {
+    const { clinicalTemplates } = require('../database/seed-clinical-templates');
+
+    let inserted = 0;
+    let skipped = 0;
+    const results = [];
+
+    for (const template of clinicalTemplates) {
+      // Check if template with this name exists
+      const checkResult = await db.query(
+        'SELECT id FROM protocol_templates WHERE name = $1',
+        [template.name]
+      );
+
+      if (checkResult.rows.length > 0) {
+        skipped++;
+        results.push({ name: template.name, status: 'skipped', reason: 'already exists' });
+        continue;
+      }
+
+      // Insert new template
+      await db.query(
+        `INSERT INTO protocol_templates (name, description, category, duration_weeks, modules)
+         VALUES ($1, $2, $3, $4, $5)`,
+        [
+          template.name,
+          template.description,
+          template.category,
+          template.duration_weeks,
+          JSON.stringify(template.modules)
+        ]
+      );
+
+      inserted++;
+      results.push({ name: template.name, status: 'inserted' });
+    }
+
+    res.json({
+      message: 'Clinical templates seeding complete',
+      inserted,
+      skipped,
+      results
+    });
+
+  } catch (error) {
+    next(error);
+  }
+});
+
 // ========================================
 // CLIENT PROTOCOLS
 // ========================================
