@@ -5840,23 +5840,117 @@ function renderExistingProtocolSections(modules) {
 
   return modules.map((module, index) => {
     const sectionType = getSectionType(module.name);
+    const isCore = module.is_core_protocol || module.name?.toLowerCase().includes('core protocol');
+    const isClinic = module.is_clinic_treatments || module.name?.toLowerCase().includes('clinic');
     let sectionContent = '';
 
     if (sectionType === 'supplements' && module.items) {
       sectionContent = renderSupplementTable(module.items);
     } else if (module.items) {
-      sectionContent = renderSectionList(module.items);
+      sectionContent = renderClinicalSectionList(module.items);
+    }
+
+    // Render safety gates if present
+    let safetyGatesHtml = '';
+    if (module.safety_gates && module.safety_gates.length > 0) {
+      safetyGatesHtml = `
+        <div class="safety-gates-section" style="background: #FEF2F2; border-left: 4px solid #DC2626; padding: 16px; border-radius: 8px; margin-top: 16px;">
+          <h4 style="color: #DC2626; margin: 0 0 8px 0; font-size: 13px; text-transform: uppercase; font-weight: 600;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 6px;">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/>
+              <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+            Safety Gates
+          </h4>
+          <ul style="margin: 0; padding-left: 20px; color: #991B1B;">
+            ${module.safety_gates.map(gate => `<li style="margin-bottom: 6px; font-size: 13px;">${escapeHtml(gate)}</li>`).join('')}
+          </ul>
+        </div>
+      `;
+    }
+
+    // Render "what not to do" if present
+    let whatNotToDoHtml = '';
+    if (module.what_not_to_do && module.what_not_to_do.length > 0) {
+      whatNotToDoHtml = `
+        <div class="what-not-to-do-section" style="background: #FEF3C7; border-left: 4px solid #D97706; padding: 16px; border-radius: 8px; margin-top: 12px;">
+          <h4 style="color: #92400E; margin: 0 0 8px 0; font-size: 13px; text-transform: uppercase; font-weight: 600;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 6px;">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="15" y1="9" x2="9" y2="15"/>
+              <line x1="9" y1="9" x2="15" y2="15"/>
+            </svg>
+            What NOT To Do Early
+          </h4>
+          <ul style="margin: 0; padding-left: 20px; color: #78350F;">
+            ${module.what_not_to_do.map(item => `<li style="margin-bottom: 6px; font-size: 13px;">${escapeHtml(item)}</li>`).join('')}
+          </ul>
+        </div>
+      `;
+    }
+
+    // Render readiness criteria if present
+    let readinessCriteriaHtml = '';
+    if (module.readiness_criteria && module.readiness_criteria.length > 0) {
+      readinessCriteriaHtml = `
+        <div class="readiness-criteria-section" style="background: #EFF6FF; border-left: 4px solid #3B82F6; padding: 16px; border-radius: 8px; margin-top: 12px;">
+          <h4 style="color: #1E40AF; margin: 0 0 8px 0; font-size: 13px; text-transform: uppercase; font-weight: 600;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 6px;">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+              <polyline points="22 4 12 14.01 9 11.01"/>
+            </svg>
+            Readiness Criteria
+          </h4>
+          <ul style="margin: 0; padding-left: 20px; color: #1E3A8A;">
+            ${module.readiness_criteria.map(criteria => `<li style="margin-bottom: 6px; font-size: 13px;">${escapeHtml(criteria)}</li>`).join('')}
+          </ul>
+        </div>
+      `;
+    }
+
+    // Section styling based on type
+    const sectionStyles = isCore
+      ? 'background: linear-gradient(to right, #ECFDF5, #F0FDF4); border-left: 4px solid #059669;'
+      : isClinic
+        ? 'background: linear-gradient(to right, #F0FDFA, #F5F5F5); border-left: 4px solid #0F766E;'
+        : '';
+
+    // Phase badge
+    let phaseBadge = '';
+    if (isCore) {
+      phaseBadge = `<span style="background: #059669; color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px; margin-left: 8px; font-weight: 500;">CORE</span>`;
+    } else if (module.phase_number) {
+      phaseBadge = `<span style="background: #0F766E; color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px; margin-left: 8px; font-weight: 500;">PHASE ${module.phase_number}</span>`;
+    } else if (isClinic) {
+      phaseBadge = `<span style="background: #0F766E; color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px; margin-left: 8px; font-weight: 500;">CLINIC</span>`;
+    }
+
+    // Duration info
+    let durationInfo = '';
+    if (module.duration_weeks) {
+      durationInfo = `<span style="color: #6B7280; font-size: 12px; margin-left: 8px;">Duration: ${module.duration_weeks} weeks</span>`;
+    }
+    if (module.start_week) {
+      durationInfo += `<span style="color: #6B7280; font-size: 12px; margin-left: 8px;">Starts: Week ${module.start_week}</span>`;
     }
 
     return `
-      <div class="protocol-section" data-section-index="${index}" data-section-type="${sectionType}" onclick="selectExistingSection(${index}, event)">
+      <div class="protocol-section" data-section-index="${index}" data-section-type="${sectionType}" onclick="selectExistingSection(${index}, event)" style="${sectionStyles} position: relative; padding: 24px; border-radius: 12px; margin-bottom: 16px;">
         <input type="checkbox" class="section-checkbox" onclick="event.stopPropagation(); toggleExistingSectionCheckbox(${index})">
-        <h2 class="section-title">
+        <h2 class="section-title" style="display: flex; align-items: center; flex-wrap: wrap;">
           <span class="drag-handle">⋮⋮</span>
           <span contenteditable="true" class="module-title-text" data-index="${index}">${escapeHtml(module.name)}</span>
+          ${phaseBadge}
+          ${durationInfo}
         </h2>
+        ${module.description ? `<p style="color: #6B7280; font-style: italic; margin: 8px 0 16px 0; font-size: 14px;">${escapeHtml(module.description)}</p>` : ''}
         ${module.goal ? `<p class="section-goal"><strong>Goal:</strong> <span contenteditable="true" class="module-goal-text" data-index="${index}">${escapeHtml(module.goal)}</span></p>` : ''}
+
+        ${readinessCriteriaHtml}
         ${sectionContent}
+        ${safetyGatesHtml}
+        ${whatNotToDoHtml}
 
         <!-- Per-module AI input -->
         <div class="section-input" style="margin-top: 16px;">
@@ -5881,6 +5975,47 @@ function renderExistingProtocolSections(modules) {
       </div>
     `;
   }).join('');
+}
+
+// Render clinical section list with enhanced item display
+function renderClinicalSectionList(items) {
+  if (!items || items.length === 0) return '';
+
+  return `
+    <div class="section-items" style="margin-top: 16px;">
+      ${items.map((item, i) => {
+        const itemName = typeof item === 'string' ? item : (item.name || item.title || 'Item');
+        const isString = typeof item === 'string';
+
+        if (isString) {
+          return `<div class="section-item" style="padding: 12px; background: white; border-radius: 8px; margin-bottom: 8px; border: 1px solid #E5E7EB;">
+            <span contenteditable="true" class="item-text" data-index="${i}">${escapeHtml(itemName)}</span>
+          </div>`;
+        }
+
+        // Complex item with fields
+        return `
+          <div class="section-item clinical-item" style="padding: 16px; background: white; border-radius: 8px; margin-bottom: 12px; border: 1px solid #E5E7EB; border-left: 3px solid #0F766E;">
+            <h4 style="margin: 0 0 8px 0; color: #1F2937; font-size: 15px;" contenteditable="true" class="item-name" data-index="${i}">${escapeHtml(itemName)}</h4>
+            ${item.rationale ? `<p style="color: #374151; margin: 0 0 8px 0; font-size: 14px;">${escapeHtml(item.rationale)}</p>` : ''}
+            ${item.description ? `<p style="color: #6B7280; margin: 0 0 8px 0; font-size: 13px;">${escapeHtml(item.description)}</p>` : ''}
+            <div style="display: flex; flex-wrap: wrap; gap: 16px; margin-top: 8px;">
+              ${item.dosage ? `<span style="font-size: 13px; color: #059669;"><strong>Dosage:</strong> ${escapeHtml(item.dosage)}</span>` : ''}
+              ${item.timing ? `<span style="font-size: 13px; color: #0369A1;"><strong>Timing:</strong> ${escapeHtml(item.timing)}</span>` : ''}
+              ${item.frequency ? `<span style="font-size: 13px; color: #7C3AED;"><strong>Frequency:</strong> ${escapeHtml(item.frequency)}</span>` : ''}
+              ${item.category ? `<span style="font-size: 11px; background: #F3F4F6; padding: 2px 8px; border-radius: 4px; color: #6B7280; text-transform: uppercase;">${escapeHtml(item.category)}</span>` : ''}
+            </div>
+            ${item.contraindications ? `
+              <div style="background: #FEF2F2; padding: 8px 12px; border-radius: 6px; margin-top: 10px;">
+                <span style="font-size: 12px; color: #991B1B;"><strong>⚠️ Contraindications:</strong> ${escapeHtml(item.contraindications)}</span>
+              </div>
+            ` : ''}
+            ${item.notes ? `<p style="color: #6B7280; margin: 8px 0 0 0; font-size: 12px; font-style: italic;">📝 ${escapeHtml(item.notes)}</p>` : ''}
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
 }
 
 // Select existing protocol section
@@ -8848,50 +8983,121 @@ function renderProtocolModules(modules) {
     'lifestyle': '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/></svg>',
     'diet': '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/></svg>',
     'labs': '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/></svg>',
+    'core': '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',
+    'clinic': '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>',
     'default': '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6M9 13h6M9 17h4"/></svg>'
   };
 
   return modules.map((module, index) => {
     const moduleName = module.name || `Module ${index + 1}`;
-    const moduleType = moduleName.toLowerCase().includes('supplement') ? 'supplements' :
+    const isCore = module.is_core_protocol || moduleName.toLowerCase().includes('core protocol');
+    const isClinic = module.is_clinic_treatments || moduleName.toLowerCase().includes('clinic');
+
+    const moduleType = isCore ? 'core' :
+                       isClinic ? 'clinic' :
+                       moduleName.toLowerCase().includes('supplement') ? 'supplements' :
                        moduleName.toLowerCase().includes('lifestyle') || moduleName.toLowerCase().includes('sleep') ? 'lifestyle' :
                        moduleName.toLowerCase().includes('diet') || moduleName.toLowerCase().includes('nutrition') ? 'diet' :
                        moduleName.toLowerCase().includes('lab') || moduleName.toLowerCase().includes('test') ? 'labs' : 'default';
 
     const icon = moduleIcons[moduleType] || moduleIcons['default'];
 
+    // Phase badge
+    let phaseBadge = '';
+    if (isCore) {
+      phaseBadge = `<span style="background: #059669; color: white; padding: 2px 8px; border-radius: 12px; font-size: 10px; margin-left: 8px; font-weight: 500;">CORE</span>`;
+    } else if (module.phase_number) {
+      phaseBadge = `<span style="background: #0F766E; color: white; padding: 2px 8px; border-radius: 12px; font-size: 10px; margin-left: 8px; font-weight: 500;">PHASE ${module.phase_number}</span>`;
+    } else if (isClinic) {
+      phaseBadge = `<span style="background: #0F766E; color: white; padding: 2px 8px; border-radius: 12px; font-size: 10px; margin-left: 8px; font-weight: 500;">CLINIC</span>`;
+    }
+
+    // Module styling
+    const moduleStyle = isCore ? 'background: linear-gradient(to right, #ECFDF5, #F0FDF4); border-left: 4px solid #059669;' :
+                        isClinic ? 'background: linear-gradient(to right, #F0FDFA, #F5F5F5); border-left: 4px solid #0F766E;' : '';
+
     let itemsHtml = '';
     if (module.items && Array.isArray(module.items)) {
       itemsHtml = module.items.map(item => {
         const itemName = typeof item === 'string' ? item : (item.name || item.title || 'Item');
-        const itemDesc = typeof item === 'object' ? (item.description || item.dosage || item.timing || '') : '';
+        const itemRationale = typeof item === 'object' ? (item.rationale || '') : '';
+        const itemDesc = typeof item === 'object' ? (item.description || '') : '';
         const itemDosage = typeof item === 'object' && item.dosage ? item.dosage : '';
         const itemTiming = typeof item === 'object' && item.timing ? item.timing : '';
+        const itemContra = typeof item === 'object' && item.contraindications ? item.contraindications : '';
+        const itemNotes = typeof item === 'object' && item.notes ? item.notes : '';
 
         return `
-          <div class="module-item">
-            <div class="item-icon">${icon}</div>
+          <div class="module-item" style="border-left: 3px solid #0F766E; padding-left: 12px; margin-bottom: 16px;">
             <div class="item-details">
-              <h4>${escapeHtml(itemName)}</h4>
-              ${itemDesc ? `<p>${escapeHtml(itemDesc)}</p>` : ''}
+              <h4 style="margin: 0 0 6px 0; color: #1F2937;">${escapeHtml(itemName)}</h4>
+              ${itemRationale ? `<p style="color: #374151; margin: 0 0 6px 0; font-size: 13px;">${escapeHtml(itemRationale)}</p>` : ''}
+              ${itemDesc ? `<p style="color: #6B7280; margin: 0 0 6px 0; font-size: 13px;">${escapeHtml(itemDesc)}</p>` : ''}
               ${(itemDosage || itemTiming) ? `
-                <div class="item-meta">
-                  ${itemDosage ? `<span>Dosage: ${escapeHtml(itemDosage)}</span>` : ''}
-                  ${itemTiming ? `<span>Timing: ${escapeHtml(itemTiming)}</span>` : ''}
+                <div class="item-meta" style="display: flex; gap: 16px; flex-wrap: wrap; margin-top: 8px;">
+                  ${itemDosage ? `<span style="font-size: 12px; color: #059669;"><strong>Dosage:</strong> ${escapeHtml(itemDosage)}</span>` : ''}
+                  ${itemTiming ? `<span style="font-size: 12px; color: #0369A1;"><strong>Timing:</strong> ${escapeHtml(itemTiming)}</span>` : ''}
                 </div>
               ` : ''}
+              ${itemContra ? `
+                <div style="background: #FEF2F2; padding: 6px 10px; border-radius: 4px; margin-top: 8px;">
+                  <span style="font-size: 11px; color: #991B1B;"><strong>⚠️ Contraindications:</strong> ${escapeHtml(itemContra)}</span>
+                </div>
+              ` : ''}
+              ${itemNotes ? `<p style="color: #6B7280; margin: 6px 0 0 0; font-size: 11px; font-style: italic;">📝 ${escapeHtml(itemNotes)}</p>` : ''}
             </div>
           </div>
         `;
       }).join('');
     }
 
+    // Safety gates section
+    let safetyGatesHtml = '';
+    if (module.safety_gates && module.safety_gates.length > 0) {
+      safetyGatesHtml = `
+        <div style="background: #FEF2F2; border-left: 4px solid #DC2626; padding: 12px; border-radius: 6px; margin-top: 16px;">
+          <h5 style="color: #DC2626; margin: 0 0 8px 0; font-size: 12px; text-transform: uppercase;">⚠️ Safety Gates</h5>
+          <ul style="margin: 0; padding-left: 16px; color: #991B1B; font-size: 12px;">
+            ${module.safety_gates.map(gate => `<li style="margin-bottom: 4px;">${escapeHtml(gate)}</li>`).join('')}
+          </ul>
+        </div>
+      `;
+    }
+
+    // What not to do section
+    let whatNotToDoHtml = '';
+    if (module.what_not_to_do && module.what_not_to_do.length > 0) {
+      whatNotToDoHtml = `
+        <div style="background: #FEF3C7; border-left: 4px solid #D97706; padding: 12px; border-radius: 6px; margin-top: 12px;">
+          <h5 style="color: #92400E; margin: 0 0 8px 0; font-size: 12px; text-transform: uppercase;">🚫 What NOT To Do Early</h5>
+          <ul style="margin: 0; padding-left: 16px; color: #78350F; font-size: 12px;">
+            ${module.what_not_to_do.map(item => `<li style="margin-bottom: 4px;">${escapeHtml(item)}</li>`).join('')}
+          </ul>
+        </div>
+      `;
+    }
+
+    // Readiness criteria section
+    let readinessCriteriaHtml = '';
+    if (module.readiness_criteria && module.readiness_criteria.length > 0) {
+      readinessCriteriaHtml = `
+        <div style="background: #EFF6FF; border-left: 4px solid #3B82F6; padding: 12px; border-radius: 6px; margin-bottom: 16px;">
+          <h5 style="color: #1E40AF; margin: 0 0 8px 0; font-size: 12px; text-transform: uppercase;">✓ Readiness Criteria</h5>
+          <ul style="margin: 0; padding-left: 16px; color: #1E3A8A; font-size: 12px;">
+            ${module.readiness_criteria.map(criteria => `<li style="margin-bottom: 4px;">${escapeHtml(criteria)}</li>`).join('')}
+          </ul>
+        </div>
+      `;
+    }
+
     return `
-      <div class="protocol-module">
-        <div class="module-header">
-          <h3>
-            <span class="module-icon">${icon}</span>
+      <div class="protocol-module" style="${moduleStyle} border-radius: 12px; margin-bottom: 16px; overflow: hidden;">
+        <div class="module-header" style="padding: 16px; background: rgba(255,255,255,0.5);">
+          <h3 style="margin: 0; display: flex; align-items: center; flex-wrap: wrap;">
+            <span class="module-icon" style="margin-right: 8px;">${icon}</span>
             ${escapeHtml(moduleName)}
+            ${phaseBadge}
+            ${module.duration_weeks ? `<span style="color: #6B7280; font-size: 12px; margin-left: 8px; font-weight: normal;">• ${module.duration_weeks} weeks</span>` : ''}
           </h3>
           <button class="module-toggle" onclick="toggleModuleContent(this)">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -8899,10 +9105,15 @@ function renderProtocolModules(modules) {
             </svg>
           </button>
         </div>
-        <div class="module-content">
+        <div class="module-content" style="padding: 16px; background: white;">
+          ${module.description ? `<p style="color: #6B7280; font-style: italic; margin: 0 0 16px 0; font-size: 13px;">${escapeHtml(module.description)}</p>` : ''}
+          ${module.goal ? `<p style="margin: 0 0 16px 0;"><strong>Goal:</strong> ${escapeHtml(module.goal)}</p>` : ''}
+          ${readinessCriteriaHtml}
           <div class="module-items">
-            ${itemsHtml || '<p>No items in this module</p>'}
+            ${itemsHtml || '<p style="color: #9CA3AF;">No items in this module</p>'}
           </div>
+          ${safetyGatesHtml}
+          ${whatNotToDoHtml}
         </div>
       </div>
     `;
