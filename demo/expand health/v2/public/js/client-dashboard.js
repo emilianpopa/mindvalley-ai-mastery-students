@@ -5097,6 +5097,12 @@ function generateEngagementShareLink() {
   });
 }
 
+// Save engagement plan as PDF by ID (called from menu)
+async function saveEngagementPlanAsPDF(planId) {
+  window.currentShareProtocolId = planId;
+  await downloadEngagementPlanPDF();
+}
+
 // Download engagement plan as PDF
 async function downloadEngagementPlanPDF() {
   const protocolId = window.currentShareProtocolId;
@@ -7341,6 +7347,10 @@ function displayEngagementPlans(plans) {
           <button class="card-menu-item" onclick="shareEngagementPlanById(${plan.id}); closeAllCardMenus();">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
             Share
+          </button>
+          <button class="card-menu-item" onclick="saveEngagementPlanAsPDF(${plan.id}); closeAllCardMenus();">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 18 15 15"/></svg>
+            Save as PDF
           </button>
           <button class="card-menu-item" onclick="printEngagementPlanById(${plan.id}); closeAllCardMenus();">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
@@ -11494,6 +11504,7 @@ window.shareEngagementViaEmail = shareEngagementViaEmail;
 window.shareEngagementViaWhatsApp = shareEngagementViaWhatsApp;
 window.generateEngagementShareLink = generateEngagementShareLink;
 window.downloadEngagementPlanPDF = downloadEngagementPlanPDF;
+window.saveEngagementPlanAsPDF = saveEngagementPlanAsPDF;
 window.loadEngagementPlans = loadEngagementPlans;
 window.displayEngagementPlans = displayEngagementPlans;
 window.viewEngagementPlan = viewEngagementPlan;
