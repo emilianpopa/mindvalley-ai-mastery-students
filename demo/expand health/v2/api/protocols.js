@@ -1069,6 +1069,31 @@ router.post('/generate', authenticateToken, async (req, res, next) => {
     // Build the AI prompt with KB context
     const aiPrompt = `You are an expert functional medicine protocol specialist with deep knowledge of evidence-based supplement protocols, therapeutic dosages, and clinical timing recommendations. Generate a comprehensive, personalized wellness protocol.
 
+###############################################################
+#  CRITICAL RULE - READ THIS FIRST BEFORE ANYTHING ELSE       #
+###############################################################
+
+**EVIDENCE-BASED PROTOCOL GENERATION ONLY**
+
+You MUST ONLY create treatment modules for conditions that are EXPLICITLY CONFIRMED in the LABORATORY RESULTS section below.
+
+ABSOLUTE RULES:
+1. SCAN THE LAB RESULTS FIRST - Identify ONLY conditions with positive/abnormal findings
+2. DO NOT create modules for conditions not tested or not confirmed
+3. The Knowledge Base provides treatment approaches - but ONLY apply them to CONFIRMED conditions
+4. If a condition is mentioned in the KB but NOT in the client's labs, DO NOT include it
+
+SPECIFICALLY FORBIDDEN (unless lab-confirmed):
+- H. pylori eradication → ONLY if H. pylori is POSITIVE in lab results
+- Parasite protocols → ONLY if parasites are CONFIRMED in stool testing
+- SIBO treatment → ONLY if SIBO is CONFIRMED via breath test
+- Candida protocols → ONLY if Candida overgrowth is CONFIRMED
+- Any antimicrobial/eradication protocol → ONLY if pathogen is CONFIRMED
+
+If you violate these rules, the protocol will be REJECTED.
+
+###############################################################
+
 CLIENT INFORMATION:
 - Name: ${clientData.first_name} ${clientData.last_name}
 - Age: ${clientData.date_of_birth ? calculateAge(clientData.date_of_birth) : 'Unknown'}
@@ -1079,28 +1104,38 @@ CLIENT INFORMATION:
 
 SELECTED PROTOCOL TEMPLATES: ${selectedTemplateNames || 'None - custom protocol'}
 
-${labsContent ? `LABORATORY RESULTS:\nThe following lab results are from the client's medical records. Use these findings to personalize the protocol:\n\n${labsContent}\n` : ''}
+${labsContent ? `LABORATORY RESULTS (SOURCE OF TRUTH FOR CONDITIONS):
+*** ONLY create treatment modules for conditions CONFIRMED in these results ***
+The following lab results are from the client's medical records:
+
+${labsContent}
+` : `NO LABORATORY RESULTS PROVIDED:
+*** Without lab confirmation, focus ONLY on general wellness, lifestyle, and the user's specific request. DO NOT assume any infections, pathogens, or specific conditions exist. ***
+`}
 
 ${formsContent ? `INTAKE FORMS & QUESTIONNAIRES:\nThe client has submitted the following health assessments:\n\n${formsContent}\n` : ''}
 
 ${notesContent ? `CLINICAL NOTES:\nThe following notes have been documented for this client:\n\n${notesContent}\n` : ''}
 
 ${kbContext ? `
-=== KNOWLEDGE BASE PROTOCOLS (CRITICAL - USE THESE) ===
-The following are ACTUAL protocols and recommendations from the ExpandHealth clinical knowledge base. These are your PRIMARY source of truth for treatment approaches:
+=== KNOWLEDGE BASE PROTOCOLS (REFERENCE ONLY - APPLY TO CONFIRMED CONDITIONS) ===
+The following are treatment protocols from the ExpandHealth knowledge base.
+*** IMPORTANT: Only apply these protocols to conditions that are CONFIRMED in the LABORATORY RESULTS above. ***
+*** If a protocol targets a condition not in the labs, DO NOT include it. ***
 
 ${kbContext}
 
-*** MANDATORY: You MUST incorporate the specific protocols, dosages, and recommendations from the Knowledge Base above into your generated protocol. Reference them by name (e.g., "Following the PK Protocol guidelines..."). ***
+Use these protocols for dosages and approaches, but ONLY for lab-confirmed conditions.
 ` : ''}
 
 USER REQUEST: ${prompt}
 
 CRITICAL INSTRUCTIONS:
-1. If Knowledge Base content is provided above, you MUST use it as your primary reference for treatment approaches
-2. Reference specific protocols by name from the KB (e.g., "As per the PK Protocol", "Following the Gut Healing guidelines")
-3. Base your protocol on ALL the client data provided above (labs, forms, notes)
-4. The protocol should be specifically tailored to address any abnormal lab values, symptoms mentioned in forms, and clinical observations in notes
+1. First, identify ONLY the conditions that are CONFIRMED in the laboratory results
+2. Create treatment modules ONLY for those confirmed conditions
+3. If Knowledge Base content is provided, use it for dosages and approaches for CONFIRMED conditions only
+4. Reference specific protocols by name from the KB when applicable
+5. The protocol should be specifically tailored to address confirmed abnormal lab values and documented symptoms
 
 IMPORTANT REQUIREMENTS:
 1. For ALL supplements, you MUST include specific therapeutic dosages (e.g., "5g", "500mg", "10 billion CFU")
@@ -1459,7 +1494,15 @@ Return ONLY valid JSON. No markdown, no code blocks, no explanation outside the 
 
   } catch (error) {
     console.error('[Protocol Generate] Error:', error);
-    next(error);
+    console.error('[Protocol Generate] Error message:', error.message);
+    console.error('[Protocol Generate] Error stack:', error.stack);
+
+    // Return more specific error info
+    res.status(500).json({
+      error: 'Protocol generation failed',
+      message: error.message || 'Unknown error',
+      details: error.status ? `API Status: ${error.status}` : undefined
+    });
   }
 });
 

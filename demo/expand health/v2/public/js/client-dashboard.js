@@ -1087,8 +1087,8 @@ function handleFileSelection(file) {
     return;
   }
 
-  if (file.size > 10 * 1024 * 1024) {
-    alert('File size must be less than 10MB.');
+  if (file.size > 50 * 1024 * 1024) {
+    alert('File size must be less than 50MB.');
     return;
   }
 
@@ -1224,8 +1224,8 @@ async function loadLabPdfWithPdfJs(url) {
     // Fetch PDF with auth headers for API endpoints
     let pdfData;
     if (url.startsWith('/api/')) {
-      const token = localStorage.getItem('auth_token');
-      console.log('🔷 Fetching PDF with auth token');
+      const token = localStorage.getItem('token');
+      console.log('🔷 Fetching PDF with auth token:', token ? 'found' : 'MISSING');
       const response = await fetch(url, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -1249,16 +1249,19 @@ async function loadLabPdfWithPdfJs(url) {
     const loadingIndicator = container.querySelector('.pdf-loading-indicator');
     if (loadingIndicator) loadingIndicator.remove();
 
-    // Show canvas
-    document.getElementById('labPdfCanvas').style.display = 'block';
+    // Clear container and prepare for all pages
+    container.innerHTML = '';
 
     // Calculate initial scale to fit width
     await calculateLabPdfFitWidthScale();
     console.log('🔷 Scale calculated:', labPdfCurrentScale);
 
-    // Render the first page
-    await renderLabPdfPage(labPdfCurrentPage);
-    console.log('🔷 Page rendered successfully');
+    // Render ALL pages for continuous scrolling
+    console.log('🔷 Rendering all', labPdfTotalPages, 'pages...');
+    for (let pageNum = 1; pageNum <= labPdfTotalPages; pageNum++) {
+      await renderLabPdfPageToContainer(pageNum, container);
+    }
+    console.log('🔷 All pages rendered successfully');
 
     // Update page info
     updateLabPdfPageInfo();
@@ -1341,6 +1344,60 @@ async function renderLabPdfPage(pageNum) {
 
   } catch (error) {
     console.error('Error rendering page:', error);
+  }
+}
+
+// Render a page to a new canvas appended to the container (for continuous scroll mode)
+async function renderLabPdfPageToContainer(pageNum, container) {
+  if (!labPdfDoc) return;
+
+  try {
+    const page = await labPdfDoc.getPage(pageNum);
+
+    // Create a new canvas for this page
+    const canvas = document.createElement('canvas');
+    canvas.className = 'pdf-page-canvas';
+    canvas.setAttribute('data-page', pageNum);
+
+    const ctx = canvas.getContext('2d');
+
+    // Use device pixel ratio for sharp rendering on high-DPI displays
+    const devicePixelRatio = window.devicePixelRatio || 1;
+    const viewport = page.getViewport({ scale: labPdfCurrentScale });
+
+    // Set canvas dimensions for high-DPI rendering
+    canvas.width = viewport.width * devicePixelRatio;
+    canvas.height = viewport.height * devicePixelRatio;
+
+    // Set display size (CSS)
+    canvas.style.width = viewport.width + 'px';
+    canvas.style.height = viewport.height + 'px';
+
+    // Scale context for high-DPI
+    ctx.scale(devicePixelRatio, devicePixelRatio);
+
+    // Render the page with high quality settings
+    const renderContext = {
+      canvasContext: ctx,
+      viewport: viewport,
+      enableWebGL: true,
+      renderInteractiveForms: true
+    };
+
+    await page.render(renderContext).promise;
+
+    // Append canvas to container
+    container.appendChild(canvas);
+
+    // Add page number indicator
+    const pageIndicator = document.createElement('div');
+    pageIndicator.className = 'pdf-page-indicator';
+    pageIndicator.textContent = `Page ${pageNum} of ${labPdfTotalPages}`;
+    pageIndicator.style.cssText = 'text-align: center; padding: 8px; color: #9ca3af; font-size: 12px;';
+    container.appendChild(pageIndicator);
+
+  } catch (error) {
+    console.error('Error rendering page', pageNum, ':', error);
   }
 }
 
@@ -1481,19 +1538,13 @@ function closeLabViewerModal() {
 }
 
 // Download lab PDF
-function downloadLabPdf() {
+async function downloadLabPdf() {
   if (!currentViewingLab) {
     console.log('No lab selected for download');
     return;
   }
 
-  console.log('Downloading lab:', currentViewingLab.title, currentViewingLab.file_url);
-
-  // Create a temporary link and trigger download
-  const link = document.createElement('a');
-  link.href = currentViewingLab.file_url;
-  link.download = currentViewingLab.title || 'lab-result.pdf';
-  link.target = '_blank';
+  console.log('Downloading lab:', currentViewingLab.title, currentViewingLab.id);
 
   // For demo labs without real files, show a message
   if (currentViewingLab.file_url && currentViewingLab.file_url.includes('/demo-')) {
@@ -1501,9 +1552,34 @@ function downloadLabPdf() {
     return;
   }
 
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+  try {
+    // Fetch the file with auth token
+    const response = await fetch(`/api/labs/${currentViewingLab.id}/file`, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Download failed' }));
+      throw new Error(error.error || 'Download failed');
+    }
+
+    // Get the blob and create a download link
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = currentViewingLab.original_filename || currentViewingLab.title + '.pdf' || 'lab-result.pdf';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+
+  } catch (error) {
+    console.error('Download error:', error);
+    showNotification(error.message || 'Error downloading file', 'error');
+  }
 }
 
 // Print lab PDF
@@ -1727,10 +1803,40 @@ async function deleteLab(labId) {
 }
 
 // Download lab
-function downloadLab(labId) {
+async function downloadLab(labId) {
   const lab = clientLabs.find(l => l.id === labId);
-  if (lab && lab.file_url) {
-    window.open(lab.file_url, '_blank');
+  if (!lab) {
+    showNotification('Lab not found', 'error');
+    return;
+  }
+
+  try {
+    // Fetch the file with auth token
+    const response = await fetch(`/api/labs/${labId}/file`, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Download failed' }));
+      throw new Error(error.error || 'Download failed');
+    }
+
+    // Get the blob and create a download link
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = lab.original_filename || lab.title || 'lab-result.pdf';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+
+  } catch (error) {
+    console.error('Download error:', error);
+    showNotification(error.message || 'Error downloading file', 'error');
   }
 }
 
@@ -8383,6 +8489,10 @@ function showProtocolEditor() {
   if (loading) loading.style.display = 'flex';
   if (content) content.style.display = 'none';
 
+  // Hide FAB container during loading
+  const fabContainer = document.getElementById('editorFabContainer');
+  if (fabContainer) fabContainer.style.display = 'none';
+
   // Reset progress bar
   const progressBar = document.getElementById('protocolProgressBar');
   if (progressBar) progressBar.style.width = '5%';
@@ -8452,6 +8562,11 @@ function closeProtocolEditor() {
 
   const editorView = document.getElementById('protocolEditorView');
   if (editorView) editorView.style.display = 'none';
+
+  // Hide the floating action buttons
+  const fabContainer = document.getElementById('editorFabContainer');
+  if (fabContainer) fabContainer.style.display = 'none';
+
   selectedProtocolSection = null;
   clearSectionSelection();
 }
@@ -8480,6 +8595,10 @@ function displayProtocolInEditor(data, templates, noteIds) {
     content.style.display = 'flex';
     console.log('[Protocol Editor] Content view now visible');
   }
+
+  // Show the floating action buttons (Ask AI, Quick Notes)
+  const fabContainer = document.getElementById('editorFabContainer');
+  if (fabContainer) fabContainer.style.display = 'flex';
 
   // Set protocol title
   const titleEl = document.getElementById('protocolEditorTitle');
@@ -8883,6 +9002,43 @@ async function submitProtocolAI() {
   // Clear input
   input.value = '';
 
+  const promptLower = prompt.toLowerCase();
+
+  // Check if this is a REMOVAL/DELETE request
+  const isRemovalRequest = promptLower.includes('remove') ||
+    promptLower.includes('delete') ||
+    promptLower.includes('take out') ||
+    promptLower.includes('get rid of') ||
+    promptLower.includes('eliminate');
+
+  if (isRemovalRequest && generatedProtocolData && generatedProtocolData.modules) {
+    // Try to find which module to remove based on the prompt
+    const moduleIndex = findModuleByPrompt(prompt, generatedProtocolData.modules);
+
+    if (moduleIndex !== -1) {
+      const moduleToRemove = generatedProtocolData.modules[moduleIndex];
+      const moduleName = moduleToRemove.name || 'Module';
+
+      // Confirm removal
+      if (confirm(`Are you sure you want to remove the "${moduleName}" module?`)) {
+        // Remove the module from the array
+        generatedProtocolData.modules.splice(moduleIndex, 1);
+
+        // Re-render all sections
+        renderProtocolSections(generatedProtocolData.modules);
+
+        // Clear any selection
+        clearSectionSelection();
+
+        showNotification(`Module "${moduleName}" has been removed.`, 'success');
+      }
+      return;
+    } else {
+      showNotification('Could not identify which module to remove. Please click on the module first, then ask to remove it.', 'warning');
+      return;
+    }
+  }
+
   // Check if a section is selected - edit that specific module
   if (selectedProtocolSection !== null) {
     const sectionIndex = selectedProtocolSection;
@@ -8894,6 +9050,17 @@ async function submitProtocolAI() {
 
     const currentModule = generatedProtocolData.modules[sectionIndex];
     const sectionName = currentModule.name || 'Selected section';
+
+    // Check if user wants to remove the selected module
+    if (isRemovalRequest) {
+      if (confirm(`Are you sure you want to remove the "${sectionName}" module?`)) {
+        generatedProtocolData.modules.splice(sectionIndex, 1);
+        renderProtocolSections(generatedProtocolData.modules);
+        clearSectionSelection();
+        showNotification(`Module "${sectionName}" has been removed.`, 'success');
+      }
+      return;
+    }
 
     // Show loading notification
     showNotification(`AI is modifying "${sectionName}"...`, 'info');
@@ -8937,6 +9104,69 @@ async function submitProtocolAI() {
     // No section selected - add a new module
     await addNewModule(prompt);
   }
+}
+
+// Find a module by matching keywords in the prompt
+function findModuleByPrompt(prompt, modules) {
+  const promptLower = prompt.toLowerCase();
+
+  // Common module name keywords to look for
+  const moduleKeywords = [
+    { keywords: ['h. pylori', 'h pylori', 'hpylori', 'pylori', 'h.pylori'], match: 'pylori' },
+    { keywords: ['mycotoxin', 'myco', 'mold', 'toxin binding'], match: 'mycotoxin' },
+    { keywords: ['gut', 'digestive', 'gi ', 'gastrointestinal'], match: 'gut' },
+    { keywords: ['sleep', 'circadian', 'melatonin'], match: 'sleep' },
+    { keywords: ['stress', 'adrenal', 'cortisol', 'adaptogen'], match: 'stress' },
+    { keywords: ['immune', 'immunity', 'inflammation'], match: 'immune' },
+    { keywords: ['liver', 'detox', 'detoxification'], match: 'detox' },
+    { keywords: ['supplement', 'vitamin', 'mineral'], match: 'supplement' },
+    { keywords: ['lifestyle', 'habit', 'routine'], match: 'lifestyle' },
+    { keywords: ['diet', 'nutrition', 'food', 'eating'], match: 'diet' },
+    { keywords: ['clinic', 'treatment', 'therapy', 'hbot', 'iv ', 'sauna'], match: 'clinic' },
+    { keywords: ['first', 'module 1', '1st'], match: 'first' },
+    { keywords: ['second', 'module 2', '2nd'], match: 'second' },
+    { keywords: ['third', 'module 3', '3rd'], match: 'third' },
+    { keywords: ['last', 'final'], match: 'last' },
+    { keywords: ['antimicrobial', 'antibiotic', 'eradication'], match: 'antimicrobial' }
+  ];
+
+  // First, try to find by position keywords
+  if (promptLower.includes('first') || promptLower.includes('1st') || promptLower.includes('module 1')) {
+    return 0;
+  }
+  if (promptLower.includes('second') || promptLower.includes('2nd') || promptLower.includes('module 2')) {
+    return modules.length > 1 ? 1 : -1;
+  }
+  if (promptLower.includes('third') || promptLower.includes('3rd') || promptLower.includes('module 3')) {
+    return modules.length > 2 ? 2 : -1;
+  }
+  if (promptLower.includes('last') || promptLower.includes('final')) {
+    return modules.length - 1;
+  }
+
+  // Try to match by module name keywords
+  for (let i = 0; i < modules.length; i++) {
+    const moduleName = (modules[i].name || '').toLowerCase();
+
+    // Direct name match
+    for (const kw of moduleKeywords) {
+      for (const keyword of kw.keywords) {
+        if (promptLower.includes(keyword) && moduleName.includes(kw.match)) {
+          return i;
+        }
+      }
+    }
+
+    // Also check if prompt contains words from module name directly
+    const moduleWords = moduleName.split(/\s+/).filter(w => w.length > 3);
+    for (const word of moduleWords) {
+      if (promptLower.includes(word)) {
+        return i;
+      }
+    }
+  }
+
+  return -1;
 }
 
 // Add a new module using AI
@@ -10244,6 +10474,7 @@ window.handleSectionInput = handleSectionInput;
 window.submitSectionInput = submitSectionInput;
 window.handleProtocolAI = handleProtocolAI;
 window.submitProtocolAI = submitProtocolAI;
+window.findModuleByPrompt = findModuleByPrompt;
 window.addNewModule = addNewModule;
 window.saveProtocolEditor = saveProtocolEditor;
 window.scrollToSection = scrollToSection;
