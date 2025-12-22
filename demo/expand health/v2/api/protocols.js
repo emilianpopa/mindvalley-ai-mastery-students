@@ -14,6 +14,9 @@ const anthropic = new Anthropic({
   apiKey: process.env.CLAUDE_API_KEY
 });
 
+// Import Clinical Protocol Engine prompt generator
+const { generateClinicalProtocolPrompt, calculateAge } = require('../prompts/clinical-protocol-engine');
+
 // Initialize Gemini SDK for Knowledge Base queries (using new File Search API)
 const { GoogleGenAI } = require('@google/genai');
 const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
@@ -1049,204 +1052,15 @@ router.post('/generate', authenticateToken, async (req, res, next) => {
       console.error('[Protocol Generate] KB query error:', kbError.message);
     }
 
-    // Build the AI prompt with KB context
-    const aiPrompt = `You are an expert functional medicine protocol specialist with deep knowledge of evidence-based supplement protocols, therapeutic dosages, and clinical timing recommendations. Generate a comprehensive, personalized wellness protocol.
-
-###############################################################
-#  CRITICAL RULE - READ THIS FIRST BEFORE ANYTHING ELSE       #
-###############################################################
-
-**EVIDENCE-BASED PROTOCOL GENERATION ONLY**
-
-You MUST ONLY create treatment modules for conditions that are EXPLICITLY CONFIRMED in the LABORATORY RESULTS section below.
-
-ABSOLUTE RULES:
-1. SCAN THE LAB RESULTS FIRST - Identify ONLY conditions with positive/abnormal findings
-2. DO NOT create modules for conditions not tested or not confirmed
-3. The Knowledge Base provides treatment approaches - but ONLY apply them to CONFIRMED conditions
-4. If a condition is mentioned in the KB but NOT in the client's labs, DO NOT include it
-
-SPECIFICALLY FORBIDDEN (unless lab-confirmed):
-- H. pylori eradication → ONLY if H. pylori is POSITIVE in lab results
-- Parasite protocols → ONLY if parasites are CONFIRMED in stool testing
-- SIBO treatment → ONLY if SIBO is CONFIRMED via breath test
-- Candida protocols → ONLY if Candida overgrowth is CONFIRMED
-- Any antimicrobial/eradication protocol → ONLY if pathogen is CONFIRMED
-
-If you violate these rules, the protocol will be REJECTED.
-
-###############################################################
-
-CLIENT INFORMATION:
-- Name: ${clientData.first_name} ${clientData.last_name}
-- Age: ${clientData.date_of_birth ? calculateAge(clientData.date_of_birth) : 'Unknown'}
-- Gender: ${clientData.gender || 'Not specified'}
-- Medical History: ${clientData.medical_history || 'None provided'}
-- Current Medications: ${clientData.current_medications || 'None listed'}
-- Allergies: ${clientData.allergies || 'None listed'}
-
-SELECTED PROTOCOL TEMPLATES: ${selectedTemplateNames || 'None - custom protocol'}
-
-${labsContent ? `LABORATORY RESULTS (SOURCE OF TRUTH FOR CONDITIONS):
-*** ONLY create treatment modules for conditions CONFIRMED in these results ***
-The following lab results are from the client's medical records:
-
-${labsContent}
-` : `NO LABORATORY RESULTS PROVIDED:
-*** Without lab confirmation, focus ONLY on general wellness, lifestyle, and the user's specific request. DO NOT assume any infections, pathogens, or specific conditions exist. ***
-`}
-
-${formsContent ? `INTAKE FORMS & QUESTIONNAIRES:\nThe client has submitted the following health assessments:\n\n${formsContent}\n` : ''}
-
-${notesContent ? `CLINICAL NOTES:\nThe following notes have been documented for this client:\n\n${notesContent}\n` : ''}
-
-${kbContext ? `
-=== KNOWLEDGE BASE PROTOCOLS (REFERENCE ONLY - APPLY TO CONFIRMED CONDITIONS) ===
-The following are treatment protocols from the ExpandHealth knowledge base.
-*** IMPORTANT: Only apply these protocols to conditions that are CONFIRMED in the LABORATORY RESULTS above. ***
-*** If a protocol targets a condition not in the labs, DO NOT include it. ***
-
-${kbContext}
-
-Use these protocols for dosages and approaches, but ONLY for lab-confirmed conditions.
-` : ''}
-
-USER REQUEST: ${prompt}
-
-CRITICAL INSTRUCTIONS:
-1. First, identify ONLY the conditions that are CONFIRMED in the laboratory results
-2. Create treatment modules ONLY for those confirmed conditions
-3. If Knowledge Base content is provided, use it for dosages and approaches for CONFIRMED conditions only
-4. Reference specific protocols by name from the KB when applicable
-5. The protocol should be specifically tailored to address confirmed abnormal lab values and documented symptoms
-
-IMPORTANT REQUIREMENTS:
-1. For ALL supplements, you MUST include specific therapeutic dosages (e.g., "5g", "500mg", "10 billion CFU")
-2. For ALL supplements, you MUST include precise timing (e.g., "With breakfast", "30 min before bed", "Between meals on empty stomach")
-3. Include clinical notes explaining WHY each supplement is recommended and any special instructions
-
-*** CLINIC MODALITIES - ABSOLUTELY REQUIRED (DO NOT SKIP) ***
-ExpandHealth is a clinic that offers IN-PERSON therapeutic modalities. EVERY protocol MUST include a "Clinic Treatments" module as the LAST module.
-
-YOU MUST ALWAYS include AT LEAST 3-4 of these clinic treatments in EVERY protocol:
-1. HBOT (Hyperbaric Oxygen Therapy) - 60-90 min sessions, 2x/week for tissue healing, brain health, recovery
-2. Red Light Therapy / Photobiomodulation - 15-20 min sessions, 3x/week for cellular energy, skin health, pain
-3. Cold Plunge / Cryotherapy - 3-5 min sessions, 2-3x/week for inflammation, recovery, metabolic health
-4. IV Therapy - NAD+, glutathione, vitamin C, Myers cocktail - weekly infusions for nutrient delivery
-5. Infrared Sauna - 30-45 min sessions, 2-3x/week for detoxification, cardiovascular health
-6. PEMF Therapy - 20-30 min sessions for circulation, cellular energy, pain support
-
-For each clinic modality, ALWAYS include:
-- Name of the treatment
-- Specific frequency (e.g., "2x per week")
-- Duration per session (e.g., "60 minutes")
-- Clinical notes explaining WHY this treatment benefits this specific client
-
-FAILURE TO INCLUDE A "Clinic Treatments" MODULE WILL MAKE THIS PROTOCOL INCOMPLETE.
-
-Generate a detailed protocol with this EXACT JSON structure:
-{
-  "title": "Protocol title",
-  "summary": "Brief 2-3 sentence summary of protocol goals and expected outcomes",
-  "duration_weeks": 8,
-  "modules": [
-    {
-      "name": "Gut Healing Supplements",
-      "description": "Targeted supplements to repair intestinal lining and restore gut health",
-      "goal": "Heal leaky gut, reduce inflammation, restore microbiome balance",
-      "items": [
-        {
-          "name": "L-Glutamine",
-          "dosage": "5g powder",
-          "timing": "Twice daily - morning on empty stomach and before bed",
-          "notes": "Primary amino acid for intestinal cell repair. Mix in water. Start with 2.5g and increase over 1 week."
-        }
-      ]
-    },
-    {
-      "name": "Sleep Optimization Supplements",
-      "description": "Natural compounds to improve sleep quality and duration",
-      "goal": "Improve sleep onset, increase deep sleep phases, reduce night waking",
-      "items": [
-        {
-          "name": "Magnesium Glycinate",
-          "dosage": "400mg",
-          "timing": "30-60 minutes before bed",
-          "notes": "Glycinate form has superior absorption and calming effect. May cause loose stools initially."
-        }
-      ]
-    },
-    {
-      "name": "Diet & Nutrition",
-      "description": "Dietary modifications to support healing",
-      "goal": "Reduce inflammatory triggers, support gut repair",
-      "items": [
-        {
-          "name": "Eliminate inflammatory foods",
-          "description": "Remove gluten, dairy, refined sugar, and processed foods for protocol duration",
-          "duration": "Full protocol duration",
-          "notes": "Keep food diary to track reactions when reintroducing foods later"
-        }
-      ]
-    },
-    {
-      "name": "Lifestyle Modifications",
-      "description": "Daily habits to enhance protocol effectiveness",
-      "goal": "Optimize rest, reduce stress, support natural healing",
-      "items": [
-        {
-          "name": "Sleep hygiene routine",
-          "description": "Consistent sleep/wake times, no screens 1hr before bed, cool dark room",
-          "frequency": "Daily",
-          "notes": "This amplifies supplement effectiveness significantly"
-        }
-      ]
-    },
-    {
-      "name": "Clinic Treatments",
-      "description": "In-clinic therapeutic modalities to accelerate healing",
-      "goal": "Enhance protocol outcomes through advanced therapies",
-      "items": [
-        {
-          "name": "HBOT (Hyperbaric Oxygen Therapy)",
-          "frequency": "2x per week",
-          "duration": "60 minutes at 1.5 ATA",
-          "notes": "Increases oxygen delivery to tissues, supports mitochondrial function. Recommended for 10-20 sessions."
-        },
-        {
-          "name": "Red Light Therapy",
-          "frequency": "3x per week",
-          "duration": "15-20 minutes",
-          "notes": "Near-infrared and red light for cellular energy (ATP) production. Target treatment areas based on symptoms."
-        },
-        {
-          "name": "IV Therapy - NAD+",
-          "frequency": "Weekly for 4 weeks, then monthly",
-          "duration": "2-4 hours infusion",
-          "notes": "Supports cellular energy, brain function, and anti-aging. Start with 250mg and titrate up."
-        }
-      ]
-    }
-  ],
-  "precautions": ["Specific precautions based on client's medications and conditions"],
-  "followUp": "Recommended follow-up timeline"
-}
-
-SUPPLEMENT DOSAGE GUIDELINES TO FOLLOW:
-- L-Glutamine: 5-10g/day for gut healing
-- Probiotics: 25-100 billion CFU for therapeutic effect
-- Digestive Enzymes: Full spectrum with each meal
-- Zinc Carnosine: 75-150mg/day for gut lining
-- Omega-3 Fish Oil: 2-4g EPA/DHA combined
-- Vitamin D3: 2000-5000 IU based on levels, always with K2
-- Magnesium (any form): 300-500mg
-- B-Complex: Methylated forms preferred
-- Vitamin C: 1-3g/day in divided doses
-- Ashwagandha: 300-600mg standardized extract
-- Berberine: 500mg 2-3x daily with meals
-- Curcumin: 500-1000mg with piperine or liposomal form
-
-Return ONLY valid JSON. No markdown, no code blocks, no explanation outside the JSON.`;
+    // Build the AI prompt using Clinical Protocol Engine
+    const aiPrompt = generateClinicalProtocolPrompt({
+      clientData,
+      labsContent,
+      formsContent,
+      notesContent,
+      kbContext,
+      userPrompt: prompt
+    });
 
     console.log('[Protocol Generate] Calling Claude API...');
 
@@ -1275,184 +1089,111 @@ Return ONLY valid JSON. No markdown, no code blocks, no explanation outside the 
       }
     } catch (parseError) {
       console.error('[Protocol Generate] Failed to parse response:', parseError.message);
-      // Return a comprehensive fallback structure with clinical dosages
-      const isGutProtocol = templates.includes('gut') || prompt.toLowerCase().includes('gut');
-      const isSleepProtocol = templates.includes('sleep') || prompt.toLowerCase().includes('sleep') || prompt.toLowerCase().includes('fatigue');
-
-      protocolData = {
-        title: `${selectedTemplateNames || 'Comprehensive Wellness'} Protocol for ${clientData.first_name}`,
-        summary: `Personalized protocol addressing ${prompt}. This protocol combines targeted supplementation, dietary modifications, and lifestyle changes for optimal results.`,
-        duration_weeks: 8,
-        modules: [],
-        precautions: ['Consult with healthcare provider before starting', 'Start supplements one at a time to monitor tolerance', 'Discontinue if adverse reactions occur'],
-        followUp: 'Follow up in 4 weeks to assess progress and adjust protocol as needed'
-      };
-
-      // Add Gut Healing Supplements if relevant
-      if (isGutProtocol) {
-        protocolData.modules.push({
-          name: 'Gut Healing Supplements',
-          description: 'Targeted supplements to repair intestinal lining and restore gut health',
-          goal: 'Heal intestinal lining, reduce inflammation, restore healthy microbiome',
-          items: [
-            { name: 'L-Glutamine', dosage: '5g powder', timing: 'Twice daily - morning on empty stomach and before bed', notes: 'Primary amino acid for intestinal cell repair. Mix in water. Start with 2.5g and increase over 1 week.' },
-            { name: 'Multi-Strain Probiotic', dosage: '50 billion CFU', timing: 'Morning with breakfast', notes: 'Look for strains including Lactobacillus and Bifidobacterium. Refrigerate after opening.' },
-            { name: 'Digestive Enzymes', dosage: 'Full spectrum blend', timing: 'With each main meal', notes: 'Take at beginning of meal. Should include protease, lipase, and amylase.' },
-            { name: 'Zinc Carnosine', dosage: '75mg', timing: 'Twice daily between meals', notes: 'Specifically supports gastric and intestinal lining repair.' },
-            { name: 'Omega-3 Fish Oil', dosage: '2g EPA/DHA', timing: 'With meals (split dose)', notes: 'Anti-inflammatory. Choose molecularly distilled, third-party tested brand.' },
-            { name: 'Vitamin D3 with K2', dosage: '5000 IU D3 / 100mcg K2', timing: 'Morning with fatty meal', notes: 'Essential for gut immune function. K2 ensures proper calcium metabolism.' }
-          ]
-        });
-      }
-
-      // Add Sleep Supplements if relevant
-      if (isSleepProtocol) {
-        protocolData.modules.push({
-          name: 'Sleep & Energy Supplements',
-          description: 'Natural compounds to optimize sleep quality and restore energy',
-          goal: 'Improve sleep onset, increase deep sleep, reduce daytime fatigue',
-          items: [
-            { name: 'Magnesium Glycinate', dosage: '400mg', timing: '30-60 minutes before bed', notes: 'Glycinate form is highly absorbable and has calming effect. May cause loose stools initially.' },
-            { name: 'Ashwagandha', dosage: '300mg (KSM-66 extract)', timing: 'Evening with dinner', notes: 'Adaptogen that reduces cortisol and supports adrenal function. Take for 4-8 weeks continuously.' },
-            { name: 'L-Theanine', dosage: '200mg', timing: 'Before bed or during stressful periods', notes: 'Promotes relaxation without sedation. Can be combined with magnesium.' },
-            { name: 'B-Complex (Methylated)', dosage: 'Full spectrum', timing: 'Morning with breakfast', notes: 'Essential for energy production. Methylated forms (methylfolate, methylcobalamin) are better absorbed.' },
-            { name: 'CoQ10 (Ubiquinol)', dosage: '200mg', timing: 'Morning with fatty breakfast', notes: 'Mitochondrial support for cellular energy. Ubiquinol form is active and better absorbed.' }
-          ]
-        });
-      }
-
-      // Add Diet module
-      protocolData.modules.push({
-        name: 'Diet & Nutrition',
-        description: 'Dietary modifications to support healing and reduce inflammation',
-        goal: 'Remove inflammatory triggers, nourish gut lining, stabilize blood sugar',
-        items: [
-          { name: 'Eliminate inflammatory foods', description: 'Remove gluten, dairy, refined sugar, alcohol, and processed foods for protocol duration', notes: 'Keep food diary to track symptoms and reactions' },
-          { name: 'Increase fiber intake', description: 'Add 25-35g fiber daily from vegetables, legumes, and low-sugar fruits', notes: 'Increase gradually to avoid digestive discomfort' },
-          { name: 'Bone broth daily', description: 'Consume 1-2 cups of quality bone broth', notes: 'Rich in collagen, glutamine, and minerals for gut healing' },
-          { name: 'Anti-inflammatory foods', description: 'Include fatty fish, olive oil, leafy greens, berries, turmeric', notes: 'These provide natural anti-inflammatory compounds' }
-        ]
-      });
-
-      // Add Lifestyle module
-      protocolData.modules.push({
-        name: 'Lifestyle Modifications',
-        description: 'Daily habits to enhance protocol effectiveness',
-        goal: 'Optimize circadian rhythm, reduce stress, support natural healing',
-        items: [
-          { name: 'Sleep hygiene routine', description: 'Consistent 10pm-6am sleep schedule, no screens 1hr before bed, cool dark room (65-68°F)', notes: 'Critical for gut repair which happens during sleep' },
-          { name: 'Morning sunlight exposure', description: '10-20 minutes of natural light within 1 hour of waking', notes: 'Sets circadian rhythm and improves cortisol pattern' },
-          { name: 'Stress management practice', description: '10-15 minutes daily of meditation, breathwork, or gentle yoga', notes: 'Stress directly impairs gut function via vagus nerve' },
-          { name: 'Gentle movement', description: '30 minutes daily walking or light exercise', notes: 'Avoid intense exercise initially as it can stress the body' }
-        ]
-      });
+      // Return a clinical fallback structure
+      protocolData = generateClinicalFallbackProtocol(clientData, prompt, templates, selectedTemplateNames);
     }
 
     // =====================================================
-    // POST-PROCESSING: Ensure Clinic Treatments module exists
+    // TRANSFORM: Convert new clinical structure for storage
     // =====================================================
-    // This is CRITICAL - every ExpandHealth protocol MUST include clinic modalities
-    const hasClinicTreatments = protocolData.modules?.some(m =>
-      m.name?.toLowerCase().includes('clinic') ||
-      m.name?.toLowerCase().includes('in-clinic') ||
-      m.name?.toLowerCase().includes('therapeutic modalities')
-    );
+    // The new structure has core_protocol, phased_expansion, clinic_treatments
+    // We need to transform it for both the legacy UI and the new clinical UI
 
-    if (!hasClinicTreatments && protocolData.modules) {
-      console.log('[Protocol Generate] Adding Clinic Treatments module (was missing from AI response)');
+    // Build modules array from new structure for backward compatibility
+    let modulesForDb = [];
 
-      // Determine which treatments to recommend based on client data and prompt
-      const clinicTreatments = [];
-      const promptLower = prompt.toLowerCase();
-      const medicalHistoryLower = (clientData.medical_history || '').toLowerCase();
+    // Check if this is the new clinical structure
+    if (protocolData.core_protocol) {
+      console.log('[Protocol Generate] Detected new Clinical Protocol Engine structure');
 
-      // HBOT - recommended for most protocols
-      clinicTreatments.push({
-        name: 'HBOT (Hyperbaric Oxygen Therapy)',
-        frequency: '2x per week',
-        duration: '60 minutes at 1.5 ATA',
-        notes: 'Increases oxygen delivery to tissues, supports mitochondrial function and cellular repair. Recommended for 10-20 sessions initial course.'
-      });
-
-      // Red Light Therapy - recommended for most protocols
-      clinicTreatments.push({
-        name: 'Red Light Therapy / Photobiomodulation',
-        frequency: '3x per week',
-        duration: '15-20 minutes',
-        notes: 'Near-infrared (850nm) and red (630nm) light for cellular energy (ATP) production, reduces inflammation, supports skin and tissue healing.'
-      });
-
-      // IV Therapy - based on needs
-      if (promptLower.includes('energy') || promptLower.includes('fatigue') || promptLower.includes('longevity') || promptLower.includes('detox')) {
-        clinicTreatments.push({
-          name: 'IV Therapy - NAD+',
-          frequency: 'Weekly for 4 weeks, then bi-weekly',
-          duration: '2-4 hours infusion',
-          notes: 'Supports cellular energy, brain function, DNA repair, and longevity pathways. Start with 250mg and titrate up to 500mg based on tolerance.'
-        });
-      } else {
-        clinicTreatments.push({
-          name: 'IV Therapy - Myers Cocktail',
-          frequency: 'Weekly for 4 weeks',
-          duration: '30-45 minutes infusion',
-          notes: 'Blend of B vitamins, vitamin C, magnesium, and minerals for enhanced nutrient absorption and energy support.'
+      // Convert core_protocol to a module
+      if (protocolData.core_protocol.items) {
+        modulesForDb.push({
+          name: protocolData.core_protocol.phase_name || 'Core Protocol - Weeks 1-2',
+          description: 'Minimum Viable Plan - Conservative start',
+          goal: 'Establish tolerance, reduce risk, prevent overactivation',
+          is_core_protocol: true,
+          duration_weeks: protocolData.core_protocol.duration_weeks || 2,
+          items: protocolData.core_protocol.items,
+          safety_gates: protocolData.core_protocol.safety_gates || [],
+          what_not_to_do: protocolData.core_protocol.what_not_to_do || []
         });
       }
 
-      // Infrared Sauna - for detox/metabolic
-      if (promptLower.includes('detox') || promptLower.includes('weight') || promptLower.includes('metabolic') || medicalHistoryLower.includes('toxin')) {
-        clinicTreatments.push({
-          name: 'Infrared Sauna',
-          frequency: '2-3x per week',
-          duration: '30-45 minutes',
-          notes: 'Full-spectrum infrared for deep tissue detoxification, improved circulation, and cardiovascular health. Stay well hydrated.'
+      // Convert phased_expansion to modules
+      if (protocolData.phased_expansion && Array.isArray(protocolData.phased_expansion)) {
+        protocolData.phased_expansion.forEach(phase => {
+          modulesForDb.push({
+            name: phase.phase_name || `Phase ${phase.phase_number}`,
+            description: `Starts week ${phase.start_week}`,
+            goal: phase.readiness_criteria?.join('; ') || 'Conditional expansion',
+            phase_number: phase.phase_number,
+            start_week: phase.start_week,
+            duration_weeks: phase.duration_weeks,
+            items: phase.items || [],
+            safety_gates: phase.safety_gates || [],
+            readiness_criteria: phase.readiness_criteria || [],
+            clinician_decision_points: phase.clinician_decision_points || []
+          });
         });
       }
 
-      // Cold Plunge - for inflammation/recovery
-      if (promptLower.includes('inflammation') || promptLower.includes('recovery') || promptLower.includes('immune') || promptLower.includes('stress')) {
-        clinicTreatments.push({
-          name: 'Cold Plunge / Cryotherapy',
-          frequency: '2-3x per week',
-          duration: '3-5 minutes at 50-55°F',
-          notes: 'Activates cold shock proteins, reduces inflammation, improves stress resilience and metabolic health. Build up tolerance gradually.'
+      // Convert clinic_treatments to a module
+      if (protocolData.clinic_treatments && protocolData.clinic_treatments.available_modalities) {
+        modulesForDb.push({
+          name: 'Clinic Treatments',
+          description: protocolData.clinic_treatments.phase || 'Available after core protocol stability',
+          goal: 'Advanced therapeutic support',
+          is_clinic_treatments: true,
+          readiness_criteria: protocolData.clinic_treatments.readiness_criteria || [],
+          items: protocolData.clinic_treatments.available_modalities.map(m => ({
+            name: m.name,
+            description: m.indication,
+            notes: m.notes,
+            contraindications: m.contraindications,
+            frequency: m.protocol
+          })),
+          note: protocolData.clinic_treatments.note
         });
       }
-
-      // PEMF - for pain/healing
-      if (promptLower.includes('pain') || promptLower.includes('healing') || promptLower.includes('injury') || promptLower.includes('bone')) {
-        clinicTreatments.push({
-          name: 'PEMF Therapy',
-          frequency: '2-3x per week',
-          duration: '20-30 minutes',
-          notes: 'Pulsed electromagnetic field therapy for enhanced circulation, cellular energy, bone healing, and pain support.'
-        });
-      }
-
-      // Add the Clinic Treatments module at the end
-      protocolData.modules.push({
-        name: 'Clinic Treatments',
-        description: 'In-clinic therapeutic modalities to accelerate healing and optimize protocol outcomes',
-        goal: 'Enhance cellular function, accelerate recovery, and provide advanced therapeutic support',
-        items: clinicTreatments
-      });
+    } else if (protocolData.modules) {
+      // Legacy structure - use as-is
+      modulesForDb = protocolData.modules;
     }
+
+    // Calculate total duration
+    let totalDurationWeeks = 8; // default
+    if (protocolData.core_protocol?.duration_weeks) {
+      totalDurationWeeks = protocolData.core_protocol.duration_weeks;
+      if (protocolData.phased_expansion) {
+        protocolData.phased_expansion.forEach(phase => {
+          const phaseEnd = (phase.start_week || 0) + (phase.duration_weeks || 4);
+          if (phaseEnd > totalDurationWeeks) {
+            totalDurationWeeks = phaseEnd;
+          }
+        });
+      }
+    } else if (protocolData.duration_weeks) {
+      totalDurationWeeks = protocolData.duration_weeks;
+    }
+
+    // Build comprehensive notes for storage
+    const notesContent = buildProtocolNotes(protocolData, prompt);
 
     // Save the protocol to the database
     // Actual DB Schema: id, client_id, template_id, start_date, end_date, status, modules, notes, ai_recommendations, created_by, created_at, updated_at
     try {
-      const durationWeeks = protocolData.duration_weeks || 8;
       const insertResult = await db.query(
         `INSERT INTO protocols (
           client_id, template_id, start_date, end_date, status, modules, notes, ai_recommendations, created_by
-        ) VALUES ($1, $2, CURRENT_DATE, CURRENT_DATE + interval '${durationWeeks} weeks', 'draft', $3, $4, $5, $6)
+        ) VALUES ($1, $2, CURRENT_DATE, CURRENT_DATE + interval '${totalDurationWeeks} weeks', 'draft', $3, $4, $5, $6)
         RETURNING *`,
         [
           client_id,
-          primaryTemplateId, // template_id from first selected template
-          JSON.stringify(protocolData.modules),
-          `Title: ${protocolData.title}\n\nPrompt: ${prompt}\n\nPrecautions: ${protocolData.precautions?.join(', ')}\n\nFollow-up: ${protocolData.followUp}`,
-          protocolData.summary,
+          primaryTemplateId,
+          JSON.stringify(modulesForDb),
+          notesContent,
+          JSON.stringify(protocolData), // Store full clinical structure as JSON
           req.user.id
         ]
       );
@@ -1757,8 +1498,8 @@ Return ONLY valid JSON. No markdown, no code blocks.`;
   }
 });
 
-// Helper function to calculate age
-function calculateAge(dateOfBirth) {
+// Helper function to calculate age (kept for backward compatibility, also imported from clinical-protocol-engine.js)
+function calculateAgeLocal(dateOfBirth) {
   const today = new Date();
   const birthDate = new Date(dateOfBirth);
   let age = today.getFullYear() - birthDate.getFullYear();
@@ -1767,6 +1508,172 @@ function calculateAge(dateOfBirth) {
     age--;
   }
   return age;
+}
+
+// Helper function to build protocol notes for database storage
+function buildProtocolNotes(protocolData, prompt) {
+  let notes = `Title: ${protocolData.title || 'Clinical Protocol'}\n\n`;
+  notes += `Prompt: ${prompt}\n\n`;
+
+  // Add integrated findings
+  if (protocolData.integrated_findings) {
+    notes += `=== INTEGRATED FINDINGS ===\n`;
+    if (protocolData.integrated_findings.primary_concerns?.length) {
+      notes += `Primary Concerns:\n${protocolData.integrated_findings.primary_concerns.map(c => `- ${c}`).join('\n')}\n\n`;
+    }
+    if (protocolData.integrated_findings.confirmed_conditions?.length) {
+      notes += `Confirmed Conditions:\n${protocolData.integrated_findings.confirmed_conditions.map(c => `- ${c}`).join('\n')}\n\n`;
+    }
+  }
+
+  // Add safety summary
+  if (protocolData.safety_summary) {
+    notes += `=== SAFETY SUMMARY ===\n`;
+    if (protocolData.safety_summary.absolute_contraindications?.length) {
+      notes += `Absolute Contraindications:\n${protocolData.safety_summary.absolute_contraindications.map(c => `- ${c}`).join('\n')}\n\n`;
+    }
+    if (protocolData.safety_summary.monitoring_requirements?.length) {
+      notes += `Monitoring Requirements:\n${protocolData.safety_summary.monitoring_requirements.map(c => `- ${c}`).join('\n')}\n\n`;
+    }
+  }
+
+  // Add precautions
+  if (protocolData.precautions?.length) {
+    notes += `Precautions: ${protocolData.precautions.join(', ')}\n\n`;
+  }
+
+  // Add follow-up
+  if (protocolData.followUp) {
+    notes += `Follow-up: ${protocolData.followUp}\n`;
+  }
+
+  return notes;
+}
+
+// Helper function to generate clinical fallback protocol
+function generateClinicalFallbackProtocol(clientData, prompt, templates, selectedTemplateNames) {
+  const promptLower = prompt.toLowerCase();
+
+  return {
+    title: `${selectedTemplateNames || 'Root-Cause Resolution'} Protocol for ${clientData.first_name}`,
+    summary: `Clinical protocol addressing ${prompt}. This protocol follows a phased approach with safety gates and conditional progression.`,
+
+    integrated_findings: {
+      primary_concerns: ['Assessment pending - based on clinical presentation'],
+      confirmed_conditions: [],
+      risk_factors: ['Individual response monitoring required']
+    },
+
+    core_protocol: {
+      phase_name: 'Core Protocol - Weeks 1-2 (Minimum Viable Plan)',
+      duration_weeks: 2,
+      max_actions: '3-5 actions maximum',
+      items: [
+        {
+          name: 'Hydration Protocol',
+          category: 'lifestyle',
+          dosage: 'Half body weight in oz water daily',
+          timing: 'Throughout day, more in morning',
+          rationale: 'Foundation for all metabolic processes',
+          contraindications: 'Adjust if kidney issues or fluid restrictions'
+        },
+        {
+          name: 'Sleep Optimization',
+          category: 'lifestyle',
+          dosage: '7-9 hours nightly',
+          timing: 'Consistent sleep/wake times within 30 min window',
+          rationale: 'Critical for healing and hormone regulation',
+          contraindications: 'Assess for sleep apnea if snoring/fatigue persists'
+        },
+        {
+          name: 'Bowel Function Assessment',
+          category: 'lifestyle',
+          dosage: 'Track daily bowel movements',
+          timing: 'Daily logging',
+          rationale: 'Must establish regularity before detox protocols',
+          contraindications: 'Seek help if <1 BM every 48 hours'
+        }
+      ],
+      safety_gates: [
+        'Do not progress to Phase 1 if bowel movements are less than daily',
+        'Hold if sleep quality drops significantly (>50% reduction)',
+        'Pause if new symptoms emerge'
+      ],
+      what_not_to_do: [
+        'No cold exposure (cold plunge, ice baths)',
+        'No high-dose supplements',
+        'No fasting protocols',
+        'No intensive exercise',
+        'No multiple binders simultaneously'
+      ]
+    },
+
+    phased_expansion: [
+      {
+        phase_name: 'Phase 1: Foundation Building',
+        phase_number: 1,
+        start_week: 3,
+        duration_weeks: 4,
+        readiness_criteria: [
+          'Daily bowel movements established',
+          'Sleep quality stable or improving',
+          'No adverse reactions during core protocol'
+        ],
+        items: [
+          {
+            name: 'Magnesium Glycinate',
+            category: 'supplement',
+            dosage: '300-400mg',
+            timing: 'Evening, 1 hour before bed',
+            rationale: 'Supports relaxation, bowel function, and cellular energy',
+            contraindications: 'Start low if loose stools present'
+          }
+        ],
+        safety_gates: ['Reduce dose if loose stools develop'],
+        clinician_decision_points: ['Assess need for additional support based on response']
+      }
+    ],
+
+    clinic_treatments: {
+      phase: 'Available after core protocol stability confirmed',
+      readiness_criteria: [
+        'Bowel function regular (daily, well-formed)',
+        'Sleep quality improved or stable',
+        'No active detox reactions'
+      ],
+      available_modalities: [
+        {
+          name: 'Infrared Sauna',
+          indication: 'Detox support, relaxation',
+          contraindications: 'Active constipation, dehydration, pregnancy',
+          protocol: '20-30 min, 2x/week initially',
+          notes: 'Start conservative, ensure hydration before/after'
+        },
+        {
+          name: 'Red Light Therapy',
+          indication: 'Cellular energy, tissue healing',
+          contraindications: 'Active cancer (consult oncologist)',
+          protocol: '15-20 min, 3x/week',
+          notes: 'Low risk, can start early if desired'
+        }
+      ],
+      note: 'Cold plunge/cryotherapy NOT recommended during initial phases'
+    },
+
+    safety_summary: {
+      absolute_contraindications: ['Active infection without treatment', 'Unstable medical conditions'],
+      relative_contraindications: ['Recent surgery', 'Pregnancy (consult OB)'],
+      monitoring_requirements: ['Track symptoms daily', 'Note any new reactions'],
+      emergency_criteria: ['Severe reaction', 'Breathing difficulty', 'Chest pain']
+    },
+
+    precautions: [
+      'Start slow - one change at a time',
+      'Monitor for any adverse reactions',
+      'Consult healthcare provider before starting'
+    ],
+    followUp: 'Review at 2 weeks to assess core protocol response before progression'
+  };
 }
 
 // ========================================

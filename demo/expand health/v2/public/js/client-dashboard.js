@@ -6583,53 +6583,78 @@ async function saveProtocolAsPDF(protocolId) {
       const data = await response.json();
       const protocol = data.protocol;
       const clientName = currentClient ? `${currentClient.first_name} ${currentClient.last_name}` : 'Client';
-      const fileName = `${(protocol.title || 'Protocol').replace(/[^a-z0-9]/gi, '_')}_${clientName.replace(/[^a-z0-9]/gi, '_')}.pdf`;
 
-      // Generate content from modules if available, otherwise use plain content
+      // Try to parse full clinical protocol data from ai_recommendations
+      let clinicalData = null;
+      if (protocol.ai_recommendations) {
+        try {
+          clinicalData = JSON.parse(protocol.ai_recommendations);
+        } catch (e) {
+          // Legacy format or not JSON
+        }
+      }
+
+      // Use clinical data title if available, otherwise fallback
+      const protocolTitle = clinicalData?.title || protocol.title || 'Health Protocol';
+
+      // Generate content HTML
       let contentHtml = '';
-      if (protocol.modules && Array.isArray(protocol.modules) && protocol.modules.length > 0) {
+      if (clinicalData && (clinicalData.core_protocol || clinicalData.integrated_findings)) {
+        // New clinical protocol structure
+        contentHtml = formatClinicalProtocolForPrint(clinicalData);
+      } else if (protocol.modules && Array.isArray(protocol.modules) && protocol.modules.length > 0) {
+        // Legacy module structure
         contentHtml = formatProtocolModulesForPrint(protocol.modules);
       } else if (protocol.content) {
-        contentHtml = `<div class="text-content">${escapeHtml(protocol.content).replace(/\n/g, '<br>').replace(/## /g, '</p><h2>').replace(/### /g, '</p><h3>').replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/^- /gm, '• ')}</div>`;
+        contentHtml = `<div class="text-content">${escapeHtml(protocol.content).replace(/\n/g, '<br>')}</div>`;
       } else {
         contentHtml = '<p>No content available</p>';
       }
 
-      // Create a hidden iframe for PDF generation
+      // Open print window
       const printWindow = window.open('', '_blank');
       printWindow.document.write(`
         <!DOCTYPE html>
         <html>
         <head>
-          <title>${escapeHtml(protocol.title || 'Protocol')} - ExpandHealth</title>
+          <title>${escapeHtml(protocolTitle)} - ExpandHealth</title>
           <style>
             @page { size: A4; margin: 20mm; }
-            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 40px; max-width: 800px; margin: 0 auto; color: #1f2937; }
+            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 40px; line-height: 1.6; max-width: 800px; margin: 0 auto; color: #1f2937; }
             h1 { color: #0F766E; margin-bottom: 8px; font-size: 24px; }
+            h2 { color: #0F766E; margin-top: 24px; font-size: 18px; border-bottom: 2px solid #0F766E; padding-bottom: 8px; }
+            h3 { color: #374151; margin-top: 16px; font-size: 16px; }
+            .header-logo { color: #0F766E; font-weight: bold; font-size: 18px; margin-bottom: 20px; }
             .meta { color: #6b7280; margin-bottom: 24px; font-size: 14px; }
-            h2 { color: #0F766E; border-bottom: 2px solid #0F766E; padding-bottom: 8px; margin-top: 32px; font-size: 18px; }
-            h3 { color: #374151; margin-top: 24px; font-size: 16px; }
-            .module { background: #F9FAFB; border-radius: 8px; padding: 20px; margin-bottom: 20px; page-break-inside: avoid; }
-            .module h3 { margin-top: 0; color: #1F2937; border-bottom: 1px solid #E5E7EB; padding-bottom: 8px; }
+            .summary { background: #FEF9C3; padding: 16px; border-radius: 8px; margin-bottom: 24px; }
+            .summary p { color: #713F12; margin: 0; }
+            .findings { background: #EFF6FF; padding: 16px; border-radius: 8px; margin-bottom: 24px; }
+            .findings h3 { margin-top: 0; color: #1E40AF; }
+            .phase { background: #F9FAFB; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #0F766E; page-break-inside: avoid; }
+            .phase h3 { margin-top: 0; color: #1F2937; }
+            .phase-subtitle { font-style: italic; color: #6B7280; margin: 4px 0 12px 0; font-size: 14px; }
+            .core-phase { border-left-color: #059669; background: #ECFDF5; }
             .item { margin-bottom: 16px; padding-left: 16px; border-left: 3px solid #0F766E; }
             .item h4 { margin: 0 0 4px 0; color: #1F2937; font-size: 15px; }
             .item p { margin: 0; color: #6B7280; font-size: 13px; }
-            .item-meta { margin-top: 6px; font-size: 12px; color: #9CA3AF; }
-            .item-meta span { margin-right: 16px; }
+            .item-meta { margin-top: 6px; font-size: 12px; color: #6B7280; }
+            .item-meta span { display: block; margin-bottom: 2px; }
             ul { padding-left: 20px; margin: 12px 0; }
             li { margin-bottom: 8px; }
+            .safety-box { background: #FEF2F2; padding: 16px; border-radius: 8px; margin-top: 16px; border-left: 4px solid #DC2626; }
+            .safety-box h4 { margin: 0 0 8px 0; color: #DC2626; font-size: 14px; text-transform: uppercase; }
+            .warning-box { background: #FEF3C7; padding: 12px; border-radius: 6px; margin-top: 12px; }
+            .warning-box h4 { margin: 0 0 8px 0; color: #92400E; font-size: 12px; text-transform: uppercase; }
+            .clinic-box { background: #F0FDFA; padding: 16px; border-radius: 8px; margin-top: 24px; border-left: 4px solid #0F766E; }
+            .clinic-box h3 { margin-top: 0; color: #0F766E; }
             .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb; color: #6b7280; font-size: 11px; }
-            .header-logo { color: #0F766E; font-weight: bold; font-size: 18px; margin-bottom: 20px; }
             .text-content { white-space: pre-wrap; line-height: 1.8; font-size: 14px; }
-            @media print {
-              body { padding: 0; }
-              .no-print { display: none; }
-            }
+            @media print { body { padding: 0; } .no-print { display: none; } }
           </style>
         </head>
         <body>
           <div class="header-logo">ExpandHealth</div>
-          <h1>${escapeHtml(protocol.title || 'Health Protocol')}</h1>
+          <h1>${escapeHtml(protocolTitle)}</h1>
           <div class="meta">
             <strong>Client:</strong> ${escapeHtml(clientName)}<br>
             <strong>Date:</strong> ${formatDate(protocol.created_at)}<br>
@@ -6640,21 +6665,15 @@ async function saveProtocolAsPDF(protocolId) {
             Generated by ExpandHealth • ${new Date().toLocaleDateString()}<br>
             This document is confidential and intended for the named recipient only.
           </div>
-          <script>
-            // Auto-trigger print dialog which allows "Save as PDF" option
-            window.onload = function() {
-              document.title = '${fileName.replace('.pdf', '').replace(/'/g, "\\'")}';
-              setTimeout(function() {
-                window.print();
-              }, 500);
-            };
-          </script>
         </body>
         </html>
       `);
       printWindow.document.close();
+      setTimeout(() => printWindow.print(), 500);
 
       showNotification('PDF ready - use "Save as PDF" in the print dialog', 'success');
+    } else {
+      showNotification('Failed to load protocol', 'error');
     }
   } catch (error) {
     console.error('Error generating PDF:', error);
@@ -6662,42 +6681,219 @@ async function saveProtocolAsPDF(protocolId) {
   }
 }
 
-// Helper function to format protocol modules for print/PDF
+// Format clinical protocol structure for print/PDF
+function formatClinicalProtocolForPrint(data) {
+  let html = '';
+
+  // Summary
+  if (data.summary) {
+    html += `<div class="summary"><p>${escapeHtml(data.summary)}</p></div>`;
+  }
+
+  // Integrated Findings
+  if (data.integrated_findings) {
+    html += `<div class="findings">`;
+    html += `<h3>Integrated Findings</h3>`;
+    if (data.integrated_findings.primary_concerns?.length) {
+      html += `<p><strong>Primary Concerns:</strong></p><ul>${data.integrated_findings.primary_concerns.map(c => `<li>${escapeHtml(c)}</li>`).join('')}</ul>`;
+    }
+    if (data.integrated_findings.confirmed_conditions?.length) {
+      html += `<p><strong>Confirmed Conditions:</strong></p><ul>${data.integrated_findings.confirmed_conditions.map(c => `<li>${escapeHtml(c)}</li>`).join('')}</ul>`;
+    }
+    html += `</div>`;
+  }
+
+  // Core Protocol
+  if (data.core_protocol) {
+    const core = data.core_protocol;
+    html += `<div class="phase core-phase">`;
+    html += `<h3>${escapeHtml(core.phase_name || 'Core Protocol - Weeks 1-2')}</h3>`;
+    html += `<p class="phase-subtitle">Minimum Viable Plan • Maximum ${core.max_actions || '3-5'} actions</p>`;
+
+    if (core.items?.length) {
+      core.items.forEach(item => {
+        html += formatProtocolItemForPrint(item);
+      });
+    }
+
+    // Safety Gates
+    if (core.safety_gates?.length) {
+      html += `<div class="safety-box">`;
+      html += `<h4>Safety Gates</h4>`;
+      html += `<ul>${core.safety_gates.map(g => `<li>${escapeHtml(g)}</li>`).join('')}</ul>`;
+      html += `</div>`;
+    }
+
+    // What Not To Do
+    if (core.what_not_to_do?.length) {
+      html += `<div class="warning-box">`;
+      html += `<h4>What NOT To Do Early</h4>`;
+      html += `<ul>${core.what_not_to_do.map(w => `<li>${escapeHtml(w)}</li>`).join('')}</ul>`;
+      html += `</div>`;
+    }
+
+    html += `</div>`;
+  }
+
+  // Phased Expansion
+  if (data.phased_expansion?.length) {
+    data.phased_expansion.forEach(phase => {
+      html += `<div class="phase">`;
+      html += `<h3>${escapeHtml(phase.phase_name || `Phase ${phase.phase_number}`)}</h3>`;
+      if (phase.start_week) {
+        html += `<p class="phase-subtitle">Starts Week ${phase.start_week} • Duration: ${phase.duration_weeks || 4} weeks</p>`;
+      }
+
+      // Readiness Criteria
+      if (phase.readiness_criteria?.length) {
+        html += `<p><strong>Readiness Criteria:</strong></p>`;
+        html += `<ul>${phase.readiness_criteria.map(c => `<li>${escapeHtml(c)}</li>`).join('')}</ul>`;
+      }
+
+      // Items
+      if (phase.items?.length) {
+        phase.items.forEach(item => {
+          html += formatProtocolItemForPrint(item);
+        });
+      }
+
+      // Safety Gates
+      if (phase.safety_gates?.length) {
+        html += `<div class="safety-box">`;
+        html += `<h4>Safety Gates</h4>`;
+        html += `<ul>${phase.safety_gates.map(g => `<li>${escapeHtml(g)}</li>`).join('')}</ul>`;
+        html += `</div>`;
+      }
+
+      html += `</div>`;
+    });
+  }
+
+  // Clinic Treatments
+  if (data.clinic_treatments) {
+    html += `<div class="clinic-box">`;
+    html += `<h3>Clinic Treatments</h3>`;
+    html += `<p class="phase-subtitle">${escapeHtml(data.clinic_treatments.phase || 'Available after core protocol stability')}</p>`;
+
+    if (data.clinic_treatments.readiness_criteria?.length) {
+      html += `<p><strong>Readiness Criteria:</strong></p>`;
+      html += `<ul>${data.clinic_treatments.readiness_criteria.map(c => `<li>${escapeHtml(c)}</li>`).join('')}</ul>`;
+    }
+
+    if (data.clinic_treatments.available_modalities?.length) {
+      data.clinic_treatments.available_modalities.forEach(mod => {
+        html += `<div class="item">`;
+        html += `<h4>${escapeHtml(mod.name)}</h4>`;
+        if (mod.indication) html += `<p><strong>Indication:</strong> ${escapeHtml(mod.indication)}</p>`;
+        if (mod.protocol) html += `<p><strong>Protocol:</strong> ${escapeHtml(mod.protocol)}</p>`;
+        if (mod.contraindications) html += `<p><strong>Contraindications:</strong> ${escapeHtml(mod.contraindications)}</p>`;
+        if (mod.notes) html += `<p>${escapeHtml(mod.notes)}</p>`;
+        html += `</div>`;
+      });
+    }
+
+    if (data.clinic_treatments.note) {
+      html += `<p style="margin-top: 12px; font-style: italic; color: #6B7280;">${escapeHtml(data.clinic_treatments.note)}</p>`;
+    }
+
+    html += `</div>`;
+  }
+
+  // Safety Summary
+  if (data.safety_summary) {
+    html += `<h2>Safety Summary</h2>`;
+    if (data.safety_summary.absolute_contraindications?.length) {
+      html += `<p><strong>Absolute Contraindications:</strong></p>`;
+      html += `<ul>${data.safety_summary.absolute_contraindications.map(c => `<li style="color: #DC2626;">${escapeHtml(c)}</li>`).join('')}</ul>`;
+    }
+    if (data.safety_summary.monitoring_requirements?.length) {
+      html += `<p><strong>Monitoring Requirements:</strong></p>`;
+      html += `<ul>${data.safety_summary.monitoring_requirements.map(m => `<li>${escapeHtml(m)}</li>`).join('')}</ul>`;
+    }
+  }
+
+  // Retest Schedule
+  if (data.retest_schedule?.length) {
+    html += `<h2>Retest Schedule</h2>`;
+    data.retest_schedule.forEach(test => {
+      html += `<div class="item">`;
+      html += `<h4>${escapeHtml(test.test)}</h4>`;
+      html += `<p><strong>Timing:</strong> ${escapeHtml(test.timing)}</p>`;
+      html += `<p><strong>Purpose:</strong> ${escapeHtml(test.purpose)}</p>`;
+      if (test.decision_tree) html += `<p><strong>Decision:</strong> ${escapeHtml(test.decision_tree)}</p>`;
+      html += `</div>`;
+    });
+  }
+
+  return html;
+}
+
+// Format a single protocol item for print
+function formatProtocolItemForPrint(item) {
+  const itemName = typeof item === 'string' ? item : (item.name || 'Item');
+  let html = `<div class="item">`;
+  html += `<h4>${escapeHtml(itemName)}</h4>`;
+
+  if (item.rationale) html += `<p>${escapeHtml(item.rationale)}</p>`;
+  if (item.description) html += `<p>${escapeHtml(item.description)}</p>`;
+
+  html += `<div class="item-meta">`;
+  if (item.dosage) html += `<span><strong>Dosage:</strong> ${escapeHtml(item.dosage)}</span>`;
+  if (item.timing) html += `<span><strong>Timing:</strong> ${escapeHtml(item.timing)}</span>`;
+  if (item.frequency) html += `<span><strong>Frequency:</strong> ${escapeHtml(item.frequency)}</span>`;
+  if (item.contraindications) html += `<span><strong>Contraindications:</strong> ${escapeHtml(item.contraindications)}</span>`;
+  if (item.notes) html += `<span><strong>Notes:</strong> ${escapeHtml(item.notes)}</span>`;
+  html += `</div>`;
+
+  html += `</div>`;
+  return html;
+}
+
+// Helper function to format legacy protocol modules for print/PDF
 function formatProtocolModulesForPrint(modules) {
   if (!modules || !Array.isArray(modules)) return '<p>No modules available</p>';
 
   return modules.map((module, index) => {
     const moduleName = module.name || `Module ${index + 1}`;
+    const isCore = module.is_core_protocol;
+    const isClinc = module.is_clinic_treatments;
 
-    let itemsHtml = '';
-    if (module.items && Array.isArray(module.items)) {
-      itemsHtml = module.items.map(item => {
-        const itemName = typeof item === 'string' ? item : (item.name || item.title || 'Item');
-        const itemDesc = typeof item === 'object' ? (item.description || '') : '';
-        const itemDosage = typeof item === 'object' && item.dosage ? item.dosage : '';
-        const itemTiming = typeof item === 'object' && item.timing ? item.timing : '';
+    let html = `<div class="phase ${isCore ? 'core-phase' : ''} ${isClinc ? 'clinic-box' : ''}">`;
+    html += `<h3>${escapeHtml(moduleName)}</h3>`;
 
-        return `
-          <div class="item">
-            <h4>${escapeHtml(itemName)}</h4>
-            ${itemDesc ? `<p>${escapeHtml(itemDesc)}</p>` : ''}
-            ${(itemDosage || itemTiming) ? `
-              <div class="item-meta">
-                ${itemDosage ? `<span><strong>Dosage:</strong> ${escapeHtml(itemDosage)}</span>` : ''}
-                ${itemTiming ? `<span><strong>Timing:</strong> ${escapeHtml(itemTiming)}</span>` : ''}
-              </div>
-            ` : ''}
-          </div>
-        `;
-      }).join('');
+    if (module.description) {
+      html += `<p class="phase-subtitle">${escapeHtml(module.description)}</p>`;
     }
 
-    return `
-      <div class="module">
-        <h3>${escapeHtml(moduleName)}</h3>
-        ${itemsHtml || '<p>No items in this module</p>'}
-      </div>
-    `;
+    if (module.goal) {
+      html += `<p><strong>Goal:</strong> ${escapeHtml(module.goal)}</p>`;
+    }
+
+    // Items
+    if (module.items?.length) {
+      module.items.forEach(item => {
+        html += formatProtocolItemForPrint(item);
+      });
+    }
+
+    // Safety Gates (new clinical format)
+    if (module.safety_gates?.length) {
+      html += `<div class="safety-box">`;
+      html += `<h4>Safety Gates</h4>`;
+      html += `<ul>${module.safety_gates.map(g => `<li>${escapeHtml(g)}</li>`).join('')}</ul>`;
+      html += `</div>`;
+    }
+
+    // What Not To Do (new clinical format)
+    if (module.what_not_to_do?.length) {
+      html += `<div class="warning-box">`;
+      html += `<h4>What NOT To Do</h4>`;
+      html += `<ul>${module.what_not_to_do.map(w => `<li>${escapeHtml(w)}</li>`).join('')}</ul>`;
+      html += `</div>`;
+    }
+
+    html += `</div>`;
+    return html;
   }).join('');
 }
 
