@@ -10301,8 +10301,8 @@ document.addEventListener('click', function(event) {
   }
 });
 
-// Save protocol as PDF
-async function saveProtocolAsPDF() {
+// Save protocol as PDF from editor view (uses generatedProtocolData)
+async function saveEditorProtocolAsPDF() {
   toggleSaveDropdown(); // Close dropdown
 
   if (!generatedProtocolData) {
@@ -11388,7 +11388,7 @@ window.execCommand = execCommand;
 window.insertTable = insertTable;
 window.exportProtocol = exportProtocol;
 window.toggleSaveDropdown = toggleSaveDropdown;
-window.saveProtocolAsPDF = saveProtocolAsPDF;
+window.saveEditorProtocolAsPDF = saveEditorProtocolAsPDF;
 window.shareWithClient = shareWithClient;
 window.closeShareModal = closeShareModal;
 window.shareViaEmail = shareViaEmail;
