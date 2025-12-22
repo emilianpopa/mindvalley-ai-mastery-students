@@ -26,7 +26,7 @@ if (process.env.GEMINI_API_KEY) {
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
-    fileSize: 10 * 1024 * 1024 // 10MB limit
+    fileSize: 50 * 1024 * 1024 // 50MB limit - lab reports can be large
   },
   fileFilter: (req, file, cb) => {
     if (file.mimetype === 'application/pdf') {
@@ -436,38 +436,6 @@ router.post('/:id/generate-summary', authenticateToken, async (req, res, next) =
       });
     }
 
-    let pdfText = '';
-    let extractedData = null;
-
-    // Try to extract text from PDF - first from database, then from file system
-    try {
-      const pdfParse = require('pdf-parse');
-      let dataBuffer;
-
-      // First try to get PDF from database
-      if (lab.file_data) {
-        dataBuffer = lab.file_data;
-        console.log('Using PDF data from database');
-      } else {
-        // Fallback to file system for old uploads
-        const filePath = path.join(__dirname, '..', lab.file_url);
-        dataBuffer = await fs.readFile(filePath);
-        console.log('Using PDF data from file system');
-      }
-
-      const pdfData = await pdfParse(dataBuffer);
-      pdfText = pdfData.text;
-      console.log(`Extracted ${pdfText.length} characters from PDF`);
-    } catch (pdfError) {
-      console.log('Could not extract PDF text:', pdfError.message);
-      // Check if we have extracted_data in the database
-      if (lab.extracted_data) {
-        extractedData = typeof lab.extracted_data === 'string'
-          ? JSON.parse(lab.extracted_data)
-          : lab.extracted_data;
-      }
-    }
-
     // Build context for the AI
     const clientInfo = lab.first_name ? `
 Patient: ${lab.first_name} ${lab.last_name}
@@ -477,37 +445,28 @@ Medical History: ${lab.medical_history || 'Not provided'}
 Current Medications: ${lab.current_medications || 'Not provided'}
 ` : '';
 
-    // Build the prompt
-    let prompt = `You are a clinical laboratory analyst assistant for a longevity and functional medicine practice. Analyze the following lab results and provide a comprehensive clinical summary.
+    // Build the analysis prompt
+    const analysisPrompt = `You are a clinical laboratory analyst assistant for a longevity and functional medicine practice. Analyze the provided lab report PDF and provide a comprehensive clinical summary.
 
 ${clientInfo}
 Lab Type: ${lab.lab_type || 'General'}
 Test Date: ${lab.test_date ? new Date(lab.test_date).toLocaleDateString() : 'Not specified'}
 Lab Title: ${lab.title || 'Lab Result'}
-`;
 
-    if (pdfText) {
-      prompt += `\n\nLab Report Text:\n${pdfText.substring(0, 15000)}\n`;
-    } else if (extractedData && extractedData.markers) {
-      prompt += `\n\nExtracted Lab Markers:\n`;
-      extractedData.markers.forEach(m => {
-        prompt += `- ${m.name}: ${m.value} ${m.unit || ''} (Reference: ${m.range || 'N/A'}) ${m.flag ? `[${m.flag.toUpperCase()}]` : ''}\n`;
-      });
-      if (extractedData.interpretation) {
-        prompt += `\nPrevious Interpretation: ${extractedData.interpretation}\n`;
-      }
-    } else {
-      prompt += `\n\nNote: No lab data text could be extracted. Please provide a general analysis based on the lab type.\n`;
-    }
+IMPORTANT: Carefully examine ALL pages of the PDF document. Extract and analyze ALL test values, biomarkers, and results shown in the report. For GI-MAP, stool tests, or microbiome tests, pay special attention to:
+- Pathogen detection results (bacterial, viral, parasitic)
+- Commensal bacteria levels
+- Inflammatory markers (calprotectin, zonulin, etc.)
+- Digestive function markers
+- Immune markers
 
-    prompt += `
 Please provide your analysis in the following format:
 
 **Clinical Summary**
 [2-3 sentence overview of the key findings]
 
 **Key Findings**
-[List the most significant abnormal or notable values with clinical context]
+[List ALL significant abnormal or notable values with their actual measured values and reference ranges. Be specific with numbers.]
 
 **Clinical Implications**
 [What do these results suggest about the patient's health?]
@@ -520,10 +479,97 @@ Please provide your analysis in the following format:
 
 Keep the analysis professional, clinically relevant, and actionable for a healthcare practitioner.`;
 
-    // Call Gemini API
-    console.log('Calling Gemini API for lab summary...');
-    const result = await geminiModel.generateContent(prompt);
-    const summary = result.response.text();
+    let summary = '';
+
+    // Try to use PDF directly with Gemini's multimodal capability
+    let pdfBuffer = null;
+
+    // Get PDF data from database or file system
+    if (lab.file_data) {
+      pdfBuffer = lab.file_data;
+      console.log('Using PDF data from database for multimodal analysis');
+    } else if (lab.file_url) {
+      try {
+        const filePath = path.join(__dirname, '..', lab.file_url);
+        pdfBuffer = await fs.readFile(filePath);
+        console.log('Using PDF data from file system for multimodal analysis');
+      } catch (fileError) {
+        console.log('Could not read PDF from file system:', fileError.message);
+      }
+    }
+
+    if (pdfBuffer) {
+      // Use Gemini's multimodal capability to analyze PDF directly
+      console.log('Calling Gemini API with PDF for multimodal analysis...');
+
+      try {
+        // Convert buffer to base64 for inline data
+        const pdfBase64 = Buffer.from(pdfBuffer).toString('base64');
+
+        const result = await geminiModel.generateContent([
+          {
+            inlineData: {
+              mimeType: 'application/pdf',
+              data: pdfBase64
+            }
+          },
+          { text: analysisPrompt }
+        ]);
+
+        summary = result.response.text();
+        console.log('Gemini multimodal response received, length:', summary.length);
+      } catch (multimodalError) {
+        console.error('Multimodal PDF analysis failed:', multimodalError.message);
+
+        // Fallback to text extraction if multimodal fails
+        console.log('Falling back to text extraction...');
+        let pdfText = '';
+
+        try {
+          const pdfParse = require('pdf-parse');
+          const pdfData = await pdfParse(pdfBuffer);
+          pdfText = pdfData.text;
+          console.log(`Extracted ${pdfText.length} characters from PDF`);
+        } catch (pdfError) {
+          console.log('Text extraction also failed:', pdfError.message);
+        }
+
+        // Build fallback prompt with extracted text
+        let fallbackPrompt = analysisPrompt;
+        if (pdfText) {
+          fallbackPrompt += `\n\nLab Report Text:\n${pdfText.substring(0, 15000)}\n`;
+        } else {
+          fallbackPrompt += `\n\nNote: Could not extract lab data. Please provide a general analysis based on the lab type.\n`;
+        }
+
+        const fallbackResult = await geminiModel.generateContent(fallbackPrompt);
+        summary = fallbackResult.response.text();
+        console.log('Fallback text analysis completed, length:', summary.length);
+      }
+    } else {
+      // No PDF available, use any extracted data we have
+      let fallbackPrompt = analysisPrompt;
+
+      if (lab.extracted_data) {
+        const extractedData = typeof lab.extracted_data === 'string'
+          ? JSON.parse(lab.extracted_data)
+          : lab.extracted_data;
+
+        if (extractedData.markers) {
+          fallbackPrompt += `\n\nExtracted Lab Markers:\n`;
+          extractedData.markers.forEach(m => {
+            fallbackPrompt += `- ${m.name}: ${m.value} ${m.unit || ''} (Reference: ${m.range || 'N/A'}) ${m.flag ? `[${m.flag.toUpperCase()}]` : ''}\n`;
+          });
+        }
+      } else {
+        fallbackPrompt += `\n\nNote: No lab data available. Please provide a general analysis based on the lab type.\n`;
+      }
+
+      console.log('Calling Gemini API with text-only analysis...');
+      const result = await geminiModel.generateContent(fallbackPrompt);
+      summary = result.response.text();
+      console.log('Text-only analysis completed, length:', summary.length);
+    }
     console.log('Gemini response received, length:', summary.length);
 
     // Update lab with summary

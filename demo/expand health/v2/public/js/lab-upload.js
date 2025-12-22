@@ -107,10 +107,10 @@ function handleFileSelect(file) {
     return;
   }
 
-  // Validate file size (10MB)
-  const maxSize = 10 * 1024 * 1024;
+  // Validate file size (50MB)
+  const maxSize = 50 * 1024 * 1024;
   if (file.size > maxSize) {
-    showAlert('File size exceeds 10MB limit');
+    showAlert('File size exceeds 50MB limit');
     return;
   }
 
