@@ -6849,18 +6849,28 @@ async function saveProtocolAsPDF(protocolId) {
         protocolTitle = protocolTitle + ' Protocol';
       }
 
-      // Generate content HTML
+      // Generate content HTML - Protocol PDF should use modules, NOT engagement plan data
       let contentHtml = '';
-      if (clinicalData && (clinicalData.core_protocol || clinicalData.integrated_findings)) {
-        // New clinical protocol structure
+
+      // First priority: Use protocol modules (the actual clinical protocol data)
+      if (protocol.modules && Array.isArray(protocol.modules) && protocol.modules.length > 0) {
+        // Parse modules if it's a string
+        let modules = protocol.modules;
+        if (typeof modules === 'string') {
+          try {
+            modules = JSON.parse(modules);
+          } catch (e) {
+            console.error('Error parsing modules:', e);
+          }
+        }
+        contentHtml = formatProtocolModulesForPrint(modules);
+      } else if (clinicalData && (clinicalData.core_protocol || clinicalData.integrated_findings)) {
+        // New clinical protocol structure from ai_recommendations
         contentHtml = formatClinicalProtocolForPrint(clinicalData);
-      } else if (protocol.modules && Array.isArray(protocol.modules) && protocol.modules.length > 0) {
-        // Legacy module structure
-        contentHtml = formatProtocolModulesForPrint(protocol.modules);
       } else if (protocol.content) {
         contentHtml = `<div class="text-content">${escapeHtml(protocol.content).replace(/\n/g, '<br>')}</div>`;
       } else {
-        contentHtml = '<p>No content available</p>';
+        contentHtml = '<p>No protocol content available</p>';
       }
 
       // Open print window
