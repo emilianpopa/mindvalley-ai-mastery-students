@@ -315,6 +315,8 @@ router.get('/stats/summary', authenticateToken, async (req, res, next) => {
 });
 
 // Get client health metrics (biological age, vitals, wearable data)
+// This endpoint pulls REAL data from database sources (labs, forms, notes)
+// Returns null/empty values when no data exists
 router.get('/:id/health-metrics', authenticateToken, async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -331,7 +333,7 @@ router.get('/:id/health-metrics', authenticateToken, async (req, res, next) => {
 
     const client = clientResult.rows[0];
 
-    // Calculate chronological age
+    // Calculate chronological age from date_of_birth
     let chronologicalAge = null;
     if (client.date_of_birth) {
       const birthDate = new Date(client.date_of_birth);
@@ -339,58 +341,200 @@ router.get('/:id/health-metrics', authenticateToken, async (req, res, next) => {
       chronologicalAge = Math.floor((today - birthDate) / (365.25 * 24 * 60 * 60 * 1000));
     }
 
-    // For now, return mock data that can be dynamically replaced
-    // In production, this would pull from:
-    // - Lab results (blood tests, biomarkers)
-    // - Wearable integrations (Oura, Whoop, Apple Health)
-    // - Form submissions (intake forms with vitals)
-    // - AI-calculated biological age from biomarkers
+    // ============================================
+    // PULL REAL VITALS FROM FORM SUBMISSIONS
+    // ============================================
+    let vitals = null;
+    try {
+      // Look for form submissions with vitals data (intake forms, health assessments)
+      const formVitalsResult = await db.query(`
+        SELECT fs.responses, fs.submitted_at, ft.name as form_name
+        FROM form_submissions fs
+        JOIN form_templates ft ON fs.form_id = ft.id
+        WHERE fs.client_id = $1
+        AND fs.responses IS NOT NULL
+        ORDER BY fs.submitted_at DESC
+        LIMIT 5
+      `, [id]);
 
-    // Mock biological age calculation (4 years younger than chronological)
-    const biologicalAge = chronologicalAge ? chronologicalAge - 4 : null;
+      // Search through form responses for vitals data
+      for (const submission of formVitalsResult.rows) {
+        const responses = typeof submission.responses === 'string'
+          ? JSON.parse(submission.responses)
+          : submission.responses;
 
-    // Mock vitals data - in production would come from latest form submission or lab
-    const vitals = {
-      weight: { value: 82, unit: 'kg', lastUpdated: '2025-05-31' },
-      height: { value: 178, unit: 'cm', lastUpdated: '2025-05-31' },
-      bmi: { value: 25.9, lastUpdated: '2025-05-31' },
-      bloodPressure: { systolic: 128, diastolic: 82, unit: 'mmHg', lastUpdated: '2025-05-31' }
-    };
+        // Look for weight, height, blood pressure in form responses
+        // Forms may have different field names, so we check common patterns
+        const weight = extractVitalFromResponses(responses, ['weight', 'body_weight', 'current_weight']);
+        const height = extractVitalFromResponses(responses, ['height', 'body_height', 'current_height']);
+        const systolic = extractVitalFromResponses(responses, ['systolic', 'blood_pressure_systolic', 'bp_systolic']);
+        const diastolic = extractVitalFromResponses(responses, ['diastolic', 'blood_pressure_diastolic', 'bp_diastolic']);
 
-    // Mock wearable data - in production would come from wearable integrations
-    const wearableVitals = {
-      vo2Max: { value: 42.5, unit: 'ml/kg/min', trend: 2.3, lastUpdated: '2025-06-01' },
-      restingHeartRate: { value: 58, unit: 'bpm', trend: -3, lastUpdated: '2025-06-01' },
-      hrv: { value: 45, unit: 'ms', trend: 8, lastUpdated: '2025-06-01' },
-      source: 'Oura Ring',
-      lastSync: '2h ago'
-    };
+        if (weight || height || systolic) {
+          vitals = {
+            weight: weight ? { value: parseFloat(weight), unit: 'kg', lastUpdated: submission.submitted_at } : null,
+            height: height ? { value: parseFloat(height), unit: 'cm', lastUpdated: submission.submitted_at } : null,
+            bmi: (weight && height) ? { value: calculateBMI(parseFloat(weight), parseFloat(height)), lastUpdated: submission.submitted_at } : null,
+            bloodPressure: (systolic && diastolic) ? { systolic: parseInt(systolic), diastolic: parseInt(diastolic), unit: 'mmHg', lastUpdated: submission.submitted_at } : null,
+            source: submission.form_name
+          };
+          break; // Use the most recent form with vitals data
+        }
+      }
+    } catch (vitalsError) {
+      console.error('Error fetching vitals from forms:', vitalsError);
+    }
 
-    // Health scores - in production would be calculated from all data sources
-    const healthScores = {
-      sleep: { score: 48, status: 'warning' },
-      diet: { score: 90, status: 'good' },
-      stress: { score: 42, status: 'poor' },
-      activity: { score: 89, status: 'good' }
-    };
+    // ============================================
+    // PULL BIOMARKERS FROM LAB RESULTS
+    // ============================================
+    let biologicalAgeData = null;
+    let labBiomarkers = [];
+    try {
+      const labsResult = await db.query(`
+        SELECT id, title, lab_type, test_date, extracted_data, ai_summary
+        FROM labs
+        WHERE client_id = $1
+        ORDER BY test_date DESC NULLS LAST, created_at DESC
+        LIMIT 10
+      `, [id]);
 
+      // Extract biomarkers from lab results
+      for (const lab of labsResult.rows) {
+        const extractedData = typeof lab.extracted_data === 'string'
+          ? JSON.parse(lab.extracted_data)
+          : lab.extracted_data;
+
+        if (extractedData && extractedData.markers) {
+          labBiomarkers = labBiomarkers.concat(extractedData.markers.map(m => ({
+            ...m,
+            labTitle: lab.title,
+            testDate: lab.test_date
+          })));
+        }
+      }
+
+      // Biological age would ideally be calculated from multiple biomarkers
+      // For now, only show if we have real lab data
+      if (labBiomarkers.length > 0 && chronologicalAge) {
+        // Note: Real biological age calculation would use an algorithm based on
+        // multiple biomarkers (HbA1c, lipid panel, inflammatory markers, etc.)
+        // For now, we'll mark it as not yet calculated
+        biologicalAgeData = {
+          value: null, // Not calculated without proper algorithm
+          chronologicalAge: chronologicalAge,
+          difference: null,
+          lastUpdated: labBiomarkers[0]?.testDate || null,
+          note: 'Biological age calculation requires sufficient biomarker data'
+        };
+      } else if (chronologicalAge) {
+        biologicalAgeData = {
+          value: null,
+          chronologicalAge: chronologicalAge,
+          difference: null,
+          lastUpdated: null,
+          note: 'Upload lab results to calculate biological age'
+        };
+      }
+    } catch (labError) {
+      console.error('Error fetching lab biomarkers:', labError);
+    }
+
+    // ============================================
+    // WEARABLE DATA - Currently not integrated
+    // ============================================
+    // Wearable data would come from external integrations (Oura, Whoop, Apple Health)
+    // Set to null until wearable integration is implemented
+    const wearableVitals = null;
+
+    // ============================================
+    // HEALTH SCORES - Calculated from real data
+    // ============================================
+    // Health scores should be calculated from actual data points
+    // Set to null when no data exists to calculate from
+    let healthScores = null;
+
+    // Only calculate health scores if we have sufficient data
+    const hasFormData = vitals !== null;
+    const hasLabData = labBiomarkers.length > 0;
+    const hasNotesData = false; // Could check for clinical notes
+
+    if (hasFormData || hasLabData) {
+      // Get recent notes to assess for symptoms/issues
+      const notesResult = await db.query(`
+        SELECT content, note_type, created_at
+        FROM notes
+        WHERE client_id = $1
+        ORDER BY created_at DESC
+        LIMIT 10
+      `, [id]);
+
+      healthScores = {
+        sleep: null, // Would need sleep-related form questions or wearable data
+        diet: null,  // Would need nutrition assessment form
+        stress: null, // Would need stress assessment form or HRV data
+        activity: null, // Would need activity tracking or wearable data
+        dataAvailable: {
+          forms: hasFormData,
+          labs: hasLabData,
+          notes: notesResult.rows.length > 0,
+          wearables: false
+        }
+      };
+    }
+
+    // ============================================
+    // RESPONSE - Only return data that actually exists
+    // ============================================
     res.json({
       clientId: id,
       clientName: `${client.first_name} ${client.last_name}`,
-      biologicalAge: {
-        value: biologicalAge,
-        chronologicalAge: chronologicalAge,
-        difference: chronologicalAge && biologicalAge ? chronologicalAge - biologicalAge : null,
-        lastUpdated: '2025-05-31'
-      },
-      vitals,
-      wearableVitals,
-      healthScores
+      biologicalAge: biologicalAgeData,
+      vitals: vitals,
+      wearableVitals: wearableVitals,
+      healthScores: healthScores,
+      labBiomarkers: labBiomarkers.slice(0, 10), // Include top 10 recent biomarkers
+      dataLastUpdated: new Date().toISOString()
     });
 
   } catch (error) {
     next(error);
   }
 });
+
+// Helper function to extract vital values from form responses
+function extractVitalFromResponses(responses, fieldNames) {
+  if (!responses) return null;
+
+  // Check if responses is an array (common form structure)
+  if (Array.isArray(responses)) {
+    for (const response of responses) {
+      const fieldName = (response.field_name || response.fieldName || response.name || '').toLowerCase();
+      const value = response.value || response.answer;
+      if (fieldNames.some(fn => fieldName.includes(fn.toLowerCase())) && value) {
+        return value;
+      }
+    }
+  }
+
+  // Check if responses is an object with key-value pairs
+  if (typeof responses === 'object') {
+    for (const [key, value] of Object.entries(responses)) {
+      const keyLower = key.toLowerCase();
+      if (fieldNames.some(fn => keyLower.includes(fn.toLowerCase())) && value) {
+        return value;
+      }
+    }
+  }
+
+  return null;
+}
+
+// Helper function to calculate BMI
+function calculateBMI(weightKg, heightCm) {
+  if (!weightKg || !heightCm) return null;
+  const heightM = heightCm / 100;
+  return Math.round((weightKg / (heightM * heightM)) * 10) / 10;
+}
 
 module.exports = router;

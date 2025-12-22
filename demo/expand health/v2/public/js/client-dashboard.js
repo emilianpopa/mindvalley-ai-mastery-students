@@ -460,6 +460,10 @@ async function printEngagementPlanById(planId) {
 
 // ========== End Card Menu Functions ==========
 
+// Data refresh interval (in milliseconds)
+const DATA_REFRESH_INTERVAL = 60000; // Refresh every 60 seconds
+let refreshIntervalId = null;
+
 // Initialize dashboard
 document.addEventListener('DOMContentLoaded', () => {
   if (!clientId || clientId === 'new') {
@@ -472,7 +476,63 @@ document.addEventListener('DOMContentLoaded', () => {
   loadClientActivity(); // Load real activity data from API
   loadSavedNotes();
   initFormsSearch();
+
+  // Start automatic data refresh
+  startDataRefresh();
+
+  // Refresh when page becomes visible again (user returns to tab)
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      refreshDashboardData();
+    }
+  });
 });
+
+// Start automatic data refresh interval
+function startDataRefresh() {
+  if (refreshIntervalId) {
+    clearInterval(refreshIntervalId);
+  }
+  refreshIntervalId = setInterval(refreshDashboardData, DATA_REFRESH_INTERVAL);
+}
+
+// Stop automatic data refresh (call when leaving page)
+function stopDataRefresh() {
+  if (refreshIntervalId) {
+    clearInterval(refreshIntervalId);
+    refreshIntervalId = null;
+  }
+}
+
+// Refresh all dashboard data
+async function refreshDashboardData() {
+  console.log('[Dashboard] Refreshing data...');
+  try {
+    // Refresh health metrics
+    await loadHealthMetrics();
+
+    // Refresh activity
+    await loadClientActivity();
+
+    // Check which tab is active and refresh its data
+    const activeTab = document.querySelector('.tab-btn.active');
+    if (activeTab) {
+      const tabName = activeTab.getAttribute('data-tab');
+      if (tabName === 'labs') {
+        loadClientLabs();
+      } else if (tabName === 'forms') {
+        loadClientForms();
+      } else if (tabName === 'notes') {
+        loadClientNotes();
+      }
+    }
+  } catch (error) {
+    console.error('[Dashboard] Error refreshing data:', error);
+  }
+}
+
+// Export refresh function for manual use
+window.refreshDashboardData = refreshDashboardData;
 
 // Tab navigation
 function setupTabNavigation() {
@@ -3466,9 +3526,10 @@ function displayHealthMetrics(metrics) {
 
     // Update age difference
     const ageDiffEl = document.getElementById('ageDifference');
-    if (ageDiffEl && bioAge.difference !== null) {
+    if (ageDiffEl && bioAge.difference !== null && bioAge.difference !== undefined) {
       const diffValue = bioAge.difference;
       const isYounger = diffValue > 0;
+      ageDiffEl.style.display = 'flex';
       ageDiffEl.className = `age-difference ${isYounger ? 'positive' : 'negative'}`;
       ageDiffEl.innerHTML = `
         <span class="diff-arrow">${isYounger ? '↓' : '↑'}</span>
@@ -3518,6 +3579,15 @@ function displayHealthMetrics(metrics) {
   // Wearable Vitals
   if (metrics.wearableVitals) {
     const wearable = metrics.wearableVitals;
+    const hasWearableData = wearable.vo2Max || wearable.restingHeartRate || wearable.hrv;
+
+    // Update wearable badge connection status
+    const wearableBadge = document.getElementById('wearableBadge');
+    const wearableStatusEl = document.getElementById('wearableStatus');
+    if (hasWearableData && wearableBadge && wearableStatusEl) {
+      wearableBadge.classList.remove('not-connected');
+      wearableStatusEl.textContent = 'Connected';
+    }
 
     // VO2 Max
     const vo2El = document.getElementById('wearableVo2');
@@ -3525,7 +3595,7 @@ function displayHealthMetrics(metrics) {
       vo2El.innerHTML = `${wearable.vo2Max.value} <small>${wearable.vo2Max.unit}</small>`;
     }
     const vo2TrendEl = document.getElementById('vo2Trend');
-    if (vo2TrendEl && wearable.vo2Max) {
+    if (vo2TrendEl && wearable.vo2Max && wearable.vo2Max.trend !== undefined) {
       const trend = wearable.vo2Max.trend;
       vo2TrendEl.className = `wearable-trend ${trend >= 0 ? 'up' : 'down'}`;
       vo2TrendEl.textContent = `${trend >= 0 ? '↑' : '↓'} ${Math.abs(trend)}`;
@@ -3537,7 +3607,7 @@ function displayHealthMetrics(metrics) {
       rhrEl.innerHTML = `${wearable.restingHeartRate.value} <small>${wearable.restingHeartRate.unit}</small>`;
     }
     const rhrTrendEl = document.getElementById('rhrTrend');
-    if (rhrTrendEl && wearable.restingHeartRate) {
+    if (rhrTrendEl && wearable.restingHeartRate && wearable.restingHeartRate.trend !== undefined) {
       // For RHR, lower is better, so negative trend is good
       const trend = wearable.restingHeartRate.trend;
       const isGood = trend <= 0;
@@ -3551,7 +3621,7 @@ function displayHealthMetrics(metrics) {
       hrvEl.innerHTML = `${wearable.hrv.value} <small>${wearable.hrv.unit}</small>`;
     }
     const hrvTrendEl = document.getElementById('hrvTrend');
-    if (hrvTrendEl && wearable.hrv) {
+    if (hrvTrendEl && wearable.hrv && wearable.hrv.trend !== undefined) {
       const trend = wearable.hrv.trend;
       hrvTrendEl.className = `wearable-trend ${trend >= 0 ? 'up' : 'down'}`;
       hrvTrendEl.textContent = `${trend >= 0 ? '↑' : '↓'} ${Math.abs(trend)}`;

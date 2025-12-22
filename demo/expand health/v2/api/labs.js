@@ -11,14 +11,12 @@ const path = require('path');
 const fs = require('fs').promises;
 const { authenticateToken } = require('../middleware/auth');
 const db = require('../db');
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+const { GoogleGenAI } = require('@google/genai');
 
-// Initialize Gemini AI
+// Initialize Gemini AI (using new SDK)
 let genAI = null;
-let geminiModel = null;
 if (process.env.GEMINI_API_KEY) {
-  genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-  geminiModel = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-001' });
+  genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 }
 
 // Configure multer for file uploads - use memory storage to store in database
@@ -429,7 +427,7 @@ router.post('/:id/generate-summary', authenticateToken, async (req, res, next) =
     const lab = labResult.rows[0];
 
     // Check if Gemini is configured
-    if (!geminiModel) {
+    if (!genAI) {
       return res.status(500).json({
         error: 'Gemini API key not configured',
         summary: 'AI summary generation is not available. Please configure GEMINI_API_KEY in environment variables.'
@@ -506,17 +504,24 @@ Keep the analysis professional, clinically relevant, and actionable for a health
         // Convert buffer to base64 for inline data
         const pdfBase64 = Buffer.from(pdfBuffer).toString('base64');
 
-        const result = await geminiModel.generateContent([
-          {
-            inlineData: {
-              mimeType: 'application/pdf',
-              data: pdfBase64
+        const result = await genAI.models.generateContent({
+          model: 'gemini-2.0-flash-001',
+          contents: [
+            {
+              parts: [
+                {
+                  inlineData: {
+                    mimeType: 'application/pdf',
+                    data: pdfBase64
+                  }
+                },
+                { text: analysisPrompt }
+              ]
             }
-          },
-          { text: analysisPrompt }
-        ]);
+          ]
+        });
 
-        summary = result.response.text();
+        summary = result.text;
         console.log('Gemini multimodal response received, length:', summary.length);
       } catch (multimodalError) {
         console.error('Multimodal PDF analysis failed:', multimodalError.message);
@@ -542,8 +547,11 @@ Keep the analysis professional, clinically relevant, and actionable for a health
           fallbackPrompt += `\n\nNote: Could not extract lab data. Please provide a general analysis based on the lab type.\n`;
         }
 
-        const fallbackResult = await geminiModel.generateContent(fallbackPrompt);
-        summary = fallbackResult.response.text();
+        const fallbackResult = await genAI.models.generateContent({
+          model: 'gemini-2.0-flash-001',
+          contents: fallbackPrompt
+        });
+        summary = fallbackResult.text;
         console.log('Fallback text analysis completed, length:', summary.length);
       }
     } else {
@@ -566,8 +574,11 @@ Keep the analysis professional, clinically relevant, and actionable for a health
       }
 
       console.log('Calling Gemini API with text-only analysis...');
-      const result = await geminiModel.generateContent(fallbackPrompt);
-      summary = result.response.text();
+      const result = await genAI.models.generateContent({
+        model: 'gemini-2.0-flash-001',
+        contents: fallbackPrompt
+      });
+      summary = result.text;
       console.log('Text-only analysis completed, length:', summary.length);
     }
     console.log('Gemini response received, length:', summary.length);

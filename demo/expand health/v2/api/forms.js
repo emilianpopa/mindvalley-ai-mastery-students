@@ -4,7 +4,7 @@ const { Pool } = require('pg');
 const { authenticateToken } = require('../middleware/auth');
 const multer = require('multer');
 const pdfParse = require('pdf-parse');
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+const { GoogleGenAI } = require('@google/genai');
 const { Resend } = require('resend');
 
 // Initialize Resend for email
@@ -18,13 +18,10 @@ const pool = new Pool({
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
 });
 
-// Initialize Gemini AI client
+// Initialize Gemini AI client (using new SDK)
 let genAI = null;
-let geminiModel = null;
 if (process.env.GEMINI_API_KEY) {
-  genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-  // Use gemini-2.0-flash-001 which is the latest available model
-  geminiModel = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-001' });
+  genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 }
 
 // Configure multer for PDF upload
@@ -51,7 +48,7 @@ const upload = multer({
 router.post('/parse-pdf', authenticateToken, upload.single('pdf'), async (req, res) => {
   try {
     // Check if Gemini API is configured
-    if (!geminiModel) {
+    if (!genAI) {
       return res.status(503).json({
         error: 'PDF parsing service not configured',
         details: 'GEMINI_API_KEY is missing in environment variables'
@@ -118,9 +115,11 @@ ${pdfText}
 
 Return ONLY the JSON object, no other text.`;
 
-    const result = await geminiModel.generateContent(prompt);
-    const response = await result.response;
-    const responseText = response.text();
+    const result = await genAI.models.generateContent({
+      model: 'gemini-2.0-flash-001',
+      contents: prompt
+    });
+    const responseText = result.text;
     let parsedForm;
 
     try {
@@ -986,7 +985,7 @@ router.post('/submissions/ai-summary', authenticateToken, async (req, res) => {
     }
 
     // Check if Gemini API is configured
-    if (!geminiModel) {
+    if (!genAI) {
       return res.status(503).json({
         error: 'AI service not configured',
         summary: 'AI summary is not available. Please configure the GEMINI_API_KEY.'
@@ -1015,8 +1014,11 @@ Provide a 2-3 sentence summary highlighting:
 
 Keep your response concise and professional.`;
 
-    const result = await geminiModel.generateContent(prompt);
-    const summary = result.response.text();
+    const result = await genAI.models.generateContent({
+      model: 'gemini-2.0-flash-001',
+      contents: prompt
+    });
+    const summary = result.text;
 
     res.json({ summary });
   } catch (error) {
@@ -1215,7 +1217,7 @@ router.post('/submissions', async (req, res) => {
     const submission = result.rows[0];
 
     // Generate AI summary in background (non-blocking)
-    if (geminiModel) {
+    if (genAI) {
       generateAndSaveAISummary(submission.id, responses, form.name).catch(err => {
         console.error('Background AI summary generation failed:', err);
       });
@@ -1506,7 +1508,7 @@ router.post('/submissions/:id/create-client', authenticateToken, async (req, res
 
 // Background function to generate and save AI summary
 async function generateAndSaveAISummary(submissionId, responses, formName) {
-  if (!geminiModel) {
+  if (!genAI) {
     console.log('Gemini model not configured, skipping AI summary');
     return;
   }
@@ -1535,8 +1537,11 @@ Provide a summary with:
 
 Keep the summary professional and actionable. Use bullet points for clarity.`;
 
-    const result = await geminiModel.generateContent(prompt);
-    const summary = result.response.text();
+    const result = await genAI.models.generateContent({
+      model: 'gemini-2.0-flash-001',
+      contents: prompt
+    });
+    const summary = result.text;
 
     // Save to database
     await pool.query(

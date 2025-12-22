@@ -6,12 +6,12 @@
 const express = require('express');
 const router = express.Router();
 const { authenticateToken } = require('../middleware/auth');
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+const { GoogleGenAI } = require('@google/genai');
 const fs = require('fs');
 const path = require('path');
 
-// Initialize Gemini SDK
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+// Initialize Gemini SDK (using new File Search API)
+const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 // File-based storage for uploaded documents
 const UPLOAD_STORAGE_FILE = path.join(__dirname, '..', 'data', 'uploaded-documents.json');
@@ -58,20 +58,15 @@ router.get('/documents', async (req, res, next) => {
   try {
     console.log(`📚 GET /documents - uploadedDocuments count: ${uploadedDocuments.length}`);
 
-    if (!process.env.GEMINI_STORE_ID) {
+    if (!process.env.GEMINI_FILE_SEARCH_STORE_ID) {
       return res.status(503).json({
         error: 'Knowledge base not configured',
-        message: 'GEMINI_STORE_ID not set in environment variables'
+        message: 'GEMINI_FILE_SEARCH_STORE_ID not set in environment variables'
       });
     }
 
-    // Query Gemini for documents list
-    const model = genAI.getGenerativeModel({
-      model: 'gemini-1.5-pro-002'
-    });
-
-    // Note: Gemini doesn't provide a direct list API for documents
-    // We'll maintain a separate metadata tracking system
+    // Note: File Search API maintains documents internally
+    // We'll maintain a separate metadata tracking system for UI display
     const sampleDocuments = [
       {
         id: 1,
@@ -120,7 +115,7 @@ router.get('/documents', async (req, res, next) => {
 
     res.json({
       documents,
-      store_id: process.env.GEMINI_STORE_ID,
+      store_id: process.env.GEMINI_FILE_SEARCH_STORE_ID,
       total: documents.length
     });
 
@@ -139,16 +134,15 @@ router.post('/documents', async (req, res, next) => {
       return res.status(400).json({ error: 'Name and content are required' });
     }
 
-    if (!process.env.GEMINI_STORE_ID) {
+    if (!process.env.GEMINI_FILE_SEARCH_STORE_ID) {
       return res.status(503).json({
         error: 'Knowledge base not configured'
       });
     }
 
-    // In a real implementation, you would:
-    // 1. Upload the document to Gemini File API
-    // 2. Add it to the Gemini store
-    // 3. Store metadata in your database
+    // Note: In production, documents should be uploaded to the File Search store using:
+    // await genAI.fileSearchStores.uploadToFileSearchStore({...})
+    // For now, we track metadata locally
 
     // For now, simulate successful upload
     const newDocument = {
@@ -179,7 +173,8 @@ router.post('/documents', async (req, res, next) => {
   }
 });
 
-// Query knowledge base using Semantic Retrieval API
+// Query knowledge base using File Search API
+// This replaces the deprecated Semantic Retrieval (Corpus) API
 router.post('/query', async (req, res, next) => {
   try {
     const { query } = req.body;
@@ -188,97 +183,65 @@ router.post('/query', async (req, res, next) => {
       return res.status(400).json({ error: 'Query is required' });
     }
 
-    if (!process.env.GEMINI_STORE_ID) {
+    if (!process.env.GEMINI_FILE_SEARCH_STORE_ID) {
       return res.status(503).json({
         error: 'Knowledge base not configured'
       });
     }
 
-    console.log(`[KB Query] Querying: "${query.substring(0, 50)}..."`);
+    console.log(`[KB Query] Querying File Search store: "${query.substring(0, 50)}..."`);
 
-    // Query the corpus for relevant chunks using Semantic Retrieval API
-    const corpusName = process.env.GEMINI_STORE_ID;
-    const apiKey = process.env.GEMINI_API_KEY;
+    // Use File Search API with generateContent
+    const fileSearchStoreName = process.env.GEMINI_FILE_SEARCH_STORE_ID;
 
-    const queryResponse = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/${corpusName}:query?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          query: query,
-          resultsCount: 5,
-          metadataFilters: []
-        })
-      }
-    );
+    const response = await genAI.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: `Based on the knowledge base, answer this question: "${query}"
 
-    if (!queryResponse.ok) {
-      const errorText = await queryResponse.text();
-      console.error('[KB Query] Query failed:', queryResponse.status, errorText);
-      return res.status(500).json({
-        error: 'Knowledge base query failed',
-        details: errorText
-      });
-    }
-
-    const queryResult = await queryResponse.json();
-
-    // Extract relevant chunks
-    const chunks = (queryResult.relevantChunks || []).map(chunk => ({
-      text: chunk.chunk?.data?.stringValue || '',
-      documentName: chunk.chunk?.name || 'Unknown',
-      relevanceScore: chunk.chunkRelevanceScore || 0
-    }));
-
-    console.log(`[KB Query] Found ${chunks.length} relevant chunks`);
-
-    // If we got chunks, use them to generate an answer with Gemini
-    if (chunks.length > 0) {
-      const contextText = chunks.map((c, i) =>
-        `[Source ${i + 1}]: ${c.text}`
-      ).join('\n\n');
-
-      const model = genAI.getGenerativeModel({
-        model: 'gemini-1.5-flash'
-      });
-
-      const result = await model.generateContent({
-        contents: [{
-          role: 'user',
-          parts: [{
-            text: `Based on the following knowledge base content, answer this question: "${query}"
-
-KNOWLEDGE BASE CONTENT:
-${contextText}
-
-Please provide a clear, evidence-based answer citing the relevant sources.`
-          }]
+Please provide a clear, evidence-based answer citing the relevant sources from the knowledge base.`,
+      config: {
+        tools: [{
+          fileSearch: {
+            fileSearchStoreNames: [fileSearchStoreName]
+          }
         }]
-      });
+      }
+    });
 
-      const response = await result.response;
-      const answer = response.text();
-
-      res.json({
-        query,
-        answer,
-        sources: chunks.map(c => ({
-          text: c.text.substring(0, 200) + (c.text.length > 200 ? '...' : ''),
-          relevance: Math.round(c.relevanceScore * 100) + '%'
-        })),
-        timestamp: new Date()
-      });
-    } else {
+    if (!response || !response.text) {
+      console.log('[KB Query] No response from File Search');
       res.json({
         query,
         answer: 'No relevant information found in the knowledge base for this query.',
         sources: [],
         timestamp: new Date()
       });
+      return;
     }
+
+    const answer = response.text;
+
+    // Extract grounding metadata for citations if available
+    const groundingMetadata = response.candidates?.[0]?.groundingMetadata;
+    const sources = [];
+
+    if (groundingMetadata?.groundingChunks) {
+      groundingMetadata.groundingChunks.forEach((chunk, i) => {
+        sources.push({
+          text: chunk.retrievedContext?.text?.substring(0, 200) + '...' || `Source ${i + 1}`,
+          relevance: 'Cited'
+        });
+      });
+    }
+
+    console.log(`[KB Query] Response generated with ${sources.length} sources`);
+
+    res.json({
+      query,
+      answer,
+      sources,
+      timestamp: new Date()
+    });
 
   } catch (error) {
     console.error('Error querying KB:', error);
@@ -291,7 +254,7 @@ router.delete('/documents/:id', async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    if (!process.env.GEMINI_STORE_ID) {
+    if (!process.env.GEMINI_FILE_SEARCH_STORE_ID) {
       return res.status(503).json({
         error: 'Knowledge base not configured'
       });

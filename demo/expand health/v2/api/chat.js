@@ -14,9 +14,9 @@ const anthropic = new Anthropic({
   apiKey: process.env.CLAUDE_API_KEY
 });
 
-// Initialize Gemini SDK
-const { GoogleGenerativeAI } = require('@google/generative-ai');
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+// Initialize Gemini SDK (using new File Search API)
+const { GoogleGenAI } = require('@google/genai');
+const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 // Chat endpoint with context
 router.post('/', authenticateToken, async (req, res, next) => {
@@ -52,9 +52,9 @@ router.post('/', authenticateToken, async (req, res, next) => {
       contextString += `\n\nLAB CONTEXT:\n${labData}`;
     }
 
-    // Query Gemini Knowledge Base if available
+    // Query Gemini Knowledge Base if available (using File Search API)
     let kbContext = '';
-    if (process.env.GEMINI_STORE_ID) {
+    if (process.env.GEMINI_FILE_SEARCH_STORE_ID) {
       try {
         kbContext = await queryKnowledgeBase(message);
         if (kbContext) {
@@ -323,66 +323,46 @@ AI Summary: ${lab.ai_summary ? lab.ai_summary.substring(0, 500) + '...' : 'Not y
   `.trim();
 }
 
-// Query Gemini Knowledge Base using Semantic Retrieval (Corpus API)
+// Query Gemini Knowledge Base using File Search API
+// This replaces the deprecated Semantic Retrieval (Corpus) API
 async function queryKnowledgeBase(query) {
   try {
-    if (!process.env.GEMINI_STORE_ID || !process.env.GEMINI_API_KEY) {
+    if (!process.env.GEMINI_FILE_SEARCH_STORE_ID || !process.env.GEMINI_API_KEY) {
       console.log('[KB Query] Knowledge base not configured');
       return null;
     }
 
-    console.log(`[KB Query] Querying knowledge base with: "${query.substring(0, 50)}..."`);
+    console.log(`[KB Query] Querying File Search store with: "${query.substring(0, 50)}..."`);
 
-    // Use Gemini's Semantic Retrieval API to query the corpus
-    const corpusName = process.env.GEMINI_STORE_ID;
-    const apiKey = process.env.GEMINI_API_KEY;
+    // Use File Search API with generateContent
+    const fileSearchStoreName = process.env.GEMINI_FILE_SEARCH_STORE_ID;
 
-    // Query the corpus for relevant chunks
-    const queryResponse = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/${corpusName}:query?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          query: query,
-          resultsCount: 5,  // Get top 5 relevant chunks
-          metadataFilters: []
-        })
+    const response = await genAI.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: `Based on the knowledge base, provide relevant information about: ${query}
+
+Return the key facts, protocols, dosages, and clinical recommendations found in the knowledge base. Be specific and cite sources when possible.`,
+      config: {
+        tools: [{
+          fileSearch: {
+            fileSearchStoreNames: [fileSearchStoreName]
+          }
+        }]
       }
-    );
-
-    if (!queryResponse.ok) {
-      const errorText = await queryResponse.text();
-      console.error('[KB Query] Corpus query failed:', queryResponse.status, errorText);
-      return null;
-    }
-
-    const queryResult = await queryResponse.json();
-
-    if (!queryResult.relevantChunks || queryResult.relevantChunks.length === 0) {
-      console.log('[KB Query] No relevant chunks found');
-      return null;
-    }
-
-    console.log(`[KB Query] Found ${queryResult.relevantChunks.length} relevant chunks`);
-
-    // Build context from retrieved chunks
-    let kbContext = 'RELEVANT KNOWLEDGE BASE CONTENT:\n\n';
-
-    queryResult.relevantChunks.forEach((chunk, index) => {
-      const chunkText = chunk.chunk?.data?.stringValue || '';
-      const documentName = chunk.chunk?.name || 'Unknown Document';
-      const relevanceScore = chunk.chunkRelevanceScore || 0;
-
-      // Extract document title from name (e.g., "corpora/.../documents/pk-protocol/chunks/...")
-      const docMatch = documentName.match(/documents\/([^\/]+)/);
-      const docTitle = docMatch ? docMatch[1].replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : 'Document';
-
-      kbContext += `--- Source: ${docTitle} (Relevance: ${(relevanceScore * 100).toFixed(0)}%) ---\n`;
-      kbContext += chunkText.trim() + '\n\n';
     });
+
+    if (!response || !response.text) {
+      console.log('[KB Query] No response from File Search');
+      return null;
+    }
+
+    const kbContext = 'RELEVANT KNOWLEDGE BASE CONTENT:\n\n' + response.text;
+
+    // Extract grounding metadata for citations if available
+    const groundingMetadata = response.candidates?.[0]?.groundingMetadata;
+    if (groundingMetadata) {
+      console.log('[KB Query] Response includes grounding citations');
+    }
 
     console.log(`[KB Query] Built context with ${kbContext.length} characters`);
     return kbContext;
