@@ -1229,7 +1229,7 @@ router.post('/generate', authenticateToken, async (req, res, next) => {
     }
 
     // Build comprehensive notes for storage
-    const notesContent = buildProtocolNotes(protocolData, prompt);
+    const protocolNotes = buildProtocolNotes(protocolData, prompt);
 
     // Save the protocol to the database
     // Actual DB Schema: id, client_id, template_id, start_date, end_date, status, modules, notes, ai_recommendations, created_by, created_at, updated_at
@@ -1243,7 +1243,7 @@ router.post('/generate', authenticateToken, async (req, res, next) => {
           client_id,
           primaryTemplateId,
           JSON.stringify(modulesForDb),
-          notesContent,
+          protocolNotes,
           JSON.stringify(protocolData), // Store full clinical structure as JSON
           req.user.id
         ]
