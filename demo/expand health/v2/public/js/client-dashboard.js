@@ -349,7 +349,7 @@ function showEngagementPlanSuccess(plan) {
     </div>
     <div style="display: flex; gap: 12px; justify-content: center;">
       <button onclick="closeEngagementProgressModal()" class="btn-secondary" style="padding: 10px 20px;">Close</button>
-      <button onclick="closeEngagementProgressModal(); document.querySelector('[data-tab=\\'engagement\\']')?.click();" class="btn-primary" style="padding: 10px 20px;">View Engagement Plans</button>
+      <button onclick="closeEngagementProgressModal(); setTimeout(() => { loadEngagementPlans(); document.querySelector('[data-tab=\\'engagement\\']')?.click(); }, 500);" class="btn-primary" style="padding: 10px 20px;">View Engagement Plans</button>
     </div>
   `;
 }
