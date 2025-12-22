@@ -3253,16 +3253,18 @@
   display: flex;
   flex-direction: column;
   min-width: 0;
+  min-height: 0;
   position: relative;
   z-index: 1;
-  overflow: visible;
+  overflow: hidden;
 }
 
 .lab-viewer-modal .pdf-container {
   flex: 1;
   width: 100%;
-  height: 100%;
-  overflow: auto;
+  min-height: 0;
+  overflow-y: auto !important;
+  overflow-x: hidden;
   position: relative;
   background: #525659;
 }
