@@ -3255,7 +3255,7 @@
   min-width: 0;
   position: relative;
   z-index: 1;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .lab-viewer-modal .pdf-container {
