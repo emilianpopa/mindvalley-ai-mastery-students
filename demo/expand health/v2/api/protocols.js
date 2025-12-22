@@ -2025,15 +2025,24 @@ Return ONLY valid JSON. No markdown, no code blocks.`;
     }
 
     // Update protocol with engagement plan (store as clean JSON)
-    await db.query(
+    const planJson = JSON.stringify(engagementPlan);
+    console.log('[Engagement Plan] Saving to protocol id:', id);
+    console.log('[Engagement Plan] JSON length:', planJson.length);
+
+    const updateResult = await db.query(
       `UPDATE protocols SET
         ai_recommendations = $1,
         updated_at = CURRENT_TIMESTAMP
-      WHERE id = $2`,
-      [JSON.stringify(engagementPlan), id]
+      WHERE id = $2
+      RETURNING id, ai_recommendations`,
+      [planJson, id]
     );
 
-    console.log('[Engagement Plan] Generated successfully');
+    console.log('[Engagement Plan] Update result rows:', updateResult.rows.length);
+    if (updateResult.rows.length > 0) {
+      console.log('[Engagement Plan] Saved ai_recommendations length:', updateResult.rows[0].ai_recommendations?.length);
+    }
+    console.log('[Engagement Plan] Generated and saved successfully');
 
     res.json({
       success: true,
