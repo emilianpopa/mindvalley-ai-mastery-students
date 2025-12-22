@@ -6836,7 +6836,18 @@ async function saveProtocolAsPDF(protocolId) {
       }
 
       // Use clinical data title if available, otherwise fallback
-      const protocolTitle = clinicalData?.title || protocol.title || 'Health Protocol';
+      // Clean up title for Protocol PDF (remove "Engagement Plan" and "for [Name]" parts)
+      let protocolTitle = clinicalData?.title || protocol.title || 'Health Protocol';
+      // Remove "Engagement Plan" and replace with "Protocol"
+      protocolTitle = protocolTitle.replace(/\s*Engagement Plan\s*/gi, ' Protocol ').trim();
+      // Remove "for [Client Name]" suffix since we show client name separately
+      protocolTitle = protocolTitle.replace(/\s+for\s+.+$/i, '').trim();
+      // Clean up extra spaces
+      protocolTitle = protocolTitle.replace(/\s+/g, ' ').trim();
+      // Ensure "Protocol" is in the title
+      if (!protocolTitle.toLowerCase().includes('protocol')) {
+        protocolTitle = protocolTitle + ' Protocol';
+      }
 
       // Generate content HTML
       let contentHtml = '';
