@@ -2057,18 +2057,22 @@ Return ONLY valid JSON. No markdown, no code blocks.`;
   }
 });
 
-// Debug endpoint to check ai_recommendations data
+// Debug endpoint to check ai_recommendations data (includes ALL statuses)
 router.get('/debug/check-engagement/:clientId', authenticateToken, async (req, res, next) => {
   try {
     const { clientId } = req.params;
     const result = await db.query(`
       SELECT id, client_id, status,
              LENGTH(ai_recommendations) as ai_rec_length,
-             SUBSTRING(ai_recommendations, 1, 200) as ai_rec_preview
+             SUBSTRING(ai_recommendations, 1, 200) as ai_rec_preview,
+             created_at
       FROM protocols
       WHERE client_id = $1
       ORDER BY created_at DESC
     `, [clientId]);
+
+    console.log('[Debug] Found', result.rows.length, 'protocols for client', clientId);
+    result.rows.forEach(r => console.log('[Debug] Protocol', r.id, 'status:', r.status, 'ai_rec_length:', r.ai_rec_length));
 
     res.json({
       client_id: clientId,
