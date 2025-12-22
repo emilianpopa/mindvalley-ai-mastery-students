@@ -14,6 +14,7 @@
  * @param {string} notesContent - Clinical notes content
  * @param {string} kbContext - Knowledge base context
  * @param {string} userPrompt - User's specific request
+ * @param {string} selectedTemplates - Comma-separated list of selected protocol templates
  * @returns {string} Complete system prompt
  */
 function generateClinicalProtocolPrompt({
@@ -22,7 +23,8 @@ function generateClinicalProtocolPrompt({
   formsContent,
   notesContent,
   kbContext,
-  userPrompt
+  userPrompt,
+  selectedTemplates
 }) {
   const clientAge = clientData.date_of_birth ? calculateAge(clientData.date_of_birth) : 'Unknown';
 
@@ -241,6 +243,30 @@ ${kbContext}
 Use these protocols for dosages and approaches, but ONLY for lab-confirmed conditions.
 ` : ''}
 
+${selectedTemplates ? `
+###############################################################
+#  SELECTED PROTOCOL TEMPLATES (MANDATORY)                    #
+###############################################################
+
+The clinician has selected the following protocol templates:
+${selectedTemplates}
+
+**CRITICAL REQUIREMENTS:**
+1. The protocol title MUST reflect ALL selected templates (e.g., "Comprehensive Sleep, Gut & Adrenal Protocol")
+2. The protocol MUST include interventions from EACH selected template area
+3. Each selected template area should have its own dedicated section/module in phased_expansion
+4. The core_protocol should address the most foundational needs across all selected areas
+5. Do NOT focus on only one template - ALL selected templates must be represented
+
+For example, if Sleep Optimization, Gut Healing, and Adrenal Support are selected:
+- Core Protocol: Foundation items for gut, sleep, and adrenal balance
+- Phase 1: Gut healing focus with sleep support
+- Phase 2: Adrenal support with continued gut and sleep optimization
+- Phase 3: Integration and optimization across all areas
+
+The protocol should be COMPREHENSIVE and address ALL selected template areas proportionally.
+` : ''}
+
 ###############################################################
 #  USER REQUEST                                               #
 ###############################################################
@@ -424,6 +450,8 @@ Before outputting, verify:
 5. Every phase has safety gates
 6. All conditions treated are LAB-CONFIRMED
 7. Retest schedule has decision purpose
+${selectedTemplates ? `8. ALL selected templates (${selectedTemplates}) have dedicated interventions in the protocol
+9. Protocol title reflects all selected template areas` : ''}
 
 Return ONLY valid JSON. No markdown, no code blocks, no explanation outside the JSON.`;
 }

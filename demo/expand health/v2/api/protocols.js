@@ -1110,7 +1110,8 @@ router.post('/generate', authenticateToken, async (req, res, next) => {
       formsContent,
       notesContent,
       kbContext,
-      userPrompt: prompt
+      userPrompt: prompt,
+      selectedTemplates: selectedTemplateNames // Pass the selected templates to the AI
     });
 
     console.log('[Protocol Generate] Calling Claude API...');
