@@ -2057,6 +2057,29 @@ Return ONLY valid JSON. No markdown, no code blocks.`;
   }
 });
 
+// Debug endpoint to check ai_recommendations data
+router.get('/debug/check-engagement/:clientId', authenticateToken, async (req, res, next) => {
+  try {
+    const { clientId } = req.params;
+    const result = await db.query(`
+      SELECT id, client_id, status,
+             LENGTH(ai_recommendations) as ai_rec_length,
+             SUBSTRING(ai_recommendations, 1, 200) as ai_rec_preview
+      FROM protocols
+      WHERE client_id = $1
+      ORDER BY created_at DESC
+    `, [clientId]);
+
+    res.json({
+      client_id: clientId,
+      protocols: result.rows
+    });
+  } catch (error) {
+    console.error('[Debug] Error:', error);
+    next(error);
+  }
+});
+
 // Debug endpoint to check and fix protocol data
 router.post('/debug/fix-empty-protocols', authenticateToken, async (req, res, next) => {
   try {
