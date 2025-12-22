@@ -665,4 +665,264 @@ Return ONLY valid JSON, no markdown formatting.`;
   }
 });
 
+// Generate AI-powered client health summary for dashboard
+router.post('/client-summary/:clientId', authenticateToken, async (req, res, next) => {
+  try {
+    const { clientId } = req.params;
+    console.log(`[Client Summary] Starting summary generation for client ${clientId}`);
+
+    // Check if CLAUDE_API_KEY is configured
+    if (!process.env.CLAUDE_API_KEY) {
+      console.error('[Client Summary] CLAUDE_API_KEY is not configured');
+      return res.status(500).json({ error: 'AI service not configured' });
+    }
+
+    // Gather all available client data
+    let clientResult, notesResult, formsResult, labsResult;
+
+    try {
+      // Get client basic info
+      clientResult = await db.query(
+        `SELECT
+          id, first_name, last_name, email, phone, date_of_birth,
+          gender, address, city, medical_history, current_medications,
+          allergies, status
+        FROM clients
+        WHERE id = $1`,
+        [clientId]
+      );
+      console.log(`[Client Summary] Client found: ${clientResult.rows.length > 0}`);
+    } catch (dbError) {
+      console.error('[Client Summary] Client query error:', dbError.message);
+      throw dbError;
+    }
+
+    if (clientResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Client not found' });
+    }
+
+    const client = clientResult.rows[0];
+
+    try {
+      // Get client notes
+      notesResult = await db.query(
+        `SELECT content, note_type, is_consultation, consultation_date, created_at
+         FROM notes
+         WHERE client_id = $1
+         ORDER BY created_at DESC
+         LIMIT 20`,
+        [clientId]
+      );
+      console.log(`[Client Summary] Notes found: ${notesResult.rows.length}`);
+    } catch (dbError) {
+      console.error('[Client Summary] Notes query error:', dbError.message);
+      notesResult = { rows: [] };
+    }
+
+    try {
+      // Get form submissions
+      formsResult = await db.query(
+        `SELECT fs.form_data, fs.ai_summary, fs.submitted_at, ft.name as form_name
+         FROM form_submissions fs
+         JOIN form_templates ft ON fs.form_id = ft.id
+         WHERE fs.client_id = $1
+         ORDER BY fs.submitted_at DESC
+         LIMIT 10`,
+        [clientId]
+      );
+      console.log(`[Client Summary] Form submissions found: ${formsResult.rows.length}`);
+    } catch (dbError) {
+      console.error('[Client Summary] Forms query error:', dbError.message);
+      formsResult = { rows: [] };
+    }
+
+    try {
+      // Get lab results
+      labsResult = await db.query(
+        `SELECT name, lab_type, test_date, ai_summary, biomarkers, status
+         FROM labs
+         WHERE client_id = $1
+         ORDER BY test_date DESC
+         LIMIT 10`,
+        [clientId]
+      );
+      console.log(`[Client Summary] Labs found: ${labsResult.rows.length}`);
+    } catch (dbError) {
+      console.error('[Client Summary] Labs query error:', dbError.message);
+      labsResult = { rows: [] };
+    }
+
+    const notes = notesResult.rows;
+    const formSubmissions = formsResult.rows;
+    const labs = labsResult.rows;
+
+    // Check if we have any data to summarize
+    const hasData = notes.length > 0 || formSubmissions.length > 0 || labs.length > 0 ||
+                    client.medical_history || client.current_medications || client.allergies;
+
+    if (!hasData) {
+      console.log('[Client Summary] No data available for summary');
+      return res.json({
+        clientId,
+        summary: null,
+        message: 'No data available to generate summary. Add notes, forms, or lab results first.',
+        dataSourcesUsed: { notes: 0, forms: 0, labs: 0 },
+        generatedAt: new Date().toISOString()
+      });
+    }
+
+    // Build comprehensive client context for AI analysis
+    let clientContext = `
+CLIENT PROFILE:
+- Name: ${client.first_name} ${client.last_name}
+- Age: ${client.date_of_birth ? calculateAge(client.date_of_birth) : 'Unknown'}
+- Gender: ${client.gender || 'Not specified'}
+- Medical History: ${client.medical_history || 'Not provided'}
+- Current Medications: ${client.current_medications || 'None listed'}
+- Allergies: ${client.allergies || 'None listed'}
+`;
+
+    // Add notes context
+    if (notes.length > 0) {
+      clientContext += '\nCLINICAL NOTES:\n';
+      notes.forEach((note) => {
+        const noteType = note.is_consultation ? 'Consultation' : (note.note_type || 'Note');
+        const date = note.consultation_date || note.created_at;
+        clientContext += `\n[${noteType} - ${new Date(date).toLocaleDateString()}]:\n${note.content}\n`;
+      });
+    }
+
+    // Add form submission context
+    if (formSubmissions.length > 0) {
+      clientContext += '\nFORM RESPONSES:\n';
+      formSubmissions.forEach((form) => {
+        clientContext += `\n[${form.form_name} - ${new Date(form.submitted_at).toLocaleDateString()}]:\n`;
+        if (form.ai_summary) {
+          clientContext += `AI Summary: ${form.ai_summary}\n`;
+        }
+        try {
+          const formData = typeof form.form_data === 'string' ? JSON.parse(form.form_data) : form.form_data;
+          if (formData && typeof formData === 'object') {
+            Object.entries(formData).forEach(([key, value]) => {
+              if (value && String(value).trim()) {
+                clientContext += `- ${key}: ${String(value).substring(0, 300)}\n`;
+              }
+            });
+          }
+        } catch (e) {
+          // Skip if can't parse
+        }
+      });
+    }
+
+    // Add lab results context
+    if (labs.length > 0) {
+      clientContext += '\nLAB RESULTS:\n';
+      labs.forEach((lab) => {
+        clientContext += `\n[${lab.name} - ${new Date(lab.test_date).toLocaleDateString()}]:\n`;
+        if (lab.ai_summary) {
+          clientContext += `AI Summary: ${lab.ai_summary}\n`;
+        }
+        if (lab.biomarkers && Array.isArray(lab.biomarkers)) {
+          const outOfRange = lab.biomarkers.filter(b => b.status === 'high' || b.status === 'low');
+          if (outOfRange.length > 0) {
+            clientContext += `Out of range markers: ${outOfRange.map(b => `${b.name}: ${b.value} ${b.unit} (${b.status})`).join(', ')}\n`;
+          }
+        }
+      });
+    }
+
+    // Call Claude to generate summary
+    const summaryPrompt = `You are a clinical assistant for a functional medicine practice. Based on the following client data, generate a concise health summary for the practitioner's dashboard.
+
+${clientContext}
+
+Generate a summary with the following bullet points (only include categories where data exists):
+
+1. **Health goals** - What the client wants to achieve (if mentioned in forms/notes)
+2. **Symptoms** - Key symptoms or complaints mentioned
+3. **Medical history** - Important medical history, conditions, blood pressure if available
+4. **Family history** - Any relevant family medical history
+5. **Previous surgical intervention** - Any surgeries or procedures
+6. **Allergies** - Drug or food allergies (or state "No known allergies" if none)
+7. **Key lab findings** - Any notable lab results or trends (if labs available)
+8. **Current medications** - What they're currently taking
+
+Format your response as a JSON object:
+{
+  "summaryItems": [
+    {
+      "category": "Health goals",
+      "text": "The actual content..."
+    },
+    ...
+  ],
+  "lastUpdated": "Date of most recent data point"
+}
+
+Rules:
+- Only include categories where you have actual data
+- Be concise but include key clinical details
+- Use professional medical language
+- If blood pressure is mentioned, include the reading
+- If medications are mentioned, include names and dosages when available
+- Return ONLY valid JSON, no markdown formatting`;
+
+    console.log('[Client Summary] Calling Claude API...');
+
+    const response = await anthropic.messages.create({
+      model: 'claude-sonnet-4-5-20250929',
+      max_tokens: 1024,
+      messages: [{
+        role: 'user',
+        content: summaryPrompt
+      }]
+    });
+
+    console.log('[Client Summary] Claude API response received');
+    const aiResponse = response.content[0].text;
+
+    // Parse the JSON response
+    let summaryData;
+    try {
+      const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        summaryData = JSON.parse(jsonMatch[0]);
+        console.log('[Client Summary] Successfully parsed AI response');
+      } else {
+        throw new Error('No JSON found in response');
+      }
+    } catch (parseError) {
+      console.error('[Client Summary] Failed to parse AI response:', parseError.message);
+      console.log('[Client Summary] Raw AI response:', aiResponse.substring(0, 500));
+      // Return raw text if parsing fails
+      summaryData = {
+        summaryItems: [{
+          category: 'Summary',
+          text: aiResponse.substring(0, 1000)
+        }],
+        lastUpdated: new Date().toISOString()
+      };
+    }
+
+    console.log('[Client Summary] Sending response');
+    res.json({
+      clientId,
+      clientName: `${client.first_name} ${client.last_name}`,
+      summary: summaryData.summaryItems,
+      lastUpdated: summaryData.lastUpdated || new Date().toISOString(),
+      dataSourcesUsed: {
+        notes: notes.length,
+        forms: formSubmissions.length,
+        labs: labs.length
+      },
+      generatedAt: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('[Client Summary] Error:', error);
+    next(error);
+  }
+});
+
 module.exports = router;

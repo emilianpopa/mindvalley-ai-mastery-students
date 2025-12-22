@@ -446,16 +446,13 @@
                 </div>
                 <button class="btn-refresh" onclick="regenerateSummary()">Refresh</button>
               </div>
-              <p class="summary-timestamp">Last refreshed on 31.05.2025</p>
-              <div class="summary-content">
-                <ul>
-                  <li><strong>Health goals</strong> include managing stress and enhancing sleep quality.</li>
-                  <li><strong>Symptoms</strong> include poor sleep, unstable energy, stress-related chest tightness, and mood instability.</li>
-                  <li><strong>Medical history</strong> includes hypertension with a blood pressure reading of 128/82; currently, he is taking Amlodipine 5 mg daily.</li>
-                  <li><strong>Family history</strong> indicates that his father passed away from a myocardial infarction at the age of 76.</li>
-                  <li><strong>Previous surgical intervention</strong> was performed for a torn meniscus in 2020, with a successful arthroscopic meniscal repair conducted in 2021.</li>
-                  <li>No known drug or food <strong>allergies</strong></li>
-                </ul>
+              <p class="summary-timestamp" id="summaryTimestamp">Click Refresh to generate summary</p>
+              <div class="summary-content" id="summaryContent">
+                <div class="summary-empty-state">
+                  <p style="color: #6B7280; text-align: center; padding: 20px;">
+                    No summary available yet. Click <strong>Refresh</strong> to generate an AI-powered summary based on this client's forms, notes, and lab results.
+                  </p>
+                </div>
               </div>
             </div>
 

@@ -2355,33 +2355,91 @@ function archiveClient() {
   alert('Archive functionality will be implemented. This would set the client status to "archived".');
 }
 
-// Regenerate AI summary
-function regenerateSummary() {
-  const summaryContent = document.querySelector('.summary-content');
-  const timestamp = document.querySelector('.summary-timestamp');
+// Regenerate AI summary from real client data
+async function regenerateSummary() {
+  const summaryContent = document.getElementById('summaryContent');
+  const timestamp = document.getElementById('summaryTimestamp');
+
+  if (!summaryContent) return;
 
   // Show loading state
   summaryContent.innerHTML = `
     <div style="text-align: center; padding: 20px;">
       <div class="loader"></div>
-      <p style="margin-top: 12px; color: #6B7280;">Generating AI summary...</p>
+      <p style="margin-top: 12px; color: #6B7280;">Generating AI summary from client data...</p>
+      <p style="font-size: 12px; color: #9CA3AF;">Analyzing forms, notes, and lab results</p>
     </div>
   `;
 
-  // Simulate AI generation
-  setTimeout(() => {
-    summaryContent.innerHTML = `
-      <ul>
-        <li><strong>Sleep quality declining:</strong> Average 5.2 hours/night, down from 6.8 hours. Consider sleep hygiene protocol.</li>
-        <li><strong>Diet compliance excellent:</strong> Hitting 90% of nutrition targets. Mediterranean protocol working well.</li>
-        <li><strong>Stress levels elevated:</strong> HRV readings suggest high sympathetic activation. Recommend breathing exercises.</li>
-        <li><strong>Activity maintaining:</strong> Meeting daily step goals and workout frequency. Excellent consistency.</li>
-      </ul>
-    `;
-    if (timestamp) {
-      timestamp.textContent = `Last updated: ${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+  try {
+    const token = localStorage.getItem('auth_token');
+    if (!token) {
+      throw new Error('Not authenticated');
     }
-  }, 2000);
+
+    const response = await fetch(`${API_BASE}/api/chat/client-summary/${clientId}`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to generate summary');
+    }
+
+    const data = await response.json();
+
+    // Check if no data available
+    if (!data.summary || data.summary === null) {
+      summaryContent.innerHTML = `
+        <div class="summary-empty-state">
+          <p style="color: #6B7280; text-align: center; padding: 20px;">
+            ${data.message || 'No data available to generate summary. Add notes, forms, or lab results first.'}
+          </p>
+        </div>
+      `;
+      if (timestamp) {
+        timestamp.textContent = 'No data available';
+      }
+      return;
+    }
+
+    // Display the summary items
+    if (Array.isArray(data.summary)) {
+      summaryContent.innerHTML = `
+        <ul>
+          ${data.summary.map(item =>
+            `<li><strong>${item.category}</strong> ${item.text}</li>`
+          ).join('')}
+        </ul>
+        <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #E5E7EB; font-size: 11px; color: #9CA3AF;">
+          Based on ${data.dataSourcesUsed?.notes || 0} notes, ${data.dataSourcesUsed?.forms || 0} forms, ${data.dataSourcesUsed?.labs || 0} labs
+        </div>
+      `;
+    } else {
+      summaryContent.innerHTML = `<p>${data.summary}</p>`;
+    }
+
+    // Update timestamp
+    if (timestamp) {
+      const now = new Date();
+      timestamp.textContent = `Last refreshed on ${now.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '.')}`;
+    }
+
+  } catch (error) {
+    console.error('Error generating summary:', error);
+    summaryContent.innerHTML = `
+      <div style="text-align: center; padding: 20px; color: #EF4444;">
+        <p>Failed to generate summary</p>
+        <p style="font-size: 12px; color: #6B7280;">${error.message}</p>
+        <button onclick="regenerateSummary()" style="margin-top: 12px; padding: 8px 16px; background: #0F766E; color: white; border: none; border-radius: 6px; cursor: pointer;">
+          Try Again
+        </button>
+      </div>
+    `;
+  }
 }
 
 // Regenerate Personality Insights using AI
