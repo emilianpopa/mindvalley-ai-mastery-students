@@ -1154,9 +1154,17 @@ router.post('/generate', authenticateToken, async (req, res, next) => {
     // Build modules array from new structure for backward compatibility
     let modulesForDb = [];
 
+    // Log the structure we received from AI for debugging
+    console.log('[Protocol Generate] AI Response Structure Keys:', Object.keys(protocolData));
+    console.log('[Protocol Generate] Has core_protocol:', !!protocolData.core_protocol);
+    console.log('[Protocol Generate] Has phased_expansion:', !!protocolData.phased_expansion);
+    console.log('[Protocol Generate] Has modules:', !!protocolData.modules);
+    console.log('[Protocol Generate] Has what_not_to_do_early:', !!protocolData.what_not_to_do_early);
+
     // Check if this is the new clinical structure
     if (protocolData.core_protocol) {
       console.log('[Protocol Generate] Detected new Clinical Protocol Engine structure');
+      console.log('[Protocol Generate] core_protocol has items:', !!protocolData.core_protocol.items, 'count:', protocolData.core_protocol.items?.length || 0);
 
       // Convert core_protocol to a module
       if (protocolData.core_protocol.items) {
@@ -1212,6 +1220,80 @@ router.post('/generate', authenticateToken, async (req, res, next) => {
       // Legacy structure - use as-is
       modulesForDb = protocolData.modules;
     }
+
+    // Add "What Not To Do Early" as a module if present
+    if (protocolData.what_not_to_do_early && protocolData.what_not_to_do_early.delayed_interventions?.length) {
+      modulesForDb.push({
+        name: protocolData.what_not_to_do_early.title || 'What NOT To Do Early (Weeks 1-4)',
+        description: protocolData.what_not_to_do_early.description || 'Interventions intentionally delayed for safety',
+        goal: 'Safety and proper sequencing',
+        is_safety_section: true,
+        items: protocolData.what_not_to_do_early.delayed_interventions.map(d => ({
+          name: d.intervention,
+          description: d.reason_for_delay,
+          notes: `Risk if premature: ${d.risk_if_premature}. When appropriate: ${d.when_appropriate}`,
+          is_delayed: true
+        })),
+        prohibited_items: protocolData.what_not_to_do_early.prohibited_in_core_protocol || []
+      });
+    }
+
+    // FALLBACK: If modulesForDb is still empty, create modules from the raw protocol data
+    if (modulesForDb.length === 0) {
+      console.log('[Protocol Generate] WARNING: No modules extracted, creating fallback structure');
+
+      // Try to create at least a basic module from available data
+      const fallbackModule = {
+        name: protocolData.title || 'Protocol Overview',
+        description: protocolData.summary || 'Generated protocol',
+        goal: 'Clinical optimization based on assessment',
+        items: []
+      };
+
+      // Try to extract items from integrated_findings
+      if (protocolData.integrated_findings) {
+        if (protocolData.integrated_findings.primary_concerns?.length) {
+          fallbackModule.items.push({
+            name: 'Primary Concerns',
+            description: protocolData.integrated_findings.primary_concerns.join('; '),
+            category: 'assessment'
+          });
+        }
+        if (protocolData.integrated_findings.confirmed_conditions?.length) {
+          fallbackModule.items.push({
+            name: 'Confirmed Conditions',
+            description: protocolData.integrated_findings.confirmed_conditions.join('; '),
+            category: 'assessment'
+          });
+        }
+      }
+
+      // Add safety summary if present
+      if (protocolData.safety_summary) {
+        fallbackModule.items.push({
+          name: 'Safety Summary',
+          description: [
+            protocolData.safety_summary.absolute_contraindications?.length ? `Contraindications: ${protocolData.safety_summary.absolute_contraindications.join(', ')}` : '',
+            protocolData.safety_summary.monitoring_requirements?.length ? `Monitoring: ${protocolData.safety_summary.monitoring_requirements.join(', ')}` : ''
+          ].filter(Boolean).join('. '),
+          category: 'safety'
+        });
+      }
+
+      // Add precautions
+      if (protocolData.precautions?.length) {
+        fallbackModule.items.push({
+          name: 'Precautions',
+          description: protocolData.precautions.join('; '),
+          category: 'safety'
+        });
+      }
+
+      modulesForDb.push(fallbackModule);
+      console.log('[Protocol Generate] Created fallback module with', fallbackModule.items.length, 'items');
+    }
+
+    console.log('[Protocol Generate] Final modulesForDb count:', modulesForDb.length);
 
     // Calculate total duration
     let totalDurationWeeks = 8; // default
