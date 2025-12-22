@@ -2024,13 +2024,13 @@ Return ONLY valid JSON. No markdown, no code blocks.`;
       };
     }
 
-    // Update protocol with engagement plan
+    // Update protocol with engagement plan (store as clean JSON)
     await db.query(
       `UPDATE protocols SET
-        ai_recommendations = COALESCE(ai_recommendations, '') || E'\n\n--- ENGAGEMENT PLAN ---\n' || $1,
+        ai_recommendations = $1,
         updated_at = CURRENT_TIMESTAMP
       WHERE id = $2`,
-      [JSON.stringify(engagementPlan, null, 2), id]
+      [JSON.stringify(engagementPlan), id]
     );
 
     console.log('[Engagement Plan] Generated successfully');

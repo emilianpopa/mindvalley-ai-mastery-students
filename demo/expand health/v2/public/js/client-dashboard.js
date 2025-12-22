@@ -6656,19 +6656,34 @@ async function openEngagementPlanEditor(protocolId) {
     let planData = null;
     if (protocol.ai_recommendations) {
       const rawContent = protocol.ai_recommendations;
+      console.log('[Engagement Plan] Raw ai_recommendations:', rawContent?.substring(0, 200));
       try {
-        // Try to find JSON in the content
-        const jsonMatch = rawContent.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          planData = JSON.parse(jsonMatch[0]);
-        }
+        // First try direct JSON parse (for clean JSON storage)
+        planData = JSON.parse(rawContent);
       } catch (e) {
-        console.error('Error parsing engagement plan:', e);
+        console.log('[Engagement Plan] Direct parse failed, trying regex extraction');
+        try {
+          // Fallback: Try to find JSON object in the content (for legacy data with prefixes)
+          const jsonMatch = rawContent.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            planData = JSON.parse(jsonMatch[0]);
+          }
+        } catch (e2) {
+          console.error('Error parsing engagement plan:', e2);
+        }
       }
     }
 
     if (!planData) {
-      showNotification('No structured engagement plan data found', 'error');
+      console.log('[Engagement Plan] No plan data found in ai_recommendations');
+      showNotification('No structured engagement plan data found. Please generate an engagement plan first.', 'error');
+      return;
+    }
+
+    // Validate that we have the expected structure
+    if (!planData.phases || !Array.isArray(planData.phases)) {
+      console.error('[Engagement Plan] Invalid plan structure - missing phases array');
+      showNotification('Invalid engagement plan structure. Please regenerate the plan.', 'error');
       return;
     }
 
