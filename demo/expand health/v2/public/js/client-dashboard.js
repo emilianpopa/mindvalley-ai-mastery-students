@@ -277,7 +277,7 @@ function showEngagementPlanProgressModal() {
         <div style="background: #E5E7EB; border-radius: 8px; height: 8px; overflow: hidden; margin-bottom: 16px;">
           <div id="progressBar" style="background: linear-gradient(90deg, #0F766E, #8B5CF6); height: 100%; width: 5%; transition: width 0.5s ease;"></div>
         </div>
-        <p style="color: #9CA3AF; font-size: 13px;">This usually takes 15-30 seconds...</p>
+        <p style="color: #9CA3AF; font-size: 13px;">This usually takes 1-2 minutes...</p>
       </div>
     </div>
   `;
