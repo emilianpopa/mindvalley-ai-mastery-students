@@ -5973,7 +5973,8 @@
   border-color: #14B8A6;
 }
 
-.protocol-note-card .note-checkbox:checked + .note-card-inner {
+.protocol-note-card .note-checkbox:checked + .note-card-inner,
+.protocol-note-card .note-checkbox:checked + .template-card-inner {
   border-color: #0F766E;
   background: #F0FDFA;
 }
@@ -6027,12 +6028,14 @@
   transition: opacity 0.2s;
 }
 
-.protocol-note-card .note-checkbox:checked + .note-card-inner .note-card-check {
+.protocol-note-card .note-checkbox:checked + .note-card-inner .note-card-check,
+.protocol-note-card .note-checkbox:checked + .template-card-inner .template-check {
   background: #0F766E;
   border-color: #0F766E;
 }
 
-.protocol-note-card .note-checkbox:checked + .note-card-inner .note-card-check svg {
+.protocol-note-card .note-checkbox:checked + .note-card-inner .note-card-check svg,
+.protocol-note-card .note-checkbox:checked + .template-card-inner .template-check svg {
   opacity: 1;
 }
 
