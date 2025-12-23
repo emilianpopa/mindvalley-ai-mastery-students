@@ -1394,6 +1394,7 @@ router.post('/generate', authenticateToken, async (req, res, next) => {
       res.status(201).json({
         message: 'Protocol generated successfully',
         protocol: insertResult.rows[0],
+        modules: modulesForDb, // Include the converted modules for immediate display
         ...protocolData
       });
 
@@ -1402,6 +1403,7 @@ router.post('/generate', authenticateToken, async (req, res, next) => {
       // Return the generated data even if save fails
       res.json({
         message: 'Protocol generated (not saved - database error)',
+        modules: modulesForDb, // Include modules even on save error
         ...protocolData,
         saveError: saveError.message
       });
