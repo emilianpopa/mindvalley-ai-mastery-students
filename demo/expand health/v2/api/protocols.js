@@ -1129,18 +1129,24 @@ router.post('/generate', authenticateToken, async (req, res, next) => {
     console.log('[Protocol Generate] Claude API response received');
 
     const aiResponse = response.content[0].text;
+    console.log('[Protocol Generate] Raw AI response length:', aiResponse.length);
+    console.log('[Protocol Generate] Raw AI response preview:', aiResponse.substring(0, 500));
 
     // Parse the JSON response
     let protocolData;
     try {
       const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
+        console.log('[Protocol Generate] JSON match found, length:', jsonMatch[0].length);
         protocolData = JSON.parse(jsonMatch[0]);
+        console.log('[Protocol Generate] Successfully parsed JSON');
       } else {
+        console.error('[Protocol Generate] No JSON found in response');
         throw new Error('No JSON found in response');
       }
     } catch (parseError) {
       console.error('[Protocol Generate] Failed to parse response:', parseError.message);
+      console.error('[Protocol Generate] Parse error details:', parseError);
       // Return a clinical fallback structure
       protocolData = generateClinicalFallbackProtocol(clientData, prompt, templates, selectedTemplateNames);
     }
@@ -1164,21 +1170,22 @@ router.post('/generate', authenticateToken, async (req, res, next) => {
     // Check if this is the new clinical structure
     if (protocolData.core_protocol) {
       console.log('[Protocol Generate] Detected new Clinical Protocol Engine structure');
-      console.log('[Protocol Generate] core_protocol has items:', !!protocolData.core_protocol.items, 'count:', protocolData.core_protocol.items?.length || 0);
+      console.log('[Protocol Generate] core_protocol:', JSON.stringify(protocolData.core_protocol).substring(0, 300));
 
-      // Convert core_protocol to a module
-      if (protocolData.core_protocol.items) {
-        modulesForDb.push({
-          name: protocolData.core_protocol.phase_name || 'Core Protocol - Weeks 1-2',
-          description: 'Minimum Viable Plan - Conservative start',
-          goal: 'Establish tolerance, reduce risk, prevent overactivation',
-          is_core_protocol: true,
-          duration_weeks: protocolData.core_protocol.duration_weeks || 2,
-          items: protocolData.core_protocol.items,
-          safety_gates: protocolData.core_protocol.safety_gates || [],
-          what_not_to_do: protocolData.core_protocol.what_not_to_do || []
-        });
-      }
+      // Convert core_protocol to a module - always add it even if items is empty
+      const coreItems = protocolData.core_protocol.items || [];
+      console.log('[Protocol Generate] core_protocol items count:', coreItems.length);
+
+      modulesForDb.push({
+        name: protocolData.core_protocol.phase_name || 'Core Protocol - Weeks 1-2',
+        description: protocolData.summary || 'Minimum Viable Plan - Conservative start',
+        goal: 'Establish tolerance, reduce risk, prevent overactivation',
+        is_core_protocol: true,
+        duration_weeks: protocolData.core_protocol.duration_weeks || 2,
+        items: coreItems,
+        safety_gates: protocolData.core_protocol.safety_gates || [],
+        what_not_to_do: protocolData.core_protocol.what_not_to_do || []
+      });
 
       // Convert phased_expansion to modules
       if (protocolData.phased_expansion && Array.isArray(protocolData.phased_expansion)) {
@@ -1235,6 +1242,56 @@ router.post('/generate', authenticateToken, async (req, res, next) => {
           is_delayed: true
         })),
         prohibited_items: protocolData.what_not_to_do_early.prohibited_in_core_protocol || []
+      });
+    }
+
+    // Add Safety Summary as a module if present
+    if (protocolData.safety_summary) {
+      const safetyItems = [];
+      if (protocolData.safety_summary.absolute_contraindications?.length) {
+        safetyItems.push({
+          name: 'Absolute Contraindications',
+          description: protocolData.safety_summary.absolute_contraindications.join('; '),
+          category: 'safety'
+        });
+      }
+      if (protocolData.safety_summary.monitoring_requirements?.length) {
+        safetyItems.push({
+          name: 'Monitoring Requirements',
+          description: protocolData.safety_summary.monitoring_requirements.join('; '),
+          category: 'safety'
+        });
+      }
+      if (protocolData.safety_summary.warning_signs?.length) {
+        safetyItems.push({
+          name: 'Warning Signs',
+          description: protocolData.safety_summary.warning_signs.join('; '),
+          category: 'safety'
+        });
+      }
+      if (safetyItems.length > 0) {
+        modulesForDb.push({
+          name: 'Safety Summary',
+          description: 'Important safety considerations for this protocol',
+          goal: 'Patient safety and monitoring',
+          is_safety_section: true,
+          items: safetyItems
+        });
+      }
+    }
+
+    // Add Retest Schedule as a module if present
+    if (protocolData.retest_schedule?.length) {
+      modulesForDb.push({
+        name: 'Retest Schedule',
+        description: 'Recommended follow-up testing schedule',
+        goal: 'Monitor progress and adjust protocol',
+        is_retest_section: true,
+        items: protocolData.retest_schedule.map(r => ({
+          name: r.test,
+          description: `Timing: ${r.timing}. Purpose: ${r.purpose}`,
+          category: 'retest'
+        }))
       });
     }
 
