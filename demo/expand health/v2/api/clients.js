@@ -6,10 +6,15 @@
 const express = require('express');
 const router = express.Router();
 const { authenticateToken } = require('../middleware/auth');
+const { setTenantContext } = require('../middleware/tenant');
 const db = require('../db');
 
+// Apply tenant context to all client routes
+router.use(authenticateToken);
+router.use(setTenantContext);
+
 // Get all clients (with search and pagination)
-router.get('/', authenticateToken, async (req, res, next) => {
+router.get('/', async (req, res, next) => {
   try {
     const {
       search = '',
@@ -26,6 +31,13 @@ router.get('/', authenticateToken, async (req, res, next) => {
     let whereConditions = [];
     let queryParams = [];
     let paramCount = 0;
+
+    // TENANT FILTERING: Non-platform admins only see their tenant's clients
+    if (!req.user.isPlatformAdmin && req.tenant?.id) {
+      paramCount++;
+      whereConditions.push(`tenant_id = $${paramCount}`);
+      queryParams.push(req.tenant.id);
+    }
 
     if (search) {
       paramCount++;
@@ -74,6 +86,7 @@ router.get('/', authenticateToken, async (req, res, next) => {
 
     res.json({
       clients: clientsResult.rows,
+      total: totalCount,
       pagination: {
         total: totalCount,
         page: parseInt(page),
@@ -88,21 +101,30 @@ router.get('/', authenticateToken, async (req, res, next) => {
 });
 
 // Get single client by ID
-router.get('/:id', authenticateToken, async (req, res, next) => {
+router.get('/:id', async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    const result = await db.query(
-      `SELECT
+    // Build query with tenant filtering
+    let query = `
+      SELECT
         id, first_name, last_name, email, phone,
         date_of_birth, gender, address, city, state,
         zip_code, emergency_contact_name, emergency_contact_phone,
         medical_history, current_medications, allergies,
-        status, created_at, updated_at
+        status, created_at, updated_at, tenant_id
       FROM clients
-      WHERE id = $1`,
-      [id]
-    );
+      WHERE id = $1
+    `;
+    const params = [id];
+
+    // Non-platform admins can only access their tenant's clients
+    if (!req.user.isPlatformAdmin && req.tenant?.id) {
+      query += ` AND tenant_id = $2`;
+      params.push(req.tenant.id);
+    }
+
+    const result = await db.query(query, params);
 
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Client not found' });
@@ -116,7 +138,7 @@ router.get('/:id', authenticateToken, async (req, res, next) => {
 });
 
 // Create new client
-router.post('/', authenticateToken, async (req, res, next) => {
+router.post('/', async (req, res, next) => {
   try {
     const {
       first_name,
@@ -143,30 +165,38 @@ router.post('/', authenticateToken, async (req, res, next) => {
       });
     }
 
-    // Check if email already exists
+    // Get tenant_id from authenticated user's context
+    const tenantId = req.tenant?.id;
+    if (!tenantId) {
+      return res.status(400).json({
+        error: 'Tenant context required to create client'
+      });
+    }
+
+    // Check if email already exists within this tenant
     const existingClient = await db.query(
-      'SELECT id FROM clients WHERE email = $1',
-      [email]
+      'SELECT id FROM clients WHERE email = $1 AND tenant_id = $2',
+      [email, tenantId]
     );
 
     if (existingClient.rows.length > 0) {
       return res.status(400).json({
-        error: 'A client with this email already exists'
+        error: 'A client with this email already exists in this clinic'
       });
     }
 
-    // Insert client
+    // Insert client with tenant_id
     const result = await db.query(
       `INSERT INTO clients (
-        first_name, last_name, email, phone, date_of_birth, gender,
+        tenant_id, first_name, last_name, email, phone, date_of_birth, gender,
         address, city, state, zip_code,
         emergency_contact_name, emergency_contact_phone,
         medical_history, current_medications, allergies, status
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
       RETURNING id, first_name, last_name, email, phone, created_at`,
       [
-        first_name, last_name, email, phone, date_of_birth, gender,
+        tenantId, first_name, last_name, email, phone, date_of_birth, gender,
         address, city, state, zip_code,
         emergency_contact_name, emergency_contact_phone,
         medical_history, current_medications, allergies, 'active'
@@ -184,7 +214,7 @@ router.post('/', authenticateToken, async (req, res, next) => {
 });
 
 // Update client
-router.put('/:id', authenticateToken, async (req, res, next) => {
+router.put('/:id', async (req, res, next) => {
   try {
     const { id } = req.params;
     const {
@@ -206,26 +236,33 @@ router.put('/:id', authenticateToken, async (req, res, next) => {
       status
     } = req.body;
 
-    // Check if client exists
-    const existingClient = await db.query(
-      'SELECT id FROM clients WHERE id = $1',
-      [id]
-    );
+    // Check if client exists and belongs to tenant
+    let checkQuery = 'SELECT id, tenant_id FROM clients WHERE id = $1';
+    const checkParams = [id];
+
+    if (!req.user.isPlatformAdmin && req.tenant?.id) {
+      checkQuery += ' AND tenant_id = $2';
+      checkParams.push(req.tenant.id);
+    }
+
+    const existingClient = await db.query(checkQuery, checkParams);
 
     if (existingClient.rows.length === 0) {
       return res.status(404).json({ error: 'Client not found' });
     }
 
-    // Check if email is being changed to one that already exists
+    const clientTenantId = existingClient.rows[0].tenant_id;
+
+    // Check if email is being changed to one that already exists in this tenant
     if (email) {
       const emailCheck = await db.query(
-        'SELECT id FROM clients WHERE email = $1 AND id != $2',
-        [email, id]
+        'SELECT id FROM clients WHERE email = $1 AND id != $2 AND tenant_id = $3',
+        [email, id, clientTenantId]
       );
 
       if (emailCheck.rows.length > 0) {
         return res.status(400).json({
-          error: 'A client with this email already exists'
+          error: 'A client with this email already exists in this clinic'
         });
       }
     }
@@ -271,17 +308,26 @@ router.put('/:id', authenticateToken, async (req, res, next) => {
 });
 
 // Delete client (soft delete - set status to 'archived')
-router.delete('/:id', authenticateToken, async (req, res, next) => {
+router.delete('/:id', async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    const result = await db.query(
-      `UPDATE clients
-       SET status = 'archived', updated_at = CURRENT_TIMESTAMP
-       WHERE id = $1
-       RETURNING id`,
-      [id]
-    );
+    // Build query with tenant filtering
+    let query = `
+      UPDATE clients
+      SET status = 'archived', updated_at = CURRENT_TIMESTAMP
+      WHERE id = $1
+    `;
+    const params = [id];
+
+    if (!req.user.isPlatformAdmin && req.tenant?.id) {
+      query += ` AND tenant_id = $2`;
+      params.push(req.tenant.id);
+    }
+
+    query += ` RETURNING id`;
+
+    const result = await db.query(query, params);
 
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Client not found' });
@@ -295,8 +341,17 @@ router.delete('/:id', authenticateToken, async (req, res, next) => {
 });
 
 // Get client stats
-router.get('/stats/summary', authenticateToken, async (req, res, next) => {
+router.get('/stats/summary', async (req, res, next) => {
   try {
+    // Build query with tenant filtering
+    let whereClause = '';
+    const params = [];
+
+    if (!req.user.isPlatformAdmin && req.tenant?.id) {
+      whereClause = 'WHERE tenant_id = $1';
+      params.push(req.tenant.id);
+    }
+
     const statsQuery = `
       SELECT
         COUNT(*) FILTER (WHERE status = 'active') as active_clients,
@@ -304,9 +359,10 @@ router.get('/stats/summary', authenticateToken, async (req, res, next) => {
         COUNT(*) as total_clients,
         COUNT(*) FILTER (WHERE created_at >= CURRENT_DATE - INTERVAL '30 days') as new_this_month
       FROM clients
+      ${whereClause}
     `;
 
-    const result = await db.query(statsQuery);
+    const result = await db.query(statsQuery, params);
     res.json({ stats: result.rows[0] });
 
   } catch (error) {
@@ -317,15 +373,20 @@ router.get('/stats/summary', authenticateToken, async (req, res, next) => {
 // Get client health metrics (biological age, vitals, wearable data)
 // This endpoint pulls REAL data from database sources (labs, forms, notes)
 // Returns null/empty values when no data exists
-router.get('/:id/health-metrics', authenticateToken, async (req, res, next) => {
+router.get('/:id/health-metrics', async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    // Get client basic info for age calculation
-    const clientResult = await db.query(
-      'SELECT id, first_name, last_name, date_of_birth FROM clients WHERE id = $1',
-      [id]
-    );
+    // Get client basic info for age calculation (with tenant filtering)
+    let query = 'SELECT id, first_name, last_name, date_of_birth, tenant_id FROM clients WHERE id = $1';
+    const params = [id];
+
+    if (!req.user.isPlatformAdmin && req.tenant?.id) {
+      query += ' AND tenant_id = $2';
+      params.push(req.tenant.id);
+    }
+
+    const clientResult = await db.query(query, params);
 
     if (clientResult.rows.length === 0) {
       return res.status(404).json({ error: 'Client not found' });

@@ -6,6 +6,7 @@
 const express = require('express');
 const router = express.Router();
 const { authenticateToken } = require('../middleware/auth');
+const { setTenantContext } = require('../middleware/tenant');
 const db = require('../db');
 const fs = require('fs');
 const path = require('path');
@@ -26,38 +27,51 @@ function loadUploadedDocuments() {
   return [];
 }
 
+// Apply auth and tenant context to all dashboard routes
+router.use(authenticateToken);
+router.use(setTenantContext);
+
 // Get dashboard statistics
-router.get('/stats', authenticateToken, async (req, res, next) => {
+router.get('/stats', async (req, res, next) => {
   try {
-    // Get client stats
+    // Build tenant filter for queries
+    const tenantFilter = (!req.user.isPlatformAdmin && req.tenant?.id)
+      ? { where: 'WHERE tenant_id = $1', params: [req.tenant.id] }
+      : { where: '', params: [] };
+
+    // Get client stats (with tenant filtering)
     const clientsResult = await db.query(`
       SELECT
         COUNT(*) as total_clients,
         COUNT(*) FILTER (WHERE status = 'active') as active_clients,
         COUNT(*) FILTER (WHERE created_at >= CURRENT_DATE - INTERVAL '30 days') as new_this_month
       FROM clients
-    `);
+      ${tenantFilter.where}
+    `, tenantFilter.params);
 
-    // Get labs stats
+    // Get labs stats (with tenant filtering)
     const labsResult = await db.query(`
       SELECT COUNT(*) as total_labs
       FROM labs
-    `);
+      ${tenantFilter.where}
+    `, tenantFilter.params);
 
-    // Get protocols stats
+    // Get protocols stats (with tenant filtering)
     const protocolsResult = await db.query(`
       SELECT
         COUNT(*) as total_protocols,
         COUNT(*) FILTER (WHERE status = 'active') as active_protocols
       FROM protocols
-    `);
+      ${tenantFilter.where}
+    `, tenantFilter.params);
 
-    // Get engagement plans count (protocols with ai_recommendations)
+    // Get engagement plans count (protocols with ai_recommendations, with tenant filtering)
     const engagementPlansResult = await db.query(`
       SELECT COUNT(*) as total_engagement_plans
       FROM protocols
-      WHERE ai_recommendations IS NOT NULL AND TRIM(ai_recommendations) != ''
-    `);
+      ${tenantFilter.where ? tenantFilter.where + ' AND' : 'WHERE'}
+      ai_recommendations IS NOT NULL AND TRIM(ai_recommendations) != ''
+    `, tenantFilter.params);
 
     // Get KB documents count (5 sample + uploaded)
     const uploadedDocuments = loadUploadedDocuments();
@@ -86,7 +100,12 @@ router.get('/stats', authenticateToken, async (req, res, next) => {
       user: {
         firstName: req.user.firstName || 'User',
         lastName: req.user.lastName || ''
-      }
+      },
+      tenant: req.tenant ? {
+        id: req.tenant.id,
+        name: req.tenant.name,
+        slug: req.tenant.slug
+      } : null
     });
 
   } catch (error) {
@@ -96,11 +115,16 @@ router.get('/stats', authenticateToken, async (req, res, next) => {
 });
 
 // Get recent activity
-router.get('/activity', authenticateToken, async (req, res, next) => {
+router.get('/activity', async (req, res, next) => {
   try {
     const limit = parseInt(req.query.limit) || 10;
 
-    // Get recent clients
+    // Build tenant filter for queries
+    const tenantFilter = (!req.user.isPlatformAdmin && req.tenant?.id)
+      ? { where: 'WHERE c.tenant_id = $2', clientWhere: 'WHERE tenant_id = $2', params: [limit, req.tenant.id] }
+      : { where: '', clientWhere: '', params: [limit] };
+
+    // Get recent clients (with tenant filtering)
     const recentClients = await db.query(`
       SELECT
         'client' as type,
@@ -109,11 +133,12 @@ router.get('/activity', authenticateToken, async (req, res, next) => {
         'New client added' as description,
         created_at as timestamp
       FROM clients
+      ${tenantFilter.clientWhere}
       ORDER BY created_at DESC
       LIMIT $1
-    `, [limit]);
+    `, tenantFilter.params);
 
-    // Get recent labs
+    // Get recent labs (with tenant filtering)
     const recentLabs = await db.query(`
       SELECT
         'lab' as type,
@@ -123,11 +148,12 @@ router.get('/activity', authenticateToken, async (req, res, next) => {
         l.created_at as timestamp
       FROM labs l
       LEFT JOIN clients c ON l.client_id = c.id
+      ${tenantFilter.where}
       ORDER BY l.created_at DESC
       LIMIT $1
-    `, [limit]);
+    `, tenantFilter.params);
 
-    // Get recent protocols
+    // Get recent protocols (with tenant filtering)
     const recentProtocols = await db.query(`
       SELECT
         'protocol' as type,
@@ -138,9 +164,10 @@ router.get('/activity', authenticateToken, async (req, res, next) => {
       FROM protocols p
       LEFT JOIN clients c ON p.client_id = c.id
       LEFT JOIN protocol_templates pt ON p.template_id = pt.id
+      ${tenantFilter.where.replace('c.tenant_id', 'p.tenant_id')}
       ORDER BY p.created_at DESC
       LIMIT $1
-    `, [limit]);
+    `, tenantFilter.params);
 
     // Combine and sort by timestamp
     const allActivity = [
