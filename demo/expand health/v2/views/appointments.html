@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Appointments - ExpandHealth</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cline x1='20' y1='20' x2='80' y2='80' stroke='%230F766E' stroke-width='12' stroke-linecap='round'/%3E%3Cline x1='80' y1='20' x2='20' y2='80' stroke='%230F766E' stroke-width='12' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/css/main.css">
+  <!-- FullCalendar CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css" rel="stylesheet">
+  <style>
+    .appointments-page {
+      padding: 24px;
+    }
+
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .page-title {
+      font-size: 1.75rem;
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 12px;
+    }
+
+    .calendar-container {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    /* FullCalendar Customizations */
+    .fc {
+      font-family: inherit;
+    }
+
+    .fc .fc-toolbar-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+
+    .fc .fc-button {
+      background: var(--teal-600);
+      border-color: var(--teal-600);
+      font-weight: 500;
+    }
+
+    .fc .fc-button:hover {
+      background: var(--teal-700);
+      border-color: var(--teal-700);
+    }
+
+    .fc .fc-button-primary:not(:disabled).fc-button-active,
+    .fc .fc-button-primary:not(:disabled):active {
+      background: var(--teal-700);
+      border-color: var(--teal-700);
+    }
+
+    .fc .fc-daygrid-day.fc-day-today {
+      background: var(--teal-50);
+    }
+
+    .fc .fc-timegrid-slot {
+      height: 40px;
+    }
+
+    .fc-event {
+      cursor: pointer;
+      border-radius: 4px;
+    }
+
+    .fc-event-title {
+      font-weight: 500;
+    }
+
+    /* Filter bar */
+    .filter-bar {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 20px;
+      padding: 16px;
+      background: var(--gray-50);
+      border-radius: 8px;
+    }
+
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .filter-group label {
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--gray-500);
+      text-transform: uppercase;
+    }
+
+    .filter-group select {
+      padding: 8px 12px;
+      border: 1px solid var(--gray-300);
+      border-radius: 6px;
+      font-size: 0.875rem;
+      min-width: 180px;
+    }
+
+    /* Appointment Modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal {
+      background: white;
+      border-radius: 12px;
+      width: 100%;
+      max-width: 600px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .modal-header h2 {
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: var(--gray-500);
+    }
+
+    .modal-body {
+      padding: 24px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--gray-700);
+      margin-bottom: 6px;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--gray-300);
+      border-radius: 6px;
+      font-size: 0.875rem;
+    }
+
+    .form-group textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      padding: 16px 24px;
+      border-top: 1px solid var(--gray-200);
+    }
+
+    /* Status badges */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 10px;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+
+    .status-scheduled { background: var(--blue-100); color: var(--blue-700); }
+    .status-confirmed { background: var(--green-100); color: var(--green-700); }
+    .status-in_progress { background: var(--yellow-100); color: var(--yellow-700); }
+    .status-completed { background: var(--gray-100); color: var(--gray-700); }
+    .status-cancelled { background: var(--red-100); color: var(--red-700); }
+    .status-no_show { background: var(--orange-100); color: var(--orange-700); }
+
+    /* Quick stats */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .stat-card .label {
+      font-size: 0.875rem;
+      color: var(--gray-500);
+      margin-bottom: 8px;
+    }
+
+    .stat-card .value {
+      font-size: 1.75rem;
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+
+    .stat-card.today {
+      border-left: 4px solid var(--teal-500);
+    }
+
+    .stat-card.upcoming {
+      border-left: 4px solid var(--blue-500);
+    }
+
+    .stat-card.completed {
+      border-left: 4px solid var(--green-500);
+    }
+
+    .stat-card.cancelled {
+      border-left: 4px solid var(--red-500);
+    }
+
+    @media (max-width: 768px) {
+      .stats-row {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .filter-bar {
+        flex-wrap: wrap;
+      }
+
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">
+          <svg class="logo-icon" width="28" height="28" viewBox="0 0 24 24" fill="none">
+            <path d="M4 4L11 12L4 20" stroke="#0F766E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M20 4L13 12L20 20" stroke="#0F766E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <div class="logo-text">
+            <span class="logo-expand">EXPAND</span>
+            <span class="logo-health">HEALTH</span>
+          </div>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <a href="/" class="nav-item">
+            <span class="nav-icon">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                <polyline points="9 22 9 12 15 12 15 22"/>
+              </svg>
+            </span>
+            <span class="nav-text">Dashboard</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <p class="nav-section-title">CLIENT ZONE</p>
+          <a href="/clients" class="nav-item">
+            <span class="nav-icon">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+              </svg>
+            </span>
+            <span class="nav-text">Clients</span>
+          </a>
+          <a href="/appointments" class="nav-item active">
+            <span class="nav-icon">
+              <svg viewBox="0 0 24 24" fill="none">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                <line x1="16" y1="2" x2="16" y2="6"/>
+                <line x1="8" y1="2" x2="8" y2="6"/>
+                <line x1="3" y1="10" x2="21" y2="10"/>
+              </svg>
+            </span>
+            <span class="nav-text">Appointments</span>
+          </a>
+          <a href="/forms" class="nav-item">
+            <span class="nav-icon">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M9 11l3 3L22 4"/>
+                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+              </svg>
+            </span>
+            <span class="nav-text">Forms</span>
+          </a>
+          <a href="/protocol-templates" class="nav-item">
+            <span class="nav-icon">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+                <polyline points="10 9 9 9 8 9"/>
+              </svg>
+            </span>
+            <span class="nav-text">Protocol Templates</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <p class="nav-section-title">ADMIN</p>
+          <a href="/admin" class="nav-item">
+            <span class="nav-icon">
+              <svg viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+              </svg>
+            </span>
+            <span class="nav-text">Admin Settings</span>
+          </a>
+          <a href="/kb-admin" class="nav-item">
+            <span class="nav-icon">
+              <svg viewBox="0 0 24 24" fill="none">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+              </svg>
+            </span>
+            <span class="nav-text">AI Knowledge Base</span>
+          </a>
+        </div>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="user-info">
+          <div class="user-avatar" id="userAvatar">U</div>
+          <div class="user-details">
+            <span class="user-name" id="userName">Loading...</span>
+            <span class="user-role" id="userRole">...</span>
+          </div>
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="logout()">Logout</button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <div class="appointments-page">
+        <div class="page-header">
+          <h1 class="page-title">Appointments</h1>
+          <div class="header-actions">
+            <button class="btn btn-primary" onclick="openNewAppointmentModal()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"/>
+                <line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+              New Appointment
+            </button>
+          </div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="stats-row">
+          <div class="stat-card today">
+            <div class="label">Today</div>
+            <div class="value" id="statToday">0</div>
+          </div>
+          <div class="stat-card upcoming">
+            <div class="label">This Week</div>
+            <div class="value" id="statWeek">0</div>
+          </div>
+          <div class="stat-card completed">
+            <div class="label">Completed (Month)</div>
+            <div class="value" id="statCompleted">0</div>
+          </div>
+          <div class="stat-card cancelled">
+            <div class="label">Cancelled (Month)</div>
+            <div class="value" id="statCancelled">0</div>
+          </div>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="filter-bar">
+          <div class="filter-group">
+            <label>Staff Member</label>
+            <select id="filterStaff" onchange="applyFilters()">
+              <option value="">All Staff</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label>Service</label>
+            <select id="filterService" onchange="applyFilters()">
+              <option value="">All Services</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label>Status</label>
+            <select id="filterStatus" onchange="applyFilters()">
+              <option value="">All Statuses</option>
+              <option value="scheduled">Scheduled</option>
+              <option value="confirmed">Confirmed</option>
+              <option value="in_progress">In Progress</option>
+              <option value="completed">Completed</option>
+              <option value="cancelled">Cancelled</option>
+              <option value="no_show">No Show</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Calendar -->
+        <div class="calendar-container">
+          <div id="calendar"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- New/Edit Appointment Modal -->
+  <div class="modal-overlay" id="appointmentModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="modalTitle">New Appointment</h2>
+        <button class="modal-close" onclick="closeModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="appointmentForm">
+          <input type="hidden" id="appointmentId">
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="clientId">Client *</label>
+              <select id="clientId" required>
+                <option value="">Select Client</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="staffId">Staff Member</label>
+              <select id="staffId">
+                <option value="">Select Staff</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="serviceTypeId">Service *</label>
+            <select id="serviceTypeId" required onchange="updateDuration()">
+              <option value="">Select Service</option>
+            </select>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="startTime">Start Time *</label>
+              <input type="datetime-local" id="startTime" required onchange="calculateEndTime()">
+            </div>
+            <div class="form-group">
+              <label for="endTime">End Time *</label>
+              <input type="datetime-local" id="endTime" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="locationType">Location Type</label>
+              <select id="locationType">
+                <option value="in_person">In Person</option>
+                <option value="video">Video Call</option>
+                <option value="phone">Phone</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="status">Status</label>
+              <select id="status">
+                <option value="scheduled">Scheduled</option>
+                <option value="confirmed">Confirmed</option>
+                <option value="in_progress">In Progress</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="clientNotes">Client Notes</label>
+            <textarea id="clientNotes" placeholder="Notes visible to client..."></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="internalNotes">Internal Notes</label>
+            <textarea id="internalNotes" placeholder="Private notes for staff only..."></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+        <button type="button" class="btn btn-danger" id="deleteBtn" style="display: none;" onclick="deleteAppointment()">Delete</button>
+        <button type="button" class="btn btn-primary" onclick="saveAppointment()">Save Appointment</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Appointment Details Modal -->
+  <div class="modal-overlay" id="appointmentDetailsModal">
+    <div class="modal" style="max-width: 500px;">
+      <div class="modal-header">
+        <h2>Appointment Details</h2>
+        <button class="modal-close" onclick="closeDetailsModal()">&times;</button>
+      </div>
+      <div class="modal-body" id="appointmentDetails">
+        <!-- Filled dynamically -->
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeDetailsModal()">Close</button>
+        <button class="btn btn-primary" onclick="editFromDetails()">Edit</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FullCalendar JS -->
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+
+  <script>
+    // Auth check
+    const token = localStorage.getItem('token');
+    if (!token) {
+      window.location.href = '/login';
+    }
+
+    let calendar;
+    let clients = [];
+    let staffMembers = [];
+    let services = [];
+    let currentAppointmentId = null;
+
+    // API helper
+    async function apiRequest(url, options = {}) {
+      const response = await fetch(url, {
+        ...options,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          ...options.headers
+        }
+      });
+
+      if (response.status === 401) {
+        window.location.href = '/login';
+        return;
+      }
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.error || 'Request failed');
+      }
+
+      return response.json();
+    }
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', async () => {
+      await loadUserInfo();
+      await Promise.all([
+        loadClients(),
+        loadStaff(),
+        loadServices()
+      ]);
+      initCalendar();
+      loadStats();
+    });
+
+    async function loadUserInfo() {
+      try {
+        const user = await apiRequest('/api/auth/me');
+        document.getElementById('userName').textContent = user.email.split('@')[0];
+        document.getElementById('userRole').textContent = user.role;
+        document.getElementById('userAvatar').textContent = user.email[0].toUpperCase();
+      } catch (error) {
+        console.error('Failed to load user info:', error);
+      }
+    }
+
+    async function loadClients() {
+      try {
+        const data = await apiRequest('/api/clients');
+        clients = data.clients || data;
+        populateClientDropdown();
+      } catch (error) {
+        console.error('Failed to load clients:', error);
+      }
+    }
+
+    async function loadStaff() {
+      try {
+        staffMembers = await apiRequest('/api/staff?active_only=true');
+        populateStaffDropdown();
+      } catch (error) {
+        console.error('Failed to load staff:', error);
+        staffMembers = [];
+      }
+    }
+
+    async function loadServices() {
+      try {
+        services = await apiRequest('/api/services?active_only=true');
+        populateServiceDropdown();
+      } catch (error) {
+        console.error('Failed to load services:', error);
+        services = [];
+      }
+    }
+
+    function populateClientDropdown() {
+      const select = document.getElementById('clientId');
+      select.innerHTML = '<option value="">Select Client</option>';
+      clients.forEach(client => {
+        const option = document.createElement('option');
+        option.value = client.id;
+        option.textContent = `${client.first_name} ${client.last_name}`;
+        select.appendChild(option);
+      });
+    }
+
+    function populateStaffDropdown() {
+      const formSelect = document.getElementById('staffId');
+      const filterSelect = document.getElementById('filterStaff');
+
+      formSelect.innerHTML = '<option value="">Select Staff</option>';
+      filterSelect.innerHTML = '<option value="">All Staff</option>';
+
+      staffMembers.forEach(staff => {
+        const name = `${staff.first_name} ${staff.last_name}`;
+
+        const option1 = document.createElement('option');
+        option1.value = staff.id;
+        option1.textContent = name;
+        formSelect.appendChild(option1);
+
+        const option2 = document.createElement('option');
+        option2.value = staff.id;
+        option2.textContent = name;
+        filterSelect.appendChild(option2);
+      });
+    }
+
+    function populateServiceDropdown() {
+      const formSelect = document.getElementById('serviceTypeId');
+      const filterSelect = document.getElementById('filterService');
+
+      formSelect.innerHTML = '<option value="">Select Service</option>';
+      filterSelect.innerHTML = '<option value="">All Services</option>';
+
+      services.forEach(service => {
+        const option1 = document.createElement('option');
+        option1.value = service.id;
+        option1.textContent = `${service.name} (${service.duration_minutes} min)`;
+        option1.dataset.duration = service.duration_minutes;
+        formSelect.appendChild(option1);
+
+        const option2 = document.createElement('option');
+        option2.value = service.id;
+        option2.textContent = service.name;
+        filterSelect.appendChild(option2);
+      });
+    }
+
+    function initCalendar() {
+      const calendarEl = document.getElementById('calendar');
+
+      calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'timeGridWeek',
+        headerToolbar: {
+          left: 'prev,next today',
+          center: 'title',
+          right: 'dayGridMonth,timeGridWeek,timeGridDay'
+        },
+        slotMinTime: '07:00:00',
+        slotMaxTime: '21:00:00',
+        allDaySlot: false,
+        selectable: true,
+        selectMirror: true,
+        editable: true,
+        eventClick: handleEventClick,
+        select: handleDateSelect,
+        eventDrop: handleEventDrop,
+        eventResize: handleEventResize,
+        events: fetchEvents
+      });
+
+      calendar.render();
+    }
+
+    async function fetchEvents(info, successCallback, failureCallback) {
+      try {
+        const params = new URLSearchParams({
+          start: info.startStr,
+          end: info.endStr
+        });
+
+        const staffFilter = document.getElementById('filterStaff').value;
+        if (staffFilter) params.append('staff_id', staffFilter);
+
+        const events = await apiRequest(`/api/appointments/calendar?${params}`);
+        successCallback(events);
+      } catch (error) {
+        console.error('Failed to fetch events:', error);
+        failureCallback(error);
+      }
+    }
+
+    function applyFilters() {
+      calendar.refetchEvents();
+    }
+
+    function handleEventClick(info) {
+      showAppointmentDetails(info.event.id);
+    }
+
+    function handleDateSelect(info) {
+      openNewAppointmentModal(info.start, info.end);
+    }
+
+    async function handleEventDrop(info) {
+      try {
+        await apiRequest(`/api/appointments/${info.event.id}`, {
+          method: 'PUT',
+          body: JSON.stringify({
+            start_time: info.event.start.toISOString(),
+            end_time: info.event.end.toISOString()
+          })
+        });
+      } catch (error) {
+        alert('Failed to update appointment: ' + error.message);
+        info.revert();
+      }
+    }
+
+    async function handleEventResize(info) {
+      try {
+        await apiRequest(`/api/appointments/${info.event.id}`, {
+          method: 'PUT',
+          body: JSON.stringify({
+            start_time: info.event.start.toISOString(),
+            end_time: info.event.end.toISOString()
+          })
+        });
+      } catch (error) {
+        alert('Failed to update appointment: ' + error.message);
+        info.revert();
+      }
+    }
+
+    async function loadStats() {
+      try {
+        const today = new Date();
+        const startOfWeek = new Date(today);
+        startOfWeek.setDate(today.getDate() - today.getDay());
+
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(startOfWeek.getDate() + 6);
+
+        const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+        const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+
+        // Get today's appointments
+        const todayStart = today.toISOString().split('T')[0] + 'T00:00:00';
+        const todayEnd = today.toISOString().split('T')[0] + 'T23:59:59';
+
+        const [todayData, weekData, monthData] = await Promise.all([
+          apiRequest(`/api/appointments?start_date=${todayStart}&end_date=${todayEnd}`),
+          apiRequest(`/api/appointments?start_date=${startOfWeek.toISOString()}&end_date=${endOfWeek.toISOString()}`),
+          apiRequest(`/api/appointments?start_date=${startOfMonth.toISOString()}&end_date=${endOfMonth.toISOString()}`)
+        ]);
+
+        document.getElementById('statToday').textContent = todayData.appointments?.length || 0;
+        document.getElementById('statWeek').textContent = weekData.appointments?.length || 0;
+
+        const monthAppts = monthData.appointments || [];
+        document.getElementById('statCompleted').textContent = monthAppts.filter(a => a.status === 'completed').length;
+        document.getElementById('statCancelled').textContent = monthAppts.filter(a => a.status === 'cancelled').length;
+      } catch (error) {
+        console.error('Failed to load stats:', error);
+      }
+    }
+
+    function openNewAppointmentModal(start, end) {
+      currentAppointmentId = null;
+      document.getElementById('modalTitle').textContent = 'New Appointment';
+      document.getElementById('appointmentForm').reset();
+      document.getElementById('deleteBtn').style.display = 'none';
+
+      if (start) {
+        document.getElementById('startTime').value = formatDateTimeLocal(start);
+      }
+      if (end) {
+        document.getElementById('endTime').value = formatDateTimeLocal(end);
+      }
+
+      document.getElementById('appointmentModal').classList.add('active');
+    }
+
+    function formatDateTimeLocal(date) {
+      const d = new Date(date);
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      const hours = String(d.getHours()).padStart(2, '0');
+      const minutes = String(d.getMinutes()).padStart(2, '0');
+      return `${year}-${month}-${day}T${hours}:${minutes}`;
+    }
+
+    function updateDuration() {
+      calculateEndTime();
+    }
+
+    function calculateEndTime() {
+      const startInput = document.getElementById('startTime');
+      const serviceSelect = document.getElementById('serviceTypeId');
+      const endInput = document.getElementById('endTime');
+
+      if (startInput.value && serviceSelect.value) {
+        const selectedOption = serviceSelect.options[serviceSelect.selectedIndex];
+        const duration = parseInt(selectedOption.dataset.duration) || 60;
+
+        const startDate = new Date(startInput.value);
+        const endDate = new Date(startDate.getTime() + duration * 60000);
+        endInput.value = formatDateTimeLocal(endDate);
+      }
+    }
+
+    async function saveAppointment() {
+      const form = document.getElementById('appointmentForm');
+      if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+      }
+
+      const data = {
+        client_id: document.getElementById('clientId').value || null,
+        staff_id: document.getElementById('staffId').value || null,
+        service_type_id: document.getElementById('serviceTypeId').value || null,
+        start_time: new Date(document.getElementById('startTime').value).toISOString(),
+        end_time: new Date(document.getElementById('endTime').value).toISOString(),
+        location_type: document.getElementById('locationType').value,
+        status: document.getElementById('status').value,
+        client_notes: document.getElementById('clientNotes').value,
+        internal_notes: document.getElementById('internalNotes').value
+      };
+
+      try {
+        if (currentAppointmentId) {
+          await apiRequest(`/api/appointments/${currentAppointmentId}`, {
+            method: 'PUT',
+            body: JSON.stringify(data)
+          });
+        } else {
+          await apiRequest('/api/appointments', {
+            method: 'POST',
+            body: JSON.stringify(data)
+          });
+        }
+
+        closeModal();
+        calendar.refetchEvents();
+        loadStats();
+      } catch (error) {
+        alert('Failed to save appointment: ' + error.message);
+      }
+    }
+
+    async function deleteAppointment() {
+      if (!currentAppointmentId) return;
+
+      if (!confirm('Are you sure you want to delete this appointment?')) return;
+
+      try {
+        await apiRequest(`/api/appointments/${currentAppointmentId}`, {
+          method: 'DELETE'
+        });
+
+        closeModal();
+        calendar.refetchEvents();
+        loadStats();
+      } catch (error) {
+        alert('Failed to delete appointment: ' + error.message);
+      }
+    }
+
+    async function showAppointmentDetails(appointmentId) {
+      try {
+        const apt = await apiRequest(`/api/appointments/${appointmentId}`);
+        currentAppointmentId = appointmentId;
+
+        const statusClass = `status-${apt.status}`;
+        const clientName = apt.client_first_name ? `${apt.client_first_name} ${apt.client_last_name}` : 'No client';
+        const staffName = apt.staff_first_name ? `${apt.staff_first_name} ${apt.staff_last_name}` : 'Unassigned';
+
+        document.getElementById('appointmentDetails').innerHTML = `
+          <div style="margin-bottom: 16px;">
+            <span class="status-badge ${statusClass}">${apt.status.replace('_', ' ')}</span>
+          </div>
+
+          <div style="margin-bottom: 12px;">
+            <strong>Service:</strong> ${apt.service_name || 'Not specified'}
+          </div>
+
+          <div style="margin-bottom: 12px;">
+            <strong>Client:</strong> ${clientName}
+            ${apt.client_email ? `<br><small>${apt.client_email}</small>` : ''}
+          </div>
+
+          <div style="margin-bottom: 12px;">
+            <strong>Staff:</strong> ${staffName}
+          </div>
+
+          <div style="margin-bottom: 12px;">
+            <strong>Time:</strong><br>
+            ${new Date(apt.start_time).toLocaleString()} - ${new Date(apt.end_time).toLocaleTimeString()}
+          </div>
+
+          <div style="margin-bottom: 12px;">
+            <strong>Location:</strong> ${apt.location_type.replace('_', ' ')}
+            ${apt.location_address ? `<br><small>${apt.location_address}</small>` : ''}
+          </div>
+
+          ${apt.client_notes ? `
+            <div style="margin-bottom: 12px;">
+              <strong>Client Notes:</strong><br>
+              <p style="margin-top: 4px; color: var(--gray-600);">${apt.client_notes}</p>
+            </div>
+          ` : ''}
+
+          ${apt.internal_notes ? `
+            <div style="margin-bottom: 12px;">
+              <strong>Internal Notes:</strong><br>
+              <p style="margin-top: 4px; color: var(--gray-600);">${apt.internal_notes}</p>
+            </div>
+          ` : ''}
+        `;
+
+        document.getElementById('appointmentDetailsModal').classList.add('active');
+      } catch (error) {
+        alert('Failed to load appointment details: ' + error.message);
+      }
+    }
+
+    async function editFromDetails() {
+      closeDetailsModal();
+
+      if (!currentAppointmentId) return;
+
+      try {
+        const apt = await apiRequest(`/api/appointments/${currentAppointmentId}`);
+
+        document.getElementById('modalTitle').textContent = 'Edit Appointment';
+        document.getElementById('clientId').value = apt.client_id || '';
+        document.getElementById('staffId').value = apt.staff_id || '';
+        document.getElementById('serviceTypeId').value = apt.service_type_id || '';
+        document.getElementById('startTime').value = formatDateTimeLocal(new Date(apt.start_time));
+        document.getElementById('endTime').value = formatDateTimeLocal(new Date(apt.end_time));
+        document.getElementById('locationType').value = apt.location_type || 'in_person';
+        document.getElementById('status').value = apt.status || 'scheduled';
+        document.getElementById('clientNotes').value = apt.client_notes || '';
+        document.getElementById('internalNotes').value = apt.internal_notes || '';
+        document.getElementById('deleteBtn').style.display = 'inline-block';
+
+        document.getElementById('appointmentModal').classList.add('active');
+      } catch (error) {
+        alert('Failed to load appointment: ' + error.message);
+      }
+    }
+
+    function closeModal() {
+      document.getElementById('appointmentModal').classList.remove('active');
+      currentAppointmentId = null;
+    }
+
+    function closeDetailsModal() {
+      document.getElementById('appointmentDetailsModal').classList.remove('active');
+    }
+
+    function logout() {
+      localStorage.removeItem('token');
+      window.location.href = '/login';
+    }
+
+    // Close modals on outside click
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) {
+          overlay.classList.remove('active');
+        }
+      });
+    });
+  </script>
+</body>
+</html>

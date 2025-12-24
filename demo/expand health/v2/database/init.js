@@ -4,6 +4,7 @@
  */
 
 const db = require('./db');
+const { initBookingDatabase } = require('./booking-init');
 
 /**
  * Initialize the audit_logs table for HIPAA compliance
@@ -333,6 +334,9 @@ async function initDatabase() {
 
     // Initialize integrations tables
     await initIntegrations();
+
+    // Initialize booking system tables
+    await initBookingDatabase();
 
     console.log('✅ Database initialization complete\n');
     return true;

@@ -30,6 +30,10 @@ const adminRoutes = require('./api/admin');
 const auditRoutes = require('./api/audit');
 const scheduledMessagesRoutes = require('./api/scheduled-messages');
 const integrationsRoutes = require('./api/integrations');
+const appointmentsRoutes = require('./api/appointments');
+const servicesRoutes = require('./api/services');
+const staffRoutes = require('./api/staff');
+const bookingPublicRoutes = require('./api/booking-public');
 
 // Initialize Express app
 const app = express();
@@ -109,6 +113,10 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/scheduled-messages', scheduledMessagesRoutes);
 app.use('/api/integrations', integrationsRoutes);
+app.use('/api/appointments', appointmentsRoutes);
+app.use('/api/services', servicesRoutes);
+app.use('/api/staff', staffRoutes);
+app.use('/api/book', bookingPublicRoutes);
 
 // ============================================
 // SERVE HTML PAGES
@@ -222,6 +230,15 @@ app.get('/kb-admin', (req, res) => {
 
 app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'admin.html'));
+});
+
+app.get('/appointments', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'appointments.html'));
+});
+
+// Public booking page (no auth required)
+app.get('/book/:tenantSlug', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'booking-public.html'));
 });
 
 // Redirect /staff to admin users section
