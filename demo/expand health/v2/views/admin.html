@@ -803,19 +803,19 @@
             <ol id="integrationInstructions">
               <li>Log into your Momence dashboard</li>
               <li>Go to Apps & Integrations → Developer API</li>
-              <li>Click "Add New Client" to create API credentials</li>
-              <li>Copy the Client ID and Client Secret here</li>
+              <li>Copy your Host ID (shown at the top)</li>
+              <li>Copy your API Token (click to reveal if needed)</li>
             </ol>
           </div>
         </div>
 
         <div class="form-group">
-          <label for="integrationClientId">Client ID</label>
-          <input type="text" id="integrationClientId" name="client_id" required placeholder="Your API Client ID">
+          <label for="integrationHostId">Host ID</label>
+          <input type="text" id="integrationHostId" name="host_id" required placeholder="e.g., 42153">
         </div>
         <div class="form-group">
-          <label for="integrationClientSecret">Client Secret</label>
-          <input type="password" id="integrationClientSecret" name="client_secret" required placeholder="Your API Client Secret">
+          <label for="integrationToken">API Token</label>
+          <input type="text" id="integrationToken" name="token" required placeholder="Your API token">
         </div>
 
         <div class="form-row">
@@ -844,7 +844,7 @@
 
         <div class="modal-actions">
           <button type="button" class="btn btn-secondary" onclick="closeIntegrationModal()">Cancel</button>
-          <button type="submit" class="btn btn-primary" id="integrationSubmitBtn">Save & Connect</button>
+          <button type="submit" class="btn btn-primary" id="integrationSubmitBtn">Test & Connect</button>
         </div>
       </form>
     </div>

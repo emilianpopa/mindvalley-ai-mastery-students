@@ -1,125 +1,51 @@
 /**
  * Momence Integration Service
  *
- * Handles OAuth2 authentication and API interactions with Momence platform.
+ * Handles Legacy API authentication with Momence platform.
+ * Uses hostId and token for authentication (query parameters).
  * API Documentation: https://api.docs.momence.com/
  */
 
-const crypto = require('crypto');
-
-const MOMENCE_API_BASE = 'https://api.momence.com/api/v2';
-const MOMENCE_AUTH_URL = 'https://api.momence.com/api/v2/auth';
+const MOMENCE_API_BASE = 'https://api.momence.com/host';
 
 class MomenceService {
   constructor(integration) {
     this.integration = integration;
-    this.accessToken = integration?.access_token;
-    this.refreshToken = integration?.refresh_token;
-    this.tokenExpiresAt = integration?.token_expires_at;
+    this.hostId = integration?.platform_host_id;
+    this.token = integration?.access_token;
   }
 
   /**
-   * Generate OAuth2 authorization URL
-   * @param {string} clientId - Momence API client ID
-   * @param {string} redirectUri - Callback URL after authorization
-   * @param {string} state - CSRF protection state parameter
-   * @returns {string} Authorization URL
+   * Build URL with authentication params
+   * @param {string} endpoint - API endpoint path
+   * @param {Object} additionalParams - Additional query parameters
+   * @returns {string} Full URL with auth params
    */
-  static getAuthorizationUrl(clientId, redirectUri, state) {
-    const params = new URLSearchParams({
-      client_id: clientId,
-      redirect_uri: redirectUri,
-      response_type: 'code',
-      state: state
-    });
+  buildUrl(endpoint, additionalParams = {}) {
+    const url = new URL(`${MOMENCE_API_BASE}${endpoint}`);
+    url.searchParams.set('hostId', this.hostId);
+    url.searchParams.set('token', this.token);
 
-    return `${MOMENCE_AUTH_URL}/authorize?${params.toString()}`;
-  }
-
-  /**
-   * Exchange authorization code for access token
-   * @param {string} code - Authorization code from OAuth callback
-   * @param {string} clientId - Momence API client ID
-   * @param {string} clientSecret - Momence API client secret
-   * @param {string} redirectUri - Callback URL (must match authorization request)
-   * @returns {Object} Token response
-   */
-  static async exchangeCodeForToken(code, clientId, clientSecret, redirectUri) {
-    const response = await fetch(`${MOMENCE_AUTH_URL}/token`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
-      },
-      body: new URLSearchParams({
-        grant_type: 'authorization_code',
-        code: code,
-        client_id: clientId,
-        client_secret: clientSecret,
-        redirect_uri: redirectUri
-      })
-    });
-
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      throw new Error(`Token exchange failed: ${error.error_description || response.statusText}`);
+    for (const [key, value] of Object.entries(additionalParams)) {
+      if (value !== undefined && value !== null) {
+        url.searchParams.set(key, value);
+      }
     }
 
-    return response.json();
-  }
-
-  /**
-   * Refresh access token
-   * @returns {Object} New token response
-   */
-  async refreshAccessToken() {
-    if (!this.refreshToken) {
-      throw new Error('No refresh token available');
-    }
-
-    const clientId = this.integration.client_id;
-    const clientSecret = this.integration.client_secret;
-
-    const response = await fetch(`${MOMENCE_AUTH_URL}/token`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
-      },
-      body: new URLSearchParams({
-        grant_type: 'refresh_token',
-        refresh_token: this.refreshToken,
-        client_id: clientId,
-        client_secret: clientSecret
-      })
-    });
-
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      throw new Error(`Token refresh failed: ${error.error_description || response.statusText}`);
-    }
-
-    const tokens = await response.json();
-    this.accessToken = tokens.access_token;
-    this.refreshToken = tokens.refresh_token || this.refreshToken;
-    this.tokenExpiresAt = new Date(Date.now() + tokens.expires_in * 1000);
-
-    return tokens;
+    return url.toString();
   }
 
   /**
    * Make authenticated API request
    * @param {string} endpoint - API endpoint path
    * @param {Object} options - Fetch options
+   * @param {Object} queryParams - Additional query parameters
    * @returns {Object} API response
    */
-  async request(endpoint, options = {}) {
-    // Check if token needs refresh
-    if (this.tokenExpiresAt && new Date() >= new Date(this.tokenExpiresAt)) {
-      await this.refreshAccessToken();
-    }
+  async request(endpoint, options = {}, queryParams = {}) {
+    const url = this.buildUrl(endpoint, queryParams);
 
-    const url = `${MOMENCE_API_BASE}${endpoint}`;
     const headers = {
-      'Authorization': `Bearer ${this.accessToken}`,
       'Content-Type': 'application/json',
       ...options.headers
     };
@@ -129,16 +55,9 @@ class MomenceService {
       headers
     });
 
-    if (response.status === 401) {
-      // Token expired, try refresh
-      await this.refreshAccessToken();
-      // Retry request
-      return this.request(endpoint, options);
-    }
-
     if (!response.ok) {
       const error = await response.json().catch(() => ({}));
-      throw new Error(`Momence API error: ${error.message || response.statusText}`);
+      throw new Error(`Momence API error: ${error.message || error.error || response.statusText}`);
     }
 
     return response.json();
@@ -150,12 +69,11 @@ class MomenceService {
 
   /**
    * Get all members (clients) from Momence
-   * @param {Object} params - Query parameters
+   * @param {Object} params - Query parameters (page, limit, search, etc.)
    * @returns {Array} List of members
    */
   async getMembers(params = {}) {
-    const queryParams = new URLSearchParams(params);
-    return this.request(`/host/members?${queryParams.toString()}`);
+    return this.request('/members', {}, params);
   }
 
   /**
@@ -164,7 +82,7 @@ class MomenceService {
    * @returns {Object} Member details
    */
   async getMember(memberId) {
-    return this.request(`/host/members/${memberId}`);
+    return this.request(`/members/${memberId}`);
   }
 
   /**
@@ -173,48 +91,22 @@ class MomenceService {
    * @returns {Object} Created member
    */
   async createMember(memberData) {
-    return this.request('/host/members', {
+    return this.request('/members', {
       method: 'POST',
       body: JSON.stringify(memberData)
     });
   }
 
   /**
-   * Update member name
+   * Update member
    * @param {string} memberId - Momence member ID
-   * @param {Object} nameData - Name data { firstName, lastName }
+   * @param {Object} memberData - Updated member data
    * @returns {Object} Updated member
    */
-  async updateMemberName(memberId, nameData) {
-    return this.request(`/host/members/${memberId}/name`, {
+  async updateMember(memberId, memberData) {
+    return this.request(`/members/${memberId}`, {
       method: 'PUT',
-      body: JSON.stringify(nameData)
-    });
-  }
-
-  /**
-   * Update member email
-   * @param {string} memberId - Momence member ID
-   * @param {string} email - New email address
-   * @returns {Object} Updated member
-   */
-  async updateMemberEmail(memberId, email) {
-    return this.request(`/host/members/${memberId}/email`, {
-      method: 'PUT',
-      body: JSON.stringify({ email })
-    });
-  }
-
-  /**
-   * Update member phone
-   * @param {string} memberId - Momence member ID
-   * @param {string} phoneNumber - New phone number
-   * @returns {Object} Updated member
-   */
-  async updateMemberPhone(memberId, phoneNumber) {
-    return this.request(`/host/members/${memberId}/phone-number`, {
-      method: 'PUT',
-      body: JSON.stringify({ phoneNumber })
+      body: JSON.stringify(memberData)
     });
   }
 
@@ -224,7 +116,7 @@ class MomenceService {
    * @returns {Array} Member notes
    */
   async getMemberNotes(memberId) {
-    return this.request(`/host/members/${memberId}/notes`);
+    return this.request(`/members/${memberId}/notes`);
   }
 
   // ============================================
@@ -233,12 +125,11 @@ class MomenceService {
 
   /**
    * Get sessions (classes)
-   * @param {Object} params - Query parameters
+   * @param {Object} params - Query parameters (from, to, etc.)
    * @returns {Array} List of sessions
    */
   async getSessions(params = {}) {
-    const queryParams = new URLSearchParams(params);
-    return this.request(`/host/sessions?${queryParams.toString()}`);
+    return this.request('/sessions', {}, params);
   }
 
   /**
@@ -247,7 +138,7 @@ class MomenceService {
    * @returns {Object} Session details
    */
   async getSession(sessionId) {
-    return this.request(`/host/sessions/${sessionId}`);
+    return this.request(`/sessions/${sessionId}`);
   }
 
   /**
@@ -256,16 +147,17 @@ class MomenceService {
    * @returns {Array} List of bookings
    */
   async getSessionBookings(sessionId) {
-    return this.request(`/host/sessions/${sessionId}/bookings`);
+    return this.request(`/sessions/${sessionId}/bookings`);
   }
 
   /**
    * Get member's session bookings
    * @param {string} memberId - Member ID
+   * @param {Object} params - Query parameters
    * @returns {Array} List of session bookings
    */
-  async getMemberSessions(memberId) {
-    return this.request(`/host/members/${memberId}/sessions`);
+  async getMemberSessions(memberId, params = {}) {
+    return this.request(`/members/${memberId}/sessions`, {}, params);
   }
 
   /**
@@ -275,7 +167,7 @@ class MomenceService {
    * @returns {Object} Booking result
    */
   async addMemberToSessionFree(sessionId, memberId) {
-    return this.request(`/host/sessions/${sessionId}/bookings/free`, {
+    return this.request(`/sessions/${sessionId}/bookings/free`, {
       method: 'POST',
       body: JSON.stringify({ memberId })
     });
@@ -287,7 +179,7 @@ class MomenceService {
    * @returns {Object} Check-in result
    */
   async checkInBooking(bookingId) {
-    return this.request(`/host/session-bookings/${bookingId}/check-in`, {
+    return this.request(`/session-bookings/${bookingId}/check-in`, {
       method: 'POST'
     });
   }
@@ -298,7 +190,7 @@ class MomenceService {
    * @returns {Object} Cancellation result
    */
   async cancelBooking(bookingId) {
-    return this.request(`/host/session-bookings/${bookingId}`, {
+    return this.request(`/session-bookings/${bookingId}`, {
       method: 'DELETE'
     });
   }
@@ -309,21 +201,21 @@ class MomenceService {
 
   /**
    * Get all appointment reservations
-   * @param {Object} params - Query parameters
+   * @param {Object} params - Query parameters (from, to, etc.)
    * @returns {Array} List of appointment reservations
    */
   async getAppointmentReservations(params = {}) {
-    const queryParams = new URLSearchParams(params);
-    return this.request(`/host/appointments/reservations?${queryParams.toString()}`);
+    return this.request('/appointments/reservations', {}, params);
   }
 
   /**
    * Get member's appointments
    * @param {string} memberId - Member ID
+   * @param {Object} params - Query parameters
    * @returns {Array} List of appointments
    */
-  async getMemberAppointments(memberId) {
-    return this.request(`/host/members/${memberId}/appointments`);
+  async getMemberAppointments(memberId, params = {}) {
+    return this.request(`/members/${memberId}/appointments`, {}, params);
   }
 
   // ============================================
@@ -335,7 +227,7 @@ class MomenceService {
    * @returns {Array} List of memberships
    */
   async getMemberships() {
-    return this.request('/host/memberships');
+    return this.request('/memberships');
   }
 
   /**
@@ -344,7 +236,7 @@ class MomenceService {
    * @returns {Array} List of active memberships
    */
   async getMemberActiveMemberships(memberId) {
-    return this.request(`/host/members/${memberId}/bought-memberships/active`);
+    return this.request(`/members/${memberId}/bought-memberships/active`);
   }
 
   // ============================================
@@ -357,8 +249,7 @@ class MomenceService {
    * @returns {Array} List of sales
    */
   async getSales(params = {}) {
-    const queryParams = new URLSearchParams(params);
-    return this.request(`/host/sales?${queryParams.toString()}`);
+    return this.request('/sales', {}, params);
   }
 
   // ============================================
@@ -367,26 +258,16 @@ class MomenceService {
 
   /**
    * Test the connection to Momence API
-   * @returns {Object} Profile info if successful
+   * @returns {Object} Test result with member count
    */
   async testConnection() {
-    return this.request('/auth/profile');
-  }
-
-  /**
-   * Get current authenticated user/host info
-   * @returns {Object} Profile information
-   */
-  async getProfile() {
-    return this.request('/auth/profile');
-  }
-
-  /**
-   * Logout / invalidate token
-   * @returns {Object} Logout result
-   */
-  async logout() {
-    return this.request('/auth/logout', { method: 'POST' });
+    // Try to fetch members to verify credentials work
+    const result = await this.request('/members', {}, { limit: 1 });
+    return {
+      success: true,
+      message: 'Connection successful',
+      data: result
+    };
   }
 }
 
@@ -409,7 +290,7 @@ function mapMomenceMemberToClient(momenceMember) {
     gender: momenceMember.gender || null,
     address: momenceMember.address || null,
     notes: momenceMember.notes || '',
-    external_id: momenceMember.id,
+    external_id: String(momenceMember.id),
     external_platform: 'momence',
     external_data: momenceMember
   };
@@ -444,18 +325,10 @@ function mapMomenceEventToAppointment(momenceEvent, type = 'session') {
     location: momenceEvent.location?.name || momenceEvent.location || null,
     notes: momenceEvent.description || momenceEvent.notes || '',
     appointment_type: type,
-    external_id: momenceEvent.id,
+    external_id: String(momenceEvent.id),
     external_platform: 'momence',
     external_data: momenceEvent
   };
-}
-
-/**
- * Generate a secure state parameter for OAuth
- * @returns {string} Random state string
- */
-function generateOAuthState() {
-  return crypto.randomBytes(32).toString('hex');
 }
 
 module.exports = {
@@ -463,7 +336,5 @@ module.exports = {
   mapMomenceMemberToClient,
   mapClientToMomenceMember,
   mapMomenceEventToAppointment,
-  generateOAuthState,
-  MOMENCE_API_BASE,
-  MOMENCE_AUTH_URL
+  MOMENCE_API_BASE
 };

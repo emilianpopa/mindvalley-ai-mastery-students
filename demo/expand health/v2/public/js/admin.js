@@ -1191,8 +1191,8 @@ function openIntegrationSetup(platform) {
     instructions.innerHTML = `
       <li>Log into your <a href="https://momence.com/dashboard" target="_blank">Momence dashboard</a></li>
       <li>Go to Apps & Integrations → Developer API</li>
-      <li>Click "Add New Client" to create API credentials</li>
-      <li>Copy the Client ID and Client Secret here</li>
+      <li>Copy your <strong>Host ID</strong> (shown at the top, e.g., 42153)</li>
+      <li>Copy your <strong>API Token</strong> (the alphanumeric string)</li>
     `;
   } else if (platform === 'practice_better') {
     instructions.innerHTML = `
@@ -1210,7 +1210,11 @@ function openIntegrationSetup(platform) {
     document.getElementById('integrationSyncClients').checked = existing.sync_clients;
     document.getElementById('integrationSyncAppointments').checked = existing.sync_appointments;
     document.getElementById('integrationSyncDirection').value = existing.sync_direction || 'bidirectional';
-    // Don't pre-fill secrets for security
+    // Pre-fill host ID if available
+    if (existing.platform_host_id) {
+      document.getElementById('integrationHostId').value = existing.platform_host_id;
+    }
+    // Don't pre-fill token for security
   }
 
   modal.classList.add('active');
@@ -1226,42 +1230,47 @@ async function handleIntegrationSubmit(event) {
 
   const formData = new FormData(event.target);
   const integrationId = formData.get('id');
+  const platform = formData.get('platform');
 
   const data = {
-    platform: formData.get('platform'),
-    client_id: formData.get('client_id'),
-    client_secret: formData.get('client_secret'),
+    platform: platform,
+    host_id: formData.get('host_id'),
+    token: formData.get('token'),
     sync_clients: document.getElementById('integrationSyncClients').checked,
     sync_appointments: document.getElementById('integrationSyncAppointments').checked,
     sync_direction: formData.get('sync_direction')
   };
 
   try {
+    const submitBtn = document.getElementById('integrationSubmitBtn');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Testing connection...';
+
     let result;
 
     if (integrationId) {
-      // Update existing
+      // Update existing and test
       result = await integrationsApi(`/${integrationId}`, { method: 'PUT', body: data });
-      showToast('Integration updated', 'success');
     } else {
-      // Create new
+      // Create new and test
       result = await integrationsApi('/', { method: 'POST', body: data });
-      showToast('Integration created', 'success');
+    }
+
+    if (result.connected) {
+      showToast('Connected to ' + platform + ' successfully!', 'success');
+    } else {
+      showToast('Integration saved', 'success');
     }
 
     closeIntegrationModal();
     await loadIntegrations();
 
-    // Prompt to connect
-    const newIntegration = integrations.find(i => i.platform === data.platform);
-    if (newIntegration && newIntegration.status === 'disconnected') {
-      if (confirm('Would you like to connect to ' + data.platform + ' now?')) {
-        connectIntegration(newIntegration.id);
-      }
-    }
-
   } catch (error) {
     showToast(error.message, 'error');
+  } finally {
+    const submitBtn = document.getElementById('integrationSubmitBtn');
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Test & Connect';
   }
 }
 
