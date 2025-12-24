@@ -186,6 +186,13 @@
             </svg>
             <span>Audit Log</span>
           </button>
+          <button class="admin-tab" data-section="integrations" onclick="showSection('integrations')">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M16 16v1a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2m5.66 0H14a2 2 0 0 1 2 2v3.34l1 1L23 7v10l-6-4v3.34"/>
+              <path d="M8 8h8v8H8z"/>
+            </svg>
+            <span>Integrations</span>
+          </button>
         </div>
 
         <!-- Dashboard Section -->
@@ -468,6 +475,139 @@
             </table>
           </div>
         </section>
+
+        <!-- Integrations Section -->
+        <section id="integrations-section" class="admin-section">
+          <div class="section-header">
+            <h3>External Integrations</h3>
+            <p class="section-subtitle">Connect your booking and EHR platforms to sync clients and appointments</p>
+          </div>
+
+          <div class="integrations-grid" id="integrationsGrid">
+            <!-- Momence Card -->
+            <div class="integration-card" data-platform="momence">
+              <div class="integration-header">
+                <div class="integration-logo">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M8 12h8M12 8v8"/>
+                  </svg>
+                </div>
+                <div class="integration-info">
+                  <h4>Momence</h4>
+                  <p class="integration-desc">Fitness & wellness booking platform</p>
+                </div>
+                <span class="integration-status disconnected" id="momence-status">Not Connected</span>
+              </div>
+              <div class="integration-body">
+                <div class="integration-features">
+                  <span class="feature-tag">Clients</span>
+                  <span class="feature-tag">Appointments</span>
+                  <span class="feature-tag">Sessions</span>
+                </div>
+                <div class="integration-actions" id="momence-actions">
+                  <button class="btn btn-secondary btn-sm" onclick="openIntegrationSetup('momence')">Setup</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Practice Better Card -->
+            <div class="integration-card" data-platform="practice_better">
+              <div class="integration-header">
+                <div class="integration-logo">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+                  </svg>
+                </div>
+                <div class="integration-info">
+                  <h4>Practice Better</h4>
+                  <p class="integration-desc">Health practitioner EHR platform</p>
+                </div>
+                <span class="integration-status disconnected" id="practice_better-status">Coming Soon</span>
+              </div>
+              <div class="integration-body">
+                <div class="integration-features">
+                  <span class="feature-tag">Clients</span>
+                  <span class="feature-tag">Appointments</span>
+                  <span class="feature-tag">Notes</span>
+                </div>
+                <div class="integration-actions">
+                  <button class="btn btn-secondary btn-sm" disabled>Coming Soon</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Bookem Card -->
+            <div class="integration-card" data-platform="bookem">
+              <div class="integration-header">
+                <div class="integration-logo">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                    <line x1="16" y1="2" x2="16" y2="6"/>
+                    <line x1="8" y1="2" x2="8" y2="6"/>
+                    <line x1="3" y1="10" x2="21" y2="10"/>
+                  </svg>
+                </div>
+                <div class="integration-info">
+                  <h4>Bookem</h4>
+                  <p class="integration-desc">South African booking platform</p>
+                </div>
+                <span class="integration-status disconnected" id="bookem-status">Coming Soon</span>
+              </div>
+              <div class="integration-body">
+                <div class="integration-features">
+                  <span class="feature-tag">Clients</span>
+                  <span class="feature-tag">Appointments</span>
+                </div>
+                <div class="integration-actions">
+                  <button class="btn btn-secondary btn-sm" disabled>Coming Soon</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Connected Integration Details -->
+          <div class="integration-details-card" id="integrationDetails" style="display: none;">
+            <div class="integration-details-header">
+              <h4 id="detailsPlatformName">Momence</h4>
+              <div class="details-header-actions">
+                <button class="btn btn-secondary btn-sm" onclick="syncIntegration('clients')">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                    <path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                  </svg>
+                  Sync Clients
+                </button>
+                <button class="btn btn-secondary btn-sm" onclick="syncIntegration('appointments')">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                    <path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                  </svg>
+                  Sync Appointments
+                </button>
+                <button class="btn btn-danger btn-sm" onclick="disconnectIntegration()">Disconnect</button>
+              </div>
+            </div>
+            <div class="integration-stats">
+              <div class="stat-item">
+                <span class="stat-value" id="detailsClientCount">0</span>
+                <span class="stat-label">Synced Clients</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-value" id="detailsAppointmentCount">0</span>
+                <span class="stat-label">Appointments</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-value" id="detailsLastSync">Never</span>
+                <span class="stat-label">Last Sync</span>
+              </div>
+            </div>
+            <div class="sync-logs">
+              <h5>Recent Sync Activity</h5>
+              <div class="sync-log-list" id="syncLogList">
+                <p class="empty-state">No sync activity yet</p>
+              </div>
+            </div>
+          </div>
+        </section>
       </div>
     </main>
   </div>
@@ -635,6 +775,76 @@
         <div class="modal-actions">
           <button type="button" class="btn btn-secondary" onclick="closeRoleModal()">Cancel</button>
           <button type="submit" class="btn btn-primary">Create Role</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Integration Setup Modal -->
+  <div class="modal" id="integrationModal">
+    <div class="modal-overlay" onclick="closeIntegrationModal()"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="integrationModalTitle">Setup Integration</h2>
+        <button class="modal-close" onclick="closeIntegrationModal()">&times;</button>
+      </div>
+      <form id="integrationForm" onsubmit="handleIntegrationSubmit(event)">
+        <input type="hidden" id="integrationPlatform" name="platform">
+        <input type="hidden" id="integrationId" name="id">
+
+        <div class="info-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="16" x2="12" y2="12"/>
+            <line x1="12" y1="8" x2="12.01" y2="8"/>
+          </svg>
+          <div>
+            <strong>How to get your API credentials:</strong>
+            <ol id="integrationInstructions">
+              <li>Log into your Momence dashboard</li>
+              <li>Go to Apps & Integrations → Developer API</li>
+              <li>Click "Add New Client" to create API credentials</li>
+              <li>Copy the Client ID and Client Secret here</li>
+            </ol>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="integrationClientId">Client ID</label>
+          <input type="text" id="integrationClientId" name="client_id" required placeholder="Your API Client ID">
+        </div>
+        <div class="form-group">
+          <label for="integrationClientSecret">Client Secret</label>
+          <input type="password" id="integrationClientSecret" name="client_secret" required placeholder="Your API Client Secret">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>
+              <input type="checkbox" id="integrationSyncClients" name="sync_clients" checked>
+              Sync Clients
+            </label>
+          </div>
+          <div class="form-group">
+            <label>
+              <input type="checkbox" id="integrationSyncAppointments" name="sync_appointments" checked>
+              Sync Appointments
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="integrationSyncDirection">Sync Direction</label>
+          <select id="integrationSyncDirection" name="sync_direction">
+            <option value="import_only">Import Only (from platform to Expand)</option>
+            <option value="bidirectional" selected>Bidirectional (two-way sync)</option>
+            <option value="export_only">Export Only (from Expand to platform)</option>
+          </select>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" onclick="closeIntegrationModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="integrationSubmitBtn">Save & Connect</button>
         </div>
       </form>
     </div>

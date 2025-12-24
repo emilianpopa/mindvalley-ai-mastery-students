@@ -198,7 +198,8 @@ function showSection(sectionName) {
     roles: 'Roles & Permissions',
     tenants: 'Clinic Management',
     kb: 'KB Sharing',
-    audit: 'Audit Log'
+    audit: 'Audit Log',
+    integrations: 'Integrations'
   };
   document.getElementById('pageTitle').textContent = 'Admin Settings';
   document.getElementById('breadcrumbSection').textContent = titles[sectionName] || 'Dashboard';
@@ -219,6 +220,9 @@ function showSection(sectionName) {
       break;
     case 'audit':
       loadAuditLog();
+      break;
+    case 'integrations':
+      loadIntegrations();
       break;
   }
 }
@@ -1063,3 +1067,342 @@ function handleLogout() {
     window.location.href = '/login';
   }
 }
+
+// ============================================
+// INTEGRATIONS
+// ============================================
+
+let integrations = [];
+let currentIntegrationId = null;
+let currentPlatform = null;
+
+// API helper for integrations (uses different base path)
+async function integrationsApi(endpoint, options = {}) {
+  const token = localStorage.getItem('auth_token');
+  if (!token) {
+    window.location.href = '/login';
+    return;
+  }
+
+  const config = {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+      ...options.headers
+    },
+    ...options
+  };
+
+  if (options.body && typeof options.body === 'object') {
+    config.body = JSON.stringify(options.body);
+  }
+
+  const response = await fetch(`/api/integrations${endpoint}`, config);
+
+  if (response.status === 401) {
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('user');
+    window.location.href = '/login';
+    return;
+  }
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || 'API request failed');
+  }
+
+  return data;
+}
+
+async function loadIntegrations() {
+  try {
+    const data = await integrationsApi('/');
+    integrations = data.integrations || [];
+    updateIntegrationsUI();
+  } catch (error) {
+    console.error('Failed to load integrations:', error);
+  }
+}
+
+function updateIntegrationsUI() {
+  // Update each platform card based on integration status
+  integrations.forEach(integration => {
+    const statusEl = document.getElementById(`${integration.platform}-status`);
+    const actionsEl = document.getElementById(`${integration.platform}-actions`);
+
+    if (statusEl) {
+      statusEl.textContent = formatIntegrationStatus(integration.status);
+      statusEl.className = `integration-status ${integration.status}`;
+    }
+
+    if (actionsEl) {
+      if (integration.status === 'connected') {
+        actionsEl.innerHTML = `
+          <button class="btn btn-secondary btn-sm" onclick="viewIntegrationDetails('${integration.platform}', ${integration.id})">Manage</button>
+        `;
+      } else if (integration.status === 'connecting' || integration.status === 'error') {
+        actionsEl.innerHTML = `
+          <button class="btn btn-secondary btn-sm" onclick="openIntegrationSetup('${integration.platform}')">Configure</button>
+          <button class="btn btn-primary btn-sm" onclick="connectIntegration(${integration.id})">Connect</button>
+        `;
+      } else {
+        actionsEl.innerHTML = `
+          <button class="btn btn-secondary btn-sm" onclick="openIntegrationSetup('${integration.platform}')">Setup</button>
+        `;
+      }
+    }
+  });
+}
+
+function formatIntegrationStatus(status) {
+  const statusLabels = {
+    disconnected: 'Not Connected',
+    connecting: 'Connecting...',
+    connected: 'Connected',
+    error: 'Error',
+    expired: 'Token Expired'
+  };
+  return statusLabels[status] || status;
+}
+
+function openIntegrationSetup(platform) {
+  currentPlatform = platform;
+
+  const modal = document.getElementById('integrationModal');
+  const form = document.getElementById('integrationForm');
+  const title = document.getElementById('integrationModalTitle');
+  const instructions = document.getElementById('integrationInstructions');
+
+  form.reset();
+  document.getElementById('integrationPlatform').value = platform;
+
+  // Set platform-specific title and instructions
+  const platformNames = {
+    momence: 'Momence',
+    practice_better: 'Practice Better',
+    bookem: 'Bookem'
+  };
+
+  title.textContent = `Setup ${platformNames[platform] || platform} Integration`;
+
+  // Update instructions based on platform
+  if (platform === 'momence') {
+    instructions.innerHTML = `
+      <li>Log into your <a href="https://momence.com/dashboard" target="_blank">Momence dashboard</a></li>
+      <li>Go to Apps & Integrations → Developer API</li>
+      <li>Click "Add New Client" to create API credentials</li>
+      <li>Copy the Client ID and Client Secret here</li>
+    `;
+  } else if (platform === 'practice_better') {
+    instructions.innerHTML = `
+      <li>Log into your Practice Better account</li>
+      <li>Go to Settings → Integrations → API</li>
+      <li>Generate new API credentials</li>
+      <li>Copy the credentials here</li>
+    `;
+  }
+
+  // Check if integration already exists
+  const existing = integrations.find(i => i.platform === platform);
+  if (existing) {
+    document.getElementById('integrationId').value = existing.id;
+    document.getElementById('integrationSyncClients').checked = existing.sync_clients;
+    document.getElementById('integrationSyncAppointments').checked = existing.sync_appointments;
+    document.getElementById('integrationSyncDirection').value = existing.sync_direction || 'bidirectional';
+    // Don't pre-fill secrets for security
+  }
+
+  modal.classList.add('active');
+}
+
+function closeIntegrationModal() {
+  document.getElementById('integrationModal').classList.remove('active');
+  currentPlatform = null;
+}
+
+async function handleIntegrationSubmit(event) {
+  event.preventDefault();
+
+  const formData = new FormData(event.target);
+  const integrationId = formData.get('id');
+
+  const data = {
+    platform: formData.get('platform'),
+    client_id: formData.get('client_id'),
+    client_secret: formData.get('client_secret'),
+    sync_clients: document.getElementById('integrationSyncClients').checked,
+    sync_appointments: document.getElementById('integrationSyncAppointments').checked,
+    sync_direction: formData.get('sync_direction')
+  };
+
+  try {
+    let result;
+
+    if (integrationId) {
+      // Update existing
+      result = await integrationsApi(`/${integrationId}`, { method: 'PUT', body: data });
+      showToast('Integration updated', 'success');
+    } else {
+      // Create new
+      result = await integrationsApi('/', { method: 'POST', body: data });
+      showToast('Integration created', 'success');
+    }
+
+    closeIntegrationModal();
+    await loadIntegrations();
+
+    // Prompt to connect
+    const newIntegration = integrations.find(i => i.platform === data.platform);
+    if (newIntegration && newIntegration.status === 'disconnected') {
+      if (confirm('Would you like to connect to ' + data.platform + ' now?')) {
+        connectIntegration(newIntegration.id);
+      }
+    }
+
+  } catch (error) {
+    showToast(error.message, 'error');
+  }
+}
+
+async function connectIntegration(integrationId) {
+  try {
+    showToast('Initiating connection...', 'info');
+    const result = await integrationsApi(`/${integrationId}/connect`, { method: 'POST' });
+
+    if (result.authUrl) {
+      // Redirect to OAuth authorization
+      window.location.href = result.authUrl;
+    } else {
+      showToast('Connection initiated', 'success');
+      loadIntegrations();
+    }
+  } catch (error) {
+    showToast(error.message, 'error');
+  }
+}
+
+async function disconnectIntegration() {
+  if (!currentIntegrationId) return;
+
+  if (!confirm('Are you sure you want to disconnect this integration? Synced data will remain.')) return;
+
+  try {
+    await integrationsApi(`/${currentIntegrationId}/disconnect`, { method: 'POST' });
+    showToast('Disconnected successfully', 'success');
+
+    document.getElementById('integrationDetails').style.display = 'none';
+    currentIntegrationId = null;
+
+    loadIntegrations();
+  } catch (error) {
+    showToast(error.message, 'error');
+  }
+}
+
+async function viewIntegrationDetails(platform, integrationId) {
+  currentIntegrationId = integrationId;
+  currentPlatform = platform;
+
+  const detailsCard = document.getElementById('integrationDetails');
+  const platformNames = {
+    momence: 'Momence',
+    practice_better: 'Practice Better',
+    bookem: 'Bookem'
+  };
+
+  document.getElementById('detailsPlatformName').textContent = platformNames[platform] || platform;
+
+  try {
+    const data = await integrationsApi(`/${integrationId}`);
+    const integration = data.integration;
+    const stats = data.stats;
+    const logs = data.syncLogs;
+
+    document.getElementById('detailsClientCount').textContent = stats?.client_count || 0;
+    document.getElementById('detailsAppointmentCount').textContent = stats?.appointment_count || 0;
+    document.getElementById('detailsLastSync').textContent = integration.last_sync_at
+      ? formatDateTime(integration.last_sync_at)
+      : 'Never';
+
+    // Render sync logs
+    const logList = document.getElementById('syncLogList');
+    if (logs && logs.length > 0) {
+      logList.innerHTML = logs.map(log => `
+        <div class="sync-log-item ${log.status}">
+          <span class="log-type">${formatSyncType(log.sync_type)}</span>
+          <span class="log-stats">${log.records_created} created, ${log.records_updated} updated${log.records_failed > 0 ? `, ${log.records_failed} failed` : ''}</span>
+          <span class="log-time">${formatDateTime(log.started_at)}</span>
+        </div>
+      `).join('');
+    } else {
+      logList.innerHTML = '<p class="empty-state">No sync activity yet</p>';
+    }
+
+    detailsCard.style.display = 'block';
+    detailsCard.scrollIntoView({ behavior: 'smooth' });
+
+  } catch (error) {
+    showToast('Failed to load integration details: ' + error.message, 'error');
+  }
+}
+
+function formatSyncType(type) {
+  const types = {
+    clients: 'Client Sync',
+    appointments: 'Appointment Sync',
+    full: 'Full Sync',
+    webhook: 'Webhook Update'
+  };
+  return types[type] || type;
+}
+
+async function syncIntegration(type) {
+  if (!currentIntegrationId) return;
+
+  try {
+    showToast(`Starting ${type} sync...`, 'info');
+
+    const result = await integrationsApi(`/${currentIntegrationId}/sync/${type}`, {
+      method: 'POST',
+      body: { direction: 'import' }
+    });
+
+    showToast(`Sync complete: ${result.stats.created} created, ${result.stats.updated} updated`, 'success');
+
+    // Refresh details
+    viewIntegrationDetails(currentPlatform, currentIntegrationId);
+
+  } catch (error) {
+    showToast('Sync failed: ' + error.message, 'error');
+  }
+}
+
+// Handle URL parameters after OAuth callback
+function handleIntegrationCallback() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const success = urlParams.get('success');
+  const error = urlParams.get('error');
+  const tab = urlParams.get('tab');
+
+  if (success) {
+    showToast(decodeURIComponent(success), 'success');
+    // Clean URL
+    window.history.replaceState({}, document.title, '/admin#integrations');
+  }
+
+  if (error) {
+    showToast(decodeURIComponent(error), 'error');
+    window.history.replaceState({}, document.title, '/admin#integrations');
+  }
+
+  if (tab === 'integrations') {
+    showSection('integrations');
+  }
+}
+
+// Add to initialization
+document.addEventListener('DOMContentLoaded', () => {
+  // Handle OAuth callback parameters
+  setTimeout(handleIntegrationCallback, 100);
+});

@@ -193,6 +193,129 @@ async function initScheduledMessages() {
 }
 
 /**
+ * Initialize integrations tables for external platform sync
+ */
+async function initIntegrations() {
+  const createIntegrationsTableSQL = `
+    CREATE TABLE IF NOT EXISTS integrations (
+      id SERIAL PRIMARY KEY,
+      tenant_id INTEGER REFERENCES tenants(id) ON DELETE CASCADE,
+      platform VARCHAR(50) NOT NULL,
+      status VARCHAR(20) DEFAULT 'disconnected',
+      client_id VARCHAR(255),
+      client_secret TEXT,
+      access_token TEXT,
+      refresh_token TEXT,
+      token_expires_at TIMESTAMP WITH TIME ZONE,
+      platform_host_id VARCHAR(255),
+      platform_config JSONB DEFAULT '{}',
+      sync_clients BOOLEAN DEFAULT true,
+      sync_appointments BOOLEAN DEFAULT true,
+      sync_direction VARCHAR(20) DEFAULT 'bidirectional',
+      last_sync_at TIMESTAMP WITH TIME ZONE,
+      last_sync_status VARCHAR(20),
+      last_sync_error TEXT,
+      created_by INTEGER REFERENCES users(id),
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      CONSTRAINT integrations_platform_check CHECK (
+        platform IN ('momence', 'practice_better', 'bookem', 'calendly', 'acuity')
+      ),
+      CONSTRAINT integrations_status_check CHECK (
+        status IN ('disconnected', 'connecting', 'connected', 'error', 'expired')
+      ),
+      CONSTRAINT integrations_tenant_platform_unique UNIQUE (tenant_id, platform)
+    );
+  `;
+
+  const createClientMappingsSQL = `
+    CREATE TABLE IF NOT EXISTS integration_client_mappings (
+      id SERIAL PRIMARY KEY,
+      integration_id INTEGER REFERENCES integrations(id) ON DELETE CASCADE,
+      client_id INTEGER REFERENCES clients(id) ON DELETE CASCADE,
+      external_id VARCHAR(255) NOT NULL,
+      external_data JSONB DEFAULT '{}',
+      sync_status VARCHAR(20) DEFAULT 'synced',
+      last_synced_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      CONSTRAINT client_mappings_unique UNIQUE (integration_id, client_id),
+      CONSTRAINT client_mappings_external_unique UNIQUE (integration_id, external_id)
+    );
+  `;
+
+  const createAppointmentMappingsSQL = `
+    CREATE TABLE IF NOT EXISTS integration_appointment_mappings (
+      id SERIAL PRIMARY KEY,
+      integration_id INTEGER REFERENCES integrations(id) ON DELETE CASCADE,
+      appointment_type VARCHAR(50) NOT NULL,
+      external_id VARCHAR(255) NOT NULL,
+      client_id INTEGER REFERENCES clients(id) ON DELETE SET NULL,
+      external_client_id VARCHAR(255),
+      title VARCHAR(255),
+      start_time TIMESTAMP WITH TIME ZONE,
+      end_time TIMESTAMP WITH TIME ZONE,
+      status VARCHAR(30),
+      location VARCHAR(255),
+      notes TEXT,
+      external_data JSONB DEFAULT '{}',
+      sync_status VARCHAR(20) DEFAULT 'synced',
+      last_synced_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      CONSTRAINT appointment_mappings_unique UNIQUE (integration_id, external_id)
+    );
+  `;
+
+  const createSyncLogsSQL = `
+    CREATE TABLE IF NOT EXISTS integration_sync_logs (
+      id SERIAL PRIMARY KEY,
+      integration_id INTEGER REFERENCES integrations(id) ON DELETE CASCADE,
+      sync_type VARCHAR(30) NOT NULL,
+      direction VARCHAR(20) NOT NULL,
+      status VARCHAR(20) NOT NULL,
+      records_processed INTEGER DEFAULT 0,
+      records_created INTEGER DEFAULT 0,
+      records_updated INTEGER DEFAULT 0,
+      records_failed INTEGER DEFAULT 0,
+      error_message TEXT,
+      details JSONB DEFAULT '{}',
+      started_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      completed_at TIMESTAMP WITH TIME ZONE
+    );
+  `;
+
+  const createIndexesSQL = `
+    CREATE INDEX IF NOT EXISTS idx_integrations_tenant ON integrations(tenant_id);
+    CREATE INDEX IF NOT EXISTS idx_integrations_platform ON integrations(platform);
+    CREATE INDEX IF NOT EXISTS idx_client_mappings_integration ON integration_client_mappings(integration_id);
+    CREATE INDEX IF NOT EXISTS idx_client_mappings_client ON integration_client_mappings(client_id);
+    CREATE INDEX IF NOT EXISTS idx_appointment_mappings_integration ON integration_appointment_mappings(integration_id);
+    CREATE INDEX IF NOT EXISTS idx_sync_logs_integration ON integration_sync_logs(integration_id);
+  `;
+
+  try {
+    await db.query(createIntegrationsTableSQL);
+    console.log('✅ integrations table ready');
+
+    await db.query(createClientMappingsSQL);
+    console.log('✅ integration_client_mappings table ready');
+
+    await db.query(createAppointmentMappingsSQL);
+    console.log('✅ integration_appointment_mappings table ready');
+
+    await db.query(createSyncLogsSQL);
+    console.log('✅ integration_sync_logs table ready');
+
+    await db.query(createIndexesSQL);
+    console.log('✅ integration indexes ready');
+
+    return true;
+  } catch (error) {
+    console.error('❌ Failed to initialize integrations:', error.message);
+    return false;
+  }
+}
+
+/**
  * Run all database initializations
  */
 async function initDatabase() {
@@ -208,6 +331,9 @@ async function initDatabase() {
     // Initialize scheduled messages table
     await initScheduledMessages();
 
+    // Initialize integrations tables
+    await initIntegrations();
+
     console.log('✅ Database initialization complete\n');
     return true;
   } catch (error) {
@@ -220,5 +346,6 @@ module.exports = {
   initDatabase,
   initAuditLogs,
   initEncryption,
-  initScheduledMessages
+  initScheduledMessages,
+  initIntegrations
 };
