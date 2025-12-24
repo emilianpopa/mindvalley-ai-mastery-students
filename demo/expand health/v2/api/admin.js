@@ -1081,18 +1081,30 @@ router.post('/migrate/tenant-separation', requirePlatformAdmin, async (req, res,
           WHERE id = ANY($2)
         `, [saTenantId, clientIdsToMove]);
 
-        // Move related data
-        await db.query(`
-          UPDATE protocols SET tenant_id = $1, updated_at = NOW() WHERE client_id = ANY($2)
-        `, [saTenantId, clientIdsToMove]);
+        // Move related data (wrap in try-catch as some tables may not exist)
+        try {
+          await db.query(`
+            UPDATE protocols SET tenant_id = $1, updated_at = NOW() WHERE client_id = ANY($2)
+          `, [saTenantId, clientIdsToMove]);
+        } catch (e) { /* protocols table may not exist */ }
 
-        await db.query(`
-          UPDATE lab_results SET tenant_id = $1 WHERE client_id = ANY($2)
-        `, [saTenantId, clientIdsToMove]);
+        try {
+          await db.query(`
+            UPDATE lab_results SET tenant_id = $1 WHERE client_id = ANY($2)
+          `, [saTenantId, clientIdsToMove]);
+        } catch (e) { /* lab_results table may not exist */ }
 
-        await db.query(`
-          UPDATE engagement_plans SET tenant_id = $1, updated_at = NOW() WHERE client_id = ANY($2)
-        `, [saTenantId, clientIdsToMove]);
+        try {
+          await db.query(`
+            UPDATE engagement_plans SET tenant_id = $1, updated_at = NOW() WHERE client_id = ANY($2)
+          `, [saTenantId, clientIdsToMove]);
+        } catch (e) { /* engagement_plans table may not exist */ }
+
+        try {
+          await db.query(`
+            UPDATE appointments SET tenant_id = $1 WHERE client_id = ANY($2)
+          `, [saTenantId, clientIdsToMove]);
+        } catch (e) { /* appointments table may not exist */ }
 
         results.steps.push({
           step: 'Moved non-test clients to SA tenant',
