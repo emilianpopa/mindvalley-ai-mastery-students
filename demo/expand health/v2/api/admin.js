@@ -906,6 +906,258 @@ router.put('/kb-collections/:id/sharing', requireClinicAdmin, async (req, res, n
 });
 
 // ============================================
+// TENANT SEPARATION MIGRATION
+// ============================================
+
+/**
+ * POST /api/admin/migrate/tenant-separation
+ * One-time migration to separate tenants:
+ * - Creates "Expand Health South Africa" tenant
+ * - Moves Momence-imported clients to SA tenant
+ * - Creates admin users for SA tenant
+ * - Renames existing tenant to "Test Tenant"
+ */
+router.post('/migrate/tenant-separation', requirePlatformAdmin, async (req, res, next) => {
+  try {
+    const results = {
+      steps: [],
+      success: true
+    };
+
+    // Step 1: Get current state
+    const tenants = await db.query('SELECT id, name, slug FROM tenants ORDER BY id');
+    results.steps.push({
+      step: 'Query current tenants',
+      data: tenants.rows
+    });
+
+    if (tenants.rows.length === 0) {
+      return res.status(400).json({ error: 'No tenants found' });
+    }
+
+    const currentTenant = tenants.rows[0];
+
+    // Step 2: Create South Africa tenant if not exists
+    let saTenantId;
+    const existingSA = await db.query("SELECT id FROM tenants WHERE slug = 'expand-health-za'");
+
+    if (existingSA.rows.length > 0) {
+      saTenantId = existingSA.rows[0].id;
+      results.steps.push({
+        step: 'South Africa tenant already exists',
+        tenantId: saTenantId
+      });
+    } else {
+      const saResult = await db.query(`
+        INSERT INTO tenants (name, slug, status, created_by)
+        VALUES ('Expand Health South Africa', 'expand-health-za', 'active', $1)
+        RETURNING id
+      `, [req.user.id]);
+      saTenantId = saResult.rows[0].id;
+      results.steps.push({
+        step: 'Created South Africa tenant',
+        tenantId: saTenantId
+      });
+
+      // Create default KB collection for SA tenant
+      await db.query(`
+        INSERT INTO tenant_kb_collections (tenant_id, name, description, created_by)
+        VALUES ($1, 'Main Collection', 'Primary knowledge base collection', $2)
+      `, [saTenantId, req.user.id]);
+    }
+
+    // Step 3: Create admin users for South Africa tenant
+    const existingAdmin = await db.query(
+      "SELECT id FROM users WHERE email = 'admin@expandhealth.co.za'"
+    );
+
+    if (existingAdmin.rows.length > 0) {
+      results.steps.push({
+        step: 'SA admin already exists',
+        email: 'admin@expandhealth.co.za'
+      });
+    } else {
+      const hashedPassword = await bcrypt.hash('ExpandHealth2024!', 10);
+      await db.query(`
+        INSERT INTO users (tenant_id, email, password_hash, first_name, last_name, status)
+        VALUES ($1, 'admin@expandhealth.co.za', $2, 'Admin', 'SA', 'enabled')
+      `, [saTenantId, hashedPassword]);
+
+      // Assign admin role
+      await db.query(`
+        INSERT INTO user_roles (user_id, role_id)
+        SELECT u.id, r.id
+        FROM users u, roles r
+        WHERE u.email = 'admin@expandhealth.co.za' AND r.name = 'clinic_admin'
+      `);
+
+      results.steps.push({
+        step: 'Created SA admin user',
+        email: 'admin@expandhealth.co.za',
+        password: 'ExpandHealth2024!'
+      });
+    }
+
+    // Create practitioner for SA
+    const existingPractitioner = await db.query(
+      "SELECT id FROM users WHERE email = 'practitioner@expandhealth.co.za'"
+    );
+
+    if (existingPractitioner.rows.length === 0) {
+      const hashedPassword = await bcrypt.hash('ExpandHealth2024!', 10);
+      await db.query(`
+        INSERT INTO users (tenant_id, email, password_hash, first_name, last_name, status)
+        VALUES ($1, 'practitioner@expandhealth.co.za', $2, 'Practitioner', 'SA', 'enabled')
+      `, [saTenantId, hashedPassword]);
+
+      await db.query(`
+        INSERT INTO user_roles (user_id, role_id)
+        SELECT u.id, r.id
+        FROM users u, roles r
+        WHERE u.email = 'practitioner@expandhealth.co.za' AND r.name = 'therapist'
+      `);
+
+      results.steps.push({
+        step: 'Created SA practitioner user',
+        email: 'practitioner@expandhealth.co.za'
+      });
+    }
+
+    // Step 4: Move Momence-imported clients to SA tenant
+    // First check for integration_client_mappings table
+    let momenceClientIds = [];
+    try {
+      const mappings = await db.query(`
+        SELECT client_id FROM integration_client_mappings
+        WHERE external_platform = 'momence'
+      `);
+      momenceClientIds = mappings.rows.map(r => r.client_id);
+    } catch (e) {
+      // Table might not exist
+    }
+
+    if (momenceClientIds.length > 0) {
+      // Move clients via Momence mappings
+      const updateResult = await db.query(`
+        UPDATE clients
+        SET tenant_id = $1, updated_at = NOW()
+        WHERE id = ANY($2)
+        RETURNING id, first_name, last_name
+      `, [saTenantId, momenceClientIds]);
+
+      results.steps.push({
+        step: 'Moved Momence clients to SA tenant',
+        count: updateResult.rows.length,
+        clients: updateResult.rows.map(c => `${c.first_name} ${c.last_name}`)
+      });
+
+      // Update integration mappings
+      await db.query(`
+        UPDATE integration_client_mappings
+        SET tenant_id = $1
+        WHERE external_platform = 'momence'
+      `, [saTenantId]);
+    } else {
+      // Alternative: Move clients that are NOT test clients
+      // Keep clients with these names as test clients
+      const nonTestClients = await db.query(`
+        SELECT id, first_name, last_name, email
+        FROM clients
+        WHERE tenant_id = $1
+        AND LOWER(email) NOT LIKE '%test%'
+        AND LOWER(email) NOT LIKE '%demo%'
+        AND LOWER(first_name) != 'test'
+        AND LOWER(first_name) != 'demo'
+        AND (first_name || ' ' || last_name) != 'Chris Moore'
+      `, [currentTenant.id]);
+
+      if (nonTestClients.rows.length > 0) {
+        const clientIdsToMove = nonTestClients.rows.map(c => c.id);
+
+        // Move clients
+        await db.query(`
+          UPDATE clients
+          SET tenant_id = $1, updated_at = NOW()
+          WHERE id = ANY($2)
+        `, [saTenantId, clientIdsToMove]);
+
+        // Move related data
+        await db.query(`
+          UPDATE protocols SET tenant_id = $1, updated_at = NOW() WHERE client_id = ANY($2)
+        `, [saTenantId, clientIdsToMove]);
+
+        await db.query(`
+          UPDATE lab_results SET tenant_id = $1 WHERE client_id = ANY($2)
+        `, [saTenantId, clientIdsToMove]);
+
+        await db.query(`
+          UPDATE engagement_plans SET tenant_id = $1, updated_at = NOW() WHERE client_id = ANY($2)
+        `, [saTenantId, clientIdsToMove]);
+
+        results.steps.push({
+          step: 'Moved non-test clients to SA tenant',
+          count: clientIdsToMove.length,
+          clients: nonTestClients.rows.map(c => `${c.first_name} ${c.last_name} (${c.email})`)
+        });
+      } else {
+        results.steps.push({
+          step: 'No clients to move (all appear to be test clients)',
+          count: 0
+        });
+      }
+    }
+
+    // Step 5: Rename existing tenant to Test
+    await db.query(`
+      UPDATE tenants
+      SET name = 'Test Tenant', slug = 'test'
+      WHERE id = $1
+    `, [currentTenant.id]);
+
+    results.steps.push({
+      step: 'Renamed existing tenant to Test Tenant',
+      oldName: currentTenant.name,
+      newName: 'Test Tenant'
+    });
+
+    // Step 6: Get final state
+    const finalTenants = await db.query('SELECT id, name, slug FROM tenants ORDER BY id');
+    const finalUsers = await db.query(`
+      SELECT u.email, u.first_name, u.last_name, t.name as tenant_name
+      FROM users u
+      JOIN tenants t ON u.tenant_id = t.id
+      ORDER BY t.id, u.email
+    `);
+    const finalClients = await db.query(`
+      SELECT c.first_name, c.last_name, c.email, t.name as tenant_name
+      FROM clients c
+      JOIN tenants t ON c.tenant_id = t.id
+      ORDER BY t.id, c.last_name
+    `);
+
+    results.finalState = {
+      tenants: finalTenants.rows,
+      users: finalUsers.rows,
+      clients: finalClients.rows
+    };
+
+    results.credentials = {
+      southAfrica: {
+        admin: { email: 'admin@expandhealth.co.za', password: 'ExpandHealth2024!' },
+        practitioner: { email: 'practitioner@expandhealth.co.za', password: 'ExpandHealth2024!' }
+      }
+    };
+
+    await logAdminAction(req.user.id, null, 'tenant_separation_migration', 'system', null, null, results, req);
+
+    res.json(results);
+  } catch (error) {
+    console.error('Migration error:', error);
+    next(error);
+  }
+});
+
+// ============================================
 // AUDIT LOG
 // ============================================
 
