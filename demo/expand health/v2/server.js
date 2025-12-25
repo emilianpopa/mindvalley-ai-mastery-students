@@ -263,6 +263,16 @@ app.get('/inbox', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'inbox.html'));
 });
 
+// Point of Sale
+app.get('/pos', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'pos.html'));
+});
+
+// Classes
+app.get('/classes', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'classes.html'));
+});
+
 // Public booking page (no auth required)
 app.get('/book/:tenantSlug', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'booking-public.html'));
