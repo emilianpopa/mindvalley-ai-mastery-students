@@ -273,6 +273,14 @@ app.get('/classes', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'classes.html'));
 });
 
+app.get('/class-templates', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'class-templates.html'));
+});
+
+app.get('/substitution-requests', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'substitution-requests.html'));
+});
+
 // Reservations (Appointments list view)
 app.get('/reservations', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'reservations.html'));
