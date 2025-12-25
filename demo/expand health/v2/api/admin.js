@@ -36,7 +36,7 @@ router.get('/stats', requireClinicAdmin, async (req, res, next) => {
       const [tenants, users, clients, protocols] = await Promise.all([
         db.query('SELECT COUNT(*) as count FROM tenants WHERE status = $1', ['active']),
         db.query('SELECT COUNT(*) as count FROM users WHERE status = $1', ['enabled']),
-        db.query('SELECT COUNT(*) as count FROM clients WHERE status = $1', ['enabled']),
+        db.query('SELECT COUNT(*) as count FROM clients WHERE status IN ($1, $2)', ['active', 'enabled']),
         db.query('SELECT COUNT(*) as count FROM protocols')
       ]);
 
@@ -53,7 +53,7 @@ router.get('/stats', requireClinicAdmin, async (req, res, next) => {
       // Tenant-specific stats
       const [users, clients, protocols, kbDocs] = await Promise.all([
         db.query('SELECT COUNT(*) as count FROM users WHERE tenant_id = $1 AND status = $2', [tenantId, 'enabled']),
-        db.query('SELECT COUNT(*) as count FROM clients WHERE tenant_id = $1 AND status = $2', [tenantId, 'enabled']),
+        db.query('SELECT COUNT(*) as count FROM clients WHERE tenant_id = $1 AND status IN ($2, $3)', [tenantId, 'active', 'enabled']),
         db.query('SELECT COUNT(*) as count FROM protocols WHERE tenant_id = $1', [tenantId]),
         db.query('SELECT COUNT(*) as count FROM kb_documents WHERE tenant_id = $1 OR is_global = true', [tenantId])
       ]);
@@ -103,7 +103,7 @@ router.get('/tenants', requirePlatformAdmin, async (req, res, next) => {
         COUNT(DISTINCT c.id) as client_count
       FROM tenants t
       LEFT JOIN users u ON t.id = u.tenant_id AND u.status = 'enabled'
-      LEFT JOIN clients c ON t.id = c.tenant_id AND c.status = 'enabled'
+      LEFT JOIN clients c ON t.id = c.tenant_id AND (c.status = 'active' OR c.status = 'enabled')
       WHERE 1=1
     `;
     const params = [];
@@ -1165,6 +1165,435 @@ router.post('/migrate/tenant-separation', requirePlatformAdmin, async (req, res,
     res.json(results);
   } catch (error) {
     console.error('Migration error:', error);
+    next(error);
+  }
+});
+
+/**
+ * POST /api/admin/migrate/fix-user-roles
+ * Fix user roles - ensure all admin users have proper entries in user_roles table
+ * Specifically fixes SA tenant admin user to have clinic_admin role
+ */
+router.post('/migrate/fix-user-roles', async (req, res, next) => {
+  try {
+    const results = {
+      steps: [],
+      success: true
+    };
+
+    // First, ensure clinic_admin role exists
+    const clinicAdminCheck = await db.query("SELECT id FROM roles WHERE name = 'clinic_admin'");
+    if (clinicAdminCheck.rows.length === 0) {
+      await db.query(`
+        INSERT INTO roles (name, description, permissions)
+        VALUES ('clinic_admin', 'Clinic Administrator - full access within their clinic', '{"admin": true}'::jsonb)
+      `);
+      results.steps.push({ step: 'Created clinic_admin role' });
+    } else {
+      results.steps.push({ step: 'clinic_admin role already exists' });
+    }
+
+    // Get all users and their current roles
+    const usersResult = await db.query(`
+      SELECT u.id, u.email, u.first_name, u.last_name, u.tenant_id, t.name as tenant_name,
+             COALESCE(array_agg(r.name) FILTER (WHERE r.name IS NOT NULL), ARRAY[]::text[]) as current_roles
+      FROM users u
+      LEFT JOIN tenants t ON u.tenant_id = t.id
+      LEFT JOIN user_roles ur ON u.id = ur.user_id
+      LEFT JOIN roles r ON ur.role_id = r.id
+      GROUP BY u.id, t.name
+      ORDER BY t.name, u.email
+    `);
+
+    results.steps.push({
+      step: 'Current users and roles',
+      users: usersResult.rows.map(u => ({
+        email: u.email,
+        tenant: u.tenant_name,
+        roles: u.current_roles
+      }))
+    });
+
+    // Get role IDs (refresh after potential insert)
+    const rolesResult = await db.query('SELECT id, name FROM roles');
+    const roleMap = {};
+    rolesResult.rows.forEach(r => { roleMap[r.name] = r.id; });
+
+    results.steps.push({
+      step: 'Available roles',
+      roles: rolesResult.rows.map(r => r.name)
+    });
+
+    const fixedUsers = [];
+
+    // Fix SA admin - should have clinic_admin role
+    const saAdmin = usersResult.rows.find(u => u.email === 'admin@expandhealth.co.za');
+    if (saAdmin) {
+      if (!saAdmin.current_roles.includes('clinic_admin')) {
+        const clinicAdminRoleId = roleMap['clinic_admin'];
+        if (clinicAdminRoleId) {
+          await db.query(`
+            INSERT INTO user_roles (user_id, role_id)
+            VALUES ($1, $2)
+            ON CONFLICT (user_id, role_id) DO NOTHING
+          `, [saAdmin.id, clinicAdminRoleId]);
+          fixedUsers.push({ email: saAdmin.email, added_role: 'clinic_admin' });
+        }
+      } else {
+        fixedUsers.push({ email: saAdmin.email, status: 'already has clinic_admin' });
+      }
+    } else {
+      fixedUsers.push({ email: 'admin@expandhealth.co.za', status: 'not found' });
+    }
+
+    // Fix SA practitioner - should have therapist role
+    const saPractitioner = usersResult.rows.find(u => u.email === 'practitioner@expandhealth.co.za');
+    if (saPractitioner) {
+      if (!saPractitioner.current_roles.includes('therapist')) {
+        const therapistRoleId = roleMap['therapist'];
+        if (therapistRoleId) {
+          await db.query(`
+            INSERT INTO user_roles (user_id, role_id)
+            VALUES ($1, $2)
+            ON CONFLICT (user_id, role_id) DO NOTHING
+          `, [saPractitioner.id, therapistRoleId]);
+          fixedUsers.push({ email: saPractitioner.email, added_role: 'therapist' });
+        }
+      } else {
+        fixedUsers.push({ email: saPractitioner.email, status: 'already has therapist' });
+      }
+    }
+
+    // Also fix any other users without roles - give them therapist by default
+    for (const user of usersResult.rows) {
+      if (user.current_roles.length === 0 || (user.current_roles.length === 1 && user.current_roles[0] === null)) {
+        // User has no roles, give them therapist by default
+        const therapistRoleId = roleMap['therapist'];
+        if (therapistRoleId) {
+          await db.query(`
+            INSERT INTO user_roles (user_id, role_id)
+            VALUES ($1, $2)
+            ON CONFLICT (user_id, role_id) DO NOTHING
+          `, [user.id, therapistRoleId]);
+          fixedUsers.push({ email: user.email, added_role: 'therapist (default)' });
+        }
+      }
+    }
+
+    results.steps.push({
+      step: 'Fixed user roles',
+      users: fixedUsers
+    });
+
+    // Verify the fix
+    const verification = await db.query(`
+      SELECT u.email, u.tenant_id, t.name as tenant_name,
+             array_agg(r.name) as assigned_roles
+      FROM users u
+      LEFT JOIN tenants t ON u.tenant_id = t.id
+      LEFT JOIN user_roles ur ON u.id = ur.user_id
+      LEFT JOIN roles r ON ur.role_id = r.id
+      GROUP BY u.id, t.name
+      ORDER BY t.name, u.email
+    `);
+
+    results.verification = verification.rows;
+
+    res.json(results);
+  } catch (error) {
+    console.error('Fix user roles migration error:', error);
+    next(error);
+  }
+});
+
+/**
+ * POST /api/admin/migrate/create-super-admin
+ * Create a dedicated super admin (platform admin) user separate from test tenant admin
+ */
+router.post('/migrate/create-super-admin', async (req, res, next) => {
+  try {
+    const results = {
+      steps: [],
+      success: true
+    };
+
+    const superAdminEmail = 'superadmin@expandhealth.io';
+    const superAdminPassword = 'SuperAdmin2024!';
+
+    // Check if super admin already exists
+    const existingAdmin = await db.query(
+      "SELECT id FROM users WHERE email = $1",
+      [superAdminEmail]
+    );
+
+    if (existingAdmin.rows.length > 0) {
+      results.steps.push({ step: 'Super admin already exists', email: superAdminEmail });
+    } else {
+      // Get the Test Tenant ID (super admin needs a tenant, we'll use Test Tenant)
+      const testTenant = await db.query("SELECT id FROM tenants WHERE slug = 'test'");
+      if (testTenant.rows.length === 0) {
+        return res.status(400).json({ error: 'Test tenant not found' });
+      }
+      const testTenantId = testTenant.rows[0].id;
+
+      // Create the super admin user
+      const hashedPassword = await bcrypt.hash(superAdminPassword, 10);
+      const userResult = await db.query(`
+        INSERT INTO users (tenant_id, email, password_hash, first_name, last_name, status, is_platform_admin)
+        VALUES ($1, $2, $3, 'Super', 'Admin', 'enabled', true)
+        RETURNING id
+      `, [testTenantId, superAdminEmail, hashedPassword]);
+
+      const userId = userResult.rows[0].id;
+
+      // Assign super_admin role
+      await db.query(`
+        INSERT INTO user_roles (user_id, role_id)
+        SELECT $1, id FROM roles WHERE name = 'super_admin'
+      `, [userId]);
+
+      results.steps.push({
+        step: 'Created super admin',
+        email: superAdminEmail,
+        password: superAdminPassword,
+        isPlatformAdmin: true
+      });
+    }
+
+    // Update the existing admin@expandhealth.io to NOT be platform admin (make it test tenant admin only)
+    await db.query(`
+      UPDATE users SET is_platform_admin = false
+      WHERE email = 'admin@expandhealth.io'
+    `);
+    results.steps.push({ step: 'Removed platform admin from admin@expandhealth.io' });
+
+    // Make sure admin@expandhealth.io has clinic_admin role for Test Tenant
+    const testAdmin = await db.query("SELECT id FROM users WHERE email = 'admin@expandhealth.io'");
+    if (testAdmin.rows.length > 0) {
+      const clinicAdminRole = await db.query("SELECT id FROM roles WHERE name = 'clinic_admin'");
+      if (clinicAdminRole.rows.length > 0) {
+        await db.query(`
+          INSERT INTO user_roles (user_id, role_id)
+          VALUES ($1, $2)
+          ON CONFLICT (user_id, role_id) DO NOTHING
+        `, [testAdmin.rows[0].id, clinicAdminRole.rows[0].id]);
+        results.steps.push({ step: 'Ensured admin@expandhealth.io has clinic_admin role' });
+      }
+    }
+
+    // Verify final state
+    const verification = await db.query(`
+      SELECT u.email, u.is_platform_admin, t.name as tenant_name,
+             array_agg(r.name) as roles
+      FROM users u
+      LEFT JOIN tenants t ON u.tenant_id = t.id
+      LEFT JOIN user_roles ur ON u.id = ur.user_id
+      LEFT JOIN roles r ON ur.role_id = r.id
+      GROUP BY u.id, t.name
+      ORDER BY u.is_platform_admin DESC, t.name, u.email
+    `);
+
+    results.verification = verification.rows;
+
+    results.credentials = {
+      superAdmin: {
+        email: superAdminEmail,
+        password: superAdminPassword,
+        note: 'Platform-wide super admin - can manage all tenants'
+      },
+      testTenantAdmin: {
+        email: 'admin@expandhealth.io',
+        password: 'admin123',
+        note: 'Test Tenant clinic admin only'
+      },
+      saTenantAdmin: {
+        email: 'admin@expandhealth.co.za',
+        password: 'ExpandHealth2024!',
+        note: 'South Africa Tenant clinic admin'
+      }
+    };
+
+    res.json(results);
+  } catch (error) {
+    console.error('Create super admin error:', error);
+    next(error);
+  }
+});
+
+/**
+ * POST /api/admin/migrate/fix-test-clients
+ * Fix test clients assignment - move specific clients to Test tenant
+ * Test clients: Chris Moore, Emilian Popa, Sarah Chen, Michael Rodriguez, Jennifer Walsh
+ */
+router.post('/migrate/fix-test-clients', requirePlatformAdmin, async (req, res, next) => {
+  try {
+    const results = {
+      steps: [],
+      success: true
+    };
+
+    // Get tenant IDs
+    const testTenant = await db.query("SELECT id FROM tenants WHERE slug = 'test'");
+    const saTenant = await db.query("SELECT id FROM tenants WHERE slug = 'expand-health-za'");
+
+    if (testTenant.rows.length === 0 || saTenant.rows.length === 0) {
+      return res.status(400).json({ error: 'Required tenants not found. Run tenant-separation migration first.' });
+    }
+
+    const testTenantId = testTenant.rows[0].id;
+    const saTenantId = saTenant.rows[0].id;
+
+    results.steps.push({
+      step: 'Found tenants',
+      testTenantId,
+      saTenantId
+    });
+
+    // Define the test clients that should be in Test Tenant
+    const testClientNames = [
+      { first: 'Chris', last: 'Moore' },
+      { first: 'Emilian', last: 'Popa' },
+      { first: 'Sarah', last: 'Chen' },
+      { first: 'Michael', last: 'Rodriguez' },
+      { first: 'Jennifer', last: 'Walsh' }
+    ];
+
+    // Find and move each test client to Test Tenant
+    const movedClients = [];
+    for (const client of testClientNames) {
+      const clientResult = await db.query(`
+        SELECT id, first_name, last_name, email, tenant_id
+        FROM clients
+        WHERE LOWER(first_name) = LOWER($1) AND LOWER(last_name) = LOWER($2)
+      `, [client.first, client.last]);
+
+      if (clientResult.rows.length > 0) {
+        const c = clientResult.rows[0];
+        if (c.tenant_id !== testTenantId) {
+          // Move to Test Tenant
+          await db.query(`
+            UPDATE clients SET tenant_id = $1, updated_at = NOW() WHERE id = $2
+          `, [testTenantId, c.id]);
+
+          // Move related data
+          try {
+            await db.query(`UPDATE protocols SET tenant_id = $1 WHERE client_id = $2`, [testTenantId, c.id]);
+          } catch (e) { /* ignore */ }
+          try {
+            await db.query(`UPDATE labs SET tenant_id = $1 WHERE client_id = $2`, [testTenantId, c.id]);
+          } catch (e) { /* ignore */ }
+          try {
+            await db.query(`UPDATE appointments SET tenant_id = $1 WHERE client_id = $2`, [testTenantId, c.id]);
+          } catch (e) { /* ignore */ }
+
+          movedClients.push(`${c.first_name} ${c.last_name} (${c.email})`);
+        } else {
+          movedClients.push(`${c.first_name} ${c.last_name} (already in Test Tenant)`);
+        }
+      } else {
+        movedClients.push(`${client.first} ${client.last} (not found)`);
+      }
+    }
+
+    results.steps.push({
+      step: 'Processed test clients',
+      clients: movedClients
+    });
+
+    // Get final counts
+    const testCount = await db.query('SELECT COUNT(*) as count FROM clients WHERE tenant_id = $1', [testTenantId]);
+    const saCount = await db.query('SELECT COUNT(*) as count FROM clients WHERE tenant_id = $1', [saTenantId]);
+
+    results.finalCounts = {
+      testTenant: parseInt(testCount.rows[0].count),
+      saTenant: parseInt(saCount.rows[0].count)
+    };
+
+    // List test tenant clients
+    const testClients = await db.query(`
+      SELECT first_name, last_name, email FROM clients WHERE tenant_id = $1 ORDER BY last_name
+    `, [testTenantId]);
+    results.testTenantClients = testClients.rows.map(c => `${c.first_name} ${c.last_name}`);
+
+    await logAdminAction(req.user.id, null, 'fix_test_clients_migration', 'system', null, null, results, req);
+
+    res.json(results);
+  } catch (error) {
+    console.error('Fix test clients migration error:', error);
+    next(error);
+  }
+});
+
+// ============================================
+// APPOINTMENTS SYSTEM MIGRATION
+// ============================================
+
+/**
+ * POST /api/admin/migrate/appointments-system
+ * Creates appointments/booking system tables and seeds with synthetic data
+ */
+router.post('/migrate/appointments-system', requirePlatformAdmin, async (req, res, next) => {
+  try {
+    const results = {
+      steps: [],
+      success: true
+    };
+
+    const fs = require('fs');
+    const path = require('path');
+
+    // Step 1: Run the schema migration
+    const schemaPath = path.join(__dirname, '../database/migrations/add_appointments_system.sql');
+    if (fs.existsSync(schemaPath)) {
+      const schemaSql = fs.readFileSync(schemaPath, 'utf8');
+      await db.query(schemaSql);
+      results.steps.push({ step: 'Created appointments system tables', success: true });
+    } else {
+      results.steps.push({ step: 'Schema file not found', success: false, path: schemaPath });
+    }
+
+    // Step 2: Run the seed data migration
+    const seedPath = path.join(__dirname, '../database/migrations/seed_appointments_data.sql');
+    if (fs.existsSync(seedPath)) {
+      const seedSql = fs.readFileSync(seedPath, 'utf8');
+      await db.query(seedSql);
+      results.steps.push({ step: 'Seeded appointments data', success: true });
+    } else {
+      results.steps.push({ step: 'Seed file not found', success: false, path: seedPath });
+    }
+
+    // Step 3: Get counts
+    const [serviceTypes, staff, appointments] = await Promise.all([
+      db.query('SELECT COUNT(*) as count FROM service_types'),
+      db.query('SELECT COUNT(*) as count FROM staff'),
+      db.query('SELECT COUNT(*) as count FROM appointments')
+    ]);
+
+    results.counts = {
+      serviceTypes: parseInt(serviceTypes.rows[0].count),
+      staff: parseInt(staff.rows[0].count),
+      appointments: parseInt(appointments.rows[0].count)
+    };
+
+    // Step 4: Get sample of appointments
+    const sampleAppointments = await db.query(`
+      SELECT
+        a.id, a.title, a.start_time, a.status, a.payment_status, a.price,
+        c.first_name || ' ' || c.last_name as client_name,
+        s.first_name || ' ' || s.last_name as staff_name
+      FROM appointments a
+      LEFT JOIN clients c ON a.client_id = c.id
+      LEFT JOIN staff s ON a.staff_id = s.id
+      ORDER BY a.start_time DESC
+      LIMIT 10
+    `);
+    results.sampleAppointments = sampleAppointments.rows;
+
+    await logAdminAction(req.user.id, null, 'appointments_system_migration', 'system', null, null, results, req);
+
+    res.json(results);
+  } catch (error) {
+    console.error('Appointments system migration error:', error);
     next(error);
   }
 });

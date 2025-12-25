@@ -3,110 +3,92 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Booking Dashboard - ExpandHealth</title>
-  <link rel="stylesheet" href="/css/styles.css">
+  <title>Dashboard - ExpandHealth</title>
+  <link rel="stylesheet" href="/css/main.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    .booking-dashboard {
-      padding: 1.5rem;
-      max-width: 1600px;
-      margin: 0 auto;
+    /* Momence-style Dashboard */
+    .dashboard-page {
+      padding: 2rem;
+      background: #f8fafc;
+      min-height: 100vh;
     }
 
-    .dashboard-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1.5rem;
+    /* Header Section */
+    .page-header {
+      margin-bottom: 2rem;
     }
 
-    .dashboard-header h1 {
-      font-size: 1.75rem;
+    .greeting {
+      font-size: 1.5rem;
       font-weight: 600;
-      color: var(--text-primary);
-      margin: 0;
+      color: #1e293b;
+      margin: 0 0 0.25rem 0;
     }
 
-    .dashboard-actions {
+    .greeting-date {
+      color: #64748b;
+      font-size: 0.875rem;
+    }
+
+    /* Stats Bar - Momence Style */
+    .stats-bar {
       display: flex;
-      gap: 0.75rem;
+      gap: 1rem;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
     }
 
-    .period-selector {
+    .stat-pill {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
-      padding: 0.5rem 1rem;
-      background: var(--bg-secondary);
-      border-radius: 8px;
-      font-size: 0.875rem;
-      color: var(--text-secondary);
-    }
-
-    /* Stats Grid - Momence Style */
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 1rem;
-      margin-bottom: 1.5rem;
-    }
-
-    .stat-card {
+      gap: 0.75rem;
       background: white;
+      padding: 1rem 1.5rem;
       border-radius: 12px;
-      padding: 1.25rem;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-      border: 1px solid var(--border-light);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      border: 1px solid #e2e8f0;
+      flex: 1;
+      min-width: 180px;
     }
 
-    .stat-card.highlight {
-      background: linear-gradient(135deg, #0d9488 0%, #14b8a6 100%);
-      color: white;
+    .stat-pill-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
     }
 
-    .stat-card.highlight .stat-label {
-      color: rgba(255, 255, 255, 0.85);
+    .stat-pill-icon.sales { background: #dcfce7; }
+    .stat-pill-icon.bookings { background: #e0e7ff; }
+    .stat-pill-icon.customers { background: #fef3c7; }
+    .stat-pill-icon.members { background: #f3e8ff; }
+
+    .stat-pill-content {
+      flex: 1;
     }
 
-    .stat-card.highlight .stat-value {
-      color: white;
-    }
-
-    .stat-label {
-      font-size: 0.8rem;
-      color: var(--text-secondary);
-      margin-bottom: 0.5rem;
+    .stat-pill-label {
+      font-size: 0.75rem;
+      color: #64748b;
       text-transform: uppercase;
       letter-spacing: 0.5px;
+      margin-bottom: 0.25rem;
     }
 
-    .stat-value {
-      font-size: 1.75rem;
+    .stat-pill-value {
+      font-size: 1.25rem;
       font-weight: 700;
-      color: var(--text-primary);
-      line-height: 1.2;
+      color: #1e293b;
     }
 
-    .stat-value.currency::before {
-      content: 'ZAR ';
-      font-size: 0.875rem;
-      font-weight: 500;
-    }
-
-    .stat-subtext {
-      font-size: 0.75rem;
-      color: var(--text-muted);
-      margin-top: 0.25rem;
-    }
-
-    .stat-card.highlight .stat-subtext {
-      color: rgba(255, 255, 255, 0.7);
-    }
-
-    /* Main Content Grid */
+    /* Main Grid */
     .dashboard-grid {
       display: grid;
-      grid-template-columns: 1fr 400px;
+      grid-template-columns: 1fr 380px;
       gap: 1.5rem;
     }
 
@@ -116,24 +98,12 @@
       }
     }
 
-    .dashboard-main {
-      display: flex;
-      flex-direction: column;
-      gap: 1.5rem;
-    }
-
-    .dashboard-sidebar {
-      display: flex;
-      flex-direction: column;
-      gap: 1.5rem;
-    }
-
-    /* Card Styles */
-    .dashboard-card {
+    /* Cards */
+    .card {
       background: white;
-      border-radius: 12px;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-      border: 1px solid var(--border-light);
+      border-radius: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      border: 1px solid #e2e8f0;
       overflow: hidden;
     }
 
@@ -141,66 +111,204 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 1rem 1.25rem;
-      border-bottom: 1px solid var(--border-light);
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid #f1f5f9;
     }
 
-    .card-header h3 {
+    .card-title {
       font-size: 1rem;
       font-weight: 600;
-      color: var(--text-primary);
+      color: #1e293b;
       margin: 0;
     }
 
-    .card-header-actions {
-      display: flex;
-      gap: 0.5rem;
+    .card-subtitle {
+      font-size: 0.75rem;
+      color: #94a3b8;
+      margin-top: 0.125rem;
+    }
+
+    .card-link {
+      font-size: 0.8125rem;
+      color: #0d9488;
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .card-link:hover {
+      text-decoration: underline;
     }
 
     .card-body {
-      padding: 1.25rem;
+      padding: 1.5rem;
     }
 
-    .card-body.no-padding {
+    .card-body.flush {
       padding: 0;
     }
 
-    /* Quick Overview Section */
-    .quick-overview {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 1rem;
+    /* Sales Chart Card */
+    .sales-card {
+      margin-bottom: 1.5rem;
     }
 
-    .overview-item {
+    .sales-header {
       display: flex;
-      flex-direction: column;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 1.5rem;
+      background: linear-gradient(135deg, #0d9488 0%, #14b8a6 100%);
+      color: white;
     }
 
-    .overview-label {
-      font-size: 0.75rem;
-      color: var(--text-secondary);
+    .sales-total {
+      font-size: 2rem;
+      font-weight: 700;
       margin-bottom: 0.25rem;
     }
 
-    .overview-value {
-      font-size: 1rem;
-      font-weight: 600;
-      color: var(--primary);
+    .sales-label {
+      font-size: 0.875rem;
+      opacity: 0.9;
     }
 
-    .overview-value.negative {
-      color: var(--danger);
+    .sales-change {
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+      padding: 0.375rem 0.75rem;
+      background: rgba(255,255,255,0.2);
+      border-radius: 20px;
+      font-size: 0.8125rem;
+      font-weight: 500;
     }
 
-    /* Sales Chart */
+    .sales-change.positive { color: #bbf7d0; }
+    .sales-change.negative { color: #fecaca; }
+
     .chart-container {
-      height: 250px;
+      height: 200px;
       padding: 1rem;
     }
 
-    /* Upcoming Appointments */
-    .appointment-list {
+    /* Quick Stats Grid */
+    .quick-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .quick-stat {
+      background: white;
+      border-radius: 12px;
+      padding: 1.25rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      border: 1px solid #e2e8f0;
+      text-align: center;
+    }
+
+    .quick-stat-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #1e293b;
+      margin-bottom: 0.25rem;
+    }
+
+    .quick-stat-value.success { color: #16a34a; }
+    .quick-stat-value.danger { color: #dc2626; }
+    .quick-stat-value.warning { color: #d97706; }
+
+    .quick-stat-label {
+      font-size: 0.75rem;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* To-Do Section */
+    .todo-section {
+      margin-bottom: 1.5rem;
+    }
+
+    .todo-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .todo-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .todo-item:last-child {
+      border-bottom: none;
+    }
+
+    .todo-checkbox {
+      width: 20px;
+      height: 20px;
+      border: 2px solid #cbd5e1;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .todo-checkbox:hover {
+      border-color: #0d9488;
+    }
+
+    .todo-checkbox.checked {
+      background: #0d9488;
+      border-color: #0d9488;
+      color: white;
+    }
+
+    .todo-text {
+      flex: 1;
+      font-size: 0.9375rem;
+      color: #334155;
+    }
+
+    .todo-badge {
+      font-size: 0.75rem;
+      padding: 0.25rem 0.625rem;
+      border-radius: 12px;
+      font-weight: 500;
+    }
+
+    .todo-badge.urgent {
+      background: #fef2f2;
+      color: #dc2626;
+    }
+
+    .todo-badge.pending {
+      background: #fef3c7;
+      color: #d97706;
+    }
+
+    .todo-empty {
+      padding: 2rem;
+      text-align: center;
+      color: #94a3b8;
+    }
+
+    .todo-empty svg {
+      width: 48px;
+      height: 48px;
+      margin-bottom: 0.75rem;
+      opacity: 0.5;
+    }
+
+    /* Appointments List */
+    .appointments-list {
       max-height: 400px;
       overflow-y: auto;
     }
@@ -209,9 +317,10 @@
       display: flex;
       align-items: flex-start;
       gap: 1rem;
-      padding: 1rem 1.25rem;
-      border-bottom: 1px solid var(--border-light);
-      transition: background-color 0.15s;
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid #f1f5f9;
+      cursor: pointer;
+      transition: background 0.15s;
     }
 
     .appointment-item:last-child {
@@ -219,97 +328,117 @@
     }
 
     .appointment-item:hover {
-      background-color: var(--bg-hover);
+      background: #f8fafc;
+    }
+
+    .appointment-time-block {
+      text-align: center;
+      min-width: 60px;
+    }
+
+    .appointment-day {
+      font-size: 0.6875rem;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
 
     .appointment-time {
-      min-width: 100px;
-    }
-
-    .appointment-date {
-      font-size: 0.8rem;
+      font-size: 0.9375rem;
       font-weight: 600;
-      color: var(--text-primary);
-    }
-
-    .appointment-hour {
-      font-size: 0.75rem;
-      color: var(--text-secondary);
+      color: #1e293b;
     }
 
     .appointment-relative {
-      font-size: 0.7rem;
-      color: var(--primary);
+      font-size: 0.6875rem;
+      color: #0d9488;
       font-weight: 500;
     }
 
-    .appointment-details {
+    .appointment-info {
       flex: 1;
+      min-width: 0;
     }
 
     .appointment-service {
-      font-weight: 600;
-      color: var(--text-primary);
-      margin-bottom: 0.25rem;
       display: flex;
       align-items: center;
       gap: 0.5rem;
+      margin-bottom: 0.375rem;
     }
 
     .service-dot {
       width: 8px;
       height: 8px;
       border-radius: 50%;
-      background: var(--primary);
+      flex-shrink: 0;
+    }
+
+    .appointment-title {
+      font-size: 0.9375rem;
+      font-weight: 600;
+      color: #1e293b;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .appointment-client {
-      font-size: 0.85rem;
-      color: var(--text-secondary);
+      font-size: 0.8125rem;
+      color: #64748b;
+      margin-bottom: 0.25rem;
     }
 
     .appointment-staff {
       font-size: 0.75rem;
-      color: var(--text-muted);
+      color: #94a3b8;
     }
 
     .appointment-meta {
       display: flex;
       flex-direction: column;
       align-items: flex-end;
-      gap: 0.25rem;
+      gap: 0.375rem;
     }
 
-    .appointment-status {
-      font-size: 0.7rem;
-      padding: 0.2rem 0.5rem;
-      border-radius: 4px;
+    .appointment-badge {
+      font-size: 0.6875rem;
+      padding: 0.25rem 0.5rem;
+      border-radius: 6px;
       font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
     }
 
-    .appointment-status.scheduled {
+    .appointment-badge.scheduled {
       background: #e0f2fe;
       color: #0369a1;
     }
 
-    .appointment-status.confirmed {
+    .appointment-badge.confirmed {
       background: #dcfce7;
       color: #16a34a;
     }
 
-    .appointment-status.unpaid {
+    .appointment-badge.paid {
+      background: #dcfce7;
+      color: #16a34a;
+    }
+
+    .appointment-badge.unpaid {
       background: #fef3c7;
       color: #d97706;
     }
 
-    .appointment-status.paid {
-      background: #dcfce7;
-      color: #16a34a;
+    .appointment-price {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: #1e293b;
     }
 
-    /* Recent Activity */
+    /* Activity Feed */
     .activity-list {
-      max-height: 350px;
+      max-height: 320px;
       overflow-y: auto;
     }
 
@@ -317,8 +446,8 @@
       display: flex;
       align-items: flex-start;
       gap: 0.75rem;
-      padding: 0.875rem 1.25rem;
-      border-bottom: 1px solid var(--border-light);
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid #f1f5f9;
     }
 
     .activity-item:last-child {
@@ -332,7 +461,6 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 0.875rem;
       flex-shrink: 0;
     }
 
@@ -351,374 +479,406 @@
       color: #0369a1;
     }
 
+    .activity-icon.payment {
+      background: #f3e8ff;
+      color: #9333ea;
+    }
+
     .activity-content {
       flex: 1;
       min-width: 0;
     }
 
-    .activity-description {
-      font-size: 0.85rem;
-      color: var(--text-primary);
+    .activity-text {
+      font-size: 0.875rem;
+      color: #334155;
       line-height: 1.4;
     }
 
-    .activity-description strong {
+    .activity-text strong {
       font-weight: 600;
+      color: #1e293b;
     }
 
-    .activity-time {
-      font-size: 0.7rem;
-      color: var(--text-muted);
-      margin-top: 0.25rem;
-    }
-
-    /* To-Do List */
-    .todo-empty {
-      text-align: center;
-      padding: 2rem;
-      color: var(--text-muted);
-    }
-
-    /* Staff Performance */
-    .staff-list {
-      padding: 0.5rem 0;
-    }
-
-    .staff-item {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      padding: 0.75rem 1.25rem;
-    }
-
-    .staff-avatar {
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 600;
-      font-size: 0.875rem;
-      color: white;
-    }
-
-    .staff-info {
-      flex: 1;
-    }
-
-    .staff-name {
-      font-weight: 600;
-      font-size: 0.9rem;
-      color: var(--text-primary);
-    }
-
-    .staff-stats {
+    .activity-timestamp {
       font-size: 0.75rem;
-      color: var(--text-secondary);
-    }
-
-    .staff-revenue {
-      font-weight: 600;
-      color: var(--primary);
-    }
-
-    /* Loading State */
-    .loading-placeholder {
-      background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-      background-size: 200% 100%;
-      animation: loading 1.5s infinite;
-      border-radius: 4px;
-    }
-
-    @keyframes loading {
-      0% { background-position: 200% 0; }
-      100% { background-position: -200% 0; }
+      color: #94a3b8;
+      margin-top: 0.25rem;
     }
 
     /* Empty States */
     .empty-state {
+      padding: 2.5rem;
       text-align: center;
-      padding: 2rem;
-      color: var(--text-muted);
+      color: #94a3b8;
     }
 
     .empty-state svg {
-      width: 48px;
-      height: 48px;
+      width: 56px;
+      height: 56px;
       margin-bottom: 1rem;
-      opacity: 0.5;
+      opacity: 0.4;
+    }
+
+    .empty-state p {
+      margin: 0;
+      font-size: 0.9375rem;
+    }
+
+    /* Today Summary Card */
+    .today-card {
+      background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+      color: white;
+      margin-bottom: 1.5rem;
+    }
+
+    .today-card .card-header {
+      border-bottom-color: rgba(255,255,255,0.1);
+    }
+
+    .today-card .card-title {
+      color: white;
+    }
+
+    .today-card .card-subtitle {
+      color: rgba(255,255,255,0.7);
+    }
+
+    .today-stats {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.5rem;
+      padding: 1.5rem;
+    }
+
+    .today-stat-value {
+      font-size: 1.75rem;
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+    }
+
+    .today-stat-label {
+      font-size: 0.75rem;
+      color: rgba(255,255,255,0.7);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Fix oversized sidebar icons */
+    .sidebar .nav-icon {
+      width: 20px !important;
+      height: 20px !important;
+      min-width: 20px !important;
+      max-width: 20px !important;
+      min-height: 20px !important;
+      max-height: 20px !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      flex-shrink: 0 !important;
+      overflow: hidden !important;
+    }
+
+    .sidebar .nav-icon svg {
+      width: 20px !important;
+      height: 20px !important;
+      min-width: 20px !important;
+      max-width: 20px !important;
+      min-height: 20px !important;
+      max-height: 20px !important;
+      flex-shrink: 0 !important;
     }
   </style>
 </head>
 <body>
-  <div class="layout">
-    <!-- Sidebar Navigation -->
-    <nav class="sidebar" id="sidebar">
+  <div class="app-container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
       <div class="sidebar-header">
-        <a href="/" class="logo">
-          <span class="logo-icon">X</span>
-          <span class="logo-text">EXPAND <span>HEALTH</span></span>
-        </a>
-      </div>
-
-      <div class="nav-section">
-        <a href="/" class="nav-item">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+        <div class="logo">
+          <svg class="logo-icon" width="28" height="28" viewBox="0 0 24 24" fill="none">
+            <path d="M4 4L11 12L4 20" stroke="#0F766E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M20 4L13 12L20 20" stroke="#0F766E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
-          Dashboard
-        </a>
-      </div>
-
-      <div class="nav-section">
-        <div class="nav-section-title">BOOKING</div>
-        <a href="/schedule" class="nav-item active">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-            <line x1="16" y1="2" x2="16" y2="6"></line>
-            <line x1="8" y1="2" x2="8" y2="6"></line>
-            <line x1="3" y1="10" x2="21" y2="10"></line>
-          </svg>
-          Schedule
-        </a>
-        <a href="/appointments" class="nav-item">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"></circle>
-            <polyline points="12 6 12 12 16 14"></polyline>
-          </svg>
-          Appointments
-        </a>
-      </div>
-
-      <div class="nav-section">
-        <div class="nav-section-title">CLIENT ZONE</div>
-        <a href="/clients" class="nav-item">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-            <circle cx="9" cy="7" r="4"></circle>
-            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-          </svg>
-          Clients
-        </a>
-        <a href="/forms" class="nav-item">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-            <polyline points="14 2 14 8 20 8"></polyline>
-            <line x1="16" y1="13" x2="8" y2="13"></line>
-            <line x1="16" y1="17" x2="8" y2="17"></line>
-            <polyline points="10 9 9 9 8 9"></polyline>
-          </svg>
-          Forms
-        </a>
-        <a href="/protocol-templates" class="nav-item">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
-            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
-          </svg>
-          Protocol Templates
-        </a>
-      </div>
-
-      <div class="nav-section">
-        <div class="nav-section-title">ADMIN</div>
-        <a href="/admin" class="nav-item">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="3"></circle>
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-          </svg>
-          Admin Settings
-        </a>
-        <a href="/kb-admin" class="nav-item">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
-            <polyline points="2 17 12 22 22 17"></polyline>
-            <polyline points="2 12 12 17 22 12"></polyline>
-          </svg>
-          AI Knowledge Base
-        </a>
-      </div>
-
-      <div class="sidebar-footer">
-        <div class="user-info">
-          <div class="user-avatar" id="userAvatar">U</div>
-          <div class="user-details">
-            <div class="user-name" id="userName">User</div>
-            <div class="user-tenant" id="userTenant">Tenant</div>
+          <div class="logo-text">
+            <span class="logo-expand">EXPAND</span>
+            <span class="logo-health">HEALTH</span>
           </div>
         </div>
-        <button class="logout-btn" onclick="logout()">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-            <polyline points="16 17 21 12 16 7"></polyline>
-            <line x1="21" y1="12" x2="9" y2="12"></line>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <a href="/" class="nav-item">
+            <span class="nav-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                <polyline points="9 22 9 12 15 12 15 22"/>
+              </svg>
+            </span>
+            <span class="nav-text">Dashboard</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <p class="nav-section-title">BOOKING</p>
+          <a href="/schedule" class="nav-item active">
+            <span class="nav-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+                <path d="M3 3v18h18"/>
+                <path d="M18 17V9"/>
+                <path d="M13 17V5"/>
+                <path d="M8 17v-3"/>
+              </svg>
+            </span>
+            <span class="nav-text">Schedule</span>
+          </a>
+          <a href="/appointments" class="nav-item">
+            <span class="nav-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                <line x1="16" y1="2" x2="16" y2="6"/>
+                <line x1="8" y1="2" x2="8" y2="6"/>
+                <line x1="3" y1="10" x2="21" y2="10"/>
+              </svg>
+            </span>
+            <span class="nav-text">Appointments</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <p class="nav-section-title">CLIENT ZONE</p>
+          <a href="/clients" class="nav-item">
+            <span class="nav-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+              </svg>
+            </span>
+            <span class="nav-text">Clients</span>
+          </a>
+          <a href="/forms" class="nav-item">
+            <span class="nav-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M9 11l3 3L22 4"/>
+                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+              </svg>
+            </span>
+            <span class="nav-text">Forms</span>
+          </a>
+          <a href="/protocol-templates" class="nav-item">
+            <span class="nav-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+                <polyline points="10 9 9 9 8 9"/>
+              </svg>
+            </span>
+            <span class="nav-text">Protocol Templates</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <p class="nav-section-title">ADMIN</p>
+          <a href="/admin" class="nav-item">
+            <span class="nav-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+              </svg>
+            </span>
+            <span class="nav-text">Admin Settings</span>
+          </a>
+          <a href="/kb-admin" class="nav-item">
+            <span class="nav-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+              </svg>
+            </span>
+            <span class="nav-text">AI Knowledge Base</span>
+          </a>
+        </div>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button class="ask-ai-btn" onclick="window.chatWidget && window.chatWidget.toggleChat()">
+          <svg viewBox="0 0 24 24" fill="none" width="16" height="16">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
           </svg>
+          <span>Ask AI</span>
         </button>
       </div>
-    </nav>
+    </aside>
 
     <!-- Main Content -->
     <main class="main-content">
-      <div class="booking-dashboard">
+      <div class="dashboard-page">
         <!-- Header -->
-        <div class="dashboard-header">
-          <h1>Dashboard</h1>
-          <div class="dashboard-actions">
-            <div class="period-selector">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                <line x1="16" y1="2" x2="16" y2="6"></line>
-                <line x1="8" y1="2" x2="8" y2="6"></line>
-                <line x1="3" y1="10" x2="21" y2="10"></line>
-              </svg>
-              <span>Last 30 days</span>
-            </div>
-            <button class="btn btn-primary" onclick="window.location.href='/appointments'">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="12" y1="5" x2="12" y2="19"></line>
-                <line x1="5" y1="12" x2="19" y2="12"></line>
-              </svg>
-              New Booking
-            </button>
-          </div>
+        <div class="page-header">
+          <h1 class="greeting" id="greeting">Good morning</h1>
+          <p class="greeting-date" id="todayDate"></p>
         </div>
 
-        <!-- Stats Grid -->
-        <div class="stats-grid">
-          <div class="stat-card highlight">
-            <div class="stat-label">Total Sales</div>
-            <div class="stat-value currency" id="totalSales">0.00</div>
-            <div class="stat-subtext">Last 30 days</div>
+        <!-- Stats Bar -->
+        <div class="stats-bar">
+          <div class="stat-pill">
+            <div class="stat-pill-icon sales">&#128176;</div>
+            <div class="stat-pill-content">
+              <div class="stat-pill-label">Total Sales</div>
+              <div class="stat-pill-value">R <span id="totalSales">0</span></div>
+            </div>
           </div>
-          <div class="stat-card">
-            <div class="stat-label">Total Bookings</div>
-            <div class="stat-value" id="totalBookings">0</div>
-            <div class="stat-subtext">Last 30 days</div>
+          <div class="stat-pill">
+            <div class="stat-pill-icon bookings">&#128197;</div>
+            <div class="stat-pill-content">
+              <div class="stat-pill-label">Bookings</div>
+              <div class="stat-pill-value" id="totalBookings">0</div>
+            </div>
           </div>
-          <div class="stat-card">
-            <div class="stat-label">New Customers</div>
-            <div class="stat-value" id="newCustomers">0</div>
-            <div class="stat-subtext">Last 30 days</div>
+          <div class="stat-pill">
+            <div class="stat-pill-icon customers">&#128100;</div>
+            <div class="stat-pill-content">
+              <div class="stat-pill-label">New Customers</div>
+              <div class="stat-pill-value" id="newCustomers">0</div>
+            </div>
           </div>
-          <div class="stat-card">
-            <div class="stat-label">First-time Visitors</div>
-            <div class="stat-value" id="firstTimeVisitors">0</div>
-            <div class="stat-subtext">Last 30 days</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-label">Total Members</div>
-            <div class="stat-value" id="totalMembers">0</div>
-            <div class="stat-subtext">Active clients</div>
+          <div class="stat-pill">
+            <div class="stat-pill-icon members">&#127775;</div>
+            <div class="stat-pill-content">
+              <div class="stat-pill-label">First Time</div>
+              <div class="stat-pill-value" id="firstTimeVisitors">0</div>
+            </div>
           </div>
         </div>
 
         <!-- Main Grid -->
         <div class="dashboard-grid">
           <!-- Left Column -->
-          <div class="dashboard-main">
-            <!-- Quick Overview -->
-            <div class="dashboard-card">
-              <div class="card-header">
-                <h3>Quick Overview</h3>
-                <span class="text-muted text-sm">Last 30 days</span>
+          <div class="dashboard-left">
+            <!-- Quick Stats -->
+            <div class="quick-stats">
+              <div class="quick-stat">
+                <div class="quick-stat-value success" id="completedCount">0</div>
+                <div class="quick-stat-label">Completed</div>
               </div>
-              <div class="card-body">
-                <div class="quick-overview">
-                  <div class="overview-item">
-                    <span class="overview-label">Completed</span>
-                    <span class="overview-value" id="completedCount">0</span>
-                  </div>
-                  <div class="overview-item">
-                    <span class="overview-label">Cancelled</span>
-                    <span class="overview-value negative" id="cancelledCount">0</span>
-                  </div>
-                  <div class="overview-item">
-                    <span class="overview-label">No Shows</span>
-                    <span class="overview-value negative" id="noShowCount">0</span>
-                  </div>
-                  <div class="overview-item">
-                    <span class="overview-label">Conversion Rate</span>
-                    <span class="overview-value" id="conversionRate">0%</span>
-                  </div>
-                  <div class="overview-item">
-                    <span class="overview-label">Paid</span>
-                    <span class="overview-value" id="paidCount">0</span>
-                  </div>
-                  <div class="overview-item">
-                    <span class="overview-label">Unpaid</span>
-                    <span class="overview-value negative" id="unpaidCount">0</span>
-                  </div>
-                </div>
+              <div class="quick-stat">
+                <div class="quick-stat-value danger" id="cancelledCount">0</div>
+                <div class="quick-stat-label">Cancelled</div>
+              </div>
+              <div class="quick-stat">
+                <div class="quick-stat-value warning" id="noShowCount">0</div>
+                <div class="quick-stat-label">No Shows</div>
               </div>
             </div>
 
             <!-- Sales Chart -->
-            <div class="dashboard-card">
-              <div class="card-header">
-                <h3>Total Sales</h3>
-                <span class="text-muted text-sm">Last 7 days</span>
-              </div>
-              <div class="card-body no-padding">
-                <div class="chart-container">
-                  <canvas id="salesChart"></canvas>
+            <div class="card sales-card">
+              <div class="sales-header">
+                <div>
+                  <div class="sales-total">R <span id="salesTotal">0</span></div>
+                  <div class="sales-label">Total sales (last 7 days)</div>
                 </div>
+                <div class="sales-change positive" id="salesChange">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                    <polyline points="18 15 12 9 6 15"></polyline>
+                  </svg>
+                  <span>0%</span>
+                </div>
+              </div>
+              <div class="chart-container">
+                <canvas id="salesChart"></canvas>
               </div>
             </div>
 
             <!-- Today's Summary -->
-            <div class="dashboard-card">
+            <div class="card today-card">
               <div class="card-header">
-                <h3>Today's Schedule</h3>
-                <span class="text-muted text-sm" id="todayDate"></span>
-              </div>
-              <div class="card-body">
-                <div class="quick-overview">
-                  <div class="overview-item">
-                    <span class="overview-label">Total Appointments</span>
-                    <span class="overview-value" id="todayTotal">0</span>
-                  </div>
-                  <div class="overview-item">
-                    <span class="overview-label">Completed</span>
-                    <span class="overview-value" id="todayCompleted">0</span>
-                  </div>
-                  <div class="overview-item">
-                    <span class="overview-label">Upcoming</span>
-                    <span class="overview-value" id="todayUpcoming">0</span>
-                  </div>
-                  <div class="overview-item">
-                    <span class="overview-label">Expected Revenue</span>
-                    <span class="overview-value" id="todayRevenue">ZAR 0</span>
-                  </div>
+                <div>
+                  <h3 class="card-title">Today's Schedule</h3>
+                  <p class="card-subtitle" id="todayDateShort"></p>
                 </div>
+              </div>
+              <div class="today-stats">
+                <div>
+                  <div class="today-stat-value" id="todayTotal">0</div>
+                  <div class="today-stat-label">Total</div>
+                </div>
+                <div>
+                  <div class="today-stat-value" id="todayCompleted">0</div>
+                  <div class="today-stat-label">Completed</div>
+                </div>
+                <div>
+                  <div class="today-stat-value" id="todayUpcoming">0</div>
+                  <div class="today-stat-label">Upcoming</div>
+                </div>
+                <div>
+                  <div class="today-stat-value" id="todayRevenue">R 0</div>
+                  <div class="today-stat-label">Expected</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- To-Do Section -->
+            <div class="card todo-section">
+              <div class="card-header">
+                <h3 class="card-title">To-Do</h3>
+                <span id="todoCount" class="card-subtitle">0 items</span>
+              </div>
+              <div class="card-body flush">
+                <ul class="todo-list" id="todoList">
+                  <li class="todo-empty">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                      <path d="M9 11l3 3L22 4"></path>
+                      <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                    </svg>
+                    <p>All caught up!</p>
+                  </li>
+                </ul>
               </div>
             </div>
           </div>
 
           <!-- Right Column -->
-          <div class="dashboard-sidebar">
+          <div class="dashboard-right">
             <!-- Upcoming Appointments -->
-            <div class="dashboard-card">
+            <div class="card">
               <div class="card-header">
-                <h3>Upcoming Appointments</h3>
-                <a href="/appointments" class="text-primary text-sm">Show all</a>
+                <h3 class="card-title">Upcoming Appointments</h3>
+                <a href="/appointments" class="card-link">Show all</a>
               </div>
-              <div class="card-body no-padding">
-                <div class="appointment-list" id="upcomingAppointments">
-                  <div class="empty-state">Loading...</div>
+              <div class="card-body flush">
+                <div class="appointments-list" id="upcomingAppointments">
+                  <div class="empty-state">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                      <line x1="16" y1="2" x2="16" y2="6"></line>
+                      <line x1="8" y1="2" x2="8" y2="6"></line>
+                      <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg>
+                    <p>Loading appointments...</p>
+                  </div>
                 </div>
               </div>
             </div>
 
             <!-- Recent Activity -->
-            <div class="dashboard-card">
+            <div class="card" style="margin-top: 1.5rem;">
               <div class="card-header">
-                <h3>Recent Activity</h3>
+                <h3 class="card-title">Recent Activity</h3>
               </div>
-              <div class="card-body no-padding">
+              <div class="card-body flush">
                 <div class="activity-list" id="recentActivity">
-                  <div class="empty-state">Loading...</div>
+                  <div class="empty-state">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                    <p>Loading activity...</p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -728,7 +888,38 @@
     </main>
   </div>
 
-  <script src="/js/auth.js"></script>
+  <script src="/js/dashboard.js"></script>
   <script src="/js/booking-dashboard.js"></script>
+  <script src="/js/chat-widget.js"></script>
+  <script>
+    // Set greeting based on time of day
+    function setGreeting() {
+      const hour = new Date().getHours();
+      const greetingEl = document.getElementById('greeting');
+      const userName = localStorage.getItem('user_name') || 'there';
+
+      let greeting = 'Good morning';
+      if (hour >= 12 && hour < 17) greeting = 'Good afternoon';
+      else if (hour >= 17) greeting = 'Good evening';
+
+      greetingEl.textContent = `${greeting}, ${userName.split(' ')[0]}!`;
+    }
+
+    // Set today's date
+    function setTodayDate() {
+      const today = new Date();
+      const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+      document.getElementById('todayDate').textContent = today.toLocaleDateString('en-ZA', options);
+      document.getElementById('todayDateShort').textContent = today.toLocaleDateString('en-ZA', {
+        weekday: 'short', month: 'short', day: 'numeric'
+      });
+    }
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      setGreeting();
+      setTodayDate();
+    });
+  </script>
 </body>
 </html>

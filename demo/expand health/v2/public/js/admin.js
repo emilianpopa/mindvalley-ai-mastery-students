@@ -1187,6 +1187,9 @@ function openIntegrationSetup(platform) {
   title.textContent = `Setup ${platformNames[platform] || platform} Integration`;
 
   // Update instructions based on platform
+  const syncDirectionSelect = document.getElementById('integrationSyncDirection');
+  const syncDirectionHelp = document.getElementById('syncDirectionHelp');
+
   if (platform === 'momence') {
     instructions.innerHTML = `
       <li>Log into your <a href="https://momence.com/dashboard" target="_blank">Momence dashboard</a></li>
@@ -1194,6 +1197,10 @@ function openIntegrationSetup(platform) {
       <li>Copy your <strong>Host ID</strong> (shown at the top, e.g., 42153)</li>
       <li>Copy your <strong>API Token</strong> (the alphanumeric string)</li>
     `;
+    // Momence Legacy API is read-only - only import is supported
+    syncDirectionSelect.value = 'import_only';
+    syncDirectionSelect.disabled = true;
+    syncDirectionHelp.textContent = 'Note: Momence Legacy API only supports importing data into Expand Health. Export/bidirectional sync requires the Momence Public API.';
   } else if (platform === 'practice_better') {
     instructions.innerHTML = `
       <li>Log into your Practice Better account</li>
@@ -1223,6 +1230,10 @@ function openIntegrationSetup(platform) {
 function closeIntegrationModal() {
   document.getElementById('integrationModal').classList.remove('active');
   currentPlatform = null;
+  // Reset form state
+  document.getElementById('integrationForm').reset();
+  document.getElementById('integrationSyncDirection').disabled = false;
+  document.getElementById('syncDirectionHelp').textContent = '';
 }
 
 async function handleIntegrationSubmit(event) {
@@ -1377,7 +1388,12 @@ async function syncIntegration(type) {
       body: { direction: 'import' }
     });
 
-    showToast(`Sync complete: ${result.stats.created} created, ${result.stats.updated} updated`, 'success');
+    // API returns created/updated directly, not nested in stats
+    const created = result.created || result.stats?.created || 0;
+    const updated = result.updated || result.stats?.updated || 0;
+    const processed = result.processed || result.stats?.processed || 0;
+
+    showToast(`Sync complete: ${created} created, ${updated} updated (${processed} processed)`, 'success');
 
     // Refresh details
     viewIntegrationDetails(currentPlatform, currentIntegrationId);
@@ -1415,3 +1431,38 @@ document.addEventListener('DOMContentLoaded', () => {
   // Handle OAuth callback parameters
   setTimeout(handleIntegrationCallback, 100);
 });
+
+// ============================================
+// MIGRATIONS
+// ============================================
+
+/**
+ * Run the appointments system migration
+ * Creates service_types, staff, and appointments tables with synthetic data
+ */
+async function runAppointmentsMigration() {
+  if (!confirm('This will create the appointments system tables and seed with synthetic booking data. Continue?')) {
+    return;
+  }
+
+  try {
+    showToast('Running appointments migration...', 'info');
+
+    const result = await api('/migrate/appointments-system', { method: 'POST' });
+
+    if (result.success !== false) {
+      showToast(`Migration complete! Created ${result.counts?.appointments || 0} appointments, ${result.counts?.staff || 0} staff, ${result.counts?.serviceTypes || 0} service types.`, 'success');
+
+      // Show sample data if available
+      if (result.sampleAppointments && result.sampleAppointments.length > 0) {
+        console.log('Sample appointments:', result.sampleAppointments);
+      }
+    } else {
+      showToast('Migration had issues: ' + JSON.stringify(result.steps), 'error');
+    }
+
+  } catch (error) {
+    showToast('Migration failed: ' + error.message, 'error');
+    console.error('Migration error:', error);
+  }
+}
