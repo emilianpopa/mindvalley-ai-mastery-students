@@ -1,7 +1,8 @@
 /* Inbox Layout */
 .inbox-layout {
   display: flex;
-  height: calc(100vh - 0px);
+  flex-direction: row;
+  height: 100vh;
   margin-left: 260px;
   background: var(--bg-light);
   overflow: hidden;
@@ -697,11 +698,14 @@
 .detail-panel {
   width: 280px;
   min-width: 280px;
+  max-width: 280px;
   background: var(--bg-white);
   border-left: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   overflow-y: auto;
+  flex-shrink: 0;
+  height: 100%;
 }
 
 .detail-panel.hidden {
