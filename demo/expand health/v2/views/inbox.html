@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inbox - ExpandHealth</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/inbox.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">
+          <div class="logo-icon">
+            <svg viewBox="0 0 24 24" fill="none" width="28" height="28">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+              <path d="M12 6v6l4 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div class="logo-text">
+            <span class="logo-title">ExpandHealth</span>
+            <span class="logo-subtitle">AI Co-Pilot</span>
+          </div>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <a href="/" class="nav-item">
+            <span class="nav-icon">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                <polyline points="9 22 9 12 15 12 15 22"/>
+              </svg>
+            </span>
+            <span class="nav-text">Dashboard</span>
+          </a>
+          <a href="/inbox" class="nav-item active">
+            <span class="nav-icon">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                <polyline points="22,6 12,13 2,6"/>
+              </svg>
+            </span>
+            <span class="nav-text">Inbox</span>
+            <span class="nav-badge">3</span>
+          </a>
+          <a href="#" class="nav-item">
+            <span class="nav-icon">
+              <svg viewBox="0 0 24 24" fill="none">
+                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+                <line x1="8" y1="21" x2="16" y2="21"/>
+                <line x1="12" y1="17" x2="12" y2="21"/>
+              </svg>
+            </span>
+            <span class="nav-text">Point of sale</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <p class="nav-section-title">BOOKING</p>
+          <a href="/schedule" class="nav-item">
+            <span class="nav-icon">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M3 3v18h18"/>
+                <path d="M18 17V9"/>
+                <path d="M13 17V5"/>
+                <path d="M8 17v-3"/>
+              </svg>
+            </span>
+            <span class="nav-text">Schedule</span>
+          </a>
+          <a href="/appointments" class="nav-item">
+            <span class="nav-icon">
+              <svg viewBox="0 0 24 24" fill="none">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                <line x1="16" y1="2" x2="16" y2="6"/>
+                <line x1="8" y1="2" x2="8" y2="6"/>
+                <line x1="3" y1="10" x2="21" y2="10"/>
+              </svg>
+            </span>
+            <span class="nav-text">Appointments</span>
+          </a>
+          <a href="#" class="nav-item">
+            <span class="nav-icon">
+              <svg viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
+                <line x1="9" y1="9" x2="9.01" y2="9"/>
+                <line x1="15" y1="9" x2="15.01" y2="9"/>
+              </svg>
+            </span>
+            <span class="nav-text">Classes</span>
+          </a>
+          <a href="#" class="nav-item">
+            <span class="nav-icon">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+              </svg>
+            </span>
+            <span class="nav-text">Community</span>
+          </a>
+          <a href="#" class="nav-item">
+            <span class="nav-icon">
+              <svg viewBox="0 0 24 24" fill="none">
+                <polygon points="23 7 16 12 23 17 23 7"/>
+                <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+              </svg>
+            </span>
+            <span class="nav-text">On-Demand</span>
+          </a>
+          <a href="#" class="nav-item">
+            <span class="nav-icon">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
+              </svg>
+            </span>
+            <span class="nav-text">Memberships</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <p class="nav-section-title">CUSTOMERS</p>
+          <a href="/clients" class="nav-item">
+            <span class="nav-icon">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+              </svg>
+            </span>
+            <span class="nav-text">Customers</span>
+          </a>
+          <a href="/forms" class="nav-item">
+            <span class="nav-icon">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M9 11l3 3L22 4"/>
+                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+              </svg>
+            </span>
+            <span class="nav-text">Forms</span>
+          </a>
+          <a href="/protocol-templates" class="nav-item">
+            <span class="nav-icon">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+                <polyline points="10 9 9 9 8 9"/>
+              </svg>
+            </span>
+            <span class="nav-text">Protocol Templates</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <p class="nav-section-title">BUSINESS</p>
+          <a href="#" class="nav-item">
+            <span class="nav-icon">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+                <line x1="12" y1="22.08" x2="12" y2="12"/>
+              </svg>
+            </span>
+            <span class="nav-text">Marketing</span>
+          </a>
+          <a href="#" class="nav-item">
+            <span class="nav-icon">
+              <svg viewBox="0 0 24 24" fill="none">
+                <line x1="18" y1="20" x2="18" y2="10"/>
+                <line x1="12" y1="20" x2="12" y2="4"/>
+                <line x1="6" y1="20" x2="6" y2="14"/>
+              </svg>
+            </span>
+            <span class="nav-text">Analytics</span>
+          </a>
+          <a href="#" class="nav-item">
+            <span class="nav-icon">
+              <svg viewBox="0 0 24 24" fill="none">
+                <line x1="12" y1="1" x2="12" y2="23"/>
+                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+              </svg>
+            </span>
+            <span class="nav-text">Financials</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <p class="nav-section-title">ADMIN</p>
+          <a href="/admin" class="nav-item">
+            <span class="nav-icon">
+              <svg viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+              </svg>
+            </span>
+            <span class="nav-text">Studio set-up</span>
+          </a>
+          <a href="/kb-admin" class="nav-item">
+            <span class="nav-icon">
+              <svg viewBox="0 0 24 24" fill="none">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+              </svg>
+            </span>
+            <span class="nav-text">AI Knowledge Base</span>
+          </a>
+          <a href="#" class="nav-item">
+            <span class="nav-icon">
+              <svg viewBox="0 0 24 24" fill="none">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                <line x1="3" y1="9" x2="21" y2="9"/>
+                <line x1="9" y1="21" x2="9" y2="9"/>
+              </svg>
+            </span>
+            <span class="nav-text">Apps & Integrations</span>
+          </a>
+        </div>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button class="ask-ai-btn" onclick="window.chatWidget && window.chatWidget.toggleChat()">
+          <svg viewBox="0 0 24 24" fill="none" width="16" height="16">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+          </svg>
+          <span>Ask AI</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content inbox-layout">
+      <!-- Contacts Panel -->
+      <div class="contacts-panel">
+        <div class="contacts-header">
+          <div class="contacts-tabs">
+            <button class="tab-btn active" data-tab="all">All customers</button>
+            <button class="tab-btn" data-tab="leads">Leads</button>
+            <button class="tab-btn" data-tab="practitioners">Practitioners</button>
+          </div>
+          <div class="contacts-actions">
+            <button class="icon-btn" title="Refresh">
+              <svg viewBox="0 0 24 24" fill="none" width="18" height="18">
+                <path d="M23 4v6h-6M1 20v-6h6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <button class="icon-btn" title="Filter">
+              <svg viewBox="0 0 24 24" fill="none" width="18" height="18">
+                <path d="M3 4h18l-7 8.5v7L10 22v-9.5L3 4z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <button class="icon-btn" title="Sort">
+              <svg viewBox="0 0 24 24" fill="none" width="18" height="18">
+                <path d="M11 5h10M11 9h7M11 13h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <path d="M3 4v16M3 20l3-3M3 20l-3-3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="contacts-search">
+          <svg viewBox="0 0 24 24" fill="none" width="18" height="18">
+            <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2"/>
+            <path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <input type="text" placeholder="Search contacts..." id="contactSearch">
+        </div>
+
+        <div class="contacts-list" id="contactsList">
+          <!-- Contacts will be loaded here -->
+        </div>
+      </div>
+
+      <!-- Conversation Panel -->
+      <div class="conversation-panel">
+        <div class="conversation-header" id="conversationHeader">
+          <div class="contact-info">
+            <div class="contact-avatar" id="selectedContactAvatar">
+              <span>?</span>
+            </div>
+            <div class="contact-details">
+              <h2 id="selectedContactName">Select a conversation</h2>
+            </div>
+          </div>
+          <div class="conversation-actions">
+            <div class="channel-tabs">
+              <button class="channel-tab active" data-channel="all">All</button>
+              <button class="channel-tab" data-channel="email">
+                <svg viewBox="0 0 24 24" fill="none" width="14" height="14">
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" stroke="currentColor" stroke-width="2"/>
+                  <polyline points="22,6 12,13 2,6" stroke="currentColor" stroke-width="2"/>
+                </svg>
+                E-mail
+              </button>
+              <button class="channel-tab" data-channel="sms">
+                <svg viewBox="0 0 24 24" fill="none" width="14" height="14">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="currentColor" stroke-width="2"/>
+                </svg>
+                SMS
+              </button>
+              <button class="channel-tab" data-channel="in-app">
+                <svg viewBox="0 0 24 24" fill="none" width="14" height="14">
+                  <rect x="5" y="2" width="14" height="20" rx="2" ry="2" stroke="currentColor" stroke-width="2"/>
+                  <line x1="12" y1="18" x2="12.01" y2="18" stroke="currentColor" stroke-width="2"/>
+                </svg>
+                In-App
+              </button>
+            </div>
+            <button class="btn-detail" id="toggleDetailBtn">
+              <svg viewBox="0 0 24 24" fill="none" width="16" height="16">
+                <circle cx="12" cy="12" r="1" stroke="currentColor" stroke-width="2"/>
+                <circle cx="12" cy="5" r="1" stroke="currentColor" stroke-width="2"/>
+                <circle cx="12" cy="19" r="1" stroke="currentColor" stroke-width="2"/>
+              </svg>
+              Detail
+            </button>
+          </div>
+        </div>
+
+        <div class="messages-container" id="messagesContainer">
+          <div class="empty-state">
+            <svg viewBox="0 0 24 24" fill="none" width="48" height="48">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="currentColor" stroke-width="2"/>
+            </svg>
+            <p>Select a conversation to view messages</p>
+          </div>
+        </div>
+
+        <div class="compose-area" id="composeArea" style="display: none;">
+          <div class="compose-tabs">
+            <button class="compose-tab active" data-type="email">
+              <svg viewBox="0 0 24 24" fill="none" width="14" height="14">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" stroke="currentColor" stroke-width="2"/>
+                <polyline points="22,6 12,13 2,6" stroke="currentColor" stroke-width="2"/>
+              </svg>
+              E-mail
+            </button>
+            <button class="compose-tab" data-type="sms">
+              <svg viewBox="0 0 24 24" fill="none" width="14" height="14">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="currentColor" stroke-width="2"/>
+              </svg>
+              SMS
+            </button>
+            <button class="compose-tab" data-type="in-app">
+              <svg viewBox="0 0 24 24" fill="none" width="14" height="14">
+                <rect x="5" y="2" width="14" height="20" rx="2" ry="2" stroke="currentColor" stroke-width="2"/>
+                <line x1="12" y1="18" x2="12.01" y2="18" stroke="currentColor" stroke-width="2"/>
+              </svg>
+              In-App
+            </button>
+            <button class="compose-expand" title="Expand">
+              <svg viewBox="0 0 24 24" fill="none" width="14" height="14">
+                <polyline points="15 3 21 3 21 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <polyline points="9 21 3 21 3 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <line x1="21" y1="3" x2="14" y2="10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <line x1="3" y1="21" x2="10" y2="14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </div>
+          <div class="compose-subject" id="composeSubject">
+            <input type="text" placeholder="Subject" id="emailSubject">
+          </div>
+          <div class="compose-body">
+            <textarea placeholder="Type your message..." id="messageBody"></textarea>
+          </div>
+          <div class="compose-footer">
+            <div class="compose-tools">
+              <button class="tool-btn" title="Attach file">
+                <svg viewBox="0 0 24 24" fill="none" width="16" height="16">
+                  <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+              <button class="tool-btn" title="Insert emoji">
+                <svg viewBox="0 0 24 24" fill="none" width="16" height="16">
+                  <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                  <path d="M8 14s1.5 2 4 2 4-2 4-2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  <line x1="9" y1="9" x2="9.01" y2="9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  <line x1="15" y1="9" x2="15.01" y2="9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+              </button>
+              <button class="tool-btn ai-assist" title="AI Assist">
+                <svg viewBox="0 0 24 24" fill="none" width="16" height="16">
+                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" stroke="currentColor" stroke-width="2"/>
+                </svg>
+              </button>
+            </div>
+            <div class="compose-actions">
+              <span class="unsubscribe-note">The customer will receive this email even if they've unsubscribed</span>
+              <button class="btn btn-primary send-btn" id="sendMessageBtn">
+                <svg viewBox="0 0 24 24" fill="none" width="16" height="16">
+                  <line x1="22" y1="2" x2="11" y2="13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <polygon points="22 2 15 22 11 13 2 9 22 2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                Send
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Customer Detail Panel -->
+      <div class="detail-panel" id="detailPanel">
+        <div class="detail-header">
+          <div class="detail-avatar" id="detailAvatar">
+            <span>?</span>
+          </div>
+          <h3 id="detailName">Customer Name</h3>
+          <p id="detailPhone">+27 00 000 0000</p>
+        </div>
+
+        <div class="detail-sections">
+          <div class="detail-section">
+            <h4>Lead stage</h4>
+            <div class="lead-stage">
+              <span class="stage-badge" id="detailLeadStage">No stage</span>
+              <a href="#" class="stage-link" id="detailSalesJourney">No active sales journey</a>
+            </div>
+          </div>
+
+          <div class="detail-section">
+            <h4>Next visit</h4>
+            <p id="detailNextVisit" class="detail-value">No scheduled visit</p>
+          </div>
+
+          <div class="detail-section">
+            <h4>Active memberships</h4>
+            <p id="detailMemberships" class="detail-value">No active memberships</p>
+          </div>
+
+          <div class="detail-section">
+            <h4>Account totals</h4>
+            <div class="account-totals">
+              <div class="total-row">
+                <span>Money credits</span>
+                <span id="detailMoneyCredits">ZAR 0.00</span>
+              </div>
+              <div class="total-row">
+                <span>Class/Appointment credits</span>
+                <span id="detailAppointmentCredits">0</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="detail-section">
+            <h4>Last visit</h4>
+            <div class="last-visit" id="detailLastVisit">
+              <span class="visit-type">No visits yet</span>
+            </div>
+          </div>
+
+          <div class="detail-section">
+            <h4>Tags</h4>
+            <div class="tags-list" id="detailTags">
+              <span class="tag">No tags</span>
+            </div>
+          </div>
+
+          <div class="detail-actions">
+            <a href="#" class="view-profile-link" id="viewProfileLink">View full profile</a>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="/js/inbox.js"></script>
+</body>
+</html>

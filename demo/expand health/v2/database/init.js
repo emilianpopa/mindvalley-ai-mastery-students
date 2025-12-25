@@ -317,6 +317,57 @@ async function initIntegrations() {
 }
 
 /**
+ * Initialize messages table for inbox/communication
+ */
+async function initMessages() {
+  const createTableSQL = `
+    CREATE TABLE IF NOT EXISTS messages (
+        id SERIAL PRIMARY KEY,
+        client_id INTEGER REFERENCES clients(id) ON DELETE CASCADE,
+        channel VARCHAR(20) NOT NULL DEFAULT 'email',
+        direction VARCHAR(20) NOT NULL DEFAULT 'outbound',
+        subject VARCHAR(500),
+        content TEXT NOT NULL,
+        to_email VARCHAR(255),
+        to_phone VARCHAR(50),
+        from_email VARCHAR(255),
+        from_phone VARCHAR(50),
+        status VARCHAR(30) DEFAULT 'sent',
+        sent_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        read_at TIMESTAMP WITH TIME ZONE,
+        sent_by INTEGER REFERENCES users(id),
+        metadata JSONB,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        CONSTRAINT messages_channel_check CHECK (channel IN ('email', 'sms', 'in-app', 'whatsapp')),
+        CONSTRAINT messages_direction_check CHECK (direction IN ('inbound', 'outbound'))
+    );
+  `;
+
+  const createIndexesSQL = `
+    CREATE INDEX IF NOT EXISTS idx_messages_client_id ON messages(client_id);
+    CREATE INDEX IF NOT EXISTS idx_messages_sent_at ON messages(sent_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_messages_channel ON messages(channel);
+    CREATE INDEX IF NOT EXISTS idx_messages_direction ON messages(direction);
+    CREATE INDEX IF NOT EXISTS idx_messages_status ON messages(status);
+    CREATE INDEX IF NOT EXISTS idx_messages_read_at ON messages(read_at) WHERE read_at IS NULL;
+  `;
+
+  try {
+    await db.query(createTableSQL);
+    console.log('✅ messages table ready');
+
+    await db.query(createIndexesSQL);
+    console.log('✅ messages indexes ready');
+
+    return true;
+  } catch (error) {
+    console.error('❌ Failed to initialize messages:', error.message);
+    return false;
+  }
+}
+
+/**
  * Run all database initializations
  */
 async function initDatabase() {
@@ -338,6 +389,9 @@ async function initDatabase() {
     // Initialize booking system tables
     await initBookingDatabase();
 
+    // Initialize messages/inbox table
+    await initMessages();
+
     console.log('✅ Database initialization complete\n');
     return true;
   } catch (error) {
@@ -351,5 +405,6 @@ module.exports = {
   initAuditLogs,
   initEncryption,
   initScheduledMessages,
-  initIntegrations
+  initIntegrations,
+  initMessages
 };

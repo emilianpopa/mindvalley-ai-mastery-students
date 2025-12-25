@@ -35,6 +35,7 @@ const servicesRoutes = require('./api/services');
 const staffRoutes = require('./api/staff');
 const bookingPublicRoutes = require('./api/booking-public');
 const bookingDashboardRoutes = require('./api/booking-dashboard');
+const messagesRoutes = require('./api/messages');
 
 // Initialize Express app
 const app = express();
@@ -132,6 +133,7 @@ app.use('/api/services', servicesRoutes);
 app.use('/api/staff', staffRoutes);
 app.use('/api/book', bookingPublicRoutes);
 app.use('/api/booking-dashboard', bookingDashboardRoutes);
+app.use('/api/messages', messagesRoutes);
 
 // ============================================
 // SERVE HTML PAGES
@@ -254,6 +256,11 @@ app.get('/appointments', (req, res) => {
 // Booking Dashboard (Momence-style)
 app.get('/schedule', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'booking-dashboard.html'));
+});
+
+// Inbox / Messaging
+app.get('/inbox', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'inbox.html'));
 });
 
 // Public booking page (no auth required)
