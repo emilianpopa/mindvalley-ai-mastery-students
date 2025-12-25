@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="/css/clients-light.css?v=3">
   <link rel="stylesheet" href="/css/forms-light.css?v=1">
   <link rel="stylesheet" href="/css/chat-widget.css">
+  <script src="/js/feature-flags.js"></script>
   <style>
     /* Hide the floating chat toggle button - use sidebar Ask AI instead */
     .chat-toggle { display: none !important; }
@@ -76,7 +77,18 @@
         </div>
 
         <div class="nav-section">
-          <p class="nav-section-title">APPOINTMENTS</p>
+          <p class="nav-section-title">BOOKING</p>
+          <a href="/schedule" class="nav-item">
+            <span class="nav-icon">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M3 3v18h18"/>
+                <path d="M18 17V9"/>
+                <path d="M13 17V5"/>
+                <path d="M8 17v-3"/>
+              </svg>
+            </span>
+            <span class="nav-text">Schedule</span>
+          </a>
           <a href="/appointments" class="nav-item">
             <span class="nav-icon">
               <svg viewBox="0 0 24 24" fill="none">
@@ -86,7 +98,7 @@
                 <line x1="3" y1="10" x2="21" y2="10"/>
               </svg>
             </span>
-            <span class="nav-text">Schedule</span>
+            <span class="nav-text">Appointments</span>
           </a>
         </div>
 

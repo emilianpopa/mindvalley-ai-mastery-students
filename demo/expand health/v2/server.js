@@ -98,6 +98,19 @@ app.use(attachAuditHelpers);
 app.use('/api', auditMiddleware);
 
 // ============================================
+// FEATURE FLAGS
+// ============================================
+
+// Feature flag endpoint - returns which features are enabled
+app.get('/api/features', (req, res) => {
+  res.json({
+    enableBooking: process.env.ENABLE_BOOKING === 'true',
+    enableSchedule: process.env.ENABLE_BOOKING === 'true',
+    environment: process.env.NODE_ENV || 'development'
+  });
+});
+
+// ============================================
 // API ROUTES
 // ============================================
 

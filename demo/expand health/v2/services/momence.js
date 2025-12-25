@@ -1,12 +1,17 @@
 /**
  * Momence Integration Service
  *
- * Handles Legacy API authentication with Momence platform.
- * Uses hostId and token for authentication (query parameters).
- * API Documentation: https://api.docs.momence.com/
+ * Handles Legacy API v1 authentication with Momence platform.
+ * Uses hostId and token as query parameters.
+ * Legacy API Base: https://momence.com/_api/primary/api/v1
+ *
+ * Available endpoints (discovered):
+ * - GET /Events - List events
+ * - GET /Videos - List on-demand videos
+ * - GET /Customers?page=X&pageSize=Y - List customers with pagination
  */
 
-const MOMENCE_API_BASE = 'https://api.momence.com/host';
+const MOMENCE_API_BASE = 'https://momence.com/_api/primary/api/v1';
 
 class MomenceService {
   constructor(integration) {
@@ -16,17 +21,15 @@ class MomenceService {
   }
 
   /**
-   * Build URL with authentication params
+   * Build URL with query parameters
    * @param {string} endpoint - API endpoint path
-   * @param {Object} additionalParams - Additional query parameters
-   * @returns {string} Full URL with auth params
+   * @param {Object} queryParams - Query parameters
+   * @returns {string} Full URL
    */
-  buildUrl(endpoint, additionalParams = {}) {
+  buildUrl(endpoint, queryParams = {}) {
     const url = new URL(`${MOMENCE_API_BASE}${endpoint}`);
-    url.searchParams.set('hostId', this.hostId);
-    url.searchParams.set('token', this.token);
 
-    for (const [key, value] of Object.entries(additionalParams)) {
+    for (const [key, value] of Object.entries(queryParams)) {
       if (value !== undefined && value !== null) {
         url.searchParams.set(key, value);
       }
@@ -37,13 +40,20 @@ class MomenceService {
 
   /**
    * Make authenticated API request
+   * Tries Bearer token first, falls back to query params for Legacy API
    * @param {string} endpoint - API endpoint path
    * @param {Object} options - Fetch options
-   * @param {Object} queryParams - Additional query parameters
+   * @param {Object} queryParams - Query parameters
    * @returns {Object} API response
    */
   async request(endpoint, options = {}, queryParams = {}) {
-    const url = this.buildUrl(endpoint, queryParams);
+    // Add hostId and token to query params for Legacy API compatibility
+    const authParams = {
+      hostId: this.hostId,
+      token: this.token,
+      ...queryParams
+    };
+    const url = this.buildUrl(endpoint, authParams);
 
     const headers = {
       'Content-Type': 'application/json',
@@ -64,59 +74,58 @@ class MomenceService {
   }
 
   // ============================================
-  // MEMBER MANAGEMENT
+  // CUSTOMER/MEMBER MANAGEMENT (Legacy API v1)
   // ============================================
 
   /**
-   * Get all members (clients) from Momence
-   * @param {Object} params - Query parameters (page, limit, search, etc.)
-   * @returns {Array} List of members
+   * Get all customers (clients) from Momence
+   * Uses Legacy API v1 /Customers endpoint with pagination
+   * @param {Object} params - Query parameters (page, pageSize)
+   * @returns {Object} { payload: Array, pagination: { page, pageSize, totalCount } }
    */
-  async getMembers(params = {}) {
-    return this.request('/members', {}, params);
+  async getCustomers(params = {}) {
+    const page = params.page || 1;
+    const pageSize = params.pageSize || 100;
+    return this.request('/Customers', {}, { page, pageSize });
   }
 
   /**
-   * Get single member by ID
-   * @param {string} memberId - Momence member ID
-   * @returns {Object} Member details
+   * Get all customers with automatic pagination
+   * Fetches all pages and returns combined results
+   * @param {number} maxRecords - Maximum records to fetch (default: all)
+   * @returns {Array} List of all customers
    */
-  async getMember(memberId) {
-    return this.request(`/members/${memberId}`);
+  async getAllCustomers(maxRecords = Infinity) {
+    const allCustomers = [];
+    let page = 1;
+    const pageSize = 100;
+    let hasMore = true;
+
+    while (hasMore && allCustomers.length < maxRecords) {
+      const result = await this.getCustomers({ page, pageSize });
+
+      if (result.payload && result.payload.length > 0) {
+        allCustomers.push(...result.payload);
+
+        // Check if there are more pages
+        const totalCount = result.pagination?.totalCount || 0;
+        hasMore = allCustomers.length < totalCount && allCustomers.length < maxRecords;
+        page++;
+      } else {
+        hasMore = false;
+      }
+    }
+
+    return allCustomers.slice(0, maxRecords);
   }
 
   /**
-   * Create new member in Momence
-   * @param {Object} memberData - Member data
-   * @returns {Object} Created member
+   * Alias for getCustomers to maintain compatibility
+   * @param {Object} filters - Filter parameters
+   * @returns {Object} Customers response
    */
-  async createMember(memberData) {
-    return this.request('/members', {
-      method: 'POST',
-      body: JSON.stringify(memberData)
-    });
-  }
-
-  /**
-   * Update member
-   * @param {string} memberId - Momence member ID
-   * @param {Object} memberData - Updated member data
-   * @returns {Object} Updated member
-   */
-  async updateMember(memberId, memberData) {
-    return this.request(`/members/${memberId}`, {
-      method: 'PUT',
-      body: JSON.stringify(memberData)
-    });
-  }
-
-  /**
-   * Get member notes
-   * @param {string} memberId - Momence member ID
-   * @returns {Array} Member notes
-   */
-  async getMemberNotes(memberId) {
-    return this.request(`/members/${memberId}/notes`);
+  async getMembers(filters = {}) {
+    return this.getCustomers(filters);
   }
 
   // ============================================
@@ -253,20 +262,43 @@ class MomenceService {
   }
 
   // ============================================
+  // EVENTS MANAGEMENT (Legacy API v1)
+  // ============================================
+
+  /**
+   * Get events from Momence
+   * Uses Legacy API v1 /Events endpoint
+   * @returns {Array} List of events
+   */
+  async getEvents() {
+    return this.request('/Events');
+  }
+
+  /**
+   * Get on-demand videos from Momence
+   * Uses Legacy API v1 /Videos endpoint
+   * @returns {Array} List of videos
+   */
+  async getVideos() {
+    return this.request('/Videos');
+  }
+
+  // ============================================
   // UTILITY METHODS
   // ============================================
 
   /**
    * Test the connection to Momence API
-   * @returns {Object} Test result with member count
+   * @returns {Object} Test result
    */
   async testConnection() {
-    // Try to fetch members to verify credentials work
-    const result = await this.request('/members', {}, { limit: 1 });
+    // Hit the Events endpoint (shown in Momence Legacy API docs)
+    // URL: https://momence.com/_api/primary/api/v1/Events?hostId=X&token=Y
+    const result = await this.request('/Events');
     return {
       success: true,
       message: 'Connection successful',
-      data: result
+      eventCount: Array.isArray(result) ? result.length : 0
     };
   }
 }
@@ -276,23 +308,49 @@ class MomenceService {
 // ============================================
 
 /**
- * Map Momence member to Expand Health client format
- * @param {Object} momenceMember - Momence member data
+ * Map Momence customer to Expand Health client format
+ * Legacy API v1 customer fields:
+ * - memberId: unique customer ID
+ * - email, firstName, lastName, phoneNumber
+ * - firstSeen, lastSeen: timestamps
+ * - activeSubscriptions: array of membership packages
+ * - customerFields: custom fields array
+ * - addresses: array of addresses
+ *
+ * @param {Object} momenceCustomer - Momence customer data from /Customers endpoint
  * @returns {Object} Expand Health client format
  */
-function mapMomenceMemberToClient(momenceMember) {
+function mapMomenceMemberToClient(momenceCustomer) {
+  // Build notes from active subscriptions
+  let notes = '';
+  if (momenceCustomer.activeSubscriptions && momenceCustomer.activeSubscriptions.length > 0) {
+    const subscriptions = momenceCustomer.activeSubscriptions
+      .map(sub => `${sub.membership?.name || 'Unknown'} (${sub.classesLeft || 0}/${sub.totalClasses || 0} left)`)
+      .join(', ');
+    notes = `Active memberships: ${subscriptions}`;
+  }
+
+  // Extract address if available
+  let address = null;
+  if (momenceCustomer.addresses && momenceCustomer.addresses.length > 0) {
+    const addr = momenceCustomer.addresses[0];
+    address = [addr.street, addr.city, addr.state, addr.zip, addr.country]
+      .filter(Boolean)
+      .join(', ');
+  }
+
   return {
-    first_name: momenceMember.firstName || momenceMember.first_name || '',
-    last_name: momenceMember.lastName || momenceMember.last_name || '',
-    email: momenceMember.email || '',
-    phone: momenceMember.phoneNumber || momenceMember.phone || '',
-    date_of_birth: momenceMember.dateOfBirth || momenceMember.dob || null,
-    gender: momenceMember.gender || null,
-    address: momenceMember.address || null,
-    notes: momenceMember.notes || '',
-    external_id: String(momenceMember.id),
+    first_name: momenceCustomer.firstName || '',
+    last_name: momenceCustomer.lastName || '',
+    email: momenceCustomer.email || '',
+    phone: momenceCustomer.phoneNumber || '',
+    date_of_birth: null, // Not available in Legacy API
+    gender: null, // Not available in Legacy API
+    address: address,
+    notes: notes,
+    external_id: String(momenceCustomer.memberId),
     external_platform: 'momence',
-    external_data: momenceMember
+    external_data: momenceCustomer
   };
 }
 

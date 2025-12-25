@@ -12,15 +12,6 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 async function initializeDashboard() {
-  // Set today's date
-  const today = new Date();
-  document.getElementById('todayDate').textContent = today.toLocaleDateString('en-ZA', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  });
-
   // Load all dashboard data in parallel
   await Promise.all([
     loadDashboardStats(),
@@ -38,7 +29,7 @@ async function loadDashboardStats() {
   try {
     const response = await fetch('/api/booking-dashboard/stats', {
       headers: {
-        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+        'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
       }
     });
 
@@ -48,20 +39,16 @@ async function loadDashboardStats() {
 
     const data = await response.json();
 
-    // Update overview stats
+    // Update stats bar pills
     document.getElementById('totalSales').textContent = formatCurrency(data.overview.totalSales);
     document.getElementById('totalBookings').textContent = data.overview.totalBookings;
     document.getElementById('newCustomers').textContent = data.overview.newCustomers;
     document.getElementById('firstTimeVisitors').textContent = data.overview.firstTimeVisitors;
-    document.getElementById('totalMembers').textContent = data.overview.totalMembers;
 
-    // Update quick overview
+    // Update quick stats
     document.getElementById('completedCount').textContent = data.appointments.completed;
     document.getElementById('cancelledCount').textContent = data.appointments.cancelled;
     document.getElementById('noShowCount').textContent = data.appointments.noShows;
-    document.getElementById('conversionRate').textContent = data.overview.conversionRate + '%';
-    document.getElementById('paidCount').textContent = data.payments.paid;
-    document.getElementById('unpaidCount').textContent = data.payments.unpaid;
 
   } catch (error) {
     console.error('Error loading dashboard stats:', error);
@@ -76,7 +63,7 @@ async function loadSalesChart() {
   try {
     const response = await fetch('/api/booking-dashboard/sales-chart?days=7', {
       headers: {
-        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+        'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
       }
     });
 
@@ -87,6 +74,27 @@ async function loadSalesChart() {
     const data = await response.json();
     renderSalesChart(data.data);
 
+    // Calculate total sales for the header
+    const totalSales = data.data.reduce((sum, d) => sum + d.sales, 0);
+    const salesTotalEl = document.getElementById('salesTotal');
+    if (salesTotalEl) {
+      salesTotalEl.textContent = formatCurrency(totalSales);
+    }
+
+    // Calculate week-over-week change (mock for now)
+    const changeEl = document.getElementById('salesChange');
+    if (changeEl) {
+      const change = Math.round((Math.random() * 20) - 5); // Mock: -5% to +15%
+      const isPositive = change >= 0;
+      changeEl.className = `sales-change ${isPositive ? 'positive' : 'negative'}`;
+      changeEl.innerHTML = `
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+          <polyline points="${isPositive ? '18 15 12 9 6 15' : '6 9 12 15 18 9'}"></polyline>
+        </svg>
+        <span>${Math.abs(change)}%</span>
+      `;
+    }
+
   } catch (error) {
     console.error('Error loading sales chart:', error);
   }
@@ -96,7 +104,10 @@ async function loadSalesChart() {
  * Render sales chart using Chart.js
  */
 function renderSalesChart(data) {
-  const ctx = document.getElementById('salesChart').getContext('2d');
+  const canvas = document.getElementById('salesChart');
+  if (!canvas) return;
+
+  const ctx = canvas.getContext('2d');
 
   // Destroy existing chart if any
   if (salesChart) {
@@ -105,11 +116,15 @@ function renderSalesChart(data) {
 
   const labels = data.map(d => {
     const date = new Date(d.date);
-    return date.toLocaleDateString('en-ZA', { weekday: 'short', day: 'numeric' });
+    return date.toLocaleDateString('en-ZA', { weekday: 'short' });
   });
 
   const salesData = data.map(d => d.sales);
-  const bookingsData = data.map(d => d.bookings);
+
+  // Create gradient
+  const gradient = ctx.createLinearGradient(0, 0, 0, 200);
+  gradient.addColorStop(0, 'rgba(13, 148, 136, 0.3)');
+  gradient.addColorStop(1, 'rgba(13, 148, 136, 0.02)');
 
   salesChart = new Chart(ctx, {
     type: 'line',
@@ -117,22 +132,18 @@ function renderSalesChart(data) {
       labels: labels,
       datasets: [
         {
-          label: 'Sales (ZAR)',
+          label: 'Sales',
           data: salesData,
           borderColor: '#0d9488',
-          backgroundColor: 'rgba(13, 148, 136, 0.1)',
+          backgroundColor: gradient,
           fill: true,
           tension: 0.4,
-          yAxisID: 'y'
-        },
-        {
-          label: 'Bookings',
-          data: bookingsData,
-          borderColor: '#6366f1',
-          backgroundColor: 'rgba(99, 102, 241, 0.1)',
-          fill: false,
-          tension: 0.4,
-          yAxisID: 'y1'
+          borderWidth: 2,
+          pointRadius: 0,
+          pointHoverRadius: 6,
+          pointHoverBackgroundColor: '#0d9488',
+          pointHoverBorderColor: '#fff',
+          pointHoverBorderWidth: 2
         }
       ]
     },
@@ -145,19 +156,21 @@ function renderSalesChart(data) {
       },
       plugins: {
         legend: {
-          position: 'bottom',
-          labels: {
-            usePointStyle: true,
-            padding: 20
-          }
+          display: false
         },
         tooltip: {
+          backgroundColor: '#1e293b',
+          titleColor: '#f8fafc',
+          bodyColor: '#f8fafc',
+          padding: 12,
+          cornerRadius: 8,
+          displayColors: false,
           callbacks: {
+            title: function(context) {
+              return context[0].label;
+            },
             label: function(context) {
-              if (context.datasetIndex === 0) {
-                return 'Sales: ZAR ' + context.parsed.y.toLocaleString('en-ZA', { minimumFractionDigits: 2 });
-              }
-              return 'Bookings: ' + context.parsed.y;
+              return 'R ' + context.parsed.y.toLocaleString('en-ZA', { minimumFractionDigits: 2 });
             }
           }
         }
@@ -166,33 +179,17 @@ function renderSalesChart(data) {
         x: {
           grid: {
             display: false
-          }
-        },
-        y: {
-          type: 'linear',
-          display: true,
-          position: 'left',
-          title: {
-            display: true,
-            text: 'Sales (ZAR)'
           },
           ticks: {
-            callback: function(value) {
-              return 'R ' + value.toLocaleString();
+            color: '#94a3b8',
+            font: {
+              size: 11
             }
           }
         },
-        y1: {
-          type: 'linear',
-          display: true,
-          position: 'right',
-          title: {
-            display: true,
-            text: 'Bookings'
-          },
-          grid: {
-            drawOnChartArea: false
-          }
+        y: {
+          display: false,
+          beginAtZero: true
         }
       }
     }
@@ -204,11 +201,12 @@ function renderSalesChart(data) {
  */
 async function loadUpcomingAppointments() {
   const container = document.getElementById('upcomingAppointments');
+  if (!container) return;
 
   try {
     const response = await fetch('/api/booking-dashboard/upcoming-appointments?limit=5', {
       headers: {
-        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+        'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
       }
     });
 
@@ -221,7 +219,7 @@ async function loadUpcomingAppointments() {
     if (data.appointments.length === 0) {
       container.innerHTML = `
         <div class="empty-state">
-          <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
             <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
             <line x1="16" y1="2" x2="16" y2="6"></line>
             <line x1="8" y1="2" x2="8" y2="6"></line>
@@ -235,30 +233,29 @@ async function loadUpcomingAppointments() {
 
     container.innerHTML = data.appointments.map(apt => {
       const startTime = new Date(apt.startTime);
-      const dateStr = startTime.toLocaleDateString('en-ZA', { weekday: 'short', month: 'short', day: 'numeric' });
+      const dayStr = startTime.toLocaleDateString('en-ZA', { weekday: 'short' });
       const timeStr = startTime.toLocaleTimeString('en-ZA', { hour: '2-digit', minute: '2-digit' });
-
       const serviceColor = apt.service?.color || '#0d9488';
       const paymentClass = apt.paymentStatus === 'paid' ? 'paid' : 'unpaid';
 
       return `
         <div class="appointment-item" onclick="window.location.href='/appointments?id=${apt.id}'">
-          <div class="appointment-time">
-            <div class="appointment-date">${dateStr}</div>
-            <div class="appointment-hour">${timeStr}</div>
-            <div class="appointment-relative">${apt.relativeTime}</div>
+          <div class="appointment-time-block">
+            <div class="appointment-day">${dayStr}</div>
+            <div class="appointment-time">${timeStr}</div>
+            <div class="appointment-relative">${apt.relativeTime || ''}</div>
           </div>
-          <div class="appointment-details">
+          <div class="appointment-info">
             <div class="appointment-service">
               <span class="service-dot" style="background: ${serviceColor}"></span>
-              ${apt.title}
+              <span class="appointment-title">${apt.title}</span>
             </div>
             <div class="appointment-client">${apt.client?.name || 'No client'}</div>
             <div class="appointment-staff">${apt.staff?.name || 'Unassigned'}</div>
           </div>
           <div class="appointment-meta">
-            <span class="appointment-status ${apt.status}">${apt.status}</span>
-            ${apt.price ? `<span class="appointment-status ${paymentClass}">ZAR ${apt.price.toFixed(2)}</span>` : ''}
+            <span class="appointment-badge ${apt.status}">${apt.status}</span>
+            ${apt.price ? `<span class="appointment-price">R ${apt.price.toFixed(2)}</span>` : ''}
           </div>
         </div>
       `;
@@ -266,7 +263,16 @@ async function loadUpcomingAppointments() {
 
   } catch (error) {
     console.error('Error loading upcoming appointments:', error);
-    container.innerHTML = '<div class="empty-state">Failed to load appointments</div>';
+    container.innerHTML = `
+      <div class="empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+        <p>Failed to load appointments</p>
+      </div>
+    `;
   }
 }
 
@@ -275,11 +281,12 @@ async function loadUpcomingAppointments() {
  */
 async function loadRecentActivity() {
   const container = document.getElementById('recentActivity');
+  if (!container) return;
 
   try {
-    const response = await fetch('/api/booking-dashboard/recent-activity?limit=8', {
+    const response = await fetch('/api/booking-dashboard/recent-activity?limit=6', {
       headers: {
-        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+        'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
       }
     });
 
@@ -292,6 +299,10 @@ async function loadRecentActivity() {
     if (data.activities.length === 0) {
       container.innerHTML = `
         <div class="empty-state">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
           <p>No recent activity</p>
         </div>
       `;
@@ -304,22 +315,27 @@ async function loadRecentActivity() {
 
       switch (activity.type) {
         case 'booked':
-          icon = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"></path></svg>';
+          icon = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"></path></svg>';
           break;
         case 'cancelled':
-          icon = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
+          icon = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
           break;
         case 'completed':
-          icon = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>';
+          icon = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>';
           break;
+        case 'payment':
+          icon = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>';
+          break;
+        default:
+          icon = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle></svg>';
       }
 
       return `
         <div class="activity-item">
           <div class="activity-icon ${iconClass}">${icon}</div>
           <div class="activity-content">
-            <div class="activity-description">${activity.description}</div>
-            <div class="activity-time">${activity.relativeTime}</div>
+            <div class="activity-text">${activity.description}</div>
+            <div class="activity-timestamp">${activity.relativeTime}</div>
           </div>
         </div>
       `;
@@ -327,7 +343,16 @@ async function loadRecentActivity() {
 
   } catch (error) {
     console.error('Error loading recent activity:', error);
-    container.innerHTML = '<div class="empty-state">Failed to load activity</div>';
+    container.innerHTML = `
+      <div class="empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+        <p>Failed to load activity</p>
+      </div>
+    `;
   }
 }
 
@@ -338,7 +363,7 @@ async function loadTodaySummary() {
   try {
     const response = await fetch('/api/booking-dashboard/today-summary', {
       headers: {
-        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+        'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
       }
     });
 
@@ -348,10 +373,15 @@ async function loadTodaySummary() {
 
     const data = await response.json();
 
-    document.getElementById('todayTotal').textContent = data.total;
-    document.getElementById('todayCompleted').textContent = data.completed;
-    document.getElementById('todayUpcoming').textContent = data.scheduled + data.confirmed;
-    document.getElementById('todayRevenue').textContent = 'ZAR ' + formatCurrency(data.expectedRevenue);
+    const totalEl = document.getElementById('todayTotal');
+    const completedEl = document.getElementById('todayCompleted');
+    const upcomingEl = document.getElementById('todayUpcoming');
+    const revenueEl = document.getElementById('todayRevenue');
+
+    if (totalEl) totalEl.textContent = data.total;
+    if (completedEl) completedEl.textContent = data.completed;
+    if (upcomingEl) upcomingEl.textContent = data.scheduled + data.confirmed;
+    if (revenueEl) revenueEl.textContent = 'R ' + formatCurrency(data.expectedRevenue);
 
   } catch (error) {
     console.error('Error loading today summary:', error);
@@ -362,9 +392,10 @@ async function loadTodaySummary() {
  * Format currency
  */
 function formatCurrency(value) {
+  if (typeof value !== 'number') value = 0;
   return value.toLocaleString('en-ZA', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
   });
 }
 
@@ -372,6 +403,5 @@ function formatCurrency(value) {
  * Show error toast
  */
 function showError(message) {
-  // Simple console error for now - can be enhanced with toast notification
   console.error(message);
 }
