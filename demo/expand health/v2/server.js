@@ -153,6 +153,15 @@ app.get('/clients', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'clients.html'));
 });
 
+// Customers CRM (Momence-style)
+app.get('/customers', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'customers.html'));
+});
+
+app.get('/customers/:id', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'customer-profile.html'));
+});
+
 app.get('/clients/new', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'client-new.html'));
 });
