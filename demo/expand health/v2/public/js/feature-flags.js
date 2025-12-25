@@ -43,7 +43,7 @@
   async function applyFeatureFlags() {
     const flags = await fetchFeatureFlags();
 
-    // Hide booking section if disabled
+    // Hide booking/Momence features if disabled
     if (!flags.enableBooking) {
       // Hide the BOOKING nav section
       const bookingSections = document.querySelectorAll('.nav-section');
@@ -51,6 +51,22 @@
         const title = section.querySelector('.nav-section-title');
         if (title && title.textContent.trim() === 'BOOKING') {
           section.style.display = 'none';
+        }
+      });
+
+      // Hide Inbox link (Momence feature)
+      const inboxLinks = document.querySelectorAll('a[href="/inbox"]');
+      inboxLinks.forEach(link => {
+        const navItem = link.closest('.nav-item') || link;
+        navItem.style.display = 'none';
+      });
+
+      // Hide Point of Sale link (Momence feature)
+      const navItems = document.querySelectorAll('.nav-item');
+      navItems.forEach(item => {
+        const text = item.querySelector('.nav-text');
+        if (text && text.textContent.trim() === 'Point of sale') {
+          item.style.display = 'none';
         }
       });
 
@@ -72,6 +88,19 @@
           card.style.display = 'none';
         }
       });
+
+      // Hide Momence-style dashboard sections (upcoming appointments, activity)
+      const upcomingSection = document.getElementById('upcomingAppointmentsList');
+      if (upcomingSection) {
+        const card = upcomingSection.closest('.dashboard-card');
+        if (card) card.style.display = 'none';
+      }
+
+      // Hide activity sidebar
+      const activitySidebar = document.querySelector('.activity-sidebar');
+      if (activitySidebar) {
+        activitySidebar.style.display = 'none';
+      }
     }
   }
 
