@@ -937,6 +937,34 @@ body {
 }
 
 @media (max-width: 768px) {
+  .sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+  }
+
+  .sidebar.mobile-open {
+    transform: translateX(0);
+    width: 260px;
+  }
+
+  .sidebar.mobile-open .logo-text,
+  .sidebar.mobile-open .nav-text,
+  .sidebar.mobile-open .nav-section-title,
+  .sidebar.mobile-open .nav-arrow,
+  .sidebar.mobile-open .ask-ai-btn span:last-child {
+    display: block;
+  }
+
+  .sidebar.mobile-open .nav-item {
+    justify-content: flex-start;
+    padding: 12px 20px;
+    margin: 0 12px;
+  }
+
+  .main-content {
+    margin-left: 0;
+  }
+
   .clients-toolbar {
     flex-direction: column;
     align-items: stretch;
@@ -966,5 +994,99 @@ body {
   .quick-notes-btn {
     bottom: 16px;
     right: 16px;
+  }
+
+  /* Mobile Menu Button */
+  .mobile-menu-btn {
+    display: flex;
+    width: 40px;
+    height: 40px;
+    background: white;
+    border: 1px solid #E5E7EB;
+    border-radius: 10px;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #6B7280;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+  }
+
+  .mobile-menu-btn:hover {
+    background: #F3F4F6;
+    color: #1F2937;
+  }
+
+  .mobile-menu-btn svg {
+    width: 24px;
+    height: 24px;
+    stroke: currentColor;
+    stroke-width: 2;
+  }
+
+  /* Header left mobile wrapper */
+  .header-left-mobile {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  /* Mobile Overlay */
+  .mobile-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 99;
+  }
+
+  .mobile-overlay.active {
+    display: block;
+  }
+
+  /* Mobile Close Button in Sidebar */
+  .mobile-close-btn {
+    display: flex;
+    position: absolute;
+    top: 20px;
+    right: 16px;
+    width: 32px;
+    height: 32px;
+    background: #F8FAFC;
+    border: 1px solid #E5E7EB;
+    border-radius: 8px;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #6B7280;
+    z-index: 101;
+  }
+
+  .mobile-close-btn:hover {
+    background: #E5E7EB;
+    color: #1F2937;
+  }
+
+  .mobile-close-btn svg {
+    width: 18px;
+    height: 18px;
+    stroke: currentColor;
+    stroke-width: 2;
+  }
+}
+
+/* Hide mobile elements on desktop */
+@media (min-width: 769px) {
+  .mobile-menu-btn,
+  .mobile-overlay,
+  .mobile-close-btn {
+    display: none !important;
+  }
+
+  .header-left-mobile {
+    display: contents;
   }
 }

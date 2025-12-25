@@ -9,9 +9,19 @@
   <!-- <link rel="stylesheet" href="/css/chat-widget.css"> -->
 </head>
 <body>
+  <!-- Mobile Overlay -->
+  <div class="mobile-overlay" id="mobileOverlay" onclick="closeMobileMenu()"></div>
+
   <div class="app-container">
     <!-- Sidebar -->
-    <aside class="sidebar">
+    <aside class="sidebar" id="sidebar">
+      <!-- Mobile Close Button -->
+      <button class="mobile-close-btn" onclick="closeMobileMenu()">
+        <svg viewBox="0 0 24 24" fill="none">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
       <div class="sidebar-header">
         <div class="logo">
           <svg class="logo-icon" width="28" height="28" viewBox="0 0 24 24" fill="none">
@@ -39,7 +49,18 @@
         </div>
 
         <div class="nav-section">
-          <p class="nav-section-title">APPOINTMENTS</p>
+          <p class="nav-section-title">BOOKING</p>
+          <a href="/schedule" class="nav-item">
+            <span class="nav-icon">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M3 3v18h18"/>
+                <path d="M18 17V9"/>
+                <path d="M13 17V5"/>
+                <path d="M8 17v-3"/>
+              </svg>
+            </span>
+            <span class="nav-text">Schedule</span>
+          </a>
           <a href="/appointments" class="nav-item">
             <span class="nav-icon">
               <svg viewBox="0 0 24 24" fill="none">
@@ -49,7 +70,7 @@
                 <line x1="3" y1="10" x2="21" y2="10"/>
               </svg>
             </span>
-            <span class="nav-text">Schedule</span>
+            <span class="nav-text">Appointments</span>
           </a>
         </div>
 
@@ -126,8 +147,18 @@
       <!-- Header -->
       <header class="header">
         <div class="header-left">
-          <h1>Dashboard</h1>
-          <p class="breadcrumb">Home → Dashboard</p>
+          <!-- Mobile Menu Button -->
+          <button class="mobile-menu-btn" onclick="openMobileMenu()">
+            <svg viewBox="0 0 24 24" fill="none">
+              <line x1="3" y1="6" x2="21" y2="6"/>
+              <line x1="3" y1="12" x2="21" y2="12"/>
+              <line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+          </button>
+          <div>
+            <h1>Dashboard</h1>
+            <p class="breadcrumb">Home → Dashboard</p>
+          </div>
         </div>
         <div class="header-right">
           <div class="user-menu-wrapper">
@@ -478,6 +509,28 @@
 
     // Load user info on page load
     document.addEventListener('DOMContentLoaded', loadUserInfo);
+
+    // Mobile Menu Functions
+    function openMobileMenu() {
+      document.getElementById('sidebar').classList.add('mobile-open');
+      document.getElementById('mobileOverlay').classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeMobileMenu() {
+      document.getElementById('sidebar').classList.remove('mobile-open');
+      document.getElementById('mobileOverlay').classList.remove('active');
+      document.body.style.overflow = '';
+    }
+
+    // Close mobile menu when clicking a nav link
+    document.querySelectorAll('.sidebar .nav-item').forEach(link => {
+      link.addEventListener('click', () => {
+        if (window.innerWidth <= 768) {
+          closeMobileMenu();
+        }
+      });
+    });
   </script>
 </body>
 </html>
