@@ -273,6 +273,16 @@ app.get('/classes', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'classes.html'));
 });
 
+// Reservations (Appointments list view)
+app.get('/reservations', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'reservations.html'));
+});
+
+// Services (Appointment services management)
+app.get('/services', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'services.html'));
+});
+
 // Public booking page (no auth required)
 app.get('/book/:tenantSlug', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'booking-public.html'));

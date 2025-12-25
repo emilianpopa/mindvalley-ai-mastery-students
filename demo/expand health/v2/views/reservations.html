@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reservations - ExpandHealth</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cline x1='20' y1='20' x2='80' y2='80' stroke='%230F766E' stroke-width='12' stroke-linecap='round'/%3E%3Cline x1='80' y1='20' x2='20' y2='80' stroke='%230F766E' stroke-width='12' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/css/main.css">
+  <script src="/js/feature-flags.js"></script>
+  <style>
+    .reservations-page {
+      padding: 24px;
+    }
+
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .page-title {
+      font-size: 1.75rem;
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+
+    /* Tabs */
+    .tabs-container {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .tab {
+      padding: 12px 20px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--gray-600);
+      background: none;
+      border: none;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      transition: all 0.2s;
+    }
+
+    .tab:hover {
+      color: var(--teal-600);
+    }
+
+    .tab.active {
+      color: var(--teal-600);
+      border-bottom-color: var(--teal-600);
+    }
+
+    /* Search and filters */
+    .search-bar {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 24px;
+      align-items: center;
+    }
+
+    .search-input-wrapper {
+      position: relative;
+      flex: 1;
+      max-width: 400px;
+    }
+
+    .search-input-wrapper svg {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--gray-400);
+      width: 18px;
+      height: 18px;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 10px 12px 10px 40px;
+      border: 1px solid var(--gray-300);
+      border-radius: 8px;
+      font-size: 0.875rem;
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: var(--teal-500);
+      box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
+    }
+
+    .filter-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      border: 1px solid var(--gray-300);
+      border-radius: 8px;
+      background: white;
+      font-size: 0.875rem;
+      color: var(--gray-700);
+      cursor: pointer;
+    }
+
+    .filter-btn:hover {
+      background: var(--gray-50);
+    }
+
+    /* Table styles */
+    .table-container {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+
+    .reservations-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .reservations-table th {
+      text-align: left;
+      padding: 14px 16px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: var(--gray-500);
+      background: var(--gray-50);
+      border-bottom: 1px solid var(--gray-200);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .reservations-table th:hover {
+      background: var(--gray-100);
+    }
+
+    .reservations-table th svg {
+      width: 12px;
+      height: 12px;
+      margin-left: 4px;
+      vertical-align: middle;
+    }
+
+    .reservations-table td {
+      padding: 16px;
+      border-bottom: 1px solid var(--gray-100);
+      font-size: 0.875rem;
+      color: var(--gray-700);
+    }
+
+    .reservations-table tr:hover {
+      background: var(--gray-50);
+    }
+
+    .reservations-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    /* Expand arrow */
+    .expand-cell {
+      width: 40px;
+    }
+
+    .expand-btn {
+      background: none;
+      border: none;
+      padding: 4px;
+      cursor: pointer;
+      color: var(--gray-400);
+      transition: transform 0.2s;
+    }
+
+    .expand-btn.expanded {
+      transform: rotate(90deg);
+    }
+
+    /* Appointment name with color indicator */
+    .appointment-name {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .appointment-color {
+      width: 6px;
+      height: 40px;
+      border-radius: 3px;
+    }
+
+    .color-blue { background: #6366f1; }
+    .color-green { background: #22c55e; }
+    .color-orange { background: #f97316; }
+    .color-purple { background: #a855f7; }
+    .color-teal { background: #14b8a6; }
+    .color-red { background: #ef4444; }
+
+    /* Time cell */
+    .time-cell {
+      white-space: nowrap;
+    }
+
+    .time-start, .time-end {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .time-start svg, .time-end svg {
+      width: 14px;
+      height: 14px;
+      color: var(--gray-400);
+    }
+
+    .time-end {
+      color: var(--gray-500);
+      font-size: 0.8125rem;
+    }
+
+    /* Price and status */
+    .price-cell {
+      font-weight: 500;
+    }
+
+    .payment-status {
+      display: inline-flex;
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+
+    .payment-paid {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .payment-not-paid {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .payment-partial {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    /* Actions column */
+    .actions-cell {
+      width: 40px;
+      text-align: center;
+    }
+
+    .actions-btn {
+      background: none;
+      border: none;
+      padding: 8px;
+      cursor: pointer;
+      color: var(--gray-400);
+      border-radius: 4px;
+    }
+
+    .actions-btn:hover {
+      background: var(--gray-100);
+      color: var(--gray-600);
+    }
+
+    /* Attendee count */
+    .attendee-count {
+      text-align: center;
+      font-weight: 500;
+    }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--gray-500);
+    }
+
+    .empty-state svg {
+      width: 48px;
+      height: 48px;
+      color: var(--gray-300);
+      margin-bottom: 16px;
+    }
+
+    .empty-state h3 {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--gray-700);
+      margin-bottom: 8px;
+    }
+
+    /* Appointments submenu */
+    .appointments-submenu {
+      display: none;
+      flex-direction: column;
+      padding-left: 20px;
+      margin-top: 4px;
+    }
+
+    .appointments-submenu.show {
+      display: flex;
+    }
+
+    .nav-item.has-submenu .nav-text {
+      flex: 1;
+    }
+
+    .submenu-arrow {
+      width: 16px;
+      height: 16px;
+      transition: transform 0.2s;
+    }
+
+    .nav-item.has-submenu.expanded .submenu-arrow {
+      transform: rotate(180deg);
+    }
+
+    .submenu-item {
+      padding: 8px 12px;
+      font-size: 0.8125rem;
+      color: var(--gray-600);
+      text-decoration: none;
+      border-radius: 6px;
+      transition: all 0.2s;
+    }
+
+    .submenu-item:hover {
+      background: var(--gray-100);
+      color: var(--gray-900);
+    }
+
+    .submenu-item.active {
+      background: var(--teal-50);
+      color: var(--teal-700);
+    }
+
+    @media (max-width: 1024px) {
+      .reservations-table th:nth-child(5),
+      .reservations-table td:nth-child(5),
+      .reservations-table th:nth-child(6),
+      .reservations-table td:nth-child(6) {
+        display: none;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .search-bar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .search-input-wrapper {
+        max-width: none;
+      }
+
+      .reservations-table th:nth-child(4),
+      .reservations-table td:nth-child(4) {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">
+          <svg class="logo-icon" width="28" height="28" viewBox="0 0 24 24" fill="none">
+            <path d="M4 4L11 12L4 20" stroke="#0F766E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M20 4L13 12L20 20" stroke="#0F766E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <div class="logo-text">
+            <span class="logo-expand">EXPAND</span>
+            <span class="logo-health">HEALTH</span>
+          </div>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <a href="/" class="nav-item">
+            <span class="nav-icon">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                <polyline points="9 22 9 12 15 12 15 22"/>
+              </svg>
+            </span>
+            <span class="nav-text">Dashboard</span>
+          </a>
+          <a href="/inbox" class="nav-item">
+            <span class="nav-icon">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                <polyline points="22,6 12,13 2,6"/>
+              </svg>
+            </span>
+            <span class="nav-text">Inbox</span>
+          </a>
+          <a href="/pos" class="nav-item">
+            <span class="nav-icon">
+              <svg viewBox="0 0 24 24" fill="none">
+                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+                <line x1="8" y1="21" x2="16" y2="21"/>
+                <line x1="12" y1="17" x2="12" y2="21"/>
+              </svg>
+            </span>
+            <span class="nav-text">Point of sale</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <p class="nav-section-title">BOOKING</p>
+          <a href="/schedule" class="nav-item">
+            <span class="nav-icon">
+              <svg viewBox="0 0 24 24" fill="none">
+                <rect x="3" y="3" width="7" height="7"/>
+                <rect x="14" y="3" width="7" height="7"/>
+                <rect x="14" y="14" width="7" height="7"/>
+                <rect x="3" y="14" width="7" height="7"/>
+              </svg>
+            </span>
+            <span class="nav-text">Dashboard</span>
+          </a>
+          <a href="/appointments" class="nav-item has-submenu expanded">
+            <span class="nav-icon">
+              <svg viewBox="0 0 24 24" fill="none">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                <line x1="16" y1="2" x2="16" y2="6"/>
+                <line x1="8" y1="2" x2="8" y2="6"/>
+                <line x1="3" y1="10" x2="21" y2="10"/>
+              </svg>
+            </span>
+            <span class="nav-text">Appointments</span>
+            <svg class="submenu-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </a>
+          <div class="appointments-submenu show">
+            <a href="/appointments" class="submenu-item">Schedule</a>
+            <a href="/reservations" class="submenu-item active">Reservations</a>
+            <a href="/services" class="submenu-item">Services & add-ons</a>
+            <a href="#" class="submenu-item">Boards</a>
+          </div>
+          <a href="/classes" class="nav-item">
+            <span class="nav-icon">
+              <svg viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="10"/>
+                <polyline points="12 6 12 12 16 14"/>
+              </svg>
+            </span>
+            <span class="nav-text">Classes</span>
+          </a>
+          <a href="#" class="nav-item">
+            <span class="nav-icon">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+              </svg>
+            </span>
+            <span class="nav-text">Community</span>
+          </a>
+          <a href="#" class="nav-item">
+            <span class="nav-icon">
+              <svg viewBox="0 0 24 24" fill="none">
+                <polygon points="23 7 16 12 23 17 23 7"/>
+                <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+              </svg>
+            </span>
+            <span class="nav-text">On-Demand</span>
+          </a>
+          <a href="#" class="nav-item">
+            <span class="nav-icon">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
+              </svg>
+            </span>
+            <span class="nav-text">Memberships</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <p class="nav-section-title">CUSTOMERS</p>
+          <a href="/clients" class="nav-item">
+            <span class="nav-icon">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+              </svg>
+            </span>
+            <span class="nav-text">Customers</span>
+          </a>
+          <a href="/forms" class="nav-item">
+            <span class="nav-icon">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M9 11l3 3L22 4"/>
+                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+              </svg>
+            </span>
+            <span class="nav-text">Forms</span>
+          </a>
+          <a href="/protocol-templates" class="nav-item">
+            <span class="nav-icon">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+                <polyline points="10 9 9 9 8 9"/>
+              </svg>
+            </span>
+            <span class="nav-text">Protocol Templates</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <p class="nav-section-title">BUSINESS</p>
+          <a href="#" class="nav-item">
+            <span class="nav-icon">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+                <line x1="12" y1="22.08" x2="12" y2="12"/>
+              </svg>
+            </span>
+            <span class="nav-text">Marketing</span>
+          </a>
+          <a href="#" class="nav-item">
+            <span class="nav-icon">
+              <svg viewBox="0 0 24 24" fill="none">
+                <line x1="18" y1="20" x2="18" y2="10"/>
+                <line x1="12" y1="20" x2="12" y2="4"/>
+                <line x1="6" y1="20" x2="6" y2="14"/>
+              </svg>
+            </span>
+            <span class="nav-text">Analytics</span>
+          </a>
+          <a href="#" class="nav-item">
+            <span class="nav-icon">
+              <svg viewBox="0 0 24 24" fill="none">
+                <line x1="12" y1="1" x2="12" y2="23"/>
+                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+              </svg>
+            </span>
+            <span class="nav-text">Financials</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <p class="nav-section-title">ADMIN</p>
+          <a href="/admin" class="nav-item">
+            <span class="nav-icon">
+              <svg viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+              </svg>
+            </span>
+            <span class="nav-text">Studio set-up</span>
+          </a>
+          <a href="/kb-admin" class="nav-item">
+            <span class="nav-icon">
+              <svg viewBox="0 0 24 24" fill="none">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+              </svg>
+            </span>
+            <span class="nav-text">AI Knowledge Base</span>
+          </a>
+          <a href="#" class="nav-item">
+            <span class="nav-icon">
+              <svg viewBox="0 0 24 24" fill="none">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                <line x1="3" y1="9" x2="21" y2="9"/>
+                <line x1="9" y1="21" x2="9" y2="9"/>
+              </svg>
+            </span>
+            <span class="nav-text">Apps & Integrations</span>
+          </a>
+        </div>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="user-info">
+          <div class="user-avatar" id="userAvatar">U</div>
+          <div class="user-details">
+            <span class="user-name" id="userName">Loading...</span>
+            <span class="user-role" id="userRole">...</span>
+          </div>
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="logout()">Logout</button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <div class="reservations-page">
+        <div class="page-header">
+          <h1 class="page-title">Reservations</h1>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs-container">
+          <button class="tab active" data-filter="all">All</button>
+          <button class="tab" data-filter="upcoming">Upcoming</button>
+          <button class="tab" data-filter="past">Past</button>
+        </div>
+
+        <!-- Search and Filters -->
+        <div class="search-bar">
+          <div class="search-input-wrapper">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"/>
+              <path d="m21 21-4.35-4.35"/>
+            </svg>
+            <input type="text" class="search-input" id="searchInput" placeholder="Search reservations...">
+          </div>
+          <button class="filter-btn" id="filterBtn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="4" y1="21" x2="4" y2="14"/>
+              <line x1="4" y1="10" x2="4" y2="3"/>
+              <line x1="12" y1="21" x2="12" y2="12"/>
+              <line x1="12" y1="8" x2="12" y2="3"/>
+              <line x1="20" y1="21" x2="20" y2="16"/>
+              <line x1="20" y1="12" x2="20" y2="3"/>
+              <line x1="1" y1="14" x2="7" y2="14"/>
+              <line x1="9" y1="8" x2="15" y2="8"/>
+              <line x1="17" y1="16" x2="23" y2="16"/>
+            </svg>
+            Filters
+          </button>
+        </div>
+
+        <!-- Table -->
+        <div class="table-container">
+          <table class="reservations-table">
+            <thead>
+              <tr>
+                <th class="expand-cell"></th>
+                <th>Appointment</th>
+                <th>Scheduled at <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></th>
+                <th>Board</th>
+                <th>Venue</th>
+                <th>Staff</th>
+                <th>Price</th>
+                <th class="attendee-count">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                    <circle cx="9" cy="7" r="4"/>
+                  </svg>
+                </th>
+                <th class="actions-cell"></th>
+              </tr>
+            </thead>
+            <tbody id="reservationsBody">
+              <!-- Populated by JavaScript -->
+            </tbody>
+          </table>
+
+          <div class="empty-state" id="emptyState" style="display: none;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+              <line x1="16" y1="2" x2="16" y2="6"/>
+              <line x1="8" y1="2" x2="8" y2="6"/>
+              <line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
+            <h3>No reservations found</h3>
+            <p>Reservations will appear here when clients book appointments.</p>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // Auth check
+    const token = localStorage.getItem('auth_token');
+    if (!token) {
+      window.location.href = '/login';
+    }
+
+    let reservations = [];
+    let currentFilter = 'all';
+
+    // API helper
+    async function apiRequest(url, options = {}) {
+      const response = await fetch(url, {
+        ...options,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          ...options.headers
+        }
+      });
+
+      if (response.status === 401) {
+        window.location.href = '/login';
+        return;
+      }
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.error || 'Request failed');
+      }
+
+      return response.json();
+    }
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', async () => {
+      await loadUserInfo();
+      await loadReservations();
+      setupEventListeners();
+    });
+
+    async function loadUserInfo() {
+      try {
+        const user = await apiRequest('/api/auth/me');
+        document.getElementById('userName').textContent = user.email.split('@')[0];
+        document.getElementById('userRole').textContent = user.role;
+        document.getElementById('userAvatar').textContent = user.email[0].toUpperCase();
+      } catch (error) {
+        console.error('Failed to load user info:', error);
+      }
+    }
+
+    async function loadReservations() {
+      try {
+        const data = await apiRequest('/api/appointments');
+        reservations = data.appointments || [];
+        renderReservations();
+      } catch (error) {
+        console.error('Failed to load reservations:', error);
+      }
+    }
+
+    function renderReservations() {
+      const tbody = document.getElementById('reservationsBody');
+      const emptyState = document.getElementById('emptyState');
+      const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+      const now = new Date();
+
+      let filtered = reservations.filter(r => {
+        // Filter by tab
+        if (currentFilter === 'upcoming') {
+          if (new Date(r.start_time) <= now) return false;
+        } else if (currentFilter === 'past') {
+          if (new Date(r.start_time) > now) return false;
+        }
+
+        // Filter by search
+        if (searchTerm) {
+          const searchFields = [
+            r.service_name,
+            r.client_first_name,
+            r.client_last_name,
+            r.staff_first_name,
+            r.staff_last_name
+          ].filter(Boolean).join(' ').toLowerCase();
+          if (!searchFields.includes(searchTerm)) return false;
+        }
+
+        return true;
+      });
+
+      // Sort by date (newest first for past, soonest first for upcoming)
+      filtered.sort((a, b) => {
+        const dateA = new Date(a.start_time);
+        const dateB = new Date(b.start_time);
+        return currentFilter === 'past' ? dateB - dateA : dateA - dateB;
+      });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = '';
+        emptyState.style.display = 'block';
+        return;
+      }
+
+      emptyState.style.display = 'none';
+
+      const colors = ['color-blue', 'color-green', 'color-orange', 'color-purple', 'color-teal', 'color-red'];
+
+      tbody.innerHTML = filtered.map((r, i) => {
+        const startDate = new Date(r.start_time);
+        const endDate = new Date(r.end_time);
+        const colorClass = colors[i % colors.length];
+        const isPaid = r.status === 'completed';
+        const paymentClass = isPaid ? 'payment-paid' : 'payment-not-paid';
+        const paymentText = isPaid ? 'Paid' : 'Not paid';
+
+        return `
+          <tr data-id="${r.id}">
+            <td class="expand-cell">
+              <button class="expand-btn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="9 18 15 12 9 6"/>
+                </svg>
+              </button>
+            </td>
+            <td>
+              <div class="appointment-name">
+                <div class="appointment-color ${colorClass}"></div>
+                <span>${r.service_name || 'Appointment'}</span>
+              </div>
+            </td>
+            <td class="time-cell">
+              <div class="time-start">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="9 18 15 12 9 6"/>
+                </svg>
+                ${formatDateTime(startDate)}
+              </div>
+              <div class="time-end">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="9 6 15 12 9 18"/>
+                </svg>
+                ${formatDateTime(endDate)}
+              </div>
+            </td>
+            <td>${r.board_name || 'Expand Health'}</td>
+            <td>${r.venue_name || r.location_type?.replace('_', ' ') || 'Event Space'}</td>
+            <td>${r.staff_first_name ? `${r.staff_first_name} ${r.staff_last_name}` : ''}</td>
+            <td class="price-cell">
+              ZAR ${formatPrice(r.price || 150)}<br>
+              <span class="payment-status ${paymentClass}">${paymentText}</span>
+            </td>
+            <td class="attendee-count">1</td>
+            <td class="actions-cell">
+              <button class="actions-btn" onclick="showActions(${r.id})">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="1"/>
+                  <circle cx="12" cy="5" r="1"/>
+                  <circle cx="12" cy="19" r="1"/>
+                </svg>
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function formatDateTime(date) {
+      return date.toLocaleDateString('en-ZA', {
+        month: '2-digit',
+        day: '2-digit',
+        year: 'numeric'
+      }) + ', ' + date.toLocaleTimeString('en-ZA', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+      });
+    }
+
+    function formatPrice(price) {
+      return parseFloat(price || 0).toLocaleString('en-ZA', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+    }
+
+    function setupEventListeners() {
+      // Tab clicks
+      document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          currentFilter = tab.dataset.filter;
+          renderReservations();
+        });
+      });
+
+      // Search input
+      document.getElementById('searchInput').addEventListener('input', () => {
+        renderReservations();
+      });
+
+      // Submenu toggle
+      document.querySelectorAll('.nav-item.has-submenu').forEach(item => {
+        item.addEventListener('click', (e) => {
+          e.preventDefault();
+          item.classList.toggle('expanded');
+          const submenu = item.nextElementSibling;
+          if (submenu && submenu.classList.contains('appointments-submenu')) {
+            submenu.classList.toggle('show');
+          }
+        });
+      });
+    }
+
+    function showActions(id) {
+      // TODO: Implement actions dropdown
+      console.log('Show actions for:', id);
+    }
+
+    function logout() {
+      localStorage.removeItem('auth_token');
+      window.location.href = '/login';
+    }
+  </script>
+</body>
+</html>
