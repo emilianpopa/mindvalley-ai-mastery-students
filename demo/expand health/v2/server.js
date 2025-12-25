@@ -291,6 +291,11 @@ app.get('/services', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'services.html'));
 });
 
+// Appointment types settings
+app.get('/appointment-types', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'appointment-types.html'));
+});
+
 // Public booking page (no auth required)
 app.get('/book/:tenantSlug', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'booking-public.html'));
