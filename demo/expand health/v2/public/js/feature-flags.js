@@ -65,8 +65,25 @@
       const navItems = document.querySelectorAll('.nav-item');
       navItems.forEach(item => {
         const text = item.querySelector('.nav-text');
-        if (text && text.textContent.trim() === 'Point of sale') {
-          item.style.display = 'none';
+        if (text) {
+          const textContent = text.textContent.trim();
+          // Hide Momence-specific nav items
+          if (textContent === 'Point of sale' ||
+              textContent === 'Marketing' ||
+              textContent === 'Analytics' ||
+              textContent === 'Financials' ||
+              textContent === 'Studio set-up') {
+            item.style.display = 'none';
+          }
+        }
+      });
+
+      // Hide BUSINESS section entirely (Momence feature)
+      const navSections = document.querySelectorAll('.nav-section');
+      navSections.forEach(section => {
+        const title = section.querySelector('.nav-section-title');
+        if (title && title.textContent.trim() === 'BUSINESS') {
+          section.style.display = 'none';
         }
       });
 
