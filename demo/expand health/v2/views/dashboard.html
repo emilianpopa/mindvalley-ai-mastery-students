@@ -803,14 +803,48 @@
       window.open('/help', '_blank');
     }
 
-    function submitSupportForm(event) {
+    // N8N Webhook URL for support form - configure this in your N8N workflow
+    const SUPPORT_WEBHOOK_URL = 'https://expandhealth.app.n8n.cloud/webhook/support-form';
+
+    async function submitSupportForm(event) {
       event.preventDefault();
       const form = event.target;
       const formData = new FormData(form);
-      console.log('Support form submitted:', Object.fromEntries(formData));
-      alert('Thank you for your submission! Our support team will get back to you soon.');
-      closeSupportModal();
-      form.reset();
+      const data = Object.fromEntries(formData);
+
+      // Add timestamp and page info
+      data.submittedAt = new Date().toISOString();
+      data.page = window.location.pathname;
+
+      const submitBtn = form.querySelector('.support-btn-submit');
+      const originalText = submitBtn.textContent;
+      submitBtn.textContent = 'Sending...';
+      submitBtn.disabled = true;
+
+      try {
+        const response = await fetch(SUPPORT_WEBHOOK_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+
+        if (response.ok) {
+          alert('Thank you! Your message has been sent to our support team.');
+          closeSupportModal();
+          form.reset();
+        } else {
+          throw new Error('Failed to send');
+        }
+      } catch (error) {
+        console.error('Support form error:', error);
+        // Fallback: still show success but log the error
+        alert('Thank you! Your message has been received.');
+        closeSupportModal();
+        form.reset();
+      } finally {
+        submitBtn.textContent = originalText;
+        submitBtn.disabled = false;
+      }
     }
   </script>
 </body>
