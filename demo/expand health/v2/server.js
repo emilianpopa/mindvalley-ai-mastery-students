@@ -305,6 +305,96 @@ app.get('/appointment-types', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'appointment-types.html'));
 });
 
+// Marketing routes (placeholder pages - these will be implemented later)
+app.get('/marketing/leads', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'marketing-leads.html'));
+});
+
+app.get('/marketing/webchat', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'marketing-webchat.html'));
+});
+
+app.get('/marketing/ads', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'marketing-ads.html'));
+});
+
+app.get('/marketing/sequences', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'marketing-sequences.html'));
+});
+
+app.get('/marketing/messages', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'marketing-messages.html'));
+});
+
+app.get('/marketing/templates', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'marketing-templates.html'));
+});
+
+app.get('/marketing/referrals', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'marketing-referrals.html'));
+});
+
+app.get('/marketing/reviews', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'marketing-reviews.html'));
+});
+
+app.get('/marketing/spotfiller', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'marketing-spotfiller.html'));
+});
+
+// Studio set-up routes (placeholder pages)
+app.get('/studio/practitioners', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'studio-practitioners.html'));
+});
+
+app.get('/studio/pay-rates', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'studio-pay-rates.html'));
+});
+
+app.get('/studio/staff-tasks', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'studio-staff-tasks.html'));
+});
+
+app.get('/studio/retail-products', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'studio-retail-products.html'));
+});
+
+app.get('/studio/discount-codes', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'studio-discount-codes.html'));
+});
+
+app.get('/studio/gift-cards', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'studio-gift-cards.html'));
+});
+
+app.get('/studio/phone-number', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'studio-phone-number.html'));
+});
+
+app.get('/studio/transactional-templates', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'studio-transactional-templates.html'));
+});
+
+app.get('/studio/plugins', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'studio-plugins.html'));
+});
+
+app.get('/studio/locations', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'studio-locations.html'));
+});
+
+app.get('/studio/franchise', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'studio-franchise.html'));
+});
+
+app.get('/studio/spot-scheduling', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'studio-spot-scheduling.html'));
+});
+
+app.get('/studio/tax-settings', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'studio-tax-settings.html'));
+});
+
 // Public booking page (no auth required)
 app.get('/book/:tenantSlug', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'booking-public.html'));
