@@ -160,6 +160,86 @@ body {
   transition: transform 0.2s;
 }
 
+/* Marketing and Studio submenus */
+.marketing-submenu,
+.studio-submenu {
+  display: none;
+  flex-direction: column;
+  padding-left: 20px;
+  margin-top: 4px;
+}
+
+.marketing-submenu.show,
+.studio-submenu.show {
+  display: flex;
+}
+
+.nav-item.has-submenu {
+  cursor: pointer;
+}
+
+.nav-item.has-submenu .nav-text {
+  flex: 1;
+}
+
+.submenu-arrow {
+  width: 16px;
+  height: 16px;
+  transition: transform 0.2s;
+}
+
+.nav-item.has-submenu.expanded .submenu-arrow {
+  transform: rotate(180deg);
+}
+
+.submenu-section-title {
+  font-size: 0.625rem;
+  font-weight: 600;
+  color: #9CA3AF;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 12px 12px 6px 12px;
+  margin-top: 4px;
+}
+
+.submenu-section-title:first-child {
+  margin-top: 0;
+  padding-top: 8px;
+}
+
+.submenu-item {
+  padding: 8px 12px;
+  font-size: 0.8125rem;
+  color: #4B5563;
+  text-decoration: none;
+  border-radius: 6px;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.submenu-item:hover {
+  background: #F3F4F6;
+  color: #1F2937;
+}
+
+.submenu-item.active {
+  background: #F0FDFA;
+  color: #0F766E;
+}
+
+.submenu-item .badge-new {
+  font-size: 0.625rem;
+  font-weight: 600;
+  padding: 2px 6px;
+  background: #F5F3FF;
+  color: #7C3AED;
+  border-radius: 4px;
+  text-transform: uppercase;
+  margin-left: 8px;
+}
+
 .sidebar-footer {
   padding: 20px;
   border-top: 1px solid #F3F4F6;
