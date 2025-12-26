@@ -1160,15 +1160,36 @@
     // N8N Webhook URL for support form
     const SUPPORT_WEBHOOK_URL = 'https://expandhealth.app.n8n.cloud/webhook/support-form';
 
+    // Helper function to convert file to base64
+    function fileToBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const base64 = reader.result.split(',')[1];
+          resolve({
+            filename: file.name,
+            mimetype: file.type || 'application/octet-stream',
+            data: base64
+          });
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
     async function submitSupportForm(event) {
       event.preventDefault();
       const form = event.target;
       const formData = new FormData(form);
-      const data = Object.fromEntries(formData);
 
-      // Add timestamp and page info
-      data.submittedAt = new Date().toISOString();
-      data.page = window.location.pathname;
+      const data = {
+        facilityName: formData.get('facilityName'),
+        email: formData.get('email'),
+        messageType: formData.get('messageType'),
+        message: formData.get('message'),
+        submittedAt: new Date().toISOString(),
+        page: window.location.pathname
+      };
 
       const submitBtn = form.querySelector('.support-btn-submit');
       const originalText = submitBtn.textContent;
@@ -1176,6 +1197,11 @@
       submitBtn.disabled = true;
 
       try {
+        const fileInput = form.querySelector('input[name="attachment"]');
+        if (fileInput && fileInput.files && fileInput.files[0]) {
+          data.attachment = await fileToBase64(fileInput.files[0]);
+        }
+
         const response = await fetch(SUPPORT_WEBHOOK_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
