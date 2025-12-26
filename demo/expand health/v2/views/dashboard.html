@@ -552,40 +552,42 @@
   <div class="support-modal-overlay" id="supportModal">
     <div class="support-modal">
       <div class="support-modal-header">
-        <h2>Contact Support</h2>
+        <h2 class="support-modal-title">ExpandHealth Support</h2>
         <button class="support-modal-close" onclick="closeSupportModal()">&times;</button>
       </div>
-      <form class="support-form" onsubmit="submitSupportForm(event)">
-        <div class="support-form-group">
-          <label for="facilityName">Facility Name</label>
-          <input type="text" id="facilityName" name="facilityName" placeholder="Enter your facility name">
-        </div>
-        <div class="support-form-group">
-          <label for="supportEmail">Email</label>
-          <input type="email" id="supportEmail" name="email" placeholder="Enter your email" required>
-        </div>
-        <div class="support-form-group">
-          <label for="messageType">Message Type</label>
-          <select id="messageType" name="messageType" required>
-            <option value="">Select a type</option>
-            <option value="bug">Bug report</option>
-            <option value="feedback">Feedback</option>
-            <option value="support">Support request</option>
-          </select>
-        </div>
-        <div class="support-form-group">
-          <label for="supportMessage">Message</label>
-          <textarea id="supportMessage" name="message" rows="4" placeholder="Describe your issue or feedback..." required></textarea>
-        </div>
-        <div class="support-form-group">
-          <label for="supportFile">Attachment (optional)</label>
-          <input type="file" id="supportFile" name="file">
-        </div>
-        <div class="support-form-actions">
-          <button type="button" class="btn btn-secondary" onclick="closeSupportModal()">Cancel</button>
-          <button type="submit" class="btn btn-primary">Submit</button>
-        </div>
-      </form>
+      <div class="support-modal-body">
+        <form onsubmit="submitSupportForm(event)">
+          <div class="support-form-group">
+            <label class="support-form-label">Facility Name <span class="required">*</span></label>
+            <input type="text" class="support-form-input" name="facilityName" value="ExpandHealth" required>
+          </div>
+          <div class="support-form-group">
+            <label class="support-form-label">Email <span class="required">*</span></label>
+            <input type="email" class="support-form-input" name="email" placeholder="Enter your email" required>
+          </div>
+          <div class="support-form-group">
+            <label class="support-form-label">What message would you like to send? <span class="required">*</span></label>
+            <select class="support-form-select" name="messageType" required>
+              <option value="">Please Select</option>
+              <option value="bug">Bug report</option>
+              <option value="feedback">Feedback</option>
+              <option value="support">Support request</option>
+            </select>
+          </div>
+          <div class="support-form-group">
+            <label class="support-form-label">Message <span class="required">*</span></label>
+            <textarea class="support-form-textarea" name="message" placeholder="Describe your issue or feedback..." required></textarea>
+          </div>
+          <div class="support-form-group">
+            <label class="support-form-label">Upload any screenshot or media (optional)</label>
+            <input type="file" class="support-form-file" name="attachment" accept="image/*,.pdf">
+          </div>
+          <div class="support-form-actions">
+            <button type="button" class="support-btn-cancel" onclick="closeSupportModal()">Cancel</button>
+            <button type="submit" class="support-btn-submit">Submit</button>
+          </div>
+        </form>
+      </div>
     </div>
   </div>
 
