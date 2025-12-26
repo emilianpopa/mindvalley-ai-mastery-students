@@ -1,0 +1,84 @@
+{
+  "name": "Support Form Handler",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "support-form",
+        "responseMode": "onReceived",
+        "responseData": "allEntries",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Support Form Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "channel": "#support-requests",
+        "text": "=:sos: *New Support Request*\n\n*From:* {{ $json.email }}\n*Facility:* {{ $json.facilityName }}\n*Type:* {{ $json.messageType }}\n*Page:* {{ $json.page }}\n*Time:* {{ $json.submittedAt }}\n\n*Message:*\n{{ $json.message }}",
+        "otherOptions": {}
+      },
+      "id": "slack-notification",
+      "name": "Send to Slack",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2,
+      "position": [500, 200],
+      "credentials": {
+        "slackApi": {
+          "id": "YOUR_SLACK_CREDENTIAL_ID",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fromEmail": "support@expandhealth.io",
+        "toEmail": "your-email@example.com",
+        "subject": "=New Support Request from {{ $json.facilityName }} - {{ $json.messageType }}",
+        "emailType": "html",
+        "html": "=<h2>New Support Request</h2>\n<table style=\"border-collapse: collapse; width: 100%;\">\n<tr><td style=\"padding: 8px; border: 1px solid #ddd;\"><strong>From:</strong></td><td style=\"padding: 8px; border: 1px solid #ddd;\">{{ $json.email }}</td></tr>\n<tr><td style=\"padding: 8px; border: 1px solid #ddd;\"><strong>Facility:</strong></td><td style=\"padding: 8px; border: 1px solid #ddd;\">{{ $json.facilityName }}</td></tr>\n<tr><td style=\"padding: 8px; border: 1px solid #ddd;\"><strong>Type:</strong></td><td style=\"padding: 8px; border: 1px solid #ddd;\">{{ $json.messageType }}</td></tr>\n<tr><td style=\"padding: 8px; border: 1px solid #ddd;\"><strong>Page:</strong></td><td style=\"padding: 8px; border: 1px solid #ddd;\">{{ $json.page }}</td></tr>\n<tr><td style=\"padding: 8px; border: 1px solid #ddd;\"><strong>Time:</strong></td><td style=\"padding: 8px; border: 1px solid #ddd;\">{{ $json.submittedAt }}</td></tr>\n</table>\n<h3>Message:</h3>\n<p style=\"background: #f5f5f5; padding: 16px; border-radius: 8px;\">{{ $json.message }}</p>",
+        "options": {}
+      },
+      "id": "email-notification",
+      "name": "Send Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [500, 400],
+      "credentials": {
+        "smtp": {
+          "id": "YOUR_SMTP_CREDENTIAL_ID",
+          "name": "SMTP account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Support Form Webhook": {
+      "main": [
+        [
+          {
+            "node": "Send to Slack",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2024-12-26T00:00:00.000Z",
+  "versionId": "1"
+}

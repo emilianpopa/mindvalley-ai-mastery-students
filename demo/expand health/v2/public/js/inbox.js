@@ -20,8 +20,8 @@
   const detailPanel = document.getElementById('detailPanel');
   const sendMessageBtn = document.getElementById('sendMessageBtn');
 
-  // Avatar colors
-  const avatarColors = ['purple', 'blue', 'green', 'orange', 'pink', 'teal', 'indigo', 'red'];
+  // Avatar colors (expanded for more variety like Momence)
+  const avatarColors = ['purple', 'blue', 'green', 'orange', 'pink', 'teal', 'indigo', 'red', 'cyan', 'amber', 'lime', 'rose'];
 
   // Initialize
   document.addEventListener('DOMContentLoaded', init);
@@ -133,9 +133,8 @@
             <span class="contact-name">${contact.first_name} ${contact.last_name}</span>
             <span class="contact-time">${contact.lastMessageTime}</span>
           </div>
-          <div class="contact-preview">${contact.lastMessage}</div>
+          <div class="contact-preview">${escapeHtml(contact.lastMessage || '')}</div>
         </div>
-        ${contact.unread ? '<div class="contact-unread-dot"></div>' : ''}
       </div>
     `).join('');
 
@@ -163,9 +162,8 @@
             <span class="contact-name">${contact.first_name} ${contact.last_name}</span>
             <span class="contact-time">${contact.lastMessageTime}</span>
           </div>
-          <div class="contact-preview">${contact.lastMessage}</div>
+          <div class="contact-preview">${escapeHtml(contact.lastMessage || '')}</div>
         </div>
-        ${contact.unread ? '<div class="contact-unread-dot"></div>' : ''}
       </div>
     `).join('');
 
@@ -440,6 +438,12 @@
   // Helper functions
   function getInitials(firstName, lastName) {
     return `${(firstName || '')[0] || ''}${(lastName || '')[0] || ''}`.toUpperCase();
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
   }
 
   function getRandomLastMessage() {
