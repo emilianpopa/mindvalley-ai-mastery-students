@@ -508,6 +508,99 @@ async function initLocations() {
 }
 
 /**
+ * Seed default staff members for ExpandHealth
+ */
+async function seedDefaultStaff() {
+  // Check if staff already exists
+  const existingStaff = await db.query('SELECT COUNT(*) FROM staff');
+  if (parseInt(existingStaff.rows[0].count) > 0) {
+    console.log('✅ Staff already seeded, skipping...');
+    return true;
+  }
+
+  // Get the default tenant
+  const tenantResult = await db.query('SELECT id FROM tenants LIMIT 1');
+  if (tenantResult.rows.length === 0) {
+    console.log('⚠️ No tenant found, skipping staff seed');
+    return true;
+  }
+  const tenantId = tenantResult.rows[0].id;
+
+  const staffMembers = [
+    {
+      first_name: 'Emilian',
+      last_name: 'Popa',
+      email: 'emilian@expandhealth.co.za',
+      title: 'Founder & Health Practitioner',
+      color: '#10B981'
+    },
+    {
+      first_name: 'Alexandra',
+      last_name: 'Albu',
+      email: 'albualexandra.212@gmail.com',
+      title: 'Health Coach',
+      color: '#3B82F6'
+    },
+    {
+      first_name: 'Anesu',
+      last_name: 'Mbizvo',
+      email: 'dranesu.mbizvo@expandhealth.co.za',
+      title: 'Doctor',
+      color: '#8B5CF6'
+    },
+    {
+      first_name: 'Avela',
+      last_name: 'Jafta',
+      email: 'avela.jafta@expandhealth.co.za',
+      title: 'Wellness Coordinator',
+      color: '#F59E0B'
+    },
+    {
+      first_name: 'Carmen',
+      last_name: 'Heunis',
+      email: 'carmen.heunis@expandhealth.co.za',
+      title: 'Nutritionist',
+      color: '#EF4444'
+    },
+    {
+      first_name: 'Chantel',
+      last_name: 'Newmark',
+      email: 'chantel.newmark@expand.health',
+      title: 'Therapist',
+      color: '#EC4899'
+    },
+    {
+      first_name: 'Dr Fred',
+      last_name: 'van der Riet',
+      email: 'fredvanderriet0@gmail.com',
+      title: 'Medical Director',
+      color: '#14B8A6'
+    },
+    {
+      first_name: 'Dr Melody',
+      last_name: 'Fourie',
+      email: 'melody@nourishedwellbeing.co.za',
+      title: 'Wellness Doctor',
+      color: '#6366F1'
+    }
+  ];
+
+  try {
+    for (const staff of staffMembers) {
+      await db.query(`
+        INSERT INTO staff (tenant_id, first_name, last_name, email, title, color, is_active, accepts_bookings)
+        VALUES ($1, $2, $3, $4, $5, $6, true, true)
+      `, [tenantId, staff.first_name, staff.last_name, staff.email, staff.title, staff.color]);
+    }
+    console.log(`✅ Seeded ${staffMembers.length} staff members`);
+    return true;
+  } catch (error) {
+    console.error('❌ Failed to seed staff:', error.message);
+    return false;
+  }
+}
+
+/**
  * Run all booking database initializations
  */
 async function initBookingDatabase() {
@@ -525,6 +618,9 @@ async function initBookingDatabase() {
     await initRecurringAppointments();
     await initBookingSettings();
     await initAppointmentReminders();
+
+    // Seed default staff members
+    await seedDefaultStaff();
 
     console.log('✅ Booking system initialization complete\n');
     return true;
@@ -545,5 +641,6 @@ module.exports = {
   initAppointments,
   initRecurringAppointments,
   initBookingSettings,
-  initAppointmentReminders
+  initAppointmentReminders,
+  seedDefaultStaff
 };
