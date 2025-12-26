@@ -528,25 +528,11 @@ async function seedDefaultStaff() {
 
   const staffMembers = [
     {
-      first_name: 'Emilian',
-      last_name: 'Popa',
-      email: 'emilian@expandhealth.co.za',
-      title: 'Founder & Health Practitioner',
+      first_name: 'Jack',
+      last_name: 'Memory Hardland',
+      email: 'jack@expandhealth.co.za',
+      title: 'Founder & CEO',
       color: '#10B981'
-    },
-    {
-      first_name: 'Alexandra',
-      last_name: 'Albu',
-      email: 'albualexandra.212@gmail.com',
-      title: 'Health Coach',
-      color: '#3B82F6'
-    },
-    {
-      first_name: 'Anesu',
-      last_name: 'Mbizvo',
-      email: 'dranesu.mbizvo@expandhealth.co.za',
-      title: 'Doctor',
-      color: '#8B5CF6'
     },
     {
       first_name: 'Avela',
@@ -556,23 +542,16 @@ async function seedDefaultStaff() {
       color: '#F59E0B'
     },
     {
-      first_name: 'Carmen',
-      last_name: 'Heunis',
-      email: 'carmen.heunis@expandhealth.co.za',
+      first_name: 'Maryke',
+      last_name: 'Gallagher',
+      email: 'maryke.gallagher@expandhealth.co.za',
       title: 'Nutritionist',
       color: '#EF4444'
     },
     {
-      first_name: 'Chantel',
-      last_name: 'Newmark',
-      email: 'chantel.newmark@expand.health',
-      title: 'Therapist',
-      color: '#EC4899'
-    },
-    {
-      first_name: 'Dr Fred',
-      last_name: 'van der Riet',
-      email: 'fredvanderriet0@gmail.com',
+      first_name: 'Dr Daniel',
+      last_name: 'Blanckenberg',
+      email: 'daniel.blanckenberg@expandhealth.co.za',
       title: 'Medical Director',
       color: '#14B8A6'
     },
@@ -582,6 +561,20 @@ async function seedDefaultStaff() {
       email: 'melody@nourishedwellbeing.co.za',
       title: 'Wellness Doctor',
       color: '#6366F1'
+    },
+    {
+      first_name: 'Maryke',
+      last_name: 'Korsten',
+      email: 'maryke.korsten@expandhealth.co.za',
+      title: 'Marketing & Sales',
+      color: '#EC4899'
+    },
+    {
+      first_name: 'Sheeham',
+      last_name: 'Jacobs',
+      email: 'sheeham.jacobs@expandhealth.co.za',
+      title: 'Operations',
+      color: '#8B5CF6'
     }
   ];
 
