@@ -1,0 +1,200 @@
+[Notes API] GET /client/:clientId called
+    "       WHERE p.client_id = $1 AND p.status != 'archived'\n" +
+    '          u.tenant_id, u.is_platform_admin,\n' +
+    '        SELECT\n' +
+[Notes API] Fetching notes for client: 1
+    '       ORDER BY p.created_at DESC',
+    '          t.name as tenant_name, t.slug as tenant_slug\n' +
+    '          u.id, u.email, u.first_name, u.last_name, u.status,\n' +
+[Notes API] Executing query with params: [ '1', '20', 0 ]
+    '          u.tenant_id, u.is_platform_admin,\n' +
+[Notes API] Query result rows: 1
+    '        FROM users u\n' +
+  duration: 59,
+Executed query {
+  rows: 2
+  text: '\n' +
+}
+    '        SELECT\n' +
+    '          u.id, u.email, u.first_name, u.last_name, u.status,\n' +
+Executed query {
+    '          u.tenant_id, u.is_platform_admin,\n' +
+  text: '\n' +
+    '          t.name as tenant_name, t.slug as tenant_slug\n' +
+    '        SELECT\n' +
+    '          u.id, u.email, u.first_name, u.last_name, u.status,\n' +
+    '          u.tenant_id, u.is_platform_admin,\n' +
+}
+Executed query {
+  text: '\n' +
+    '        SELECT\n' +
+    '          u.id, u.email, u.first_name, u.last_name, u.status,\n' +
+    '          u.tenant_id, u.is_platform_admin,\n' +
+    '          t.name as tenant_name, t.slug as tenant_slug\n' +
+    '        FROM users u\n' +
+    '        LEFT JOIN tenants t ON u.tenant_id = t.id\n' +
+    '        WHERE u.id = $1\n' +
+    '      ',
+  duration: 20,
+  rows: 1
+}
+Executed query {
+  text: '\n' +
+    '        SELECT\n' +
+    '          u.id, u.email, u.first_name, u.last_name, u.status,\n' +
+    '          u.tenant_id, u.is_platform_admin,\n' +
+    '          t.name as tenant_name, t.slug as tenant_slug\n' +
+    '        FROM users u\n' +
+    '        LEFT JOIN tenants t ON u.tenant_id = t.id\n' +
+    '        WHERE u.id = $1\n' +
+    '      ',
+  duration: 20,
+  rows: 1
+}
+✅ Connected to PostgreSQL database
+✅ Connected to PostgreSQL database
+Executed query {
+  text: '\n' +
+    '        SELECT\n' +
+    '          u.id, u.email, u.first_name, u.last_name, u.status,\n' +
+    '          u.tenant_id, u.is_platform_admin,\n' +
+    '          t.name as tenant_name, t.slug as tenant_slug\n' +
+    '        FROM users u\n' +
+    '        LEFT JOIN tenants t ON u.tenant_id = t.id\n' +
+    '        WHERE u.id = $1\n' +
+    '      ',
+  duration: 168,
+  rows: 1
+}
+Executed query {
+  text: '\n' +
+    '        SELECT\n' +
+    '          u.id, u.email, u.first_name, u.last_name, u.status,\n' +
+    '          u.tenant_id, u.is_platform_admin,\n' +
+    '          t.name as tenant_name, t.slug as tenant_slug\n' +
+    '        FROM users u\n' +
+    '        LEFT JOIN tenants t ON u.tenant_id = t.id\n' +
+    '        WHERE u.id = $1\n' +
+    '      ',
+  duration: 165,
+  rows: 1
+    '        WHERE u.id = $1\n' +
+  text: '\n' +
+    '      ',
+  duration: 21,
+Executed query {
+    '        SELECT\n' +
+  rows: 1
+}
+    '          u.id, u.email, u.first_name, u.last_name, u.status,\n' +
+  text: '\n' +
+Executed query {
+  text: '\n' +
+    '        SELECT\n' +
+    '          u.tenant_id, u.is_platform_admin,\n' +
+    '        SELECT\n' +
+    '          u.id, u.email, u.first_name, u.last_name, u.status,\n' +
+    '          u.id, u.email, u.first_name, u.last_name, u.status,\n' +
+    '          t.name as tenant_name, t.slug as tenant_slug\n' +
+    '          u.tenant_id, u.is_platform_admin,\n' +
+    '          u.tenant_id, u.is_platform_admin,\n' +
+    '          t.name as tenant_name, t.slug as tenant_slug\n' +
+    '          t.name as tenant_name, t.slug as tenant_slug\n' +
+    '        FROM users u\n' +
+    '        FROM users u\n' +
+    '        FROM users u\n' +
+    '        LEFT JOIN tenants t ON u.tenant_id = t.id\n' +
+    '        LEFT JOIN tenants t ON u.tenant_id = t.id\n' +
+    '        LEFT JOIN tenants t ON u.tenant_id = t.id\n' +
+    '        WHERE u.id = $1\n' +
+    '        WHERE u.id = $1\n' +
+    '      ',
+    '      ',
+  duration: 20,
+  rows: 1
+  duration: 20,
+}
+  rows: 1
+Executed query {
+}
+✅ Connected to PostgreSQL database
+✅ Connected to PostgreSQL database
+Executed query {
+  text: '\n' +
+    '        SELECT\n' +
+    '          u.id, u.email, u.first_name, u.last_name, u.status,\n' +
+    '          u.tenant_id, u.is_platform_admin,\n' +
+    '          t.name as tenant_name, t.slug as tenant_slug\n' +
+    '        FROM users u\n' +
+    '        LEFT JOIN tenants t ON u.tenant_id = t.id\n' +
+    '        WHERE u.id = $1\n' +
+    '      ',
+  duration: 166,
+  rows: 1
+}
+✅ Connected to PostgreSQL database
+Executed query {
+  text: '\n' +
+    '        SELECT\n' +
+    '          u.id, u.email, u.first_name, u.last_name, u.status,\n' +
+    '          u.tenant_id, u.is_platform_admin,\n' +
+    '          t.name as tenant_name, t.slug as tenant_slug\n' +
+    '        FROM users u\n' +
+    '        LEFT JOIN tenants t ON u.tenant_id = t.id\n' +
+    '        WHERE u.id = $1\n' +
+    '      ',
+  duration: 19,
+  rows: 1
+}
+Executed query {
+  text: '\n' +
+    '        SELECT\n' +
+    '          u.id, u.email, u.first_name, u.last_name, u.status,\n' +
+    '          u.tenant_id, u.is_platform_admin,\n' +
+    '          t.name as tenant_name, t.slug as tenant_slug\n' +
+    '        FROM users u\n' +
+    '        LEFT JOIN tenants t ON u.tenant_id = t.id\n' +
+    '        WHERE u.id = $1\n' +
+    '      ',
+  duration: 19,
+  rows: 1
+}
+[Notes API] GET /client/:clientId called
+[Notes API] Fetching notes for client: 1
+[Notes API] Executing query with params: [ '1', '20', 0 ]
+[Notes API] Query result rows: 1
+Executed query {
+  text: '\n' +
+    '        SELECT\n' +
+    '          u.id, u.email, u.first_name, u.last_name, u.status,\n' +
+    '          u.tenant_id, u.is_platform_admin,\n' +
+    '          t.name as tenant_name, t.slug as tenant_slug\n' +
+    '        FROM users u\n' +
+    '        LEFT JOIN tenants t ON u.tenant_id = t.id\n' +
+    '        WHERE u.id = $1\n' +
+    '      ',
+  duration: 21,
+  rows: 1
+}
+Executed query {
+  text: 'SELECT p.*, pt.name as template_name, pt.category as template_category\n' +
+    '       FROM protocols p\n' +
+    '       LEFT JOIN protocol_templates pt ON p.template_id = pt.id\n' +
+    "       WHERE p.client_id = $1 AND p.status != 'archived'\n" +
+    '       ORDER BY p.created_at DESC',
+  duration: 62,
+  rows: 2
+}
+Executed query {
+  text: '\n' +
+    '        SELECT\n' +
+    '          u.id, u.email, u.first_name, u.last_name, u.status,\n' +
+    '          u.tenant_id, u.is_platform_admin,\n' +
+    '          t.name as tenant_name, t.slug as tenant_slug\n' +
+    '        FROM users u\n' +
+    '        LEFT JOIN tenants t ON u.tenant_id = t.id\n' +
+    '        WHERE u.id = $1\n' +
+    '      ',
+  duration: 20,
+  rows: 1
+}
