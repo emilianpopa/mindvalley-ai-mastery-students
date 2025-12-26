@@ -2011,8 +2011,13 @@
 
     async function loadCustomer() {
       try {
-        // Use existing clients API
-        customer = await apiRequest(`/api/clients/${customerId}`);
+        // Use existing clients API - returns { client: {...} }
+        const data = await apiRequest(`/api/clients/${customerId}`);
+        const c = data.client || data;
+        customer = {
+          ...c,
+          name: `${c.first_name || ''} ${c.last_name || ''}`.trim() || c.email || 'Unnamed'
+        };
         renderCustomer();
       } catch (error) {
         console.error('Failed to load customer:', error);

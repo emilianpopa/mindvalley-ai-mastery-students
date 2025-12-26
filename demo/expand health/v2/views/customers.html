@@ -945,9 +945,13 @@
 
     async function loadCustomers() {
       try {
-        // Use the existing clients API
-        customers = await apiRequest('/api/clients');
-        document.getElementById('totalCustomers').textContent = `${customers.length} customers`;
+        // Use the existing clients API - returns { clients: [], total: number, pagination: {} }
+        const data = await apiRequest('/api/clients');
+        customers = (data.clients || []).map(c => ({
+          ...c,
+          name: `${c.first_name || ''} ${c.last_name || ''}`.trim() || c.email || 'Unnamed'
+        }));
+        document.getElementById('totalCustomers').textContent = `${data.total || customers.length} customers`;
         renderCustomers();
       } catch (error) {
         console.error('Failed to load customers:', error);
