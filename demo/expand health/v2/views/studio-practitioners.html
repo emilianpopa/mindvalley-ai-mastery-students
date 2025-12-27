@@ -772,6 +772,330 @@
     .position-relative {
       position: relative;
     }
+
+    /* Contact Modal */
+    .contact-modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 2000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .contact-modal-overlay.active {
+      display: flex;
+    }
+
+    .contact-modal {
+      background: white;
+      border-radius: 12px;
+      width: 100%;
+      max-width: 560px;
+      max-height: 90vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+    }
+
+    .contact-modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .contact-modal-title {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+
+    .contact-modal-close {
+      background: none;
+      border: none;
+      padding: 8px;
+      cursor: pointer;
+      color: var(--gray-500);
+      border-radius: 6px;
+    }
+
+    .contact-modal-close:hover {
+      background: var(--gray-100);
+    }
+
+    .contact-modal-body {
+      padding: 24px;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    .send-all-checkbox {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .send-all-checkbox input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: #6366F1;
+    }
+
+    .send-all-checkbox label {
+      font-size: 0.875rem;
+      color: var(--gray-700);
+    }
+
+    .channel-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .channel-label {
+      font-size: 0.875rem;
+      color: var(--gray-600);
+      min-width: 60px;
+    }
+
+    .channel-tabs {
+      display: flex;
+      gap: 0;
+    }
+
+    .channel-tab {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border: 1px solid var(--gray-300);
+      background: white;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--gray-600);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .channel-tab:first-child {
+      border-radius: 6px 0 0 6px;
+    }
+
+    .channel-tab:last-child {
+      border-radius: 0 6px 6px 0;
+      border-left: none;
+    }
+
+    .channel-tab.active {
+      background: #6366F1;
+      border-color: #6366F1;
+      color: white;
+    }
+
+    .channel-tab svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    .form-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .form-row-label {
+      font-size: 0.875rem;
+      color: var(--gray-600);
+      min-width: 60px;
+    }
+
+    .form-row-input {
+      flex: 1;
+    }
+
+    .form-row-input input,
+    .form-row-input select {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid var(--gray-300);
+      border-radius: 8px;
+      font-size: 0.875rem;
+    }
+
+    .editor-tabs {
+      display: flex;
+      gap: 0;
+      margin-bottom: 0;
+    }
+
+    .editor-tab {
+      padding: 10px 16px;
+      border: none;
+      background: var(--gray-100);
+      font-size: 0.875rem;
+      color: var(--gray-600);
+      cursor: pointer;
+      border-radius: 8px 8px 0 0;
+    }
+
+    .editor-tab.active {
+      background: #6366F1;
+      color: white;
+    }
+
+    .rich-text-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 8px 12px;
+      border: 1px solid var(--gray-300);
+      border-bottom: none;
+      border-radius: 0;
+      background: var(--gray-50);
+    }
+
+    .toolbar-btn {
+      background: none;
+      border: none;
+      padding: 6px 8px;
+      cursor: pointer;
+      color: var(--gray-600);
+      border-radius: 4px;
+    }
+
+    .toolbar-btn:hover {
+      background: var(--gray-200);
+    }
+
+    .toolbar-select {
+      padding: 4px 8px;
+      border: 1px solid var(--gray-300);
+      border-radius: 4px;
+      font-size: 0.813rem;
+      background: white;
+    }
+
+    .message-textarea {
+      width: 100%;
+      min-height: 180px;
+      padding: 16px;
+      border: 1px solid var(--gray-300);
+      border-radius: 0 0 8px 8px;
+      font-size: 0.875rem;
+      resize: vertical;
+      font-family: inherit;
+    }
+
+    .message-textarea:focus {
+      outline: none;
+      border-color: #6366F1;
+    }
+
+    .sms-textarea {
+      width: 100%;
+      min-height: 100px;
+      padding: 16px;
+      border: 1px solid var(--gray-300);
+      border-radius: 8px;
+      font-size: 0.875rem;
+      resize: vertical;
+      font-family: inherit;
+    }
+
+    .sms-textarea:focus {
+      outline: none;
+      border-color: #6366F1;
+    }
+
+    .sms-counter {
+      text-align: right;
+      font-size: 0.75rem;
+      color: var(--gray-500);
+      margin-top: 4px;
+    }
+
+    .template-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 12px;
+      border: 1px solid var(--gray-300);
+      border-radius: 8px;
+      background: white;
+      font-size: 0.875rem;
+      color: var(--gray-700);
+      cursor: pointer;
+      margin-top: 12px;
+    }
+
+    .template-btn:hover {
+      background: var(--gray-50);
+    }
+
+    .sms-notice {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      background: var(--gray-50);
+      border-radius: 8px;
+      margin-top: 16px;
+    }
+
+    .sms-notice-icon {
+      width: 32px;
+      height: 32px;
+      background: var(--gray-200);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .sms-notice-text {
+      font-size: 0.813rem;
+      color: var(--gray-600);
+      flex: 1;
+    }
+
+    .send-btn {
+      width: 40px;
+      height: 40px;
+      background: #6366F1;
+      border: none;
+      border-radius: 50%;
+      color: white;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .send-btn:hover {
+      background: #4F46E5;
+    }
+
+    .email-content, .sms-content {
+      display: none;
+    }
+
+    .email-content.active, .sms-content.active {
+      display: block;
+    }
   </style>
 </head>
 <body>
@@ -971,7 +1295,7 @@
               <span id="practitionerCount">0 practitioners</span>
             </div>
             <div class="header-controls">
-              <button class="btn-contact">
+              <button class="btn-contact" onclick="openContactModal()">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
                   <polyline points="22,6 12,13 2,6"></polyline>
@@ -1205,6 +1529,147 @@
         <button type="submit" class="btn-add-submit" id="saveBtn">Add</button>
       </div>
     </form>
+  </div>
+
+  <!-- Contact Practitioners Modal -->
+  <div class="contact-modal-overlay" id="contactModalOverlay" onclick="closeContactModal(event)">
+    <div class="contact-modal" onclick="event.stopPropagation()">
+      <div class="contact-modal-header">
+        <h2 class="contact-modal-title">Send message to practitioners</h2>
+        <button class="contact-modal-close" onclick="closeContactModal()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="contact-modal-body">
+        <div class="send-all-checkbox">
+          <input type="checkbox" id="sendToAll" checked>
+          <label for="sendToAll">Send to all your practitioners</label>
+        </div>
+
+        <div class="channel-row">
+          <span class="channel-label">Channel</span>
+          <div class="channel-tabs">
+            <button type="button" class="channel-tab active" onclick="switchChannel('email')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                <polyline points="22,6 12,13 2,6"></polyline>
+              </svg>
+              E-mail
+            </button>
+            <button type="button" class="channel-tab" onclick="switchChannel('sms')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+              </svg>
+              SMS
+            </button>
+          </div>
+        </div>
+
+        <!-- Email Content -->
+        <div class="email-content active" id="emailContent">
+          <div class="form-row">
+            <span class="form-row-label">From</span>
+            <div class="form-row-input">
+              <select id="emailFrom">
+                <option value="contact@expand.health">contact@expand.health</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <span class="form-row-label">Reply to</span>
+            <div class="form-row-input">
+              <input type="text" id="emailReplyTo" value="contact@expand.health">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <span class="form-row-label">Subject</span>
+            <div class="form-row-input">
+              <input type="text" id="emailSubject" placeholder="Enter email subject...">
+            </div>
+          </div>
+
+          <div class="editor-tabs">
+            <button type="button" class="editor-tab">Drag & Drop</button>
+            <button type="button" class="editor-tab active">Rich text</button>
+          </div>
+
+          <div class="rich-text-toolbar">
+            <select class="toolbar-select">
+              <option>Normal</option>
+              <option>Heading 1</option>
+              <option>Heading 2</option>
+            </select>
+            <button type="button" class="toolbar-btn"><strong>B</strong></button>
+            <button type="button" class="toolbar-btn"><em>I</em></button>
+            <button type="button" class="toolbar-btn"><u>U</u></button>
+            <button type="button" class="toolbar-btn"><s>S</s></button>
+            <button type="button" class="toolbar-btn">"</button>
+            <button type="button" class="toolbar-btn">≡</button>
+            <button type="button" class="toolbar-btn">A</button>
+            <button type="button" class="toolbar-btn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+              </svg>
+            </button>
+            <button type="button" class="toolbar-btn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                <polyline points="21 15 16 10 5 21"></polyline>
+              </svg>
+            </button>
+            <button type="button" class="toolbar-btn">&lt;/&gt;</button>
+          </div>
+          <textarea class="message-textarea" id="emailBody" placeholder="Write your message..."></textarea>
+        </div>
+
+        <!-- SMS Content -->
+        <div class="sms-content" id="smsContent">
+          <textarea class="sms-textarea" id="smsBody" placeholder="Your message" oninput="updateSmsCounter()"></textarea>
+          <div class="sms-counter"><span id="smsCharCount">0</span> (1 segment)</div>
+
+          <button type="button" class="template-btn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            Load from template
+          </button>
+
+          <div class="sms-notice">
+            <div class="sms-notice-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+              </svg>
+            </div>
+            <span class="sms-notice-text">SMS message will only be sent to practitioners with a phone number</span>
+            <button class="send-btn" onclick="sendMessage()">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="22" y1="2" x2="11" y2="13"></line>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Send button for email (positioned at bottom right) -->
+        <div class="email-content active" style="display: flex; justify-content: flex-end; margin-top: 16px;">
+          <button class="send-btn" onclick="sendMessage()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="22" y1="2" x2="11" y2="13"></line>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script src="/js/dashboard.js"></script>
@@ -1504,6 +1969,61 @@
 
     function showSupport() {
       alert('Support contact: support@expandhealth.ai');
+    }
+
+    // Contact Modal Functions
+    function openContactModal() {
+      document.getElementById('contactModalOverlay').classList.add('active');
+    }
+
+    function closeContactModal(event) {
+      if (event && event.target !== event.currentTarget) return;
+      document.getElementById('contactModalOverlay').classList.remove('active');
+    }
+
+    function switchChannel(channel) {
+      // Update tabs
+      document.querySelectorAll('.channel-tab').forEach(tab => tab.classList.remove('active'));
+      event.currentTarget.classList.add('active');
+
+      // Update content
+      document.getElementById('emailContent').classList.toggle('active', channel === 'email');
+      document.getElementById('smsContent').classList.toggle('active', channel === 'sms');
+
+      // Hide/show email send button
+      document.querySelectorAll('.email-content').forEach(el => {
+        if (el.id === 'emailContent' || el.style.display === 'flex') {
+          el.style.display = channel === 'email' ? '' : 'none';
+        }
+      });
+    }
+
+    function updateSmsCounter() {
+      const text = document.getElementById('smsBody').value;
+      const charCount = text.length;
+      const segments = Math.ceil(charCount / 160) || 1;
+      document.getElementById('smsCharCount').textContent = `${charCount} (${segments} segment${segments > 1 ? 's' : ''})`;
+    }
+
+    function sendMessage() {
+      const isEmail = document.getElementById('emailContent').classList.contains('active');
+      if (isEmail) {
+        const subject = document.getElementById('emailSubject').value;
+        const body = document.getElementById('emailBody').value;
+        if (!subject || !body) {
+          alert('Please fill in the subject and message');
+          return;
+        }
+        alert('Email sent to all practitioners!');
+      } else {
+        const body = document.getElementById('smsBody').value;
+        if (!body) {
+          alert('Please enter a message');
+          return;
+        }
+        alert('SMS sent to all practitioners with phone numbers!');
+      }
+      closeContactModal();
     }
 
     // Initialize
