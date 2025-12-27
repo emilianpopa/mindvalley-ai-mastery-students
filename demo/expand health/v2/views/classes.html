@@ -1553,7 +1553,7 @@
 
       if (response.status === 401) {
         window.location.href = '/login';
-        return;
+        throw new Error('Unauthorized');
       }
 
       if (!response.ok) {
@@ -1576,11 +1576,15 @@
     async function loadUserInfo() {
       try {
         const user = await apiRequest('/api/auth/me');
-        const email = user.email || user.username || 'User';
-        const displayName = email.includes('@') ? email.split('@')[0] : email;
-        document.getElementById('userName').textContent = displayName;
-        document.getElementById('userRole').textContent = user.role || 'Staff';
-        document.getElementById('userAvatar').textContent = displayName[0].toUpperCase();
+        if (user && (user.email || user.username)) {
+          const email = user.email || user.username;
+          const displayName = email.includes('@') ? email.split('@')[0] : email;
+          document.getElementById('userName').textContent = displayName;
+          document.getElementById('userRole').textContent = user.role || 'Staff';
+          document.getElementById('userAvatar').textContent = displayName[0].toUpperCase();
+        } else {
+          throw new Error('Invalid user data');
+        }
       } catch (error) {
         console.error('Failed to load user info:', error);
         document.getElementById('userName').textContent = 'User';
