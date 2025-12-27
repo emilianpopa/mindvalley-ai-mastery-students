@@ -180,239 +180,261 @@
     </aside>
 
     <!-- Main Content -->
-    <main class="main-content pos-layout">
-      <!-- Customer Header Bar -->
-      <div class="pos-customer-header">
-        <div class="customer-select-wrapper">
-          <div class="customer-select" id="customerSelect">
-            <svg viewBox="0 0 24 24" fill="none" width="20" height="20">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              <circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            <span id="customerSelectText">Select Customer</span>
-            <svg viewBox="0 0 24 24" fill="none" width="16" height="16" class="chevron">
+    <main class="main-content pos-page">
+      <!-- Page Header -->
+      <div class="pos-page-header">
+        <h1>Point of sale</h1>
+        <button class="btn btn-outline actions-btn">
+          Actions
+          <svg viewBox="0 0 24 24" fill="none" width="16" height="16">
+            <circle cx="12" cy="12" r="1" fill="currentColor"/>
+            <circle cx="12" cy="5" r="1" fill="currentColor"/>
+            <circle cx="12" cy="19" r="1" fill="currentColor"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- POS Form Container -->
+      <div class="pos-form-container">
+        <!-- Who is selling -->
+        <div class="pos-section">
+          <h3 class="pos-section-title">Who is selling</h3>
+          <div class="pos-select-wrapper">
+            <select id="sellerSelect" class="pos-select">
+              <option value="">Select staff member...</option>
+            </select>
+            <svg class="select-chevron" viewBox="0 0 24 24" fill="none" width="16" height="16">
               <polyline points="6 9 12 15 18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
           </div>
-          <div class="customer-dropdown hidden" id="customerDropdown">
-            <input type="text" placeholder="Search customers..." id="customerSearchInput">
-            <div class="customer-list" id="customerList">
-              <!-- Customers will be loaded here -->
+        </div>
+
+        <!-- Customer -->
+        <div class="pos-section">
+          <h3 class="pos-section-title">Customer</h3>
+          <div class="customer-row">
+            <div class="pos-select-wrapper customer-select-wrapper">
+              <select id="customerSelect" class="pos-select">
+                <option value="">Select customer...</option>
+              </select>
+              <svg class="select-chevron" viewBox="0 0 24 24" fill="none" width="16" height="16">
+                <polyline points="6 9 12 15 18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
             </div>
-            <button class="add-new-customer-btn" id="addNewCustomerBtn">
-              <svg viewBox="0 0 24 24" fill="none" width="16" height="16">
+            <button class="btn-add-customer" id="addCustomerBtn" title="Add new customer">
+              <svg viewBox="0 0 24 24" fill="none" width="20" height="20">
                 <line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                 <line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
               </svg>
-              Add new customer
+            </button>
+          </div>
+          <label class="checkbox-label">
+            <input type="checkbox" id="payingForOther">
+            <span class="checkbox-custom"></span>
+            <span>Paying for someone else</span>
+          </label>
+        </div>
+
+        <!-- Cart Section (hidden until customer selected) -->
+        <div class="pos-section cart-section hidden" id="cartSection">
+          <h3 class="pos-section-title">Cart</h3>
+
+          <!-- Category Tabs and Content -->
+          <div class="cart-content">
+            <div class="cart-categories">
+              <button class="cart-category-btn active" data-category="class">
+                <svg viewBox="0 0 24 24" fill="none" width="16" height="16">
+                  <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                  <polyline points="12 6 12 12 16 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                <span>Class</span>
+              </button>
+              <button class="cart-category-btn" data-category="membership">
+                <svg viewBox="0 0 24 24" fill="none" width="16" height="16">
+                  <rect x="1" y="4" width="22" height="16" rx="2" stroke="currentColor" stroke-width="2"/>
+                  <path d="M1 10h22" stroke="currentColor" stroke-width="2"/>
+                </svg>
+                <span>Membership</span>
+              </button>
+              <button class="cart-category-btn" data-category="appointment">
+                <svg viewBox="0 0 24 24" fill="none" width="16" height="16">
+                  <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/>
+                  <line x1="16" y1="2" x2="16" y2="6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  <line x1="8" y1="2" x2="8" y2="6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  <line x1="3" y1="10" x2="21" y2="10" stroke="currentColor" stroke-width="2"/>
+                </svg>
+                <span>Appointment</span>
+              </button>
+              <button class="cart-category-btn" data-category="appointment-addon">
+                <svg viewBox="0 0 24 24" fill="none" width="16" height="16">
+                  <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                  <line x1="12" y1="8" x2="12" y2="16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  <line x1="8" y1="12" x2="16" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                <span>Appointment add-on</span>
+              </button>
+              <button class="cart-category-btn" data-category="product">
+                <svg viewBox="0 0 24 24" fill="none" width="16" height="16">
+                  <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" stroke="currentColor" stroke-width="2"/>
+                  <line x1="3" y1="6" x2="21" y2="6" stroke="currentColor" stroke-width="2"/>
+                  <path d="M16 10a4 4 0 0 1-8 0" stroke="currentColor" stroke-width="2"/>
+                </svg>
+                <span>Product</span>
+              </button>
+              <button class="cart-category-btn" data-category="gift-card">
+                <svg viewBox="0 0 24 24" fill="none" width="16" height="16">
+                  <rect x="3" y="8" width="18" height="13" rx="2" stroke="currentColor" stroke-width="2"/>
+                  <path d="M3 12h18M12 8v13M7 8c0-2 1-5 5-5s5 3 5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                <span>Gift card</span>
+              </button>
+              <button class="cart-category-btn" data-category="tip">
+                <svg viewBox="0 0 24 24" fill="none" width="16" height="16">
+                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                </svg>
+                <span>Tip</span>
+              </button>
+              <button class="cart-category-btn" data-category="money-credits">
+                <svg viewBox="0 0 24 24" fill="none" width="16" height="16">
+                  <line x1="12" y1="1" x2="12" y2="23" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                <span>Money Credits</span>
+              </button>
+              <button class="cart-category-btn" data-category="class-credits">
+                <svg viewBox="0 0 24 24" fill="none" width="16" height="16">
+                  <rect x="2" y="2" width="20" height="20" rx="2" stroke="currentColor" stroke-width="2"/>
+                  <line x1="7" y1="7" x2="7" y2="17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  <line x1="12" y1="7" x2="12" y2="17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  <line x1="17" y1="7" x2="17" y2="17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                <span>Class/Appointments Credits</span>
+              </button>
+              <button class="cart-category-btn" data-category="on-demand-video">
+                <svg viewBox="0 0 24 24" fill="none" width="16" height="16">
+                  <polygon points="23 7 16 12 23 17 23 7" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                  <rect x="1" y="5" width="15" height="14" rx="2" stroke="currentColor" stroke-width="2"/>
+                </svg>
+                <span>On-demand video</span>
+              </button>
+              <button class="cart-category-btn" data-category="on-demand-course">
+                <svg viewBox="0 0 24 24" fill="none" width="16" height="16">
+                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" stroke="currentColor" stroke-width="2"/>
+                </svg>
+                <span>On-demand course</span>
+              </button>
+            </div>
+
+            <!-- Category Content Panel -->
+            <div class="cart-category-content">
+              <h4 class="category-content-title" id="categoryContentTitle">Class</h4>
+              <div class="category-select-row">
+                <div class="pos-select-wrapper category-item-select">
+                  <select id="categoryItemSelect" class="pos-select">
+                    <option value="">Select a class...</option>
+                  </select>
+                  <svg class="select-chevron" viewBox="0 0 24 24" fill="none" width="16" height="16">
+                    <polyline points="6 9 12 15 18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </div>
+                <button class="btn-calendar" id="calendarBtn" title="Select date">
+                  <svg viewBox="0 0 24 24" fill="none" width="18" height="18">
+                    <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/>
+                    <line x1="16" y1="2" x2="16" y2="6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    <line x1="8" y1="2" x2="8" y2="6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    <line x1="3" y1="10" x2="21" y2="10" stroke="currentColor" stroke-width="2"/>
+                  </svg>
+                </button>
+                <button class="btn-add-new" id="addNewItemBtn" title="Add new">
+                  <svg viewBox="0 0 24 24" fill="none" width="18" height="18">
+                    <line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    <line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Cart Items (when items added) -->
+          <div class="cart-items-list hidden" id="cartItemsList">
+            <!-- Cart items will be added here -->
+          </div>
+
+          <!-- Cart Footer -->
+          <div class="cart-footer hidden" id="cartFooter">
+            <button class="btn btn-secondary" id="cancelBtn">Cancel</button>
+            <button class="btn btn-primary" id="addToCartBtn">
+              <svg viewBox="0 0 24 24" fill="none" width="16" height="16">
+                <circle cx="9" cy="21" r="1" stroke="currentColor" stroke-width="2"/>
+                <circle cx="20" cy="21" r="1" stroke="currentColor" stroke-width="2"/>
+                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" stroke="currentColor" stroke-width="2"/>
+              </svg>
+              Add to cart
             </button>
           </div>
         </div>
-        <div class="waiver-status">
-          <label class="checkbox-wrapper">
-            <input type="checkbox" id="waiverSigned">
-            <span class="checkmark"></span>
-            <span>Waiver signed</span>
-          </label>
-        </div>
-        <div class="selected-customer hidden" id="selectedCustomer">
-          <div class="customer-avatar" id="selectedCustomerAvatar">JD</div>
-          <div class="customer-info">
-            <span class="customer-name" id="selectedCustomerName">John Doe</span>
-            <span class="customer-email" id="selectedCustomerEmail">john@example.com</span>
+      </div>
+    </main>
+  </div>
+
+  <!-- Select Class Modal -->
+  <div class="pos-modal hidden" id="selectClassModal">
+    <div class="pos-modal-overlay"></div>
+    <div class="pos-modal-content">
+      <div class="pos-modal-header">
+        <h2>Select a class</h2>
+        <button class="pos-modal-close" id="closeClassModal">
+          <svg viewBox="0 0 24 24" fill="none" width="24" height="24">
+            <line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
+      <div class="pos-modal-body">
+        <div class="modal-search-row">
+          <div class="modal-search">
+            <svg viewBox="0 0 24 24" fill="none" width="18" height="18">
+              <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2"/>
+              <path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            <input type="text" placeholder="Search for a class" id="classSearchInput">
           </div>
-          <button class="btn-icon remove-customer" id="removeCustomerBtn">
+          <button class="btn btn-outline date-filter-btn" id="classDateFilter">
             <svg viewBox="0 0 24 24" fill="none" width="16" height="16">
+              <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/>
+              <line x1="16" y1="2" x2="16" y2="6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <line x1="8" y1="2" x2="8" y2="6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <line x1="3" y1="10" x2="21" y2="10" stroke="currentColor" stroke-width="2"/>
+            </svg>
+            Class starts at
+            <svg viewBox="0 0 24 24" fill="none" width="14" height="14">
               <line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
               <line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
             </svg>
           </button>
         </div>
-      </div>
-
-      <!-- POS Content Area -->
-      <div class="pos-content">
-        <!-- Cart Panel (Left) -->
-        <div class="cart-panel">
-          <div class="cart-header">
-            <h2>Cart</h2>
-            <button class="btn-icon" id="clearCartBtn" title="Clear cart">
-              <svg viewBox="0 0 24 24" fill="none" width="18" height="18">
-                <polyline points="3 6 5 6 21 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </button>
-          </div>
-
-          <!-- Vertical Category Tabs -->
-          <div class="category-tabs-vertical">
-            <button class="category-tab-v active" data-category="class">
-              <svg viewBox="0 0 24 24" fill="none" width="18" height="18">
-                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
-                <polyline points="12 6 12 12 16 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-              </svg>
-              <span>Class</span>
-            </button>
-            <button class="category-tab-v" data-category="membership">
-              <svg viewBox="0 0 24 24" fill="none" width="18" height="18">
-                <rect x="1" y="4" width="22" height="16" rx="2" stroke="currentColor" stroke-width="2"/>
-                <path d="M1 10h22" stroke="currentColor" stroke-width="2"/>
-              </svg>
-              <span>Membership</span>
-            </button>
-            <button class="category-tab-v" data-category="appointment">
-              <svg viewBox="0 0 24 24" fill="none" width="18" height="18">
-                <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/>
-                <line x1="16" y1="2" x2="16" y2="6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                <line x1="8" y1="2" x2="8" y2="6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                <line x1="3" y1="10" x2="21" y2="10" stroke="currentColor" stroke-width="2"/>
-              </svg>
-              <span>Appointment</span>
-            </button>
-            <button class="category-tab-v" data-category="appointment-addon">
-              <svg viewBox="0 0 24 24" fill="none" width="18" height="18">
-                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
-                <line x1="12" y1="8" x2="12" y2="16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                <line x1="8" y1="12" x2="16" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-              </svg>
-              <span>Appt add-on</span>
-            </button>
-            <button class="category-tab-v" data-category="product">
-              <svg viewBox="0 0 24 24" fill="none" width="18" height="18">
-                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                <line x1="3" y1="6" x2="21" y2="6" stroke="currentColor" stroke-width="2"/>
-                <path d="M16 10a4 4 0 0 1-8 0" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-              <span>Product</span>
-            </button>
-            <button class="category-tab-v" data-category="gift-card">
-              <svg viewBox="0 0 24 24" fill="none" width="18" height="18">
-                <rect x="3" y="8" width="18" height="13" rx="2" stroke="currentColor" stroke-width="2"/>
-                <path d="M3 12h18M12 8v13M7 8c0-2 1-5 5-5s5 3 5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-              </svg>
-              <span>Gift card</span>
-            </button>
-            <button class="category-tab-v" data-category="tip">
-              <svg viewBox="0 0 24 24" fill="none" width="18" height="18">
-                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-              </svg>
-              <span>Tip</span>
-            </button>
-            <button class="category-tab-v" data-category="money-credits">
-              <svg viewBox="0 0 24 24" fill="none" width="18" height="18">
-                <line x1="12" y1="1" x2="12" y2="23" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-              </svg>
-              <span>Money Credits</span>
-            </button>
-            <button class="category-tab-v" data-category="class-credits">
-              <svg viewBox="0 0 24 24" fill="none" width="18" height="18">
-                <rect x="2" y="2" width="20" height="20" rx="2" stroke="currentColor" stroke-width="2"/>
-                <line x1="7" y1="7" x2="7" y2="17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                <line x1="12" y1="7" x2="12" y2="17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                <line x1="17" y1="7" x2="17" y2="17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-              </svg>
-              <span>Class/Appt Credits</span>
-            </button>
-            <button class="category-tab-v" data-category="on-demand-video">
-              <svg viewBox="0 0 24 24" fill="none" width="18" height="18">
-                <polygon points="23 7 16 12 23 17 23 7" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-                <rect x="1" y="5" width="15" height="14" rx="2" stroke="currentColor" stroke-width="2"/>
-              </svg>
-              <span>On-demand video</span>
-            </button>
-            <button class="category-tab-v" data-category="on-demand-course">
-              <svg viewBox="0 0 24 24" fill="none" width="18" height="18">
-                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-              <span>On-demand course</span>
-            </button>
-          </div>
-
-          <!-- Cart Items -->
-          <div class="cart-items" id="cartItems">
-            <div class="empty-cart">
-              <svg viewBox="0 0 24 24" fill="none" width="40" height="40">
-                <circle cx="9" cy="21" r="1" stroke="currentColor" stroke-width="2"/>
-                <circle cx="20" cy="21" r="1" stroke="currentColor" stroke-width="2"/>
-                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-              <p>No items in cart</p>
-              <span>Select an item from the right</span>
-            </div>
-          </div>
-
-          <!-- Cart Summary -->
-          <div class="cart-summary">
-            <div class="summary-row">
-              <span>Subtotal</span>
-              <span id="cartSubtotal">R 0.00</span>
-            </div>
-            <div class="summary-row discount-row hidden" id="discountRow">
-              <span>Discount</span>
-              <span id="cartDiscount">- R 0.00</span>
-            </div>
-            <div class="summary-row">
-              <span>Tax (15%)</span>
-              <span id="cartTax">R 0.00</span>
-            </div>
-            <div class="summary-row total-row">
-              <span>Total</span>
-              <span id="cartTotal">R 0.00</span>
-            </div>
-          </div>
-
-          <!-- Action Buttons -->
-          <div class="cart-actions">
-            <button class="btn btn-secondary" id="addDiscountBtn">
-              <svg viewBox="0 0 24 24" fill="none" width="16" height="16">
-                <path d="M9 9h.01M15 15h.01M16 8l-8 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-              Discount
-            </button>
-            <button class="btn btn-secondary" id="addNoteBtn">
-              <svg viewBox="0 0 24 24" fill="none" width="16" height="16">
-                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-              Note
-            </button>
-          </div>
-
-          <!-- Payment Buttons -->
-          <div class="payment-buttons">
-            <button class="btn btn-lg btn-outline" id="parkSaleBtn">Park Sale</button>
-            <button class="btn btn-lg btn-primary" id="checkoutBtn" disabled>
-              <svg viewBox="0 0 24 24" fill="none" width="18" height="18">
-                <rect x="1" y="4" width="22" height="16" rx="2" ry="2" stroke="currentColor" stroke-width="2"/>
-                <line x1="1" y1="10" x2="23" y2="10" stroke="currentColor" stroke-width="2"/>
-              </svg>
-              Checkout
-            </button>
-          </div>
+        <div class="modal-time-tabs">
+          <button class="time-tab active" data-time="upcoming">
+            <svg viewBox="0 0 24 24" fill="none" width="14" height="14">
+              <line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <polyline points="12 5 19 12 12 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Upcoming
+          </button>
+          <button class="time-tab" data-time="past">
+            <svg viewBox="0 0 24 24" fill="none" width="14" height="14">
+              <line x1="19" y1="12" x2="5" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <polyline points="12 5 5 12 12 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Past
+          </button>
         </div>
-
-        <!-- Items Panel (Right) -->
-        <div class="items-panel">
-          <div class="items-header">
-            <h2 id="categoryTitle">Classes</h2>
-            <div class="items-search">
-              <svg viewBox="0 0 24 24" fill="none" width="18" height="18">
-                <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2"/>
-                <path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-              </svg>
-              <input type="text" placeholder="Search items..." id="itemSearch">
-            </div>
-          </div>
-
-          <div class="items-grid" id="itemsGrid">
-            <!-- Items will be loaded here based on selected category -->
-          </div>
+        <div class="modal-results" id="classResults">
+          <div class="no-results">No classes found</div>
         </div>
       </div>
-    </main>
+    </div>
   </div>
 
   <!-- Payment Modal -->
@@ -478,21 +500,6 @@
               </svg>
               <span>Split</span>
             </button>
-          </div>
-        </div>
-
-        <div class="cash-input hidden" id="cashInput">
-          <label>Amount Received</label>
-          <input type="number" id="cashReceived" placeholder="0.00" step="0.01">
-          <div class="quick-amounts">
-            <button class="quick-amount" data-amount="50">R 50</button>
-            <button class="quick-amount" data-amount="100">R 100</button>
-            <button class="quick-amount" data-amount="200">R 200</button>
-            <button class="quick-amount" data-amount="500">R 500</button>
-          </div>
-          <div class="change-due">
-            <span>Change Due</span>
-            <span id="changeDue">R 0.00</span>
           </div>
         </div>
       </div>
