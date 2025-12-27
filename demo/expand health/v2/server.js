@@ -141,6 +141,11 @@ app.use('/api/tasks', tasksRoutes);
 app.use('/api/classes', classesRoutes);
 app.use('/api/locations', locationsRoutes);
 
+// Health check endpoint (no auth required) - for Railway health checks
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
 // ============================================
 // SERVE HTML PAGES
 // ============================================
