@@ -732,12 +732,17 @@
       border-radius: 8px;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
       min-width: 160px;
-      z-index: 100;
+      z-index: 1000;
       display: none;
     }
 
     .dropdown-menu.show {
       display: block;
+    }
+
+    .dropdown-menu.dropup {
+      top: auto;
+      bottom: 100%;
     }
 
     .dropdown-item {
@@ -1339,9 +1344,20 @@
     function toggleDropdown(event, staffId) {
       event.stopPropagation();
       // Close all dropdowns first
-      document.querySelectorAll('.dropdown-menu').forEach(d => d.classList.remove('show'));
+      document.querySelectorAll('.dropdown-menu').forEach(d => {
+        d.classList.remove('show');
+        d.classList.remove('dropup');
+      });
       // Toggle the clicked one
       const dropdown = document.getElementById(`dropdown-${staffId}`);
+      const button = event.currentTarget;
+      const rect = button.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+
+      // If less than 150px below, open upward
+      if (spaceBelow < 150) {
+        dropdown.classList.add('dropup');
+      }
       dropdown.classList.toggle('show');
     }
 
