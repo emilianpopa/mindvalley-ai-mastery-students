@@ -917,6 +917,476 @@
     .studio-submenu.show {
       display: flex;
     }
+
+    /* Class Type Tabs (Momence style) */
+    .class-type-tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 16px;
+    }
+
+    .class-type-tab {
+      padding: 8px 16px;
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--gray-500);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .class-type-tab:hover {
+      color: var(--gray-700);
+    }
+
+    .class-type-tab.active {
+      color: var(--teal-700);
+      border-bottom-color: var(--teal-600);
+    }
+
+    /* Date Navigation (Momence style) */
+    .date-navigation {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .date-nav-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      background: white;
+      border: 1px solid var(--gray-300);
+      border-radius: 6px;
+      cursor: pointer;
+      color: var(--gray-600);
+      transition: all 0.2s;
+    }
+
+    .date-nav-btn:hover {
+      background: var(--gray-50);
+      border-color: var(--gray-400);
+    }
+
+    .date-picker-wrapper {
+      position: relative;
+    }
+
+    .date-picker-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      background: white;
+      border: 1px solid var(--gray-300);
+      border-radius: 6px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--gray-700);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .date-picker-btn:hover {
+      background: var(--gray-50);
+      border-color: var(--gray-400);
+    }
+
+    .date-picker-btn svg {
+      color: var(--gray-500);
+    }
+
+    /* Calendar Dropdown */
+    .calendar-dropdown {
+      display: none;
+      position: absolute;
+      top: calc(100% + 8px);
+      left: 0;
+      width: 280px;
+      background: white;
+      border: 1px solid var(--gray-200);
+      border-radius: 10px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+      z-index: 1000;
+      padding: 12px;
+    }
+
+    .calendar-dropdown.open {
+      display: block;
+    }
+
+    .calendar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .calendar-month-year {
+      display: flex;
+      gap: 8px;
+    }
+
+    .calendar-month-year select {
+      padding: 4px 8px;
+      border: 1px solid var(--gray-300);
+      border-radius: 4px;
+      font-size: 0.8125rem;
+      color: var(--gray-700);
+      background: white;
+      cursor: pointer;
+    }
+
+    .cal-nav-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      background: transparent;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      color: var(--gray-500);
+    }
+
+    .cal-nav-btn:hover {
+      background: var(--gray-100);
+      color: var(--gray-700);
+    }
+
+    .calendar-weekdays {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      text-align: center;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--gray-500);
+      margin-bottom: 8px;
+    }
+
+    .calendar-days {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 2px;
+    }
+
+    .calendar-day {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      font-size: 0.8125rem;
+      color: var(--gray-700);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .calendar-day:hover {
+      background: var(--gray-100);
+    }
+
+    .calendar-day.other-month {
+      color: var(--gray-400);
+    }
+
+    .calendar-day.today {
+      background: var(--teal-50);
+      color: var(--teal-700);
+      font-weight: 600;
+    }
+
+    .calendar-day.selected {
+      background: var(--teal-600);
+      color: white;
+    }
+
+    .calendar-day.has-classes::after {
+      content: '';
+      position: absolute;
+      bottom: 2px;
+      width: 4px;
+      height: 4px;
+      background: var(--teal-500);
+      border-radius: 50%;
+    }
+
+    /* Month Calendar Grid View */
+    .month-calendar-view {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+
+    .month-calendar-header {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      background: var(--gray-50);
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .month-calendar-header-day {
+      padding: 12px;
+      text-align: center;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--gray-500);
+      text-transform: uppercase;
+    }
+
+    .month-calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+    }
+
+    .month-calendar-cell {
+      min-height: 100px;
+      border-right: 1px solid var(--gray-200);
+      border-bottom: 1px solid var(--gray-200);
+      padding: 8px;
+    }
+
+    .month-calendar-cell:nth-child(7n) {
+      border-right: none;
+    }
+
+    .month-calendar-cell.other-month {
+      background: var(--gray-50);
+    }
+
+    .month-calendar-cell.today {
+      background: var(--teal-50);
+    }
+
+    .month-calendar-date {
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--gray-600);
+      margin-bottom: 4px;
+    }
+
+    .month-calendar-cell.today .month-calendar-date {
+      color: var(--teal-700);
+      font-weight: 600;
+    }
+
+    .month-calendar-cell.other-month .month-calendar-date {
+      color: var(--gray-400);
+    }
+
+    .month-class-item {
+      padding: 4px 6px;
+      margin-bottom: 2px;
+      background: var(--teal-50);
+      border-left: 3px solid var(--teal-600);
+      border-radius: 3px;
+      font-size: 0.75rem;
+      color: var(--gray-700);
+      cursor: pointer;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .month-class-item:hover {
+      background: var(--teal-100);
+    }
+
+    .month-class-time {
+      font-size: 0.6875rem;
+      color: var(--gray-500);
+    }
+
+    /* Week View */
+    .week-calendar-view {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+
+    .week-calendar-header {
+      display: grid;
+      grid-template-columns: 60px repeat(7, 1fr);
+      background: var(--gray-50);
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .week-calendar-header-day {
+      padding: 12px 8px;
+      text-align: center;
+    }
+
+    .week-day-name {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--gray-500);
+      text-transform: uppercase;
+    }
+
+    .week-day-number {
+      font-size: 1.25rem;
+      font-weight: 500;
+      color: var(--gray-700);
+      margin-top: 4px;
+    }
+
+    .week-day-number.today {
+      width: 32px;
+      height: 32px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--teal-600);
+      color: white;
+      border-radius: 50%;
+    }
+
+    .week-time-column {
+      padding: 8px;
+      text-align: right;
+      font-size: 0.75rem;
+      color: var(--gray-500);
+      border-right: 1px solid var(--gray-200);
+    }
+
+    .week-calendar-body {
+      display: grid;
+      grid-template-columns: 60px repeat(7, 1fr);
+      max-height: 600px;
+      overflow-y: auto;
+    }
+
+    .week-time-slot {
+      min-height: 48px;
+      border-bottom: 1px solid var(--gray-100);
+      border-right: 1px solid var(--gray-200);
+      position: relative;
+    }
+
+    .week-time-slot:nth-child(7n+1) {
+      border-right: 1px solid var(--gray-200);
+    }
+
+    .week-class-item {
+      position: absolute;
+      left: 2px;
+      right: 2px;
+      padding: 4px 6px;
+      background: var(--teal-100);
+      border-left: 3px solid var(--teal-600);
+      border-radius: 4px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      overflow: hidden;
+    }
+
+    .week-class-item:hover {
+      background: var(--teal-200);
+    }
+
+    /* Day View */
+    .day-calendar-view {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+
+    .day-time-grid {
+      display: grid;
+      grid-template-columns: 60px 1fr;
+    }
+
+    .day-time-slot {
+      min-height: 60px;
+      border-bottom: 1px solid var(--gray-100);
+      padding: 4px 8px;
+      position: relative;
+    }
+
+    .day-class-item {
+      padding: 8px 12px;
+      margin-bottom: 4px;
+      background: white;
+      border: 1px solid var(--gray-200);
+      border-left: 4px solid var(--teal-600);
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .day-class-item:hover {
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .day-class-title {
+      font-weight: 500;
+      color: var(--gray-900);
+      margin-bottom: 4px;
+    }
+
+    .day-class-meta {
+      font-size: 0.8125rem;
+      color: var(--gray-500);
+    }
+
+    /* Actions Dropdown */
+    .actions-dropdown-menu {
+      display: none;
+      position: absolute;
+      top: calc(100% + 4px);
+      right: 0;
+      min-width: 180px;
+      background: white;
+      border: 1px solid var(--gray-200);
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      z-index: 100;
+      padding: 4px;
+    }
+
+    .actions-dropdown.open .actions-dropdown-menu {
+      display: block;
+    }
+
+    .actions-menu-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      padding: 10px 12px;
+      background: none;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      color: var(--gray-700);
+      cursor: pointer;
+      text-align: left;
+    }
+
+    .actions-menu-item:hover {
+      background: var(--gray-50);
+    }
+
+    .actions-menu-item svg {
+      width: 16px;
+      height: 16px;
+      color: var(--gray-500);
+    }
+
+    .actions-menu-divider {
+      height: 1px;
+      background: var(--gray-200);
+      margin: 4px 0;
+    }
   </style>
 </head>
 <body>
@@ -1234,13 +1704,39 @@
               </svg>
               New class
             </button>
-            <div class="actions-dropdown">
-              <button class="actions-btn">
+            <div class="actions-dropdown" id="actionsDropdown">
+              <button class="actions-btn" onclick="toggleActionsDropdown()">
                 Actions
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polyline points="6 9 12 15 18 9"/>
                 </svg>
               </button>
+              <div class="actions-dropdown-menu">
+                <button class="actions-menu-item" onclick="openClassSettings()">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                  </svg>
+                  Class settings
+                </button>
+                <div class="actions-menu-divider"></div>
+                <button class="actions-menu-item" onclick="exportClasses()">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="7 10 12 15 17 10"/>
+                    <line x1="12" y1="15" x2="12" y2="3"/>
+                  </svg>
+                  Export schedule
+                </button>
+                <button class="actions-menu-item" onclick="printSchedule()">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="6 9 6 2 18 2 18 9"/>
+                    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+                    <rect x="6" y="14" width="12" height="8"/>
+                  </svg>
+                  Print schedule
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -1268,7 +1764,7 @@
               </svg>
               Day
             </button>
-            <button class="view-tab active" data-view="week">
+            <button class="view-tab" data-view="week">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
                 <line x1="16" y1="2" x2="16" y2="6"/>
@@ -1277,7 +1773,7 @@
               </svg>
               Week
             </button>
-            <button class="view-tab" data-view="month">
+            <button class="view-tab active" data-view="month">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
                 <line x1="16" y1="2" x2="16" y2="6"/>
@@ -1302,6 +1798,61 @@
               Upcoming
             </button>
           </div>
+        </div>
+
+        <!-- Class Type Tabs (Momence style) -->
+        <div class="class-type-tabs">
+          <button class="class-type-tab active" data-type="all">All</button>
+          <button class="class-type-tab" data-type="classes">Classes</button>
+          <button class="class-type-tab" data-type="workshops">Workshops</button>
+        </div>
+
+        <!-- Date Navigation (for Day/Week/Month views) -->
+        <div class="date-navigation" id="dateNavigation">
+          <button class="date-nav-btn" onclick="navigateDate(-1)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="15 18 9 12 15 6"/>
+            </svg>
+          </button>
+          <div class="date-picker-wrapper">
+            <button class="date-picker-btn" onclick="toggleDatePicker()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                <line x1="16" y1="2" x2="16" y2="6"/>
+                <line x1="8" y1="2" x2="8" y2="6"/>
+                <line x1="3" y1="10" x2="21" y2="10"/>
+              </svg>
+              <span id="currentDateLabel">December 2025</span>
+            </button>
+            <!-- Calendar Dropdown -->
+            <div class="calendar-dropdown" id="calendarDropdown">
+              <div class="calendar-header">
+                <button class="cal-nav-btn" onclick="navigateCalendar(-1)">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="15 18 9 12 15 6"/>
+                  </svg>
+                </button>
+                <div class="calendar-month-year">
+                  <select id="calendarMonth" onchange="updateCalendarDisplay()"></select>
+                  <select id="calendarYear" onchange="updateCalendarDisplay()"></select>
+                </div>
+                <button class="cal-nav-btn" onclick="navigateCalendar(1)">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="9 18 15 12 9 6"/>
+                  </svg>
+                </button>
+              </div>
+              <div class="calendar-weekdays">
+                <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+              </div>
+              <div class="calendar-days" id="calendarDays"></div>
+            </div>
+          </div>
+          <button class="date-nav-btn" onclick="navigateDate(1)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="9 18 15 12 9 6"/>
+            </svg>
+          </button>
         </div>
 
         <!-- Search and Filter -->
@@ -1341,6 +1892,43 @@
               Filters
               <span class="filter-badge" id="filterBadge" style="display: none;">1</span>
             </button>
+          </div>
+        </div>
+
+        <!-- Calendar Views Container -->
+        <div id="calendarViewContainer">
+          <!-- Month View -->
+          <div class="month-calendar-view" id="monthView" style="display: none;">
+            <div class="month-calendar-header">
+              <div class="month-calendar-header-day">Sun</div>
+              <div class="month-calendar-header-day">Mon</div>
+              <div class="month-calendar-header-day">Tue</div>
+              <div class="month-calendar-header-day">Wed</div>
+              <div class="month-calendar-header-day">Thu</div>
+              <div class="month-calendar-header-day">Fri</div>
+              <div class="month-calendar-header-day">Sat</div>
+            </div>
+            <div class="month-calendar-grid" id="monthCalendarGrid">
+              <!-- Calendar cells will be rendered here -->
+            </div>
+          </div>
+
+          <!-- Week View -->
+          <div class="week-calendar-view" id="weekView" style="display: none;">
+            <div class="week-calendar-header" id="weekCalendarHeader">
+              <div class="week-time-column"></div>
+              <!-- Day headers will be rendered here -->
+            </div>
+            <div class="week-calendar-body" id="weekCalendarBody">
+              <!-- Time slots will be rendered here -->
+            </div>
+          </div>
+
+          <!-- Day View -->
+          <div class="day-calendar-view" id="dayView" style="display: none;">
+            <div class="day-time-grid" id="dayTimeGrid">
+              <!-- Time slots will be rendered here -->
+            </div>
           </div>
         </div>
 
@@ -1418,7 +2006,7 @@
       <div class="filter-section">
         <p class="filter-section-title">Locations</p>
         <select class="search-input" id="locationFilter" style="width: 100%; padding-left: 12px;">
-          <option value="">28 DeWolfe Street</option>
+          <option value="">All locations</option>
         </select>
       </div>
 
@@ -1738,6 +2326,7 @@
     document.addEventListener('DOMContentLoaded', async () => {
       await loadUserInfo();
       await loadStaff();
+      await loadLocations();
       await loadClassTemplates();
       loadClasses();
       setupEventListeners();
@@ -1761,7 +2350,9 @@
     async function loadStaff() {
       try {
         const data = await apiRequest('/api/staff?active_only=true');
-        staff = data.staff || [];
+        // API returns array directly, not { staff: [...] }
+        staff = Array.isArray(data) ? data : (data.staff || []);
+        console.log('Loaded staff:', staff.length, 'members');
         populateStaffDropdown();
       } catch (error) {
         console.error('Failed to load staff:', error);
@@ -1775,7 +2366,8 @@
       staff.forEach(s => {
         const option = document.createElement('option');
         option.value = s.id;
-        option.textContent = s.name;
+        // Staff has first_name and last_name, not name
+        option.textContent = `${s.first_name} ${s.last_name}`.trim();
         staffSelect.appendChild(option);
 
         const filterOption = option.cloneNode(true);
@@ -1783,10 +2375,42 @@
       });
     }
 
+    let locations = [];
+
+    async function loadLocations() {
+      try {
+        const data = await apiRequest('/api/locations?active_only=true');
+        // API returns array directly
+        locations = Array.isArray(data) ? data : (data.locations || []);
+        console.log('Loaded locations:', locations.length, 'locations');
+        populateLocationsDropdown();
+      } catch (error) {
+        console.error('Failed to load locations:', error);
+      }
+    }
+
+    function populateLocationsDropdown() {
+      const locationFilter = document.getElementById('locationFilter');
+
+      // Clear existing options except "All locations"
+      while (locationFilter.options.length > 1) {
+        locationFilter.remove(1);
+      }
+
+      locations.forEach(loc => {
+        const option = document.createElement('option');
+        option.value = loc.id;
+        option.textContent = loc.name;
+        locationFilter.appendChild(option);
+      });
+    }
+
     async function loadClassTemplates() {
       try {
         const data = await apiRequest('/api/classes/templates');
-        classTemplates = data.templates || [];
+        // API returns array directly, not { templates: [...] }
+        classTemplates = Array.isArray(data) ? data : (data.templates || []);
+        console.log('Loaded templates:', classTemplates.length, 'templates');
         populateTemplateDropdowns();
       } catch (error) {
         console.error('Failed to load class templates:', error);
@@ -2398,6 +3022,491 @@
         submitBtn.disabled = false;
       }
     }
+
+    // ============================================
+    // Calendar & Date Navigation (Momence-style)
+    // ============================================
+
+    let currentView = 'month';
+    let currentDate = new Date();
+    let selectedDate = new Date();
+    let calendarDisplayMonth = new Date().getMonth();
+    let calendarDisplayYear = new Date().getFullYear();
+
+    // Initialize calendar on page load
+    document.addEventListener('DOMContentLoaded', () => {
+      initializeCalendar();
+      initializeViewTabs();
+      initializeClassTypeTabs();
+      updateCurrentView();
+    });
+
+    function initializeCalendar() {
+      const monthSelect = document.getElementById('calendarMonth');
+      const yearSelect = document.getElementById('calendarYear');
+
+      // Populate months
+      const months = ['January', 'February', 'March', 'April', 'May', 'June',
+                      'July', 'August', 'September', 'October', 'November', 'December'];
+      months.forEach((month, idx) => {
+        const option = document.createElement('option');
+        option.value = idx;
+        option.textContent = month;
+        monthSelect.appendChild(option);
+      });
+
+      // Populate years (current - 2 to current + 5)
+      const currentYear = new Date().getFullYear();
+      for (let year = currentYear - 2; year <= currentYear + 5; year++) {
+        const option = document.createElement('option');
+        option.value = year;
+        option.textContent = year;
+        yearSelect.appendChild(option);
+      }
+
+      // Set initial values
+      monthSelect.value = calendarDisplayMonth;
+      yearSelect.value = calendarDisplayYear;
+
+      updateDateLabel();
+      renderCalendarDropdown();
+    }
+
+    function initializeViewTabs() {
+      document.querySelectorAll('.view-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          document.querySelectorAll('.view-tab').forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          currentView = tab.dataset.view;
+          updateCurrentView();
+        });
+      });
+    }
+
+    function initializeClassTypeTabs() {
+      document.querySelectorAll('.class-type-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          document.querySelectorAll('.class-type-tab').forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          // Filter classes based on type
+          const classType = tab.dataset.type;
+          filterClassesByType(classType);
+        });
+      });
+    }
+
+    function filterClassesByType(type) {
+      // Re-render current view with filtered data
+      updateCurrentView();
+    }
+
+    function toggleDatePicker() {
+      const dropdown = document.getElementById('calendarDropdown');
+      dropdown.classList.toggle('open');
+
+      // Close on click outside
+      if (dropdown.classList.contains('open')) {
+        setTimeout(() => {
+          document.addEventListener('click', closeDatePickerOnClickOutside);
+        }, 0);
+      }
+    }
+
+    function closeDatePickerOnClickOutside(e) {
+      const wrapper = document.querySelector('.date-picker-wrapper');
+      if (!wrapper.contains(e.target)) {
+        document.getElementById('calendarDropdown').classList.remove('open');
+        document.removeEventListener('click', closeDatePickerOnClickOutside);
+      }
+    }
+
+    function navigateDate(direction) {
+      if (currentView === 'day') {
+        currentDate.setDate(currentDate.getDate() + direction);
+      } else if (currentView === 'week') {
+        currentDate.setDate(currentDate.getDate() + (direction * 7));
+      } else if (currentView === 'month') {
+        currentDate.setMonth(currentDate.getMonth() + direction);
+      }
+      calendarDisplayMonth = currentDate.getMonth();
+      calendarDisplayYear = currentDate.getFullYear();
+      updateDateLabel();
+      updateCurrentView();
+    }
+
+    function navigateCalendar(direction) {
+      calendarDisplayMonth += direction;
+      if (calendarDisplayMonth > 11) {
+        calendarDisplayMonth = 0;
+        calendarDisplayYear++;
+      } else if (calendarDisplayMonth < 0) {
+        calendarDisplayMonth = 11;
+        calendarDisplayYear--;
+      }
+      document.getElementById('calendarMonth').value = calendarDisplayMonth;
+      document.getElementById('calendarYear').value = calendarDisplayYear;
+      renderCalendarDropdown();
+    }
+
+    function updateCalendarDisplay() {
+      calendarDisplayMonth = parseInt(document.getElementById('calendarMonth').value);
+      calendarDisplayYear = parseInt(document.getElementById('calendarYear').value);
+      renderCalendarDropdown();
+    }
+
+    function renderCalendarDropdown() {
+      const container = document.getElementById('calendarDays');
+      container.innerHTML = '';
+
+      const firstDay = new Date(calendarDisplayYear, calendarDisplayMonth, 1);
+      const lastDay = new Date(calendarDisplayYear, calendarDisplayMonth + 1, 0);
+      const startDayOfWeek = firstDay.getDay();
+      const totalDays = lastDay.getDate();
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      // Previous month days
+      const prevMonthLastDay = new Date(calendarDisplayYear, calendarDisplayMonth, 0).getDate();
+      for (let i = startDayOfWeek - 1; i >= 0; i--) {
+        const day = document.createElement('div');
+        day.className = 'calendar-day other-month';
+        day.textContent = prevMonthLastDay - i;
+        day.onclick = () => selectCalendarDay(calendarDisplayYear, calendarDisplayMonth - 1, prevMonthLastDay - i);
+        container.appendChild(day);
+      }
+
+      // Current month days
+      for (let i = 1; i <= totalDays; i++) {
+        const day = document.createElement('div');
+        day.className = 'calendar-day';
+        day.textContent = i;
+
+        const thisDate = new Date(calendarDisplayYear, calendarDisplayMonth, i);
+        thisDate.setHours(0, 0, 0, 0);
+
+        if (thisDate.getTime() === today.getTime()) {
+          day.classList.add('today');
+        }
+
+        if (selectedDate && thisDate.getTime() === selectedDate.getTime()) {
+          day.classList.add('selected');
+        }
+
+        day.onclick = () => selectCalendarDay(calendarDisplayYear, calendarDisplayMonth, i);
+        container.appendChild(day);
+      }
+
+      // Next month days to fill the grid
+      const remainingCells = 42 - (startDayOfWeek + totalDays);
+      for (let i = 1; i <= remainingCells; i++) {
+        const day = document.createElement('div');
+        day.className = 'calendar-day other-month';
+        day.textContent = i;
+        day.onclick = () => selectCalendarDay(calendarDisplayYear, calendarDisplayMonth + 1, i);
+        container.appendChild(day);
+      }
+    }
+
+    function selectCalendarDay(year, month, day) {
+      currentDate = new Date(year, month, day);
+      selectedDate = new Date(year, month, day);
+      calendarDisplayMonth = currentDate.getMonth();
+      calendarDisplayYear = currentDate.getFullYear();
+      document.getElementById('calendarMonth').value = calendarDisplayMonth;
+      document.getElementById('calendarYear').value = calendarDisplayYear;
+      document.getElementById('calendarDropdown').classList.remove('open');
+      updateDateLabel();
+      renderCalendarDropdown();
+      updateCurrentView();
+    }
+
+    function updateDateLabel() {
+      const label = document.getElementById('currentDateLabel');
+      const months = ['January', 'February', 'March', 'April', 'May', 'June',
+                      'July', 'August', 'September', 'October', 'November', 'December'];
+      const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+      if (currentView === 'day') {
+        label.textContent = `${days[currentDate.getDay()]}, ${months[currentDate.getMonth()]} ${currentDate.getDate()}, ${currentDate.getFullYear()}`;
+      } else if (currentView === 'week') {
+        const weekStart = new Date(currentDate);
+        weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+        const weekEnd = new Date(weekStart);
+        weekEnd.setDate(weekEnd.getDate() + 6);
+        label.textContent = `${months[weekStart.getMonth()]} ${weekStart.getDate()} - ${months[weekEnd.getMonth()]} ${weekEnd.getDate()}, ${weekEnd.getFullYear()}`;
+      } else {
+        label.textContent = `${months[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
+      }
+    }
+
+    function updateCurrentView() {
+      // Hide all views
+      document.getElementById('monthView').style.display = 'none';
+      document.getElementById('weekView').style.display = 'none';
+      document.getElementById('dayView').style.display = 'none';
+      document.getElementById('emptyState').style.display = 'none';
+      document.getElementById('classesList').style.display = 'none';
+
+      updateDateLabel();
+
+      if (currentView === 'list') {
+        renderListView();
+      } else if (currentView === 'day') {
+        document.getElementById('dayView').style.display = 'block';
+        renderDayView();
+      } else if (currentView === 'week') {
+        document.getElementById('weekView').style.display = 'block';
+        renderWeekView();
+      } else if (currentView === 'month') {
+        document.getElementById('monthView').style.display = 'block';
+        renderMonthView();
+      }
+    }
+
+    function renderListView() {
+      if (classes.length === 0) {
+        document.getElementById('emptyState').style.display = 'block';
+      } else {
+        document.getElementById('classesList').style.display = 'block';
+        renderClasses();
+      }
+    }
+
+    function renderMonthView() {
+      const grid = document.getElementById('monthCalendarGrid');
+      grid.innerHTML = '';
+
+      const year = currentDate.getFullYear();
+      const month = currentDate.getMonth();
+      const firstDay = new Date(year, month, 1);
+      const lastDay = new Date(year, month + 1, 0);
+      const startDayOfWeek = firstDay.getDay();
+      const totalDays = lastDay.getDate();
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      // Previous month padding
+      const prevMonthLastDay = new Date(year, month, 0).getDate();
+      for (let i = startDayOfWeek - 1; i >= 0; i--) {
+        const cell = document.createElement('div');
+        cell.className = 'month-calendar-cell other-month';
+        cell.innerHTML = `<div class="month-calendar-date">${prevMonthLastDay - i}</div>`;
+        grid.appendChild(cell);
+      }
+
+      // Current month days
+      for (let day = 1; day <= totalDays; day++) {
+        const cell = document.createElement('div');
+        cell.className = 'month-calendar-cell';
+
+        const cellDate = new Date(year, month, day);
+        cellDate.setHours(0, 0, 0, 0);
+
+        if (cellDate.getTime() === today.getTime()) {
+          cell.classList.add('today');
+        }
+
+        // Find classes for this day
+        const dayClasses = classes.filter(cls => {
+          const clsDate = new Date(cls.start_time);
+          return clsDate.getDate() === day &&
+                 clsDate.getMonth() === month &&
+                 clsDate.getFullYear() === year;
+        });
+
+        let classesHtml = '';
+        dayClasses.slice(0, 3).forEach(cls => {
+          const time = new Date(cls.start_time);
+          const timeStr = time.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+          classesHtml += `
+            <div class="month-class-item" onclick="viewClass(${cls.id})">
+              <span class="month-class-time">${timeStr}</span> ${cls.name}
+            </div>
+          `;
+        });
+
+        if (dayClasses.length > 3) {
+          classesHtml += `<div class="month-class-item" style="background: var(--gray-100); border-left-color: var(--gray-400);">+${dayClasses.length - 3} more</div>`;
+        }
+
+        cell.innerHTML = `
+          <div class="month-calendar-date">${day}</div>
+          ${classesHtml}
+        `;
+
+        cell.onclick = (e) => {
+          if (!e.target.classList.contains('month-class-item')) {
+            currentDate = new Date(year, month, day);
+            currentView = 'day';
+            document.querySelectorAll('.view-tab').forEach(t => t.classList.remove('active'));
+            document.querySelector('.view-tab[data-view="day"]').classList.add('active');
+            updateCurrentView();
+          }
+        };
+
+        grid.appendChild(cell);
+      }
+
+      // Next month padding
+      const remainingCells = 42 - (startDayOfWeek + totalDays);
+      for (let i = 1; i <= remainingCells; i++) {
+        const cell = document.createElement('div');
+        cell.className = 'month-calendar-cell other-month';
+        cell.innerHTML = `<div class="month-calendar-date">${i}</div>`;
+        grid.appendChild(cell);
+      }
+    }
+
+    function renderWeekView() {
+      const headerContainer = document.getElementById('weekCalendarHeader');
+      const bodyContainer = document.getElementById('weekCalendarBody');
+
+      // Get the start of the week (Sunday)
+      const weekStart = new Date(currentDate);
+      weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+      // Build header
+      let headerHtml = '<div class="week-time-column"></div>';
+      for (let i = 0; i < 7; i++) {
+        const day = new Date(weekStart);
+        day.setDate(day.getDate() + i);
+        const isToday = day.toDateString() === today.toDateString();
+        headerHtml += `
+          <div class="week-calendar-header-day">
+            <div class="week-day-name">${days[i]}</div>
+            <div class="week-day-number${isToday ? ' today' : ''}">${day.getDate()}</div>
+          </div>
+        `;
+      }
+      headerContainer.innerHTML = headerHtml;
+
+      // Build time slots (6 AM to 10 PM)
+      let bodyHtml = '';
+      for (let hour = 6; hour <= 22; hour++) {
+        const timeStr = hour > 12 ? `${hour - 12} PM` : (hour === 12 ? '12 PM' : `${hour} AM`);
+        bodyHtml += `<div class="week-time-column">${timeStr}</div>`;
+
+        for (let day = 0; day < 7; day++) {
+          const slotDate = new Date(weekStart);
+          slotDate.setDate(slotDate.getDate() + day);
+          slotDate.setHours(hour, 0, 0, 0);
+
+          // Find classes for this time slot
+          const slotClasses = classes.filter(cls => {
+            const clsStart = new Date(cls.start_time);
+            return clsStart.getHours() === hour &&
+                   clsStart.getDate() === slotDate.getDate() &&
+                   clsStart.getMonth() === slotDate.getMonth();
+          });
+
+          let classHtml = '';
+          slotClasses.forEach(cls => {
+            classHtml += `
+              <div class="week-class-item" onclick="viewClass(${cls.id})" style="top: 2px;">
+                ${cls.name}
+              </div>
+            `;
+          });
+
+          bodyHtml += `<div class="week-time-slot">${classHtml}</div>`;
+        }
+      }
+      bodyContainer.innerHTML = bodyHtml;
+    }
+
+    function renderDayView() {
+      const container = document.getElementById('dayTimeGrid');
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      // Build time slots (6 AM to 10 PM)
+      let html = '';
+      for (let hour = 6; hour <= 22; hour++) {
+        const timeStr = hour > 12 ? `${hour - 12} PM` : (hour === 12 ? '12 PM' : `${hour} AM`);
+
+        // Find classes for this hour
+        const hourClasses = classes.filter(cls => {
+          const clsStart = new Date(cls.start_time);
+          return clsStart.getHours() === hour &&
+                 clsStart.getDate() === currentDate.getDate() &&
+                 clsStart.getMonth() === currentDate.getMonth() &&
+                 clsStart.getFullYear() === currentDate.getFullYear();
+        });
+
+        let classesHtml = '';
+        hourClasses.forEach(cls => {
+          const startTime = new Date(cls.start_time);
+          const endTime = new Date(cls.end_time);
+          const startStr = startTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+          const endStr = endTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+          classesHtml += `
+            <div class="day-class-item" onclick="viewClass(${cls.id})">
+              <div class="day-class-title">${cls.name}</div>
+              <div class="day-class-meta">${startStr} - ${endStr} | ${cls.staff_name || 'No instructor'}</div>
+            </div>
+          `;
+        });
+
+        html += `
+          <div class="week-time-column">${timeStr}</div>
+          <div class="day-time-slot">${classesHtml}</div>
+        `;
+      }
+      container.innerHTML = html;
+    }
+
+    // ============================================
+    // Actions Dropdown
+    // ============================================
+
+    function toggleActionsDropdown() {
+      const dropdown = document.getElementById('actionsDropdown');
+      dropdown.classList.toggle('open');
+
+      if (dropdown.classList.contains('open')) {
+        setTimeout(() => {
+          document.addEventListener('click', closeActionsDropdownOnClickOutside);
+        }, 0);
+      }
+    }
+
+    function closeActionsDropdownOnClickOutside(e) {
+      const dropdown = document.getElementById('actionsDropdown');
+      if (!dropdown.contains(e.target)) {
+        dropdown.classList.remove('open');
+        document.removeEventListener('click', closeActionsDropdownOnClickOutside);
+      }
+    }
+
+    function openClassSettings() {
+      document.getElementById('actionsDropdown').classList.remove('open');
+      window.location.href = '/studio/class-settings';
+    }
+
+    function exportClasses() {
+      document.getElementById('actionsDropdown').classList.remove('open');
+      alert('Export functionality coming soon!');
+    }
+
+    function printSchedule() {
+      document.getElementById('actionsDropdown').classList.remove('open');
+      window.print();
+    }
+
+    // Make sure to update the view when classes are loaded
+    const originalLoadClasses = loadClasses;
+    loadClasses = async function() {
+      await originalLoadClasses();
+      updateCurrentView();
+    };
   </script>
 </body>
 </html>
