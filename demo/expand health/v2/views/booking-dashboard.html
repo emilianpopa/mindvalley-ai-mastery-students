@@ -1739,43 +1739,53 @@
     async function openAddTaskModal() {
       document.getElementById('addTaskModal').classList.add('active');
 
-      // Load staff list for assignment dropdown
-      if (staffList.length === 0) {
-        try {
-          const response = await fetch('/api/staff?active_only=true', {
-            headers: {
-              'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
-            }
-          });
-          if (response.ok) {
-            staffList = await response.json();
-            const select = document.getElementById('taskAssignedTo');
+      // Always load fresh staff list for assignment dropdown
+      try {
+        const response = await fetch('/api/staff?active_only=true', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+          }
+        });
+        if (response.ok) {
+          staffList = await response.json();
+          console.log('Loaded staff:', staffList);
+          const select = document.getElementById('taskAssignedTo');
+          if (staffList && staffList.length > 0) {
             select.innerHTML = '<option value="">Unassigned</option>' +
               staffList.map(s => `<option value="${s.id}">${s.first_name} ${s.last_name}</option>`).join('');
+          } else {
+            select.innerHTML = '<option value="">No staff members found</option>';
           }
-        } catch (error) {
-          console.error('Error loading staff:', error);
+        } else {
+          console.error('Staff API response not OK:', response.status);
         }
+      } catch (error) {
+        console.error('Error loading staff:', error);
       }
 
-      // Load clients list for linking
-      if (clientsList.length === 0) {
-        try {
-          const response = await fetch('/api/clients?limit=100', {
-            headers: {
-              'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
-            }
-          });
-          if (response.ok) {
-            const data = await response.json();
-            clientsList = data.clients || [];
-            const select = document.getElementById('taskClientId');
+      // Always load fresh clients list for linking
+      try {
+        const response = await fetch('/api/clients?limit=100', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+          }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          clientsList = data.clients || [];
+          console.log('Loaded clients:', clientsList.length);
+          const select = document.getElementById('taskClientId');
+          if (clientsList && clientsList.length > 0) {
             select.innerHTML = '<option value="">None</option>' +
               clientsList.map(c => `<option value="${c.id}">${c.first_name} ${c.last_name}</option>`).join('');
+          } else {
+            select.innerHTML = '<option value="">No customers found</option>';
           }
-        } catch (error) {
-          console.error('Error loading clients:', error);
+        } else {
+          console.error('Clients API response not OK:', response.status);
         }
+      } catch (error) {
+        console.error('Error loading clients:', error);
       }
     }
 
