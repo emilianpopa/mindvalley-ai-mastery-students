@@ -1581,6 +1581,8 @@
         document.getElementById('userAvatar').textContent = user.email[0].toUpperCase();
       } catch (error) {
         console.error('Failed to load user info:', error);
+        document.getElementById('userName').textContent = 'User';
+        document.getElementById('userRole').textContent = 'Staff';
       }
     }
 
