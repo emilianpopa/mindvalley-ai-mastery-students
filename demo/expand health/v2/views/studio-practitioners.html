@@ -334,78 +334,101 @@
       margin-bottom: 20px;
     }
 
-    /* Modal */
-    .modal-overlay {
+    /* Slide Panel (Momence style) */
+    .slide-panel-overlay {
       position: fixed;
       top: 0;
       left: 0;
       right: 0;
       bottom: 0;
-      background: rgba(0, 0, 0, 0.5);
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      background: rgba(0, 0, 0, 0.3);
       z-index: 1000;
       opacity: 0;
       visibility: hidden;
-      transition: all 0.2s;
+      transition: all 0.3s;
     }
 
-    .modal-overlay.active {
+    .slide-panel-overlay.active {
       opacity: 1;
       visibility: visible;
     }
 
-    .modal {
+    .slide-panel {
+      position: fixed;
+      top: 0;
+      right: -480px;
+      width: 480px;
+      height: 100vh;
       background: white;
-      border-radius: 12px;
-      width: 100%;
-      max-width: 500px;
-      max-height: 90vh;
-      overflow-y: auto;
+      z-index: 1001;
+      display: flex;
+      flex-direction: column;
+      transition: right 0.3s ease;
+      box-shadow: -4px 0 20px rgba(0, 0, 0, 0.1);
     }
 
-    .modal-header {
+    .slide-panel.active {
+      right: 0;
+    }
+
+    .panel-header {
       display: flex;
-      justify-content: space-between;
       align-items: center;
+      gap: 16px;
       padding: 20px 24px;
       border-bottom: 1px solid var(--gray-200);
     }
 
-    .modal-title {
+    .panel-back {
+      background: none;
+      border: none;
+      padding: 8px;
+      cursor: pointer;
+      color: var(--gray-600);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 6px;
+    }
+
+    .panel-back:hover {
+      background: var(--gray-100);
+    }
+
+    .panel-title {
       font-size: 1.125rem;
       font-weight: 600;
       color: var(--gray-900);
     }
 
-    .modal-close {
-      background: none;
-      border: none;
-      font-size: 24px;
-      color: var(--gray-400);
-      cursor: pointer;
-      line-height: 1;
-    }
-
-    .modal-close:hover {
-      color: var(--gray-600);
-    }
-
-    .modal-body {
+    .panel-body {
+      flex: 1;
+      overflow-y: auto;
       padding: 24px;
+    }
+
+    .form-section {
+      background: white;
+      border: 1px solid var(--gray-200);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 16px;
     }
 
     .form-group {
       margin-bottom: 20px;
     }
 
+    .form-group:last-child {
+      margin-bottom: 0;
+    }
+
     .form-label {
       display: block;
-      font-size: 0.875rem;
+      font-size: 0.813rem;
       font-weight: 500;
       color: var(--gray-700);
-      margin-bottom: 6px;
+      margin-bottom: 8px;
     }
 
     .form-label .required {
@@ -413,108 +436,275 @@
     }
 
     .form-input,
-    .form-select {
+    .form-select,
+    .form-textarea {
       width: 100%;
-      padding: 10px 12px;
+      padding: 12px 14px;
       border: 1px solid var(--gray-300);
       border-radius: 8px;
       font-size: 0.875rem;
+      background: white;
+      color: var(--gray-900);
+    }
+
+    .form-input::placeholder,
+    .form-textarea::placeholder {
+      color: var(--gray-400);
     }
 
     .form-input:focus,
-    .form-select:focus {
+    .form-select:focus,
+    .form-textarea:focus {
       outline: none;
       border-color: var(--teal-500);
       box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
     }
 
-    .form-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
+    .form-textarea {
+      min-height: 80px;
+      resize: vertical;
     }
 
-    .color-picker-wrapper {
+    .input-with-button {
+      display: flex;
+      gap: 8px;
+    }
+
+    .input-with-button .form-input,
+    .input-with-button .form-select {
+      flex: 1;
+    }
+
+    .input-add-btn {
+      width: 42px;
+      height: 42px;
       display: flex;
       align-items: center;
-      gap: 12px;
-    }
-
-    .color-picker {
-      width: 48px;
-      height: 38px;
+      justify-content: center;
+      background: var(--gray-100);
       border: 1px solid var(--gray-300);
       border-radius: 8px;
       cursor: pointer;
-      padding: 2px;
+      color: var(--gray-600);
+      flex-shrink: 0;
     }
 
-    .color-picker::-webkit-color-swatch-wrapper {
-      padding: 0;
+    .input-add-btn:hover {
+      background: var(--gray-200);
     }
 
-    .color-picker::-webkit-color-swatch {
-      border: none;
-      border-radius: 6px;
-    }
-
-    .checkbox-group {
+    /* Toggle switch */
+    .toggle-row {
       display: flex;
-      gap: 24px;
+      align-items: center;
+      justify-content: space-between;
+      padding: 4px 0;
     }
 
-    .checkbox-label {
+    .toggle-label {
       display: flex;
       align-items: center;
       gap: 8px;
       font-size: 0.875rem;
       color: var(--gray-700);
+    }
+
+    .toggle-label svg {
+      color: var(--gray-400);
+    }
+
+    .toggle-switch {
+      position: relative;
+      width: 44px;
+      height: 24px;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: var(--gray-300);
+      transition: 0.3s;
+      border-radius: 24px;
+    }
+
+    .toggle-slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: 0.3s;
+      border-radius: 50%;
+    }
+
+    .toggle-switch input:checked + .toggle-slider {
+      background-color: #6366F1;
+    }
+
+    .toggle-switch input:checked + .toggle-slider:before {
+      transform: translateX(20px);
+    }
+
+    /* Phone input */
+    .phone-input-wrapper {
+      display: flex;
+      gap: 8px;
+    }
+
+    .country-select {
+      width: 90px;
+      padding: 12px 10px;
+      border: 1px solid var(--gray-300);
+      border-radius: 8px;
+      font-size: 0.875rem;
+      background: white;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .phone-number-input {
+      flex: 1;
+    }
+
+    /* Collapsible section */
+    .collapsible-section {
+      border: 1px solid var(--gray-200);
+      border-radius: 12px;
+      margin-bottom: 16px;
+    }
+
+    .collapsible-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      cursor: pointer;
+      background: white;
+      border-radius: 12px;
+    }
+
+    .collapsible-header:hover {
+      background: var(--gray-50);
+    }
+
+    .collapsible-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--gray-700);
+    }
+
+    .collapsible-toggle {
+      color: var(--gray-400);
+      transition: transform 0.2s;
+    }
+
+    .collapsible-section.open .collapsible-toggle {
+      transform: rotate(180deg);
+    }
+
+    .collapsible-content {
+      display: none;
+      padding: 0 20px 20px;
+    }
+
+    .collapsible-section.open .collapsible-content {
+      display: block;
+    }
+
+    /* Tags section */
+    .tags-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .tags-title {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--gray-700);
+    }
+
+    .manage-tags-link {
+      font-size: 0.813rem;
+      color: #6366F1;
+      text-decoration: none;
       cursor: pointer;
     }
 
-    .checkbox-label input {
-      width: 18px;
-      height: 18px;
+    .manage-tags-link:hover {
+      text-decoration: underline;
     }
 
-    .modal-footer {
+    /* Panel footer */
+    .panel-footer {
       display: flex;
       justify-content: flex-end;
       gap: 12px;
       padding: 16px 24px;
       border-top: 1px solid var(--gray-200);
+      background: white;
     }
 
-    .btn-cancel {
+    .btn-discard {
       padding: 10px 20px;
       background: white;
-      border: 1px solid var(--gray-300);
-      border-radius: 8px;
+      border: none;
+      color: var(--gray-600);
       font-weight: 500;
+      font-size: 0.875rem;
       cursor: pointer;
     }
 
-    .btn-cancel:hover {
-      background: var(--gray-50);
+    .btn-discard:hover {
+      color: var(--gray-800);
     }
 
-    .btn-save {
-      padding: 10px 20px;
-      background: var(--teal-600);
+    .btn-add-submit {
+      padding: 10px 24px;
+      background: #6366F1;
       color: white;
       border: none;
       border-radius: 8px;
       font-weight: 500;
+      font-size: 0.875rem;
       cursor: pointer;
     }
 
-    .btn-save:hover {
-      background: var(--teal-700);
+    .btn-add-submit:hover {
+      background: #5558E3;
     }
 
-    .btn-save:disabled {
+    .btn-add-submit:disabled {
       background: var(--gray-300);
       cursor: not-allowed;
+    }
+
+    /* Info icon */
+    .info-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 16px;
+      height: 16px;
+      color: var(--gray-400);
+      cursor: help;
     }
 
     /* Dropdown menu */
@@ -569,10 +759,16 @@
     <!-- Include sidebar -->
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-header">
-        <a href="/" class="logo">
-          <span class="logo-x">EXPAND</span>
-          <span class="logo-health">HEALTH</span>
-        </a>
+        <div class="logo">
+          <svg class="logo-icon" width="28" height="28" viewBox="0 0 24 24" fill="none">
+            <path d="M4 4L11 12L4 20" stroke="#0F766E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M20 4L13 12L20 20" stroke="#0F766E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <div class="logo-text">
+            <span class="logo-expand">EXPAND</span>
+            <span class="logo-health">HEALTH</span>
+          </div>
+        </div>
       </div>
 
       <nav class="sidebar-nav">
@@ -821,75 +1017,182 @@
     </main>
   </div>
 
-  <!-- Add/Edit Staff Modal -->
-  <div class="modal-overlay" id="staffModal">
-    <div class="modal">
-      <div class="modal-header">
-        <h2 class="modal-title" id="modalTitle">Add new practitioner</h2>
-        <button class="modal-close" onclick="closeStaffModal()">&times;</button>
-      </div>
-      <form id="staffForm" onsubmit="saveStaff(event)">
-        <div class="modal-body">
-          <input type="hidden" name="id" id="staffId">
+  <!-- Add/Edit Staff Slide Panel (Momence style) -->
+  <div class="slide-panel-overlay" id="staffPanelOverlay" onclick="closeStaffModal()"></div>
+  <div class="slide-panel" id="staffPanel">
+    <div class="panel-header">
+      <button class="panel-back" onclick="closeStaffModal()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+      </button>
+      <h2 class="panel-title" id="modalTitle">Add new practitioner</h2>
+    </div>
 
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label">First Name <span class="required">*</span></label>
-              <input type="text" class="form-input" name="first_name" id="firstName" required>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Last Name <span class="required">*</span></label>
-              <input type="text" class="form-input" name="last_name" id="lastName" required>
-            </div>
+    <form id="staffForm" onsubmit="saveStaff(event)">
+      <div class="panel-body">
+        <input type="hidden" name="id" id="staffId">
+
+        <!-- Basic Info Section -->
+        <div class="form-section">
+          <div class="form-group">
+            <label class="form-label">First name <span class="required">*</span></label>
+            <input type="text" class="form-input" name="first_name" id="firstName" placeholder="Enter first name" required>
           </div>
 
           <div class="form-group">
-            <label class="form-label">Email</label>
-            <input type="email" class="form-input" name="email" id="staffEmail">
+            <label class="form-label">Last name <span class="required">*</span></label>
+            <input type="text" class="form-input" name="last_name" id="lastName" placeholder="Enter last name" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Bio</label>
+            <textarea class="form-textarea" name="bio" id="staffBio" placeholder="Enter practitioner bio..."></textarea>
+          </div>
+        </div>
+
+        <!-- Pay Rate Section -->
+        <div class="form-section">
+          <div class="form-group">
+            <label class="form-label">Default pay rate</label>
+            <div class="input-with-button">
+              <select class="form-select" name="pay_rate" id="staffPayRate">
+                <option value="">Select pay rate</option>
+                <option value="$25/hr">$25/hr</option>
+                <option value="$35/hr">$35/hr</option>
+                <option value="$50/hr">$50/hr</option>
+                <option value="$75/hr">$75/hr</option>
+                <option value="$100/hr">$100/hr</option>
+                <option value="$150/hr">$150/hr</option>
+              </select>
+              <button type="button" class="input-add-btn" title="Add custom rate">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="toggle-row">
+            <div class="toggle-label">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+              </svg>
+              Bookable
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" name="accepts_bookings" id="staffBookings" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Contact Info Section -->
+        <div class="form-section">
+          <div class="form-group">
+            <label class="form-label">E-mail</label>
+            <input type="email" class="form-input" name="email" id="staffEmail" placeholder="Enter email address">
           </div>
 
           <div class="form-group">
             <label class="form-label">Phone</label>
-            <input type="tel" class="form-input" name="phone" id="staffPhone">
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">Title / Role <span class="required">*</span></label>
-            <input type="text" class="form-input" name="title" id="staffTitle" placeholder="e.g., Nutritionist, Wellness Coach" required>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">Default Pay Rate</label>
-            <input type="text" class="form-input" name="pay_rate" id="staffPayRate" placeholder="e.g., $50/hr">
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">Color</label>
-            <div class="color-picker-wrapper">
-              <input type="color" class="color-picker" name="color" id="staffColor" value="#10B981">
-              <span style="font-size: 0.875rem; color: var(--gray-500);">Used for calendar</span>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <div class="checkbox-group">
-              <label class="checkbox-label">
-                <input type="checkbox" name="is_active" id="staffActive" checked>
-                Active
-              </label>
-              <label class="checkbox-label">
-                <input type="checkbox" name="accepts_bookings" id="staffBookings" checked>
-                Accepts Bookings
-              </label>
+            <div class="phone-input-wrapper">
+              <select class="form-select country-select" id="countryCode">
+                <option value="+1">🇺🇸 +1</option>
+                <option value="+44">🇬🇧 +44</option>
+                <option value="+61">🇦🇺 +61</option>
+                <option value="+33">🇫🇷 +33</option>
+                <option value="+49">🇩🇪 +49</option>
+                <option value="+81">🇯🇵 +81</option>
+                <option value="+86">🇨🇳 +86</option>
+                <option value="+91">🇮🇳 +91</option>
+              </select>
+              <input type="tel" class="form-input phone-number-input" name="phone" id="staffPhone" placeholder="Enter phone number">
             </div>
           </div>
         </div>
-        <div class="modal-footer">
-          <button type="button" class="btn-cancel" onclick="closeStaffModal()">Cancel</button>
-          <button type="submit" class="btn-save" id="saveBtn">Save</button>
+
+        <!-- Role Section -->
+        <div class="form-section">
+          <div class="form-group">
+            <label class="form-label">Roles <span class="required">*</span></label>
+            <div class="input-with-button">
+              <select class="form-select" name="title" id="staffTitle" required>
+                <option value="">Select role</option>
+                <option value="Owner">Owner</option>
+                <option value="Manager">Manager</option>
+                <option value="Practitioner">Practitioner</option>
+                <option value="Wellness Coach">Wellness Coach</option>
+                <option value="Nutritionist">Nutritionist</option>
+                <option value="Fitness Instructor">Fitness Instructor</option>
+                <option value="Yoga Instructor">Yoga Instructor</option>
+                <option value="Massage Therapist">Massage Therapist</option>
+                <option value="Esthetician">Esthetician</option>
+                <option value="Front Desk">Front Desk</option>
+              </select>
+              <button type="button" class="input-add-btn" title="Add custom role">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+              </button>
+            </div>
+          </div>
         </div>
-      </form>
-    </div>
+
+        <!-- Healthcare Provider Codes (Collapsible) -->
+        <div class="collapsible-section" id="healthcareSection">
+          <div class="collapsible-header" onclick="toggleCollapsible('healthcareSection')">
+            <span class="collapsible-title">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+              </svg>
+              Healthcare provider codes
+            </span>
+            <svg class="collapsible-toggle" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </div>
+          <div class="collapsible-content">
+            <div class="form-group">
+              <label class="form-label">NPI Number</label>
+              <input type="text" class="form-input" name="npi_number" id="staffNPI" placeholder="Enter NPI number">
+            </div>
+            <div class="form-group">
+              <label class="form-label">License Number</label>
+              <input type="text" class="form-input" name="license_number" id="staffLicense" placeholder="Enter license number">
+            </div>
+          </div>
+        </div>
+
+        <!-- Tags Section -->
+        <div class="form-section">
+          <div class="tags-header">
+            <span class="tags-title">Tags</span>
+            <a href="#" class="manage-tags-link" onclick="event.preventDefault(); alert('Tag management coming soon!');">Manage tags</a>
+          </div>
+          <select class="form-select" name="tags" id="staffTags" multiple style="min-height: 80px;">
+            <option value="senior">Senior</option>
+            <option value="new">New</option>
+            <option value="specialist">Specialist</option>
+            <option value="part-time">Part-time</option>
+            <option value="full-time">Full-time</option>
+          </select>
+        </div>
+
+        <!-- Hidden fields for backward compatibility -->
+        <input type="hidden" name="color" id="staffColor" value="#10B981">
+        <input type="hidden" name="is_active" id="staffActive" value="true">
+      </div>
+
+      <div class="panel-footer">
+        <button type="button" class="btn-discard" onclick="closeStaffModal()">Discard</button>
+        <button type="submit" class="btn-add-submit" id="saveBtn">Add</button>
+      </div>
+    </form>
   </div>
 
   <script src="/js/dashboard.js"></script>
@@ -1041,35 +1344,49 @@
     });
 
     function openStaffModal(staff = null) {
-      const modal = document.getElementById('staffModal');
+      const overlay = document.getElementById('staffPanelOverlay');
+      const panel = document.getElementById('staffPanel');
       const title = document.getElementById('modalTitle');
       const form = document.getElementById('staffForm');
+      const saveBtn = document.getElementById('saveBtn');
 
       form.reset();
 
       if (staff) {
         title.textContent = 'Edit practitioner';
+        saveBtn.textContent = 'Save';
         document.getElementById('staffId').value = staff.id;
         document.getElementById('firstName').value = staff.first_name || '';
         document.getElementById('lastName').value = staff.last_name || '';
+        document.getElementById('staffBio').value = staff.bio || '';
         document.getElementById('staffEmail').value = staff.email || '';
         document.getElementById('staffPhone').value = staff.phone || '';
         document.getElementById('staffTitle').value = staff.title || '';
         document.getElementById('staffPayRate').value = staff.pay_rate || '';
         document.getElementById('staffColor').value = staff.color || '#10B981';
-        document.getElementById('staffActive').checked = staff.is_active !== false;
+        document.getElementById('staffActive').value = staff.is_active !== false ? 'true' : 'false';
         document.getElementById('staffBookings').checked = staff.accepts_bookings !== false;
+        document.getElementById('staffNPI').value = staff.npi_number || '';
+        document.getElementById('staffLicense').value = staff.license_number || '';
       } else {
         title.textContent = 'Add new practitioner';
+        saveBtn.textContent = 'Add';
         document.getElementById('staffId').value = '';
         document.getElementById('staffColor').value = '#10B981';
       }
 
-      modal.classList.add('active');
+      overlay.classList.add('active');
+      panel.classList.add('active');
     }
 
     function closeStaffModal() {
-      document.getElementById('staffModal').classList.remove('active');
+      document.getElementById('staffPanelOverlay').classList.remove('active');
+      document.getElementById('staffPanel').classList.remove('active');
+    }
+
+    function toggleCollapsible(sectionId) {
+      const section = document.getElementById(sectionId);
+      section.classList.toggle('open');
     }
 
     function editStaff(id) {
@@ -1093,16 +1410,20 @@
       const data = {
         first_name: formData.get('first_name'),
         last_name: formData.get('last_name'),
+        bio: formData.get('bio') || null,
         email: formData.get('email') || null,
         phone: formData.get('phone') || null,
         title: formData.get('title'),
         pay_rate: formData.get('pay_rate') || null,
         color: formData.get('color'),
-        is_active: document.getElementById('staffActive').checked,
-        accepts_bookings: document.getElementById('staffBookings').checked
+        is_active: formData.get('is_active') === 'true',
+        accepts_bookings: document.getElementById('staffBookings').checked,
+        npi_number: formData.get('npi_number') || null,
+        license_number: formData.get('license_number') || null
       };
 
       const saveBtn = document.getElementById('saveBtn');
+      const originalText = saveBtn.textContent;
       saveBtn.disabled = true;
       saveBtn.textContent = 'Saving...';
 
@@ -1131,7 +1452,7 @@
         alert('Failed to save practitioner');
       } finally {
         saveBtn.disabled = false;
-        saveBtn.textContent = 'Save';
+        saveBtn.textContent = originalText;
       }
     }
 
