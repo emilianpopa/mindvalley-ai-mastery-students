@@ -21,7 +21,7 @@ router.use(authenticateToken);
  */
 router.get('/', async (req, res, next) => {
   try {
-    const tenantId = req.user.tenant_id;
+    const tenantId = req.user.tenantId;
     const { active_only, accepts_bookings } = req.query;
 
     let query = `
@@ -59,7 +59,7 @@ router.get('/', async (req, res, next) => {
  */
 router.get('/:id', async (req, res, next) => {
   try {
-    const tenantId = req.user.tenant_id;
+    const tenantId = req.user.tenantId;
     const { id } = req.params;
 
     // Get staff member
@@ -110,7 +110,7 @@ router.get('/:id', async (req, res, next) => {
  */
 router.post('/', requireRole('admin'), async (req, res, next) => {
   try {
-    const tenantId = req.user.tenant_id;
+    const tenantId = req.user.tenantId;
 
     const {
       user_id,
@@ -153,7 +153,7 @@ router.post('/', requireRole('admin'), async (req, res, next) => {
  */
 router.put('/:id', requireRole('admin'), async (req, res, next) => {
   try {
-    const tenantId = req.user.tenant_id;
+    const tenantId = req.user.tenantId;
     const { id } = req.params;
 
     const {
@@ -208,7 +208,7 @@ router.put('/:id', requireRole('admin'), async (req, res, next) => {
  */
 router.delete('/:id', requireRole('admin'), async (req, res, next) => {
   try {
-    const tenantId = req.user.tenant_id;
+    const tenantId = req.user.tenantId;
     const { id } = req.params;
 
     // Check for future appointments
@@ -244,7 +244,7 @@ router.delete('/:id', requireRole('admin'), async (req, res, next) => {
  */
 router.get('/:id/services', async (req, res, next) => {
   try {
-    const tenantId = req.user.tenant_id;
+    const tenantId = req.user.tenantId;
     const { id } = req.params;
 
     const result = await db.query(`
@@ -476,7 +476,7 @@ router.delete('/:id/time-off/:timeOffId', async (req, res, next) => {
  */
 router.get('/:id/appointments', async (req, res, next) => {
   try {
-    const tenantId = req.user.tenant_id;
+    const tenantId = req.user.tenantId;
     const { id } = req.params;
     const { start_date, end_date, status } = req.query;
 
