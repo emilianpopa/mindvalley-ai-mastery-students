@@ -637,11 +637,16 @@
       border-top: 1px solid var(--gray-200);
     }
 
-    /* Class type selection */
+    /* Class type selection - Momence style */
+    .class-type-selection {
+      margin-bottom: 24px;
+    }
+
     .class-type-selection h3 {
       font-size: 0.875rem;
-      color: var(--gray-600);
-      margin-bottom: 16px;
+      font-weight: 500;
+      color: var(--gray-700);
+      margin-bottom: 12px;
     }
 
     .class-type-options {
@@ -651,24 +656,155 @@
     }
 
     .class-type-option {
-      padding: 12px 20px;
-      background: var(--gray-100);
-      border: 2px solid var(--gray-200);
-      border-radius: 8px;
+      padding: 10px 16px;
+      background: white;
+      border: 1px solid var(--gray-300);
+      border-radius: 6px;
       font-size: 0.875rem;
       font-weight: 500;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all 0.15s;
+      color: var(--gray-700);
     }
 
     .class-type-option:hover {
-      background: var(--gray-200);
+      border-color: var(--gray-400);
+      background: var(--gray-50);
     }
 
     .class-type-option.active {
       background: var(--teal-50);
       border-color: var(--teal-500);
       color: var(--teal-700);
+    }
+
+    /* Class kind selection - pill buttons with icons */
+    .class-kind-options {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    .class-kind-option {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      background: white;
+      border: 1px solid var(--gray-300);
+      border-radius: 20px;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+      color: var(--gray-700);
+    }
+
+    .class-kind-option:hover {
+      border-color: var(--gray-400);
+      background: var(--gray-50);
+    }
+
+    .class-kind-option.active {
+      background: var(--teal-50);
+      border-color: var(--teal-500);
+      color: var(--teal-700);
+    }
+
+    .class-kind-option svg {
+      width: 16px;
+      height: 16px;
+      opacity: 0.7;
+    }
+
+    .class-kind-option.active svg {
+      opacity: 1;
+    }
+
+    /* Class kind description box */
+    .class-kind-description {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 16px;
+      background: var(--gray-50);
+      border-radius: 8px;
+      margin-top: 8px;
+    }
+
+    .class-kind-description-icon {
+      width: 40px;
+      height: 40px;
+      background: white;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      border: 1px solid var(--gray-200);
+    }
+
+    .class-kind-description-icon svg {
+      width: 20px;
+      height: 20px;
+      color: var(--gray-600);
+    }
+
+    .class-kind-description-text h4 {
+      font-size: 0.9375rem;
+      font-weight: 600;
+      color: var(--gray-900);
+      margin-bottom: 4px;
+    }
+
+    .class-kind-description-text p {
+      font-size: 0.8125rem;
+      color: var(--gray-600);
+      margin: 0;
+      line-height: 1.4;
+    }
+
+    /* Next button - Momence style */
+    .btn-next {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 24px;
+      background: var(--teal-600);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.9375rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .btn-next:hover {
+      background: var(--teal-700);
+    }
+
+    .btn-next svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .btn-cancel {
+      padding: 12px 20px;
+      background: white;
+      color: var(--gray-700);
+      border: 1px solid var(--gray-300);
+      border-radius: 8px;
+      font-size: 0.9375rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-cancel:hover {
+      background: var(--gray-50);
+      border-color: var(--gray-400);
     }
 
     @media (max-width: 768px) {
@@ -1379,14 +1515,14 @@
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <polyline points="15 18 9 12 15 6"/>
           </svg>
-          Back
         </button>
         <span id="modalTitle" style="font-size: 1.25rem; font-weight: 600;">Create a new class</span>
         <button class="modal-close" onclick="closeCreateModal()">&times;</button>
       </div>
       <div class="modal-body">
-        <!-- Step 1: Class Type Selection -->
+        <!-- Step 1: Class Type + Kind Selection (Momence style - both on same page) -->
         <div id="classTypeStep">
+          <!-- Type selection -->
           <div class="class-type-selection">
             <h3>Choose which type of class to create</h3>
             <div class="class-type-options">
@@ -1395,40 +1531,76 @@
               <button class="class-type-option" data-type="recurring">Recurring class</button>
             </div>
           </div>
-        </div>
 
-        <!-- Step 2: Class Kind Selection -->
-        <div id="classKindStep" style="display: none;">
+          <!-- Kind selection (shown on same page) -->
           <div class="class-type-selection">
-            <h3>What kind of class is this?</h3>
-            <div class="class-type-options" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
-              <button class="class-type-option" data-kind="class" style="flex-direction: column; padding: 20px;">
-                <span style="font-size: 24px; margin-bottom: 8px;">📚</span>
+            <h3>What kind of class are you planning?</h3>
+            <div class="class-kind-options">
+              <button class="class-kind-option active" data-kind="class">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                  <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
+                  <line x1="3" y1="10" x2="21" y2="10"/>
+                </svg>
                 Class
               </button>
-              <button class="class-type-option" data-kind="workshop" style="flex-direction: column; padding: 20px;">
-                <span style="font-size: 24px; margin-bottom: 8px;">🛠️</span>
+              <button class="class-kind-option" data-kind="workshop">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+                </svg>
                 Workshop
               </button>
-              <button class="class-type-option" data-kind="course" style="flex-direction: column; padding: 20px;">
-                <span style="font-size: 24px; margin-bottom: 8px;">🎓</span>
+              <button class="class-kind-option" data-kind="course">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+                </svg>
                 Course
               </button>
-              <button class="class-type-option" data-kind="retreat" style="flex-direction: column; padding: 20px;">
-                <span style="font-size: 24px; margin-bottom: 8px;">🏕️</span>
+              <button class="class-kind-option" data-kind="retreat">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                  <polyline points="9 22 9 12 15 12 15 22"/>
+                </svg>
                 Retreat
               </button>
-              <button class="class-type-option" data-kind="private_class" style="flex-direction: column; padding: 20px;">
-                <span style="font-size: 24px; margin-bottom: 8px;">👤</span>
-                Private
+              <button class="class-kind-option" data-kind="private_class">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                  <circle cx="12" cy="7" r="4"/>
+                </svg>
+                Private Class
               </button>
-              <button class="class-type-option" data-kind="semester" style="flex-direction: column; padding: 20px;">
-                <span style="font-size: 24px; margin-bottom: 8px;">📅</span>
+              <button class="class-kind-option" data-kind="semester">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                  <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
+                  <line x1="3" y1="10" x2="21" y2="10"/>
+                  <line x1="9" y1="14" x2="9" y2="18"/><line x1="15" y1="14" x2="15" y2="18"/>
+                </svg>
                 Semester
               </button>
             </div>
+
+            <!-- Description box that updates based on selection -->
+            <div class="class-kind-description" id="classKindDescription">
+              <div class="class-kind-description-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                  <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
+                  <line x1="3" y1="10" x2="21" y2="10"/>
+                </svg>
+              </div>
+              <div class="class-kind-description-text">
+                <h4>Class</h4>
+                <p>A regular class provides the fastest checkout experience for your customers.</p>
+              </div>
+            </div>
           </div>
         </div>
+
+        <!-- Step 2 (hidden): Previously was class kind, now merged into step 1 -->
+        <div id="classKindStep" style="display: none;"></div>
 
         <!-- Step 3: Template Selection (for from_template type) -->
         <div id="templateSelectStep" style="display: none;">
@@ -1517,8 +1689,14 @@
         </div>
       </div>
       <div class="modal-footer">
-        <button class="btn btn-secondary" onclick="closeCreateModal()">Cancel</button>
-        <button class="btn btn-primary" onclick="handleNextStep()" id="nextBtn">Next</button>
+        <button class="btn-cancel" onclick="closeCreateModal()">Cancel</button>
+        <button class="btn-next" onclick="handleNextStep()" id="nextBtn">
+          Next
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="5" y1="12" x2="19" y2="12"/>
+            <polyline points="12 5 19 12 12 19"/>
+          </svg>
+        </button>
       </div>
     </div>
   </div>
@@ -1761,14 +1939,64 @@
         });
       });
 
-      // Class kind selection (Step 2)
-      document.querySelectorAll('#classKindStep .class-type-option').forEach(option => {
+      // Class kind selection (now on same page as type)
+      const kindDescriptions = {
+        class: {
+          title: 'Class',
+          description: 'A regular class provides the fastest checkout experience for your customers.',
+          icon: '<rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>'
+        },
+        workshop: {
+          title: 'Workshop',
+          description: 'A hands-on session where participants learn and practice specific skills.',
+          icon: '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>'
+        },
+        course: {
+          title: 'Course',
+          description: 'A structured series of classes designed for progressive learning over time.',
+          icon: '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>'
+        },
+        retreat: {
+          title: 'Retreat',
+          description: 'An immersive experience typically spanning multiple days at a dedicated location.',
+          icon: '<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>'
+        },
+        private_class: {
+          title: 'Private Class',
+          description: 'One-on-one or small group sessions tailored to individual needs.',
+          icon: '<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>'
+        },
+        semester: {
+          title: 'Semester',
+          description: 'A long-term program with recurring classes over an extended period.',
+          icon: '<rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="9" y1="14" x2="9" y2="18"/><line x1="15" y1="14" x2="15" y2="18"/>'
+        }
+      };
+
+      document.querySelectorAll('.class-kind-option').forEach(option => {
         option.addEventListener('click', () => {
-          document.querySelectorAll('#classKindStep .class-type-option').forEach(o => o.classList.remove('active'));
+          document.querySelectorAll('.class-kind-option').forEach(o => o.classList.remove('active'));
           option.classList.add('active');
           selectedClassKind = option.dataset.kind;
+
+          // Update description box
+          const desc = kindDescriptions[selectedClassKind];
+          if (desc) {
+            document.getElementById('classKindDescription').innerHTML = `
+              <div class="class-kind-description-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${desc.icon}</svg>
+              </div>
+              <div class="class-kind-description-text">
+                <h4>${desc.title}</h4>
+                <p>${desc.description}</p>
+              </div>
+            `;
+          }
         });
       });
+
+      // Set default kind
+      selectedClassKind = 'class';
 
       // Template selection change
       document.getElementById('classTemplateSelect').addEventListener('change', (e) => {
@@ -1823,7 +2051,7 @@
       // Reset modal state
       currentStep = 1;
       selectedClassType = 'one_off';
-      selectedClassKind = null;
+      selectedClassKind = 'class';
       selectedTemplateId = null;
 
       // Reset form
@@ -1835,20 +2063,36 @@
 
       // Show first step, hide others
       document.getElementById('classTypeStep').style.display = 'block';
-      document.getElementById('classKindStep').style.display = 'none';
       document.getElementById('templateSelectStep').style.display = 'none';
       document.getElementById('classDetailsStep').style.display = 'none';
 
-      // Reset selection states
+      // Reset type selection states
       document.querySelectorAll('#classTypeStep .class-type-option').forEach(o => o.classList.remove('active'));
       document.querySelector('#classTypeStep .class-type-option[data-type="one_off"]').classList.add('active');
 
-      document.querySelectorAll('#classKindStep .class-type-option').forEach(o => o.classList.remove('active'));
+      // Reset kind selection states (now on same page)
+      document.querySelectorAll('.class-kind-option').forEach(o => o.classList.remove('active'));
+      document.querySelector('.class-kind-option[data-kind="class"]').classList.add('active');
+
+      // Reset description box to default
+      document.getElementById('classKindDescription').innerHTML = `
+        <div class="class-kind-description-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+            <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
+            <line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
+        </div>
+        <div class="class-kind-description-text">
+          <h4>Class</h4>
+          <p>A regular class provides the fastest checkout experience for your customers.</p>
+        </div>
+      `;
 
       // Update UI
       document.getElementById('modalBackBtn').style.display = 'none';
       document.getElementById('modalTitle').textContent = 'Create a new class';
-      document.getElementById('nextBtn').textContent = 'Next';
+      updateNextButtonForNext();
       document.getElementById('recurringOptions').style.display = 'none';
 
       document.getElementById('createModal').classList.add('active');
@@ -1859,67 +2103,58 @@
     }
 
     function goBackInModal() {
-      if (currentStep === 2) {
-        // Go back to step 1 (class type)
+      if (currentStep === 3) {
+        // Go back to step 1 (type + kind selection)
         currentStep = 1;
         document.getElementById('classTypeStep').style.display = 'block';
-        document.getElementById('classKindStep').style.display = 'none';
+        document.getElementById('templateSelectStep').style.display = 'none';
         document.getElementById('modalBackBtn').style.display = 'none';
         document.getElementById('modalTitle').textContent = 'Create a new class';
-        document.getElementById('nextBtn').textContent = 'Next';
-      } else if (currentStep === 3) {
-        // Go back to step 2 (class kind)
-        currentStep = 2;
-        document.getElementById('classKindStep').style.display = 'block';
-        document.getElementById('templateSelectStep').style.display = 'none';
-        document.getElementById('classDetailsStep').style.display = 'none';
-        document.getElementById('modalTitle').textContent = 'Select class type';
-        document.getElementById('nextBtn').textContent = 'Next';
+        updateNextButtonForNext();
       } else if (currentStep === 4) {
-        // Go back to step 3 (template) or step 2 (kind)
+        // Go back to step 3 (template) or step 1 (type + kind)
         if (selectedClassType === 'from_template') {
           currentStep = 3;
           document.getElementById('templateSelectStep').style.display = 'block';
           document.getElementById('classDetailsStep').style.display = 'none';
           document.getElementById('modalTitle').textContent = 'Select a template';
-          document.getElementById('nextBtn').textContent = 'Next';
+          updateNextButtonForNext();
         } else {
-          currentStep = 2;
-          document.getElementById('classKindStep').style.display = 'block';
+          currentStep = 1;
+          document.getElementById('classTypeStep').style.display = 'block';
           document.getElementById('classDetailsStep').style.display = 'none';
-          document.getElementById('modalTitle').textContent = 'Select class type';
-          document.getElementById('nextBtn').textContent = 'Next';
+          document.getElementById('modalBackBtn').style.display = 'none';
+          document.getElementById('modalTitle').textContent = 'Create a new class';
+          updateNextButtonForNext();
         }
+        // Reset recurring options
+        document.getElementById('recurringOptions').style.display = 'none';
       }
     }
 
     function handleNextStep() {
       if (currentStep === 1) {
-        // Move to step 2 (class kind)
-        currentStep = 2;
-        document.getElementById('classTypeStep').style.display = 'none';
-        document.getElementById('classKindStep').style.display = 'block';
-        document.getElementById('modalBackBtn').style.display = 'flex';
-        document.getElementById('modalTitle').textContent = 'Select class type';
-      } else if (currentStep === 2) {
+        // Step 1 now has both type AND kind on the same page (Momence style)
         if (!selectedClassKind) {
-          alert('Please select a class type');
+          alert('Please select a class kind');
           return;
         }
 
         if (selectedClassType === 'from_template') {
-          // Move to step 3 (template selection)
+          // Move to template selection
           currentStep = 3;
-          document.getElementById('classKindStep').style.display = 'none';
+          document.getElementById('classTypeStep').style.display = 'none';
           document.getElementById('templateSelectStep').style.display = 'block';
+          document.getElementById('modalBackBtn').style.display = 'flex';
           document.getElementById('modalTitle').textContent = 'Select a template';
         } else {
-          // Move to step 4 (details form)
+          // Move directly to details form
           currentStep = 4;
-          document.getElementById('classKindStep').style.display = 'none';
+          document.getElementById('classTypeStep').style.display = 'none';
           document.getElementById('classDetailsStep').style.display = 'block';
+          document.getElementById('modalBackBtn').style.display = 'flex';
           document.getElementById('modalTitle').textContent = 'Class details';
-          document.getElementById('nextBtn').textContent = 'Create class';
+          updateNextButtonForSubmit();
 
           // Show recurring options if recurring type
           if (selectedClassType === 'recurring') {
@@ -1941,7 +2176,7 @@
         document.getElementById('templateSelectStep').style.display = 'none';
         document.getElementById('classDetailsStep').style.display = 'block';
         document.getElementById('modalTitle').textContent = 'Class details';
-        document.getElementById('nextBtn').textContent = 'Create class';
+        updateNextButtonForSubmit();
 
         // Pre-fill form with template data
         const template = classTemplates.find(t => t.id == selectedTemplateId);
@@ -1964,6 +2199,27 @@
         // Submit the form
         submitCreateClass();
       }
+    }
+
+    function updateNextButtonForSubmit() {
+      const btn = document.getElementById('nextBtn');
+      btn.innerHTML = `
+        Create class
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+      `;
+    }
+
+    function updateNextButtonForNext() {
+      const btn = document.getElementById('nextBtn');
+      btn.innerHTML = `
+        Next
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="5" y1="12" x2="19" y2="12"/>
+          <polyline points="12 5 19 12 12 19"/>
+        </svg>
+      `;
     }
 
     async function submitCreateClass() {
