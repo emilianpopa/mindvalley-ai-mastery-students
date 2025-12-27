@@ -1575,12 +1575,15 @@
 
     async function loadUserInfo() {
       try {
-        const user = await apiRequest('/api/auth/me');
-        if (user && (user.email || user.username)) {
-          const email = user.email || user.username;
-          const displayName = email.includes('@') ? email.split('@')[0] : email;
+        const response = await apiRequest('/api/auth/me');
+        // API returns { user: { ... } }, extract the user object
+        const user = response.user || response;
+        if (user && (user.email || user.username || user.firstName)) {
+          const email = user.email || user.username || '';
+          const displayName = user.firstName || (email.includes('@') ? email.split('@')[0] : email) || 'User';
+          const role = user.roles?.[0] || user.role || 'Staff';
           document.getElementById('userName').textContent = displayName;
-          document.getElementById('userRole').textContent = user.role || 'Staff';
+          document.getElementById('userRole').textContent = role.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase());
           document.getElementById('userAvatar').textContent = displayName[0].toUpperCase();
         } else {
           throw new Error('Invalid user data');
