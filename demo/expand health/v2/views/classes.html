@@ -1375,27 +1375,150 @@
   <div class="modal-overlay" id="createModal">
     <div class="modal">
       <div class="modal-header">
-        <button class="modal-back" onclick="closeCreateModal()">
+        <button class="modal-back" onclick="goBackInModal()" id="modalBackBtn" style="display: none;">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <polyline points="15 18 9 12 15 6"/>
           </svg>
-          Create a new class
+          Back
         </button>
+        <span id="modalTitle" style="font-size: 1.25rem; font-weight: 600;">Create a new class</span>
         <button class="modal-close" onclick="closeCreateModal()">&times;</button>
       </div>
       <div class="modal-body">
-        <div class="class-type-selection">
-          <h3>Choose which type of class to create</h3>
-          <div class="class-type-options">
-            <button class="class-type-option active" data-type="oneoff">One-off class</button>
-            <button class="class-type-option" data-type="template">One-off class from template</button>
-            <button class="class-type-option" data-type="recurring">Recurring class</button>
+        <!-- Step 1: Class Type Selection -->
+        <div id="classTypeStep">
+          <div class="class-type-selection">
+            <h3>Choose which type of class to create</h3>
+            <div class="class-type-options">
+              <button class="class-type-option active" data-type="one_off">One-off class</button>
+              <button class="class-type-option" data-type="from_template">One-off class from template</button>
+              <button class="class-type-option" data-type="recurring">Recurring class</button>
+            </div>
           </div>
+        </div>
+
+        <!-- Step 2: Class Kind Selection -->
+        <div id="classKindStep" style="display: none;">
+          <div class="class-type-selection">
+            <h3>What kind of class is this?</h3>
+            <div class="class-type-options" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
+              <button class="class-type-option" data-kind="class" style="flex-direction: column; padding: 20px;">
+                <span style="font-size: 24px; margin-bottom: 8px;">📚</span>
+                Class
+              </button>
+              <button class="class-type-option" data-kind="workshop" style="flex-direction: column; padding: 20px;">
+                <span style="font-size: 24px; margin-bottom: 8px;">🛠️</span>
+                Workshop
+              </button>
+              <button class="class-type-option" data-kind="course" style="flex-direction: column; padding: 20px;">
+                <span style="font-size: 24px; margin-bottom: 8px;">🎓</span>
+                Course
+              </button>
+              <button class="class-type-option" data-kind="retreat" style="flex-direction: column; padding: 20px;">
+                <span style="font-size: 24px; margin-bottom: 8px;">🏕️</span>
+                Retreat
+              </button>
+              <button class="class-type-option" data-kind="private_class" style="flex-direction: column; padding: 20px;">
+                <span style="font-size: 24px; margin-bottom: 8px;">👤</span>
+                Private
+              </button>
+              <button class="class-type-option" data-kind="semester" style="flex-direction: column; padding: 20px;">
+                <span style="font-size: 24px; margin-bottom: 8px;">📅</span>
+                Semester
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 3: Template Selection (for from_template type) -->
+        <div id="templateSelectStep" style="display: none;">
+          <div class="class-type-selection">
+            <h3>Select a template</h3>
+            <select class="search-input" id="classTemplateSelect" style="width: 100%; padding: 12px; margin-top: 16px;">
+              <option value="">-- Select a template --</option>
+            </select>
+            <div id="templatePreview" style="display: none; margin-top: 16px; padding: 16px; background: var(--gray-50); border-radius: 8px;"></div>
+          </div>
+        </div>
+
+        <!-- Step 4: Class Details Form -->
+        <div id="classDetailsStep" style="display: none;">
+          <form id="createClassForm">
+            <input type="hidden" id="classTypeInput" name="class_type">
+            <input type="hidden" id="classKindInput" name="class_kind">
+            <input type="hidden" id="templateIdInput" name="template_id">
+
+            <div style="margin-bottom: 16px;">
+              <label style="display: block; font-weight: 500; margin-bottom: 6px;">Class name <span style="color: var(--red-500);">*</span></label>
+              <input type="text" class="search-input" id="className" style="width: 100%; padding: 12px;" placeholder="e.g., Morning Yoga Flow" required>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+              <div>
+                <label style="display: block; font-weight: 500; margin-bottom: 6px;">Date <span style="color: var(--red-500);">*</span></label>
+                <input type="date" class="search-input" id="classDate" style="width: 100%; padding: 12px;" required>
+              </div>
+              <div>
+                <label style="display: block; font-weight: 500; margin-bottom: 6px;">Time <span style="color: var(--red-500);">*</span></label>
+                <input type="time" class="search-input" id="classTime" style="width: 100%; padding: 12px;" required>
+              </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+              <div>
+                <label style="display: block; font-weight: 500; margin-bottom: 6px;">Duration (minutes)</label>
+                <input type="number" class="search-input" id="classDuration" style="width: 100%; padding: 12px;" value="60" min="15" max="480">
+              </div>
+              <div>
+                <label style="display: block; font-weight: 500; margin-bottom: 6px;">Max participants</label>
+                <input type="number" class="search-input" id="classMaxParticipants" style="width: 100%; padding: 12px;" placeholder="Unlimited" min="1">
+              </div>
+            </div>
+
+            <div style="margin-bottom: 16px;">
+              <label style="display: block; font-weight: 500; margin-bottom: 6px;">Practitioner</label>
+              <select class="search-input" id="classStaff" style="width: 100%; padding: 12px;">
+                <option value="">-- Select practitioner --</option>
+              </select>
+            </div>
+
+            <div style="margin-bottom: 16px;">
+              <label style="display: block; font-weight: 500; margin-bottom: 6px;">Price (ZAR)</label>
+              <input type="number" class="search-input" id="classPrice" style="width: 100%; padding: 12px;" placeholder="0.00" step="0.01" min="0">
+            </div>
+
+            <div style="margin-bottom: 16px;">
+              <label style="display: block; font-weight: 500; margin-bottom: 6px;">Description</label>
+              <textarea class="search-input" id="classDescription" style="width: 100%; padding: 12px; min-height: 80px; resize: vertical;" placeholder="Add class description..."></textarea>
+            </div>
+
+            <div style="margin-bottom: 16px;">
+              <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                <input type="checkbox" id="classWaitlist" style="width: 18px; height: 18px;">
+                <span>Enable waitlist</span>
+              </label>
+            </div>
+
+            <!-- Recurring options (shown only for recurring type) -->
+            <div id="recurringOptions" style="display: none; background: #FEF3C7; padding: 16px; border-radius: 8px; margin-bottom: 16px;">
+              <label style="display: block; font-weight: 500; margin-bottom: 8px; color: #92400E;">Repeat every</label>
+              <div style="display: flex; gap: 12px; align-items: center;">
+                <select class="search-input" id="recurringInterval" style="padding: 8px 12px;">
+                  <option value="daily">Day</option>
+                  <option value="weekly" selected>Week</option>
+                  <option value="biweekly">2 Weeks</option>
+                  <option value="monthly">Month</option>
+                </select>
+                <span style="color: #6b7280;">until</span>
+                <input type="date" class="search-input" id="recurringEnd" style="padding: 8px 12px;">
+              </div>
+            </div>
+          </form>
         </div>
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" onclick="closeCreateModal()">Cancel</button>
-        <button class="btn btn-primary" onclick="proceedToClassForm()" disabled id="nextBtn">Next &rarr;</button>
+        <button class="btn btn-primary" onclick="handleNextStep()" id="nextBtn">Next</button>
       </div>
     </div>
   </div>
@@ -1408,7 +1531,14 @@
     }
 
     let classes = [];
-    let selectedClassType = 'oneoff';
+    let classTemplates = [];
+    let staff = [];
+
+    // Modal state
+    let currentStep = 1;
+    let selectedClassType = 'one_off';
+    let selectedClassKind = null;
+    let selectedTemplateId = null;
 
     // API helper
     async function apiRequest(url, options = {}) {
@@ -1437,6 +1567,8 @@
     // Initialize
     document.addEventListener('DOMContentLoaded', async () => {
       await loadUserInfo();
+      await loadStaff();
+      await loadClassTemplates();
       loadClasses();
       setupEventListeners();
     });
@@ -1452,10 +1584,66 @@
       }
     }
 
-    function loadClasses() {
-      // Placeholder - would load from API
-      classes = [];
-      renderClasses();
+    async function loadStaff() {
+      try {
+        const data = await apiRequest('/api/staff?active_only=true');
+        staff = data.staff || [];
+        populateStaffDropdown();
+      } catch (error) {
+        console.error('Failed to load staff:', error);
+      }
+    }
+
+    function populateStaffDropdown() {
+      const staffSelect = document.getElementById('classStaff');
+      const practitionerFilter = document.getElementById('practitionerFilter');
+
+      staff.forEach(s => {
+        const option = document.createElement('option');
+        option.value = s.id;
+        option.textContent = s.name;
+        staffSelect.appendChild(option);
+
+        const filterOption = option.cloneNode(true);
+        practitionerFilter.appendChild(filterOption);
+      });
+    }
+
+    async function loadClassTemplates() {
+      try {
+        const data = await apiRequest('/api/classes/templates');
+        classTemplates = data.templates || [];
+        populateTemplateDropdowns();
+      } catch (error) {
+        console.error('Failed to load class templates:', error);
+      }
+    }
+
+    function populateTemplateDropdowns() {
+      const templateSelect = document.getElementById('classTemplateSelect');
+      const templateFilter = document.getElementById('templateFilter');
+
+      classTemplates.forEach(t => {
+        const option = document.createElement('option');
+        option.value = t.id;
+        option.textContent = t.name;
+        templateSelect.appendChild(option);
+
+        const filterOption = option.cloneNode(true);
+        templateFilter.appendChild(filterOption);
+      });
+    }
+
+    async function loadClasses() {
+      try {
+        const data = await apiRequest('/api/classes/upcoming');
+        classes = data.classes || [];
+        renderClasses();
+      } catch (error) {
+        console.error('Failed to load classes:', error);
+        classes = [];
+        renderClasses();
+      }
     }
 
     function renderClasses() {
@@ -1468,8 +1656,48 @@
       } else {
         emptyState.style.display = 'none';
         classList.style.display = 'block';
-        // Render classes here
+
+        classList.innerHTML = classes.map(cls => `
+          <div class="class-item">
+            <div class="class-color" style="background: ${cls.color || '#0F766E'};"></div>
+            <div class="class-info">
+              <div class="class-name">${cls.name}</div>
+              <div class="class-meta">
+                <span>${formatDate(cls.start_time)}</span>
+                <span>${formatTime(cls.start_time)} - ${formatTime(cls.end_time)}</span>
+                <span>${cls.staff_name || 'No instructor'}</span>
+              </div>
+            </div>
+            <div class="class-participants">
+              <span class="participant-count">${cls.current_participants || 0}/${cls.max_participants || '∞'}</span>
+            </div>
+            <div class="class-actions">
+              <button class="class-action-btn" onclick="viewClass(${cls.id})" title="View">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+              </button>
+              <button class="class-action-btn" onclick="editClass(${cls.id})" title="Edit">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        `).join('');
       }
+    }
+
+    function formatDate(dateStr) {
+      const date = new Date(dateStr);
+      return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    }
+
+    function formatTime(dateStr) {
+      const date = new Date(dateStr);
+      return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
     }
 
     function setupEventListeners() {
@@ -1512,14 +1740,45 @@
         });
       });
 
-      // Class type selection
-      document.querySelectorAll('.class-type-option').forEach(option => {
+      // Class type selection (Step 1)
+      document.querySelectorAll('#classTypeStep .class-type-option').forEach(option => {
         option.addEventListener('click', () => {
-          document.querySelectorAll('.class-type-option').forEach(o => o.classList.remove('active'));
+          document.querySelectorAll('#classTypeStep .class-type-option').forEach(o => o.classList.remove('active'));
           option.classList.add('active');
           selectedClassType = option.dataset.type;
-          document.getElementById('nextBtn').disabled = false;
         });
+      });
+
+      // Class kind selection (Step 2)
+      document.querySelectorAll('#classKindStep .class-type-option').forEach(option => {
+        option.addEventListener('click', () => {
+          document.querySelectorAll('#classKindStep .class-type-option').forEach(o => o.classList.remove('active'));
+          option.classList.add('active');
+          selectedClassKind = option.dataset.kind;
+        });
+      });
+
+      // Template selection change
+      document.getElementById('classTemplateSelect').addEventListener('change', (e) => {
+        selectedTemplateId = e.target.value;
+        const template = classTemplates.find(t => t.id == selectedTemplateId);
+        const preview = document.getElementById('templatePreview');
+
+        if (template) {
+          preview.style.display = 'block';
+          preview.innerHTML = `
+            <strong>${template.name}</strong>
+            <p style="margin: 8px 0 0; color: var(--gray-600); font-size: 0.875rem;">
+              ${template.description || 'No description'}
+            </p>
+            <p style="margin: 8px 0 0; font-size: 0.875rem;">
+              <strong>Duration:</strong> ${template.duration_minutes} minutes
+              ${template.price ? `<br><strong>Price:</strong> R${template.price}` : ''}
+            </p>
+          `;
+        } else {
+          preview.style.display = 'none';
+        }
       });
 
       // Search
@@ -1549,6 +1808,37 @@
     }
 
     function openCreateModal() {
+      // Reset modal state
+      currentStep = 1;
+      selectedClassType = 'one_off';
+      selectedClassKind = null;
+      selectedTemplateId = null;
+
+      // Reset form
+      document.getElementById('createClassForm').reset();
+
+      // Set default date to today
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('classDate').value = today;
+
+      // Show first step, hide others
+      document.getElementById('classTypeStep').style.display = 'block';
+      document.getElementById('classKindStep').style.display = 'none';
+      document.getElementById('templateSelectStep').style.display = 'none';
+      document.getElementById('classDetailsStep').style.display = 'none';
+
+      // Reset selection states
+      document.querySelectorAll('#classTypeStep .class-type-option').forEach(o => o.classList.remove('active'));
+      document.querySelector('#classTypeStep .class-type-option[data-type="one_off"]').classList.add('active');
+
+      document.querySelectorAll('#classKindStep .class-type-option').forEach(o => o.classList.remove('active'));
+
+      // Update UI
+      document.getElementById('modalBackBtn').style.display = 'none';
+      document.getElementById('modalTitle').textContent = 'Create a new class';
+      document.getElementById('nextBtn').textContent = 'Next';
+      document.getElementById('recurringOptions').style.display = 'none';
+
       document.getElementById('createModal').classList.add('active');
     }
 
@@ -1556,15 +1846,184 @@
       document.getElementById('createModal').classList.remove('active');
     }
 
-    function proceedToClassForm() {
-      // Navigate to class creation form based on type
-      if (selectedClassType === 'template') {
-        window.location.href = '/classes/new?type=template';
-      } else if (selectedClassType === 'recurring') {
-        window.location.href = '/classes/new?type=recurring';
-      } else {
-        window.location.href = '/classes/new';
+    function goBackInModal() {
+      if (currentStep === 2) {
+        // Go back to step 1 (class type)
+        currentStep = 1;
+        document.getElementById('classTypeStep').style.display = 'block';
+        document.getElementById('classKindStep').style.display = 'none';
+        document.getElementById('modalBackBtn').style.display = 'none';
+        document.getElementById('modalTitle').textContent = 'Create a new class';
+        document.getElementById('nextBtn').textContent = 'Next';
+      } else if (currentStep === 3) {
+        // Go back to step 2 (class kind)
+        currentStep = 2;
+        document.getElementById('classKindStep').style.display = 'block';
+        document.getElementById('templateSelectStep').style.display = 'none';
+        document.getElementById('classDetailsStep').style.display = 'none';
+        document.getElementById('modalTitle').textContent = 'Select class type';
+        document.getElementById('nextBtn').textContent = 'Next';
+      } else if (currentStep === 4) {
+        // Go back to step 3 (template) or step 2 (kind)
+        if (selectedClassType === 'from_template') {
+          currentStep = 3;
+          document.getElementById('templateSelectStep').style.display = 'block';
+          document.getElementById('classDetailsStep').style.display = 'none';
+          document.getElementById('modalTitle').textContent = 'Select a template';
+          document.getElementById('nextBtn').textContent = 'Next';
+        } else {
+          currentStep = 2;
+          document.getElementById('classKindStep').style.display = 'block';
+          document.getElementById('classDetailsStep').style.display = 'none';
+          document.getElementById('modalTitle').textContent = 'Select class type';
+          document.getElementById('nextBtn').textContent = 'Next';
+        }
       }
+    }
+
+    function handleNextStep() {
+      if (currentStep === 1) {
+        // Move to step 2 (class kind)
+        currentStep = 2;
+        document.getElementById('classTypeStep').style.display = 'none';
+        document.getElementById('classKindStep').style.display = 'block';
+        document.getElementById('modalBackBtn').style.display = 'flex';
+        document.getElementById('modalTitle').textContent = 'Select class type';
+      } else if (currentStep === 2) {
+        if (!selectedClassKind) {
+          alert('Please select a class type');
+          return;
+        }
+
+        if (selectedClassType === 'from_template') {
+          // Move to step 3 (template selection)
+          currentStep = 3;
+          document.getElementById('classKindStep').style.display = 'none';
+          document.getElementById('templateSelectStep').style.display = 'block';
+          document.getElementById('modalTitle').textContent = 'Select a template';
+        } else {
+          // Move to step 4 (details form)
+          currentStep = 4;
+          document.getElementById('classKindStep').style.display = 'none';
+          document.getElementById('classDetailsStep').style.display = 'block';
+          document.getElementById('modalTitle').textContent = 'Class details';
+          document.getElementById('nextBtn').textContent = 'Create class';
+
+          // Show recurring options if recurring type
+          if (selectedClassType === 'recurring') {
+            document.getElementById('recurringOptions').style.display = 'block';
+          }
+
+          // Set hidden fields
+          document.getElementById('classTypeInput').value = selectedClassType;
+          document.getElementById('classKindInput').value = selectedClassKind;
+        }
+      } else if (currentStep === 3) {
+        if (!selectedTemplateId) {
+          alert('Please select a template');
+          return;
+        }
+
+        // Move to step 4 (details form) with template data
+        currentStep = 4;
+        document.getElementById('templateSelectStep').style.display = 'none';
+        document.getElementById('classDetailsStep').style.display = 'block';
+        document.getElementById('modalTitle').textContent = 'Class details';
+        document.getElementById('nextBtn').textContent = 'Create class';
+
+        // Pre-fill form with template data
+        const template = classTemplates.find(t => t.id == selectedTemplateId);
+        if (template) {
+          document.getElementById('className').value = template.name;
+          document.getElementById('classDuration').value = template.duration_minutes;
+          document.getElementById('classDescription').value = template.description || '';
+          document.getElementById('classPrice').value = template.price || '';
+          document.getElementById('classMaxParticipants').value = template.max_participants || '';
+          if (template.staff_id) {
+            document.getElementById('classStaff').value = template.staff_id;
+          }
+        }
+
+        // Set hidden fields
+        document.getElementById('classTypeInput').value = selectedClassType;
+        document.getElementById('classKindInput').value = selectedClassKind;
+        document.getElementById('templateIdInput').value = selectedTemplateId;
+      } else if (currentStep === 4) {
+        // Submit the form
+        submitCreateClass();
+      }
+    }
+
+    async function submitCreateClass() {
+      const form = document.getElementById('createClassForm');
+
+      // Validate required fields
+      const name = document.getElementById('className').value.trim();
+      const date = document.getElementById('classDate').value;
+      const time = document.getElementById('classTime').value;
+
+      if (!name || !date || !time) {
+        alert('Please fill in all required fields');
+        return;
+      }
+
+      const startDateTime = new Date(`${date}T${time}`);
+      const duration = parseInt(document.getElementById('classDuration').value) || 60;
+      const endDateTime = new Date(startDateTime.getTime() + duration * 60000);
+
+      const classData = {
+        name,
+        class_type: selectedClassType,
+        class_kind: selectedClassKind,
+        template_id: selectedTemplateId || null,
+        start_time: startDateTime.toISOString(),
+        end_time: endDateTime.toISOString(),
+        duration_minutes: duration,
+        staff_id: document.getElementById('classStaff').value || null,
+        max_participants: document.getElementById('classMaxParticipants').value || null,
+        price: document.getElementById('classPrice').value || null,
+        description: document.getElementById('classDescription').value || null,
+        allow_waitlist: document.getElementById('classWaitlist').checked,
+        status: 'scheduled'
+      };
+
+      // Add recurring options if applicable
+      if (selectedClassType === 'recurring') {
+        classData.recurring_pattern = document.getElementById('recurringInterval').value;
+        classData.recurring_end_date = document.getElementById('recurringEnd').value || null;
+      }
+
+      const submitBtn = document.getElementById('nextBtn');
+      const originalText = submitBtn.textContent;
+      submitBtn.textContent = 'Creating...';
+      submitBtn.disabled = true;
+
+      try {
+        await apiRequest('/api/classes/scheduled', {
+          method: 'POST',
+          body: JSON.stringify(classData)
+        });
+
+        alert('Class created successfully!');
+        closeCreateModal();
+        loadClasses();
+      } catch (error) {
+        console.error('Failed to create class:', error);
+        alert('Failed to create class: ' + error.message);
+      } finally {
+        submitBtn.textContent = originalText;
+        submitBtn.disabled = false;
+      }
+    }
+
+    function viewClass(id) {
+      // TODO: Implement view class modal/page
+      console.log('View class:', id);
+    }
+
+    function editClass(id) {
+      // TODO: Implement edit class modal
+      console.log('Edit class:', id);
     }
 
     function toggleSubmenu(event) {

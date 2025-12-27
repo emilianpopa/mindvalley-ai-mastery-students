@@ -508,6 +508,157 @@ async function initLocations() {
 }
 
 /**
+ * Initialize class templates table
+ */
+async function initClassTemplates() {
+  const createTableSQL = `
+    CREATE TABLE IF NOT EXISTS class_templates (
+      id SERIAL PRIMARY KEY,
+      tenant_id INTEGER REFERENCES tenants(id) ON DELETE CASCADE,
+      name VARCHAR(255) NOT NULL,
+      description TEXT,
+      class_kind VARCHAR(50) DEFAULT 'class' CHECK (class_kind IN ('class', 'workshop', 'course', 'retreat', 'private_class', 'semester')),
+      duration_minutes INTEGER DEFAULT 60,
+      max_participants INTEGER,
+      price DECIMAL(10, 2),
+      color VARCHAR(7) DEFAULT '#6366F1',
+      image_url TEXT,
+      location_id INTEGER REFERENCES locations(id) ON DELETE SET NULL,
+      default_staff_id INTEGER REFERENCES staff(id) ON DELETE SET NULL,
+      enable_waitlist BOOLEAN DEFAULT false,
+      enable_spot_selection BOOLEAN DEFAULT false,
+      is_active BOOLEAN DEFAULT true,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    );
+  `;
+
+  const createIndexesSQL = `
+    CREATE INDEX IF NOT EXISTS idx_class_templates_tenant ON class_templates(tenant_id);
+    CREATE INDEX IF NOT EXISTS idx_class_templates_kind ON class_templates(class_kind);
+    CREATE INDEX IF NOT EXISTS idx_class_templates_active ON class_templates(is_active) WHERE is_active = true;
+  `;
+
+  try {
+    await db.query(createTableSQL);
+    console.log('✅ class_templates table ready');
+
+    await db.query(createIndexesSQL);
+    console.log('✅ class_templates indexes ready');
+
+    return true;
+  } catch (error) {
+    console.error('❌ Failed to initialize class_templates:', error.message);
+    return false;
+  }
+}
+
+/**
+ * Initialize scheduled classes table
+ */
+async function initScheduledClasses() {
+  const createTableSQL = `
+    CREATE TABLE IF NOT EXISTS scheduled_classes (
+      id SERIAL PRIMARY KEY,
+      tenant_id INTEGER REFERENCES tenants(id) ON DELETE CASCADE,
+      template_id INTEGER REFERENCES class_templates(id) ON DELETE SET NULL,
+      name VARCHAR(255) NOT NULL,
+      description TEXT,
+      class_kind VARCHAR(50) DEFAULT 'class' CHECK (class_kind IN ('class', 'workshop', 'course', 'retreat', 'private_class', 'semester')),
+      class_type VARCHAR(30) DEFAULT 'one_off' CHECK (class_type IN ('one_off', 'from_template', 'recurring')),
+      start_time TIMESTAMP WITH TIME ZONE NOT NULL,
+      end_time TIMESTAMP WITH TIME ZONE NOT NULL,
+      duration_minutes INTEGER DEFAULT 60,
+      max_participants INTEGER,
+      current_participants INTEGER DEFAULT 0,
+      price DECIMAL(10, 2),
+      color VARCHAR(7) DEFAULT '#6366F1',
+      image_url TEXT,
+      staff_id INTEGER REFERENCES staff(id) ON DELETE SET NULL,
+      location_id INTEGER REFERENCES locations(id) ON DELETE SET NULL,
+      enable_waitlist BOOLEAN DEFAULT false,
+      waitlist_count INTEGER DEFAULT 0,
+      enable_spot_selection BOOLEAN DEFAULT false,
+      status VARCHAR(30) DEFAULT 'scheduled' CHECK (status IN ('scheduled', 'in_progress', 'completed', 'cancelled')),
+      recurring_rule TEXT,
+      recurring_parent_id INTEGER REFERENCES scheduled_classes(id) ON DELETE CASCADE,
+      detached_from_template BOOLEAN DEFAULT false,
+      notes TEXT,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    );
+  `;
+
+  const createIndexesSQL = `
+    CREATE INDEX IF NOT EXISTS idx_scheduled_classes_tenant ON scheduled_classes(tenant_id);
+    CREATE INDEX IF NOT EXISTS idx_scheduled_classes_template ON scheduled_classes(template_id);
+    CREATE INDEX IF NOT EXISTS idx_scheduled_classes_staff ON scheduled_classes(staff_id);
+    CREATE INDEX IF NOT EXISTS idx_scheduled_classes_location ON scheduled_classes(location_id);
+    CREATE INDEX IF NOT EXISTS idx_scheduled_classes_start ON scheduled_classes(start_time);
+    CREATE INDEX IF NOT EXISTS idx_scheduled_classes_status ON scheduled_classes(status);
+    CREATE INDEX IF NOT EXISTS idx_scheduled_classes_recurring ON scheduled_classes(recurring_parent_id);
+  `;
+
+  try {
+    await db.query(createTableSQL);
+    console.log('✅ scheduled_classes table ready');
+
+    await db.query(createIndexesSQL);
+    console.log('✅ scheduled_classes indexes ready');
+
+    return true;
+  } catch (error) {
+    console.error('❌ Failed to initialize scheduled_classes:', error.message);
+    return false;
+  }
+}
+
+/**
+ * Initialize class registrations table (who is attending which class)
+ */
+async function initClassRegistrations() {
+  const createTableSQL = `
+    CREATE TABLE IF NOT EXISTS class_registrations (
+      id SERIAL PRIMARY KEY,
+      tenant_id INTEGER REFERENCES tenants(id) ON DELETE CASCADE,
+      class_id INTEGER REFERENCES scheduled_classes(id) ON DELETE CASCADE,
+      client_id INTEGER REFERENCES clients(id) ON DELETE CASCADE,
+      status VARCHAR(30) DEFAULT 'registered' CHECK (status IN ('registered', 'waitlisted', 'checked_in', 'no_show', 'cancelled')),
+      spot_number INTEGER,
+      payment_status VARCHAR(30) DEFAULT 'unpaid' CHECK (payment_status IN ('unpaid', 'paid', 'refunded', 'partial')),
+      payment_amount DECIMAL(10, 2),
+      registered_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      checked_in_at TIMESTAMP WITH TIME ZONE,
+      cancelled_at TIMESTAMP WITH TIME ZONE,
+      notes TEXT,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      CONSTRAINT class_registrations_unique UNIQUE (class_id, client_id)
+    );
+  `;
+
+  const createIndexesSQL = `
+    CREATE INDEX IF NOT EXISTS idx_class_registrations_tenant ON class_registrations(tenant_id);
+    CREATE INDEX IF NOT EXISTS idx_class_registrations_class ON class_registrations(class_id);
+    CREATE INDEX IF NOT EXISTS idx_class_registrations_client ON class_registrations(client_id);
+    CREATE INDEX IF NOT EXISTS idx_class_registrations_status ON class_registrations(status);
+  `;
+
+  try {
+    await db.query(createTableSQL);
+    console.log('✅ class_registrations table ready');
+
+    await db.query(createIndexesSQL);
+    console.log('✅ class_registrations indexes ready');
+
+    return true;
+  } catch (error) {
+    console.error('❌ Failed to initialize class_registrations:', error.message);
+    return false;
+  }
+}
+
+/**
  * Seed default staff members for ExpandHealth
  */
 async function seedDefaultStaff() {
@@ -612,6 +763,11 @@ async function initBookingDatabase() {
     await initBookingSettings();
     await initAppointmentReminders();
 
+    // Initialize class management tables
+    await initClassTemplates();
+    await initScheduledClasses();
+    await initClassRegistrations();
+
     // Seed default staff members
     await seedDefaultStaff();
 
@@ -635,5 +791,8 @@ module.exports = {
   initRecurringAppointments,
   initBookingSettings,
   initAppointmentReminders,
+  initClassTemplates,
+  initScheduledClasses,
+  initClassRegistrations,
   seedDefaultStaff
 };

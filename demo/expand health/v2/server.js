@@ -37,6 +37,7 @@ const bookingPublicRoutes = require('./api/booking-public');
 const bookingDashboardRoutes = require('./api/booking-dashboard');
 const messagesRoutes = require('./api/messages');
 const tasksRoutes = require('./api/tasks');
+const classesRoutes = require('./api/classes');
 
 // Initialize Express app
 const app = express();
@@ -136,6 +137,7 @@ app.use('/api/book', bookingPublicRoutes);
 app.use('/api/booking-dashboard', bookingDashboardRoutes);
 app.use('/api/messages', messagesRoutes);
 app.use('/api/tasks', tasksRoutes);
+app.use('/api/classes', classesRoutes);
 
 // ============================================
 // SERVE HTML PAGES
