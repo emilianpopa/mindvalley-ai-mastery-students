@@ -1576,13 +1576,16 @@
     async function loadUserInfo() {
       try {
         const user = await apiRequest('/api/auth/me');
-        document.getElementById('userName').textContent = user.email.split('@')[0];
-        document.getElementById('userRole').textContent = user.role;
-        document.getElementById('userAvatar').textContent = user.email[0].toUpperCase();
+        const email = user.email || user.username || 'User';
+        const displayName = email.includes('@') ? email.split('@')[0] : email;
+        document.getElementById('userName').textContent = displayName;
+        document.getElementById('userRole').textContent = user.role || 'Staff';
+        document.getElementById('userAvatar').textContent = displayName[0].toUpperCase();
       } catch (error) {
         console.error('Failed to load user info:', error);
         document.getElementById('userName').textContent = 'User';
         document.getElementById('userRole').textContent = 'Staff';
+        document.getElementById('userAvatar').textContent = 'U';
       }
     }
 
