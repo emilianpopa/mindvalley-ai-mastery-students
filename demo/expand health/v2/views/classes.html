@@ -2368,11 +2368,16 @@
         option.value = s.id;
         // Staff has first_name and last_name, not name
         option.textContent = `${s.first_name} ${s.last_name}`.trim();
-        staffSelect.appendChild(option);
 
-        const filterOption = option.cloneNode(true);
-        practitionerFilter.appendChild(filterOption);
+        if (staffSelect) {
+          staffSelect.appendChild(option.cloneNode(true));
+        }
+
+        if (practitionerFilter) {
+          practitionerFilter.appendChild(option.cloneNode(true));
+        }
       });
+      console.log('Populated staff dropdowns with', staff.length, 'staff members');
     }
 
     let locations = [];
@@ -2391,18 +2396,29 @@
 
     function populateLocationsDropdown() {
       const locationFilter = document.getElementById('locationFilter');
+      const classLocation = document.getElementById('classLocation');
 
-      // Clear existing options except "All locations"
-      while (locationFilter.options.length > 1) {
-        locationFilter.remove(1);
+      // Clear existing options except first one
+      if (locationFilter) {
+        while (locationFilter.options.length > 1) {
+          locationFilter.remove(1);
+        }
       }
 
       locations.forEach(loc => {
         const option = document.createElement('option');
         option.value = loc.id;
         option.textContent = loc.name;
-        locationFilter.appendChild(option);
+
+        if (locationFilter) {
+          locationFilter.appendChild(option.cloneNode(true));
+        }
+
+        if (classLocation) {
+          classLocation.appendChild(option.cloneNode(true));
+        }
       });
+      console.log('Populated location dropdowns with', locations.length, 'locations');
     }
 
     async function loadClassTemplates() {
@@ -2425,11 +2441,16 @@
         const option = document.createElement('option');
         option.value = t.id;
         option.textContent = t.name;
-        templateSelect.appendChild(option);
 
-        const filterOption = option.cloneNode(true);
-        templateFilter.appendChild(filterOption);
+        if (templateSelect) {
+          templateSelect.appendChild(option.cloneNode(true));
+        }
+
+        if (templateFilter) {
+          templateFilter.appendChild(option.cloneNode(true));
+        }
       });
+      console.log('Populated template dropdowns with', classTemplates.length, 'templates');
     }
 
     async function loadClasses() {
