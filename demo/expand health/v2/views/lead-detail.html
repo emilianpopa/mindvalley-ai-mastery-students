@@ -194,6 +194,112 @@
       margin: 8px 0;
     }
 
+    /* Stage Select Dropdown */
+    .stage-select-wrapper {
+      position: relative;
+    }
+
+    .stage-select-trigger {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--gray-300);
+      border-radius: 8px;
+      background: white;
+      font-size: 0.875rem;
+      color: var(--gray-900);
+      cursor: pointer;
+    }
+
+    .stage-select-trigger:focus {
+      outline: none;
+      border-color: #6366F1;
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+
+    .stage-select-trigger .clear-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--gray-200);
+      color: var(--gray-500);
+      margin-right: 8px;
+    }
+
+    .stage-select-trigger .clear-btn:hover {
+      background: var(--gray-300);
+    }
+
+    .stage-select-dropdown {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      margin-top: 4px;
+      background: white;
+      border: 1px solid var(--gray-200);
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      z-index: 10;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .stage-select-dropdown.active {
+      display: block;
+    }
+
+    .stage-option {
+      display: block;
+      width: 100%;
+      padding: 10px 16px;
+      text-align: left;
+      font-size: 0.875rem;
+      color: var(--gray-700);
+      background: none;
+      border: none;
+      cursor: pointer;
+    }
+
+    .stage-option:hover {
+      background: var(--gray-50);
+    }
+
+    .stage-option.selected {
+      background: #6366F1;
+      color: white;
+    }
+
+    .stage-divider {
+      display: flex;
+      align-items: center;
+      padding: 8px 16px;
+      font-size: 0.75rem;
+      color: var(--gray-400);
+    }
+
+    .stage-divider::before,
+    .stage-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--gray-200);
+    }
+
+    .stage-divider::before {
+      margin-right: 12px;
+    }
+
+    .stage-divider::after {
+      margin-left: 12px;
+    }
+
     /* Content Layout */
     .lead-content {
       display: flex;
@@ -1064,6 +1170,57 @@
     </div>
   </div>
 
+  <!-- Change Lead Stage Modal -->
+  <div class="modal-overlay" id="changeStageModal">
+    <div class="modal" style="max-width: 380px;">
+      <div class="modal-header">
+        <h2 class="modal-title">Change lead stage</h2>
+        <button class="modal-close" onclick="closeStageModal()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Lead stage</label>
+          <div class="stage-select-wrapper">
+            <button type="button" class="stage-select-trigger" id="stageSelectTrigger" onclick="toggleStageDropdown(event)">
+              <span id="selectedStageText">None</span>
+              <div style="display: flex; align-items: center; gap: 4px;">
+                <button type="button" class="clear-btn" id="clearStageBtn" onclick="clearStage(event)" style="display: none;">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                </button>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </div>
+            </button>
+            <div class="stage-select-dropdown" id="stageDropdown">
+              <button type="button" class="stage-option" data-value="none" onclick="selectStage('none', 'None')">None</button>
+              <div class="stage-divider">OR</div>
+              <button type="button" class="stage-option" data-value="new" onclick="selectStage('new', 'New')">New</button>
+              <button type="button" class="stage-option" data-value="contacted" onclick="selectStage('contacted', 'Contacted')">Contacted</button>
+              <button type="button" class="stage-option" data-value="in_progress_cold" onclick="selectStage('in_progress_cold', 'In Progress - cold')">In Progress - cold</button>
+              <button type="button" class="stage-option" data-value="in_progress_warm" onclick="selectStage('in_progress_warm', 'In Progress - warm')">In Progress - warm</button>
+              <button type="button" class="stage-option" data-value="closed_won" onclick="selectStage('closed_won', 'Closed - won')">Closed - won</button>
+              <button type="button" class="stage-option" data-value="closed_lost" onclick="selectStage('closed_lost', 'Closed - lost')">Closed - lost</button>
+              <button type="button" class="stage-option" data-value="tour_scheduled" onclick="selectStage('tour_scheduled', 'Tour scheduled')">Tour scheduled</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" onclick="closeStageModal()">Cancel</button>
+        <button class="btn-save" onclick="saveStageChange()">Save</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     // Sample lead data (in real app, this would come from API)
     const leadsData = {
@@ -1262,8 +1419,94 @@
 
     function changeStage() {
       closeActionsMenu();
-      alert('Change stage modal coming soon!');
+      openStageModal();
     }
+
+    // Stage Modal Functions
+    let selectedStageValue = 'none';
+
+    function openStageModal() {
+      // Set current stage
+      const currentStage = lead.stage || 'No stage assigned';
+      const stageMap = {
+        'No stage assigned': 'none',
+        'None': 'none',
+        'New': 'new',
+        'Contacted': 'contacted',
+        'In Progress - cold': 'in_progress_cold',
+        'In Progress - warm': 'in_progress_warm',
+        'Closed - won': 'closed_won',
+        'Closed - lost': 'closed_lost',
+        'Tour scheduled': 'tour_scheduled'
+      };
+
+      selectedStageValue = stageMap[currentStage] || 'none';
+      const displayText = currentStage === 'No stage assigned' ? 'None' : currentStage;
+      document.getElementById('selectedStageText').textContent = displayText;
+
+      // Update clear button visibility
+      document.getElementById('clearStageBtn').style.display = selectedStageValue !== 'none' ? 'flex' : 'none';
+
+      // Update selected state in dropdown
+      updateStageDropdownSelection();
+
+      document.getElementById('changeStageModal').classList.add('active');
+    }
+
+    function closeStageModal() {
+      document.getElementById('changeStageModal').classList.remove('active');
+      document.getElementById('stageDropdown').classList.remove('active');
+    }
+
+    function toggleStageDropdown(event) {
+      event.stopPropagation();
+      document.getElementById('stageDropdown').classList.toggle('active');
+    }
+
+    function selectStage(value, text) {
+      selectedStageValue = value;
+      document.getElementById('selectedStageText').textContent = text;
+      document.getElementById('stageDropdown').classList.remove('active');
+      document.getElementById('clearStageBtn').style.display = value !== 'none' ? 'flex' : 'none';
+      updateStageDropdownSelection();
+    }
+
+    function clearStage(event) {
+      event.stopPropagation();
+      selectStage('none', 'None');
+    }
+
+    function updateStageDropdownSelection() {
+      document.querySelectorAll('.stage-option').forEach(opt => {
+        opt.classList.toggle('selected', opt.dataset.value === selectedStageValue);
+      });
+    }
+
+    function saveStageChange() {
+      const stageDisplayMap = {
+        'none': 'No stage assigned',
+        'new': 'New',
+        'contacted': 'Contacted',
+        'in_progress_cold': 'In Progress - cold',
+        'in_progress_warm': 'In Progress - warm',
+        'closed_won': 'Closed - won',
+        'closed_lost': 'Closed - lost',
+        'tour_scheduled': 'Tour scheduled'
+      };
+
+      lead.stage = stageDisplayMap[selectedStageValue];
+      document.getElementById('leadStage').textContent = lead.stage;
+      closeStageModal();
+    }
+
+    // Close stage dropdown when clicking outside
+    document.getElementById('changeStageModal').addEventListener('click', function(e) {
+      if (e.target === this) {
+        closeStageModal();
+      } else if (!e.target.closest('.stage-select-wrapper')) {
+        document.getElementById('stageDropdown').classList.remove('active');
+      }
+    });
 
     function convertToCustomer() {
       closeActionsMenu();
