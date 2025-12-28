@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sequences - ExpandHealth</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cline x1='20' y1='20' x2='80' y2='80' stroke='%230F766E' stroke-width='12' stroke-linecap='round'/%3E%3Cline x1='80' y1='20' x2='20' y2='80' stroke='%230F766E' stroke-width='12' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/css/main.css">
+  <script src="/js/feature-flags.js"></script>
+  <style>
+    /* Marketing Panel - Secondary sidebar */
+    .marketing-panel {
+      width: 220px;
+      background: white;
+      border-right: 1px solid var(--gray-200);
+      padding: 16px 0;
+      overflow-y: auto;
+      flex-shrink: 0;
+    }
+
+    .panel-section {
+      margin-bottom: 16px;
+    }
+
+    .panel-title {
+      font-size: 0.688rem;
+      font-weight: 600;
+      color: var(--gray-400);
+      padding: 8px 16px;
+      letter-spacing: 0.05em;
+    }
+
+    .panel-item {
+      display: block;
+      padding: 8px 16px;
+      font-size: 0.875rem;
+      color: var(--gray-700);
+      text-decoration: none;
+      transition: background 0.15s;
+    }
+
+    .panel-item:hover {
+      background: var(--gray-50);
+    }
+
+    .panel-item.active {
+      background: #EEF2FF;
+      color: #6366F1;
+      font-weight: 500;
+    }
+
+    .panel-item .new-badge {
+      display: inline-block;
+      padding: 2px 6px;
+      background: #6366F1;
+      color: white;
+      border-radius: 4px;
+      font-size: 0.625rem;
+      font-weight: 600;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+
+    .main-content {
+      flex: 1;
+      overflow-y: auto;
+      background: #f8f9fa;
+    }
+
+    .sequences-page {
+      padding: 24px 32px;
+      padding-bottom: 48px;
+    }
+
+    /* Page Header */
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .page-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 12px;
+    }
+
+    .btn-primary {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      background: #6366F1;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: 500;
+      font-size: 0.875rem;
+      cursor: pointer;
+    }
+
+    .btn-primary:hover {
+      background: #4F46E5;
+    }
+
+    /* Warning Banner */
+    .warning-banner {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 16px 20px;
+      background: #FEF3C7;
+      border: 1px solid #F59E0B;
+      border-radius: 8px;
+      margin-bottom: 24px;
+    }
+
+    .warning-icon {
+      width: 20px;
+      height: 20px;
+      color: #D97706;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .warning-content {
+      flex: 1;
+    }
+
+    .warning-title {
+      font-weight: 600;
+      color: #92400E;
+      margin-bottom: 4px;
+    }
+
+    .warning-text {
+      font-size: 0.875rem;
+      color: #92400E;
+    }
+
+    .warning-text a {
+      color: #6366F1;
+      text-decoration: underline;
+    }
+
+    /* Tabs */
+    .tabs-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 20px;
+      border-bottom: 1px solid var(--gray-200);
+      padding-bottom: 0;
+    }
+
+    .tab-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 12px 16px;
+      background: none;
+      border: none;
+      font-size: 0.875rem;
+      color: var(--gray-500);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+    }
+
+    .tab-btn:hover {
+      color: var(--gray-700);
+    }
+
+    .tab-btn.active {
+      color: #6366F1;
+      border-bottom-color: #6366F1;
+      font-weight: 500;
+    }
+
+    /* Search */
+    .search-row {
+      margin-bottom: 20px;
+    }
+
+    .search-input {
+      width: 100%;
+      max-width: 400px;
+      padding: 10px 16px 10px 40px;
+      border: 1px solid var(--gray-300);
+      border-radius: 8px;
+      font-size: 0.875rem;
+      background: white url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%239CA3AF' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'%3E%3C/circle%3E%3Cpath d='m21 21-4.35-4.35'%3E%3C/path%3E%3C/svg%3E") no-repeat 12px center;
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: #6366F1;
+    }
+
+    /* Sequences Table */
+    .sequences-table {
+      width: 100%;
+      background: white;
+      border-radius: 12px;
+      border: 1px solid var(--gray-200);
+      overflow: hidden;
+    }
+
+    .sequences-table table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .sequences-table th {
+      text-align: left;
+      padding: 12px 16px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--gray-500);
+      background: var(--gray-50);
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .sequences-table td {
+      padding: 16px;
+      font-size: 0.875rem;
+      color: var(--gray-700);
+      border-bottom: 1px solid var(--gray-100);
+      vertical-align: middle;
+    }
+
+    .sequences-table tr:hover {
+      background: var(--gray-50);
+      cursor: pointer;
+    }
+
+    .sequence-name {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .sequence-icon {
+      width: 20px;
+      height: 20px;
+      color: var(--gray-400);
+    }
+
+    .sequence-name-text {
+      font-weight: 500;
+      color: var(--gray-900);
+    }
+
+    .trigger-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      background: var(--gray-100);
+      border-radius: 12px;
+      font-size: 0.75rem;
+      color: var(--gray-600);
+    }
+
+    /* Template Modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal {
+      background: white;
+      border-radius: 16px;
+      width: 100%;
+      max-width: 480px;
+      max-height: 90vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .modal-title {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+
+    .modal-close {
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--gray-400);
+      border-radius: 8px;
+    }
+
+    .modal-close:hover {
+      background: var(--gray-100);
+      color: var(--gray-600);
+    }
+
+    .modal-body {
+      padding: 24px;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--gray-700);
+      margin-bottom: 8px;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--gray-300);
+      border-radius: 8px;
+      font-size: 0.875rem;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: #6366F1;
+    }
+
+    /* Template Options */
+    .template-options {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .template-option {
+      padding: 16px;
+      border: 2px solid var(--gray-200);
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .template-option:hover {
+      border-color: var(--gray-300);
+    }
+
+    .template-option.selected {
+      border-color: #6366F1;
+      background: #EEF2FF;
+    }
+
+    .template-option-title {
+      font-weight: 600;
+      color: var(--gray-900);
+      margin-bottom: 6px;
+      font-size: 0.875rem;
+    }
+
+    .template-option-desc {
+      font-size: 0.813rem;
+      color: var(--gray-500);
+      line-height: 1.5;
+    }
+
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      padding: 16px 24px;
+      border-top: 1px solid var(--gray-200);
+      background: var(--gray-50);
+    }
+
+    .btn-cancel {
+      padding: 10px 20px;
+      background: white;
+      border: 1px solid var(--gray-300);
+      border-radius: 8px;
+      font-size: 0.875rem;
+      color: var(--gray-700);
+      cursor: pointer;
+    }
+
+    .btn-cancel:hover {
+      background: var(--gray-50);
+    }
+
+    .btn-create {
+      padding: 10px 20px;
+      background: #6366F1;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      color: white;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    .btn-create:hover {
+      background: #4F46E5;
+    }
+
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+    }
+
+    .empty-icon {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto 16px;
+      color: var(--gray-300);
+    }
+
+    .empty-title {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--gray-900);
+      margin-bottom: 8px;
+    }
+
+    .empty-desc {
+      font-size: 0.875rem;
+      color: var(--gray-500);
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">
+          <svg class="logo-icon" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <line x1="8" y1="8" x2="32" y2="32" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+            <line x1="32" y1="8" x2="8" y2="32" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+          </svg>
+          <div class="logo-text">
+            <span class="logo-expand">EXPAND</span>
+            <span class="logo-health">HEALTH</span>
+          </div>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <a href="/" class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect></svg>
+          <span>Dashboard</span>
+        </a>
+        <a href="/inbox" class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+          <span>Inbox</span>
+        </a>
+        <a href="/pos" class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+          <span>Point of sale</span>
+        </a>
+        <a href="/classes" class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+          <span>Classes</span>
+        </a>
+        <a href="/appointments" class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+          <span>Appointments</span>
+        </a>
+        <a href="/community" class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+          <span>Community</span>
+        </a>
+        <a href="/on-demand" class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+          <span>On-Demand</span>
+        </a>
+        <a href="/memberships" class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+          <span>Memberships</span>
+        </a>
+        <a href="/clients" class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+          <span>Customers</span>
+        </a>
+        <a href="/leads" class="nav-item active">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
+          <span>Marketing</span>
+        </a>
+        <a href="/analytics" class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+          <span>Analytics</span>
+        </a>
+        <a href="/financials" class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+          <span>Financials</span>
+        </a>
+
+        <div class="nav-section-title">STUDIO SET-UP</div>
+        <a href="/studio/practitioners" class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+          <span>Practitioners</span>
+        </a>
+        <a href="/services" class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
+          <span>Services</span>
+        </a>
+        <a href="/studio/locations" class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+          <span>Locations</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="support-links">
+          <a href="#" class="support-link">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
+            </svg>
+            <span>Support</span>
+          </a>
+          <a href="#" class="support-link">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+              <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+            <span>Help center</span>
+          </a>
+        </div>
+        <a href="/settings" class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+          <span>Settings</span>
+        </a>
+      </div>
+    </aside>
+
+    <!-- Marketing Submenu Panel -->
+    <div class="marketing-panel" id="marketingPanel">
+      <div class="panel-section">
+        <div class="panel-title">MARKETING</div>
+      </div>
+      <div class="panel-section">
+        <div class="panel-title">LEAD GENERATION</div>
+        <a href="/leads" class="panel-item">Leads</a>
+        <a href="/webchat" class="panel-item">Webchat</a>
+        <a href="/ads-manager" class="panel-item">Ads manager <span class="new-badge">New</span></a>
+      </div>
+      <div class="panel-section">
+        <div class="panel-title">NURTURE & CONVERT</div>
+        <a href="/sequences" class="panel-item active">Sequences</a>
+        <a href="/one-off-messages" class="panel-item">One-off messages</a>
+        <a href="/marketing-templates" class="panel-item">Marketing templates</a>
+      </div>
+      <div class="panel-section">
+        <div class="panel-title">ORGANIC GROWTH</div>
+        <a href="/customer-referrals" class="panel-item">Customer referrals</a>
+        <a href="/reviews" class="panel-item">Reviews</a>
+      </div>
+      <div class="panel-section">
+        <div class="panel-title">DEMAND GENERATION</div>
+        <a href="/spotfiller" class="panel-item">Spotfiller <span class="new-badge">New</span></a>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <div class="sequences-page">
+        <!-- Page Header -->
+        <div class="page-header">
+          <h1 class="page-title">Sequences</h1>
+          <div class="header-actions">
+            <button class="btn-primary" onclick="openTemplateModal()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+              Create
+            </button>
+          </div>
+        </div>
+
+        <!-- Warning Banner -->
+        <div class="warning-banner">
+          <svg class="warning-icon" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+          </svg>
+          <div class="warning-content">
+            <div class="warning-title">Important: Verify your email domain to ensure your emails are delivered</div>
+            <div class="warning-text">Please verify your domain in the <a href="/settings/marketing">Marketing suite settings page</a></div>
+          </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs-row">
+          <button class="tab-btn active">
+            All
+          </button>
+          <button class="tab-btn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+            </svg>
+            Folders
+          </button>
+          <button class="tab-btn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+            </svg>
+            Sequences
+          </button>
+        </div>
+
+        <!-- Search -->
+        <div class="search-row">
+          <input type="text" class="search-input" placeholder="Search sequences...">
+        </div>
+
+        <!-- Sequences Table -->
+        <div class="sequences-table">
+          <table>
+            <thead>
+              <tr>
+                <th>Sequence name</th>
+                <th>Trigger</th>
+                <th>Active</th>
+                <th>Sent</th>
+                <th>Converted</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr onclick="window.location='/sequences/1'">
+                <td>
+                  <div class="sequence-name">
+                    <svg class="sequence-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                    </svg>
+                    <span class="sequence-name-text">confirmation email</span>
+                  </div>
+                </td>
+                <td><span class="trigger-badge">Class signup</span></td>
+                <td>12</td>
+                <td>156</td>
+                <td>23</td>
+              </tr>
+              <tr onclick="window.location='/sequences/2'">
+                <td>
+                  <div class="sequence-name">
+                    <svg class="sequence-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                    </svg>
+                    <span class="sequence-name-text">confirmation email soul collage</span>
+                  </div>
+                </td>
+                <td><span class="trigger-badge">Class signup</span></td>
+                <td>8</td>
+                <td>89</td>
+                <td>15</td>
+              </tr>
+              <tr onclick="window.location='/sequences/3'">
+                <td>
+                  <div class="sequence-name">
+                    <svg class="sequence-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                    </svg>
+                    <span class="sequence-name-text">Ozone Treatment Aftercare</span>
+                  </div>
+                </td>
+                <td><span class="trigger-badge">Appointment visit</span></td>
+                <td>5</td>
+                <td>42</td>
+                <td>8</td>
+              </tr>
+              <tr onclick="window.location='/sequences/4'">
+                <td>
+                  <div class="sequence-name">
+                    <svg class="sequence-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                    </svg>
+                    <span class="sequence-name-text">Abandoned Checkout Lead Conversion</span>
+                  </div>
+                </td>
+                <td><span class="trigger-badge">Checkout abandoned</span></td>
+                <td>18</td>
+                <td>234</td>
+                <td>67</td>
+              </tr>
+              <tr onclick="window.location='/sequences/5'">
+                <td>
+                  <div class="sequence-name">
+                    <svg class="sequence-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                    </svg>
+                    <span class="sequence-name-text">Win-Back Sequence</span>
+                  </div>
+                </td>
+                <td><span class="trigger-badge">No visit 30 days</span></td>
+                <td>22</td>
+                <td>178</td>
+                <td>31</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Template Modal -->
+  <div class="modal-overlay" id="templateModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title">Create a new folder from template</h2>
+        <button class="modal-close" onclick="closeTemplateModal()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">New folder name</label>
+          <input type="text" class="form-input" id="folderName" placeholder="New Customer Nurture & Conversion">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Template</label>
+          <div class="template-options">
+            <div class="template-option" onclick="selectTemplate(this, 'birthday')">
+              <div class="template-option-title">Customer Birthday</div>
+              <div class="template-option-desc">This template will automatically trigger a birthday sequence for a customer on their birthday. Use it to make each of your customers feel special on their special day</div>
+            </div>
+            <div class="template-option" onclick="selectTemplate(this, 'winback')">
+              <div class="template-option-title">Win-Back Sequence</div>
+              <div class="template-option-desc">This template automatically enrolls a customer who has stopped visiting your classes or appointments into a sequence. Use it to make your customers feel like they are missed by you and your staff, or offer discounts on memberships to win them back</div>
+            </div>
+            <div class="template-option selected" onclick="selectTemplate(this, 'abandoned')">
+              <div class="template-option-title">Abandoned Checkout Lead Conversion</div>
+              <div class="template-option-desc">This template is designed to convert potential customers who were about to purchase something but then didn't. Any non-customer who abandons one of your checkout pages will be added and sent a series of emails and SMS messages inviting them to reconsider their purchase and visit your business.</div>
+            </div>
+            <div class="template-option" onclick="selectTemplate(this, 'lead')">
+              <div class="template-option-title">Lead Conversion</div>
+              <div class="template-option-desc">This template features a series of emails, text messages and phone call follow-ups that motivate potential customers to buy your intro offer. The sequence is structured to ensure you're maximizing your conversion rate potential from leads that are generated via paid social ads, your website and QR codes.</div>
+            </div>
+            <div class="template-option" onclick="selectTemplate(this, 'referrals')">
+              <div class="template-option-title">Convert Referrals to Members</div>
+              <div class="template-option-desc">This template includes a high-converting set of sequences that (a) ensure customer referrals make their first booking, (b) follow up until they return for a 2nd visit and/or purchase of your intro offer (c) turn loyal customers into influencers for your studio by encouraging them to share their referral link after hitting class visit milestones</div>
+            </div>
+            <div class="template-option" onclick="selectTemplate(this, 'newcustomer')">
+              <div class="template-option-title">New Customer</div>
+              <div class="template-option-desc">This template will enter a new customer who hasn't purchased an intro offer into a new customer nurture sequence, intended to make each new customer feel welcomed.</div>
+            </div>
+            <div class="template-option" onclick="selectTemplate(this, 'intro')">
+              <div class="template-option-title">Intro offer funnel</div>
+              <div class="template-option-desc">This template will create a high-converting set of sequences for your intro offers, with the goal of getting each customer that purchases an intro offer to feel welcomed and to ultimately end up purchasing another membership after their intro offer expires</div>
+            </div>
+            <div class="template-option" onclick="selectTemplate(this, 'milestones')">
+              <div class="template-option-title">Customer Milestones</div>
+              <div class="template-option-desc">This template will automatically enter customers into celebratory sequences when they hit visit milestones. Use it to celebrate your customers' loyalty to your business, and reward them for continuing to come back!</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" onclick="closeTemplateModal()">Cancel</button>
+        <button class="btn-create" onclick="createFromTemplate()">Create</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let selectedTemplate = 'abandoned';
+
+    function openTemplateModal() {
+      document.getElementById('templateModal').classList.add('active');
+    }
+
+    function closeTemplateModal() {
+      document.getElementById('templateModal').classList.remove('active');
+    }
+
+    function selectTemplate(element, template) {
+      // Remove selected from all
+      document.querySelectorAll('.template-option').forEach(opt => {
+        opt.classList.remove('selected');
+      });
+      // Add selected to clicked
+      element.classList.add('selected');
+      selectedTemplate = template;
+    }
+
+    function createFromTemplate() {
+      const folderName = document.getElementById('folderName').value || 'New Sequence Folder';
+      alert(`Creating sequence folder "${folderName}" from template: ${selectedTemplate}`);
+      closeTemplateModal();
+    }
+
+    // Close modal on overlay click
+    document.getElementById('templateModal').addEventListener('click', function(e) {
+      if (e.target === this) {
+        closeTemplateModal();
+      }
+    });
+  </script>
+</body>
+</html>

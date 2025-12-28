@@ -354,6 +354,11 @@ app.get('/leads', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'marketing-leads.html'));
 });
 
+// Sequences
+app.get('/sequences', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'sequences.html'));
+});
+
 app.get('/marketing/leads', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'marketing-leads.html'));
 });
