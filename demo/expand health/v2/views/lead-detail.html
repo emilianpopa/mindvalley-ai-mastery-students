@@ -1172,7 +1172,7 @@
 
   <!-- Change Lead Stage Modal -->
   <div class="modal-overlay" id="changeStageModal">
-    <div class="modal" style="max-width: 420px;">
+    <div class="modal" style="max-width: 420px; overflow: visible;">
       <div class="modal-header" style="justify-content: space-between;">
         <h2 class="modal-title">Change lead stage</h2>
         <div style="display: flex; align-items: center; gap: 8px;">
@@ -1180,7 +1180,7 @@
           <button class="btn-save" onclick="saveStageChange()">Save</button>
         </div>
       </div>
-      <div class="modal-body" style="padding-bottom: 200px;">
+      <div class="modal-body" style="overflow: visible; min-height: 350px;">
         <div class="form-group" style="margin-bottom: 0;">
           <label class="form-label">Lead stage</label>
           <div class="stage-select-wrapper">
@@ -1210,6 +1210,59 @@
             </div>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Convert to Customer Modal -->
+  <div class="modal-overlay" id="convertCustomerModal">
+    <div class="modal" style="max-width: 480px;">
+      <div class="modal-header">
+        <h2 class="modal-title">Convert to a customer</h2>
+        <button class="modal-close" onclick="closeConvertModal()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">First name</label>
+          <input type="text" class="form-input" id="convertFirstName" placeholder="First name">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Last name</label>
+          <input type="text" class="form-input" id="convertLastName" placeholder="Last name">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">E-mail</label>
+          <input type="email" class="form-input" id="convertEmail" placeholder="email@example.com">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Phone number</label>
+          <div class="phone-input-group">
+            <div class="phone-country">
+              <select class="form-select" id="convertPhoneCountry">
+                <option value="+27">🇿🇦 +27</option>
+                <option value="+1">🇺🇸 +1</option>
+                <option value="+44">🇬🇧 +44</option>
+                <option value="+61">🇦🇺 +61</option>
+                <option value="+49">🇩🇪 +49</option>
+              </select>
+            </div>
+            <div class="phone-number">
+              <input type="tel" class="form-input" id="convertPhone" placeholder="Phone number">
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" onclick="closeConvertModal()">Cancel</button>
+        <button class="btn-save" onclick="confirmConvertToCustomer()">Convert</button>
       </div>
     </div>
   </div>
@@ -1508,10 +1561,52 @@
 
     function convertToCustomer() {
       closeActionsMenu();
-      if (confirm(`Convert "${lead.name}" to a customer?`)) {
-        alert('Lead converted to customer!');
-      }
+      openConvertModal();
     }
+
+    function openConvertModal() {
+      // Parse name into first and last
+      const nameParts = lead.name.split(' ');
+      const firstName = nameParts[0] || '';
+      const lastName = nameParts.slice(1).join(' ') || '';
+
+      // Populate form with lead data
+      document.getElementById('convertFirstName').value = firstName;
+      document.getElementById('convertLastName').value = lastName;
+      document.getElementById('convertEmail').value = lead.email || '';
+      document.getElementById('convertPhone').value = lead.phone ? lead.phone.replace(/^\+\d+\s*/, '') : '';
+
+      // Show modal
+      document.getElementById('convertCustomerModal').classList.add('active');
+    }
+
+    function closeConvertModal() {
+      document.getElementById('convertCustomerModal').classList.remove('active');
+    }
+
+    function confirmConvertToCustomer() {
+      const firstName = document.getElementById('convertFirstName').value;
+      const lastName = document.getElementById('convertLastName').value;
+      const email = document.getElementById('convertEmail').value;
+      const phone = document.getElementById('convertPhone').value;
+      const phoneCountry = document.getElementById('convertPhoneCountry').value;
+
+      // In a real app, this would make an API call to convert the lead
+      alert(`Lead "${firstName} ${lastName}" converted to customer!`);
+      closeConvertModal();
+
+      // Update UI to show converted status
+      lead.converted = true;
+      lead.customerName = `${firstName} ${lastName}`;
+      renderLead();
+    }
+
+    // Close convert modal when clicking overlay
+    document.getElementById('convertCustomerModal').addEventListener('click', function(e) {
+      if (e.target === this) {
+        closeConvertModal();
+      }
+    });
 
     function addTask() {
       closeActionsMenu();
