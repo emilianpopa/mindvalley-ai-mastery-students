@@ -1096,6 +1096,338 @@
     .email-content.active, .sms-content.active {
       display: block;
     }
+
+    /* Drag & Drop / Rich Text Tab Content */
+    .dragdrop-content, .richtext-content {
+      display: none;
+    }
+
+    .dragdrop-content.active, .richtext-content.active {
+      display: block;
+    }
+
+    .no-content-placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 48px 24px;
+      border: 1px solid var(--gray-300);
+      border-radius: 0 8px 8px 8px;
+      background: var(--gray-50);
+      text-align: center;
+    }
+
+    .no-content-placeholder span {
+      font-size: 0.875rem;
+      color: var(--gray-500);
+      margin-bottom: 16px;
+    }
+
+    .add-content-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      background: #6366F1;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    .add-content-btn:hover {
+      background: #4F46E5;
+    }
+
+    /* Email Editor Modal (Full Screen) */
+    .email-editor-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 3000;
+      display: none;
+    }
+
+    .email-editor-overlay.active {
+      display: flex;
+    }
+
+    .email-editor-modal {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      background: #f5f5f5;
+    }
+
+    .email-editor-sidebar {
+      width: 280px;
+      background: white;
+      border-right: 1px solid var(--gray-200);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .email-editor-sidebar-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--gray-200);
+      font-weight: 600;
+      font-size: 0.875rem;
+      color: var(--gray-700);
+    }
+
+    .email-editor-blocks {
+      padding: 16px;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    .email-editor-block {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      padding: 16px 12px;
+      border: 1px solid var(--gray-200);
+      border-radius: 8px;
+      background: white;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .email-editor-block:hover {
+      border-color: #6366F1;
+      background: #F0F0FF;
+    }
+
+    .email-editor-block svg {
+      width: 24px;
+      height: 24px;
+      color: var(--gray-500);
+    }
+
+    .email-editor-block span {
+      font-size: 0.75rem;
+      color: var(--gray-600);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .email-editor-canvas {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .email-editor-topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 24px;
+      background: white;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .email-editor-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+
+    .email-editor-actions {
+      display: flex;
+      gap: 12px;
+    }
+
+    .email-editor-preview {
+      flex: 1;
+      padding: 40px;
+      overflow-y: auto;
+      display: flex;
+      justify-content: center;
+    }
+
+    .email-editor-preview-content {
+      width: 100%;
+      max-width: 600px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      min-height: 400px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--gray-400);
+      font-size: 0.875rem;
+    }
+
+    /* Template Selector Modal */
+    .template-modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 3000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .template-modal-overlay.active {
+      display: flex;
+    }
+
+    .template-modal {
+      background: white;
+      border-radius: 12px;
+      width: 100%;
+      max-width: 500px;
+      max-height: 80vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .template-modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .template-modal-title {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+
+    .template-modal-body {
+      padding: 24px;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    .template-search {
+      position: relative;
+      margin-bottom: 16px;
+    }
+
+    .template-search svg {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--gray-400);
+      width: 16px;
+      height: 16px;
+    }
+
+    .template-search input {
+      width: 100%;
+      padding: 10px 12px 10px 38px;
+      border: 1px solid var(--gray-300);
+      border-radius: 8px;
+      font-size: 0.875rem;
+    }
+
+    .template-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .template-item {
+      padding: 16px;
+      border: 1px solid var(--gray-200);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .template-item:hover {
+      border-color: #6366F1;
+      background: #F0F0FF;
+    }
+
+    .template-item-name {
+      font-weight: 500;
+      color: var(--gray-900);
+      margin-bottom: 4px;
+    }
+
+    .template-item-preview {
+      font-size: 0.813rem;
+      color: var(--gray-500);
+    }
+
+    .template-empty {
+      text-align: center;
+      padding: 32px;
+      color: var(--gray-500);
+    }
+
+    .template-modal-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 24px;
+      border-top: 1px solid var(--gray-200);
+      background: var(--gray-50);
+    }
+
+    .template-modal-footer a {
+      font-size: 0.875rem;
+      color: #6366F1;
+      text-decoration: none;
+    }
+
+    .template-modal-footer a:hover {
+      text-decoration: underline;
+    }
+
+    /* Save Template Modal */
+    .save-template-modal {
+      background: white;
+      border-radius: 12px;
+      width: 100%;
+      max-width: 440px;
+      overflow: hidden;
+    }
+
+    .save-template-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .save-template-title {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+
+    .save-template-body {
+      padding: 24px;
+    }
+
+    .save-template-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      padding: 16px 24px;
+      border-top: 1px solid var(--gray-200);
+    }
   </style>
 </head>
 <body>
@@ -1589,44 +1921,55 @@
           <div class="form-row">
             <span class="form-row-label">Subject</span>
             <div class="form-row-input">
-              <input type="text" id="emailSubject" placeholder="Enter email subject...">
+              <input type="text" id="emailSubject" placeholder="">
             </div>
           </div>
 
           <div class="editor-tabs">
-            <button type="button" class="editor-tab">Drag & Drop</button>
-            <button type="button" class="editor-tab active">Rich text</button>
+            <button type="button" class="editor-tab active" onclick="switchEditorTab('dragdrop')">Drag & Drop</button>
+            <button type="button" class="editor-tab" onclick="switchEditorTab('richtext')">Rich text</button>
           </div>
 
-          <div class="rich-text-toolbar">
-            <select class="toolbar-select">
-              <option>Normal</option>
-              <option>Heading 1</option>
-              <option>Heading 2</option>
-            </select>
-            <button type="button" class="toolbar-btn"><strong>B</strong></button>
-            <button type="button" class="toolbar-btn"><em>I</em></button>
-            <button type="button" class="toolbar-btn"><u>U</u></button>
-            <button type="button" class="toolbar-btn"><s>S</s></button>
-            <button type="button" class="toolbar-btn">"</button>
-            <button type="button" class="toolbar-btn">≡</button>
-            <button type="button" class="toolbar-btn">A</button>
-            <button type="button" class="toolbar-btn">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
-                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
-              </svg>
-            </button>
-            <button type="button" class="toolbar-btn">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                <polyline points="21 15 16 10 5 21"></polyline>
-              </svg>
-            </button>
-            <button type="button" class="toolbar-btn">&lt;/&gt;</button>
+          <!-- Drag & Drop Content -->
+          <div class="dragdrop-content active" id="dragdropContent">
+            <div class="no-content-placeholder">
+              <span>This email has no content.</span>
+              <button type="button" class="add-content-btn" onclick="openEmailEditor()">Add content</button>
+            </div>
           </div>
-          <textarea class="message-textarea" id="emailBody" placeholder="Write your message..."></textarea>
+
+          <!-- Rich Text Content -->
+          <div class="richtext-content" id="richtextContent">
+            <div class="rich-text-toolbar">
+              <select class="toolbar-select">
+                <option>Normal</option>
+                <option>Heading 1</option>
+                <option>Heading 2</option>
+              </select>
+              <button type="button" class="toolbar-btn"><strong>B</strong></button>
+              <button type="button" class="toolbar-btn"><em>I</em></button>
+              <button type="button" class="toolbar-btn"><u>U</u></button>
+              <button type="button" class="toolbar-btn"><s>S</s></button>
+              <button type="button" class="toolbar-btn">"</button>
+              <button type="button" class="toolbar-btn">≡</button>
+              <button type="button" class="toolbar-btn">A</button>
+              <button type="button" class="toolbar-btn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                  <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                </svg>
+              </button>
+              <button type="button" class="toolbar-btn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                  <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                  <polyline points="21 15 16 10 5 21"></polyline>
+                </svg>
+              </button>
+              <button type="button" class="toolbar-btn">&lt;/&gt;</button>
+            </div>
+            <textarea class="message-textarea" id="emailBody" placeholder="Write your message..."></textarea>
+          </div>
         </div>
 
         <!-- SMS Content -->
@@ -1634,11 +1977,11 @@
           <textarea class="sms-textarea" id="smsBody" placeholder="Your message" oninput="updateSmsCounter()"></textarea>
           <div class="sms-counter"><span id="smsCharCount">0</span> (1 segment)</div>
 
-          <button type="button" class="template-btn">
+          <button type="button" class="template-btn" onclick="openTemplateSelector('sms')">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-              <polyline points="7 10 12 15 17 10"></polyline>
-              <line x1="12" y1="15" x2="12" y2="3"></line>
+              <polyline points="17 8 12 3 7 8"></polyline>
+              <line x1="12" y1="3" x2="12" y2="15"></line>
             </svg>
             Load from template
           </button>
@@ -1646,7 +1989,7 @@
           <div class="sms-notice">
             <div class="sms-notice-icon">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+                <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
               </svg>
             </div>
             <span class="sms-notice-text">SMS message will only be sent to practitioners with a phone number</span>
@@ -1668,6 +2011,195 @@
             </svg>
           </button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Email Editor Modal (Full Screen) -->
+  <div class="email-editor-overlay" id="emailEditorOverlay">
+    <div class="email-editor-modal">
+      <div class="email-editor-sidebar">
+        <div class="email-editor-sidebar-header">Content blocks</div>
+        <div class="email-editor-blocks">
+          <div class="email-editor-block" onclick="addEmailBlock('columns')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="7" height="18" rx="1"></rect>
+              <rect x="14" y="3" width="7" height="18" rx="1"></rect>
+            </svg>
+            <span>Columns</span>
+          </div>
+          <div class="email-editor-block" onclick="addEmailBlock('button')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="8" width="18" height="8" rx="2"></rect>
+            </svg>
+            <span>Button</span>
+          </div>
+          <div class="email-editor-block" onclick="addEmailBlock('divider')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+            </svg>
+            <span>Divider</span>
+          </div>
+          <div class="email-editor-block" onclick="addEmailBlock('heading')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 12h8"></path>
+              <path d="M4 18V6"></path>
+              <path d="M12 18V6"></path>
+              <path d="M17 10l3-3-3-3"></path>
+              <path d="M20 7h-6"></path>
+            </svg>
+            <span>Heading</span>
+          </div>
+          <div class="email-editor-block" onclick="addEmailBlock('text')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 7V4h16v3"></path>
+              <path d="M9 20h6"></path>
+              <path d="M12 4v16"></path>
+            </svg>
+            <span>Text</span>
+          </div>
+          <div class="email-editor-block" onclick="addEmailBlock('image')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+              <circle cx="8.5" cy="8.5" r="1.5"></circle>
+              <polyline points="21 15 16 10 5 21"></polyline>
+            </svg>
+            <span>Image</span>
+          </div>
+          <div class="email-editor-block" onclick="addEmailBlock('menu')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+            <span>Menu</span>
+          </div>
+          <div class="email-editor-block" onclick="addEmailBlock('html')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="16 18 22 12 16 6"></polyline>
+              <polyline points="8 6 2 12 8 18"></polyline>
+            </svg>
+            <span>HTML</span>
+          </div>
+        </div>
+      </div>
+      <div class="email-editor-canvas">
+        <div class="email-editor-topbar">
+          <span class="email-editor-title">Edit email body</span>
+          <div class="email-editor-actions">
+            <button class="btn-secondary" onclick="openSaveTemplateModal()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                <polyline points="7 3 7 8 15 8"></polyline>
+              </svg>
+              Save as template
+            </button>
+            <button class="btn-secondary" onclick="closeEmailEditor()">Cancel</button>
+            <button class="btn-add" onclick="saveEmailContent()">Done</button>
+          </div>
+        </div>
+        <div class="email-editor-preview">
+          <div class="email-editor-preview-content" id="emailPreviewContent">
+            Drag and drop blocks here to build your email
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Template Selector Modal -->
+  <div class="template-modal-overlay" id="templateSelectorOverlay" onclick="closeTemplateSelector(event)">
+    <div class="template-modal" onclick="event.stopPropagation()">
+      <div class="template-modal-header">
+        <h2 class="template-modal-title">Select a template</h2>
+        <button class="contact-modal-close" onclick="closeTemplateSelector()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="template-modal-body">
+        <div class="template-search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input type="text" placeholder="Search templates..." id="templateSearchInput">
+        </div>
+        <div class="template-list" id="templateList">
+          <div class="template-empty">
+            <p>No templates yet.</p>
+            <p style="margin-top: 8px; font-size: 0.813rem;">Create your first template to reuse messages.</p>
+          </div>
+        </div>
+      </div>
+      <div class="template-modal-footer">
+        <a href="#" onclick="event.preventDefault(); openCreateTemplate();">Create a template</a>
+        <a href="#" onclick="event.preventDefault(); window.open('/marketing-templates', '_blank');">Manage templates</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Save as Template Modal -->
+  <div class="template-modal-overlay" id="saveTemplateOverlay" onclick="closeSaveTemplateModal(event)">
+    <div class="save-template-modal" onclick="event.stopPropagation()">
+      <div class="save-template-header">
+        <h2 class="save-template-title">Save as a new template</h2>
+        <button class="contact-modal-close" onclick="closeSaveTemplateModal()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="save-template-body">
+        <div class="form-group">
+          <label class="form-label">Name <span class="required">*</span></label>
+          <input type="text" class="form-input" id="templateName" placeholder="Enter template name">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Description</label>
+          <textarea class="form-textarea" id="templateDescription" placeholder="Enter description (optional)"></textarea>
+        </div>
+      </div>
+      <div class="save-template-footer">
+        <button class="btn-secondary" onclick="closeSaveTemplateModal()">Cancel</button>
+        <button class="btn-add" onclick="saveTemplate()">Save template</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create Template Modal -->
+  <div class="template-modal-overlay" id="createTemplateOverlay" onclick="closeCreateTemplate(event)">
+    <div class="save-template-modal" onclick="event.stopPropagation()">
+      <div class="save-template-header">
+        <h2 class="save-template-title">Create a template</h2>
+        <button class="contact-modal-close" onclick="closeCreateTemplate()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="save-template-body">
+        <div class="form-group">
+          <label class="form-label">Name <span class="required">*</span></label>
+          <input type="text" class="form-input" id="newTemplateName" placeholder="Enter template name">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Description</label>
+          <input type="text" class="form-input" id="newTemplateDescription" placeholder="Enter description (optional)">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Message <span class="required">*</span></label>
+          <textarea class="form-textarea" id="newTemplateMessage" placeholder="Enter your message" style="min-height: 120px;"></textarea>
+        </div>
+      </div>
+      <div class="save-template-footer">
+        <button class="btn-secondary" onclick="closeCreateTemplate()">Cancel</button>
+        <button class="btn-add" onclick="createNewTemplate()">Create template</button>
       </div>
     </div>
   </div>
@@ -2024,6 +2556,127 @@
         alert('SMS sent to all practitioners with phone numbers!');
       }
       closeContactModal();
+    }
+
+    // Editor Tab Switching (Drag & Drop / Rich Text)
+    function switchEditorTab(tab) {
+      // Update tab buttons
+      document.querySelectorAll('.editor-tab').forEach(t => t.classList.remove('active'));
+      event.currentTarget.classList.add('active');
+
+      // Toggle content visibility
+      const dragdropContent = document.getElementById('dragdropContent');
+      const richtextContent = document.getElementById('richtextContent');
+
+      if (tab === 'dragdrop') {
+        dragdropContent.classList.add('active');
+        richtextContent.classList.remove('active');
+      } else {
+        dragdropContent.classList.remove('active');
+        richtextContent.classList.add('active');
+      }
+    }
+
+    // Email Editor Functions
+    function openEmailEditor() {
+      document.getElementById('emailEditorOverlay').classList.add('active');
+    }
+
+    function closeEmailEditor() {
+      document.getElementById('emailEditorOverlay').classList.remove('active');
+    }
+
+    function addEmailBlock(blockType) {
+      const preview = document.getElementById('emailPreviewContent');
+      // For now, just show a placeholder - in a real implementation, this would add draggable blocks
+      const blockHtml = {
+        'columns': '<div style="display: flex; gap: 16px; padding: 16px; border: 1px dashed #ccc;"><div style="flex: 1; padding: 20px; background: #f5f5f5;">Column 1</div><div style="flex: 1; padding: 20px; background: #f5f5f5;">Column 2</div></div>',
+        'button': '<div style="padding: 16px; text-align: center;"><button style="padding: 12px 24px; background: #6366F1; color: white; border: none; border-radius: 6px;">Button</button></div>',
+        'divider': '<hr style="margin: 16px 0; border: none; border-top: 1px solid #e5e5e5;">',
+        'heading': '<h2 style="padding: 16px; margin: 0;" contenteditable="true">Heading text</h2>',
+        'text': '<p style="padding: 16px; margin: 0;" contenteditable="true">Enter your text here...</p>',
+        'image': '<div style="padding: 16px; text-align: center;"><div style="width: 200px; height: 120px; background: #f0f0f0; margin: 0 auto; display: flex; align-items: center; justify-content: center; color: #999;">Image placeholder</div></div>',
+        'menu': '<div style="display: flex; gap: 16px; padding: 16px; justify-content: center;"><a href="#" style="color: #6366F1;">Link 1</a><a href="#" style="color: #6366F1;">Link 2</a><a href="#" style="color: #6366F1;">Link 3</a></div>',
+        'html': '<div style="padding: 16px; background: #f9fafb; font-family: monospace; font-size: 12px;" contenteditable="true">&lt;!-- Your HTML here --&gt;</div>'
+      };
+
+      if (preview.innerHTML.includes('Drag and drop')) {
+        preview.innerHTML = '';
+      }
+      preview.innerHTML += blockHtml[blockType] || '';
+    }
+
+    function saveEmailContent() {
+      const content = document.getElementById('emailPreviewContent').innerHTML;
+      if (content && !content.includes('Drag and drop')) {
+        // Update the drag & drop content area to show a preview
+        const placeholder = document.querySelector('.no-content-placeholder');
+        if (placeholder) {
+          placeholder.innerHTML = `
+            <div style="padding: 16px; border: 1px solid var(--gray-300); border-radius: 8px; background: white; width: 100%; max-height: 150px; overflow: hidden;">
+              <div style="font-size: 0.75rem; color: var(--gray-500); margin-bottom: 8px;">Preview:</div>
+              <div style="transform: scale(0.5); transform-origin: top left; width: 200%;">${content}</div>
+            </div>
+            <button type="button" class="add-content-btn" onclick="openEmailEditor()" style="margin-top: 16px;">Edit content</button>
+          `;
+        }
+      }
+      closeEmailEditor();
+    }
+
+    // Template Functions
+    let currentTemplateType = 'email';
+
+    function openTemplateSelector(type = 'email') {
+      currentTemplateType = type;
+      document.getElementById('templateSelectorOverlay').classList.add('active');
+    }
+
+    function closeTemplateSelector(event) {
+      if (event && event.target !== event.currentTarget) return;
+      document.getElementById('templateSelectorOverlay').classList.remove('active');
+    }
+
+    function openSaveTemplateModal() {
+      document.getElementById('saveTemplateOverlay').classList.add('active');
+    }
+
+    function closeSaveTemplateModal(event) {
+      if (event && event.target !== event.currentTarget) return;
+      document.getElementById('saveTemplateOverlay').classList.remove('active');
+    }
+
+    function saveTemplate() {
+      const name = document.getElementById('templateName').value;
+      if (!name) {
+        alert('Please enter a template name');
+        return;
+      }
+      // In a real implementation, this would save to the backend
+      alert(`Template "${name}" saved successfully!`);
+      closeSaveTemplateModal();
+    }
+
+    function openCreateTemplate() {
+      closeTemplateSelector();
+      document.getElementById('createTemplateOverlay').classList.add('active');
+    }
+
+    function closeCreateTemplate(event) {
+      if (event && event.target !== event.currentTarget) return;
+      document.getElementById('createTemplateOverlay').classList.remove('active');
+    }
+
+    function createNewTemplate() {
+      const name = document.getElementById('newTemplateName').value;
+      const message = document.getElementById('newTemplateMessage').value;
+      if (!name || !message) {
+        alert('Please fill in the name and message');
+        return;
+      }
+      // In a real implementation, this would save to the backend
+      alert(`Template "${name}" created successfully!`);
+      closeCreateTemplate();
     }
 
     // Initialize
