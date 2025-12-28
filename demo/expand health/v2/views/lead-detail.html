@@ -889,13 +889,16 @@
         <div class="form-group">
           <label class="form-label">Source</label>
           <select class="form-select" id="editSource">
-            <option value="abandoned_checkout">Abandoned checkout</option>
             <option value="dashboard">Dashboard</option>
-            <option value="whatsapp">Whatsapp (meta ads)</option>
+            <option value="paid_meta_ads">Paid Meta Ads (FB/Instagram)</option>
+            <option value="endpoint_api">Endpoint (API)</option>
+            <option value="abandoned_checkout">Abandoned checkout</option>
+            <option value="missed_call">Missed call</option>
+            <option value="incoming_call">Incoming call</option>
+            <option value="incoming_sms">Incoming sms</option>
+            <option value="webchat">Webchat</option>
             <option value="whatsapp_general">Whatsapp (general)</option>
-            <option value="website">Website</option>
-            <option value="referral">Referral</option>
-            <option value="other">Other</option>
+            <option value="whatsapp_meta_ads">Whatsapp (meta ads)</option>
           </select>
         </div>
       </div>
@@ -1098,14 +1101,18 @@
 
       // Set source dropdown
       const sourceMap = {
-        'Abandoned checkout': 'abandoned_checkout',
         'Dashboard': 'dashboard',
-        'Whatsapp (meta ads)': 'whatsapp',
+        'Paid Meta Ads (FB/Instagram)': 'paid_meta_ads',
+        'Endpoint (API)': 'endpoint_api',
+        'Abandoned checkout': 'abandoned_checkout',
+        'Missed call': 'missed_call',
+        'Incoming call': 'incoming_call',
+        'Incoming sms': 'incoming_sms',
+        'Webchat': 'webchat',
         'Whatsapp (general)': 'whatsapp_general',
-        'Website': 'website',
-        'Referral': 'referral'
+        'Whatsapp (meta ads)': 'whatsapp_meta_ads'
       };
-      document.getElementById('editSource').value = sourceMap[lead.source] || 'other';
+      document.getElementById('editSource').value = sourceMap[lead.source] || 'dashboard';
 
       // Show modal
       document.getElementById('editLeadModal').classList.add('active');
@@ -1128,13 +1135,16 @@
 
       // Map source value back to display name
       const sourceDisplayMap = {
-        'abandoned_checkout': 'Abandoned checkout',
         'dashboard': 'Dashboard',
-        'whatsapp': 'Whatsapp (meta ads)',
+        'paid_meta_ads': 'Paid Meta Ads (FB/Instagram)',
+        'endpoint_api': 'Endpoint (API)',
+        'abandoned_checkout': 'Abandoned checkout',
+        'missed_call': 'Missed call',
+        'incoming_call': 'Incoming call',
+        'incoming_sms': 'Incoming sms',
+        'webchat': 'Webchat',
         'whatsapp_general': 'Whatsapp (general)',
-        'website': 'Website',
-        'referral': 'Referral',
-        'other': 'Other'
+        'whatsapp_meta_ads': 'Whatsapp (meta ads)'
       };
 
       // Update lead data
