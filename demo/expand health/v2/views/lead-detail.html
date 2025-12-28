@@ -1267,6 +1267,118 @@
     </div>
   </div>
 
+  <!-- Add Task Modal -->
+  <div class="modal-overlay" id="addTaskModal">
+    <div class="modal" style="max-width: 480px;">
+      <div class="modal-header">
+        <h2 class="modal-title">Add task</h2>
+        <button class="modal-close" onclick="closeTaskModal()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Task name</label>
+          <input type="text" class="form-input" id="taskName" placeholder="Enter task name">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Description (optional)</label>
+          <textarea class="form-input" id="taskDescription" placeholder="Add a description" rows="3" style="resize: vertical;"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Due date</label>
+          <input type="date" class="form-input" id="taskDueDate">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Assign to</label>
+          <select class="form-select" id="taskAssignee">
+            <option value="">Select staff member</option>
+            <option value="unassigned">Unassigned</option>
+            <option value="john">John Smith</option>
+            <option value="sarah">Sarah Johnson</option>
+            <option value="mike">Mike Wilson</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Priority</label>
+          <select class="form-select" id="taskPriority">
+            <option value="low">Low</option>
+            <option value="medium" selected>Medium</option>
+            <option value="high">High</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" onclick="closeTaskModal()">Cancel</button>
+        <button class="btn-save" onclick="saveTask()">Add task</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Assign Staff Modal -->
+  <div class="modal-overlay" id="assignStaffModal">
+    <div class="modal" style="max-width: 400px;">
+      <div class="modal-header">
+        <h2 class="modal-title">Assign staff member</h2>
+        <button class="modal-close" onclick="closeAssignStaffModal()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Staff member</label>
+          <select class="form-select" id="staffAssignee">
+            <option value="">Select staff member</option>
+            <option value="unassigned">Unassigned</option>
+            <option value="john">John Smith</option>
+            <option value="sarah">Sarah Johnson</option>
+            <option value="mike">Mike Wilson</option>
+            <option value="emma">Emma Davis</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" onclick="closeAssignStaffModal()">Cancel</button>
+        <button class="btn-save" onclick="saveStaffAssignment()">Assign</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Note Modal -->
+  <div class="modal-overlay" id="addNoteModal">
+    <div class="modal" style="max-width: 480px;">
+      <div class="modal-header">
+        <h2 class="modal-title">Add a note</h2>
+        <button class="modal-close" onclick="closeNoteModal()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Note</label>
+          <textarea class="form-input" id="noteContent" placeholder="Write your note here..." rows="5" style="resize: vertical;"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" onclick="closeNoteModal()">Cancel</button>
+        <button class="btn-save" onclick="saveNote()">Add note</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     // Sample lead data (in real app, this would come from API)
     const leadsData = {
@@ -1610,18 +1722,132 @@
 
     function addTask() {
       closeActionsMenu();
-      alert('Add task modal coming soon!');
+      openTaskModal();
     }
+
+    function openTaskModal() {
+      // Clear form
+      document.getElementById('taskName').value = '';
+      document.getElementById('taskDescription').value = '';
+      document.getElementById('taskDueDate').value = '';
+      document.getElementById('taskAssignee').value = '';
+      document.getElementById('taskPriority').value = 'medium';
+
+      // Show modal
+      document.getElementById('addTaskModal').classList.add('active');
+    }
+
+    function closeTaskModal() {
+      document.getElementById('addTaskModal').classList.remove('active');
+    }
+
+    function saveTask() {
+      const taskName = document.getElementById('taskName').value;
+      const taskDescription = document.getElementById('taskDescription').value;
+      const taskDueDate = document.getElementById('taskDueDate').value;
+      const taskAssignee = document.getElementById('taskAssignee').value;
+      const taskPriority = document.getElementById('taskPriority').value;
+
+      if (!taskName.trim()) {
+        alert('Please enter a task name');
+        return;
+      }
+
+      // In a real app, this would make an API call
+      alert(`Task "${taskName}" added successfully!`);
+      closeTaskModal();
+
+      // Switch to Tasks tab to show the new task
+      switchTab('tasks');
+    }
+
+    // Close task modal when clicking overlay
+    document.getElementById('addTaskModal').addEventListener('click', function(e) {
+      if (e.target === this) {
+        closeTaskModal();
+      }
+    });
 
     function assignStaff() {
       closeActionsMenu();
-      alert('Assign staff modal coming soon!');
+      openAssignStaffModal();
     }
+
+    function openAssignStaffModal() {
+      // Set current assignee
+      document.getElementById('staffAssignee').value = '';
+
+      // Show modal
+      document.getElementById('assignStaffModal').classList.add('active');
+    }
+
+    function closeAssignStaffModal() {
+      document.getElementById('assignStaffModal').classList.remove('active');
+    }
+
+    function saveStaffAssignment() {
+      const staffAssignee = document.getElementById('staffAssignee').value;
+      const staffSelect = document.getElementById('staffAssignee');
+      const staffName = staffSelect.options[staffSelect.selectedIndex].text;
+
+      if (!staffAssignee) {
+        alert('Please select a staff member');
+        return;
+      }
+
+      // In a real app, this would make an API call
+      lead.staff = staffName;
+      document.getElementById('assignedStaff').textContent = staffName;
+      alert(`Lead assigned to ${staffName}!`);
+      closeAssignStaffModal();
+    }
+
+    // Close assign staff modal when clicking overlay
+    document.getElementById('assignStaffModal').addEventListener('click', function(e) {
+      if (e.target === this) {
+        closeAssignStaffModal();
+      }
+    });
 
     function addNote() {
       closeActionsMenu();
-      alert('Add note modal coming soon!');
+      openNoteModal();
     }
+
+    function openNoteModal() {
+      // Clear form
+      document.getElementById('noteContent').value = '';
+
+      // Show modal
+      document.getElementById('addNoteModal').classList.add('active');
+    }
+
+    function closeNoteModal() {
+      document.getElementById('addNoteModal').classList.remove('active');
+    }
+
+    function saveNote() {
+      const noteContent = document.getElementById('noteContent').value;
+
+      if (!noteContent.trim()) {
+        alert('Please enter a note');
+        return;
+      }
+
+      // In a real app, this would make an API call
+      alert('Note added successfully!');
+      closeNoteModal();
+
+      // Switch to Notes tab to show the new note
+      switchTab('notes');
+    }
+
+    // Close note modal when clicking overlay
+    document.getElementById('addNoteModal').addEventListener('click', function(e) {
+      if (e.target === this) {
+        closeNoteModal();
+      }
+    });
 
     function sendEmail() {
       closeActionsMenu();
