@@ -1172,18 +1172,16 @@
 
   <!-- Change Lead Stage Modal -->
   <div class="modal-overlay" id="changeStageModal">
-    <div class="modal" style="max-width: 380px;">
-      <div class="modal-header">
+    <div class="modal" style="max-width: 420px;">
+      <div class="modal-header" style="justify-content: space-between;">
         <h2 class="modal-title">Change lead stage</h2>
-        <button class="modal-close" onclick="closeStageModal()">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
-          </svg>
-        </button>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <button class="btn-cancel" onclick="closeStageModal()">Cancel</button>
+          <button class="btn-save" onclick="saveStageChange()">Save</button>
+        </div>
       </div>
-      <div class="modal-body">
-        <div class="form-group">
+      <div class="modal-body" style="padding-bottom: 200px;">
+        <div class="form-group" style="margin-bottom: 0;">
           <label class="form-label">Lead stage</label>
           <div class="stage-select-wrapper">
             <button type="button" class="stage-select-trigger" id="stageSelectTrigger" onclick="toggleStageDropdown(event)">
@@ -1202,7 +1200,6 @@
             </button>
             <div class="stage-select-dropdown" id="stageDropdown">
               <button type="button" class="stage-option" data-value="none" onclick="selectStage('none', 'None')">None</button>
-              <div class="stage-divider">OR</div>
               <button type="button" class="stage-option" data-value="new" onclick="selectStage('new', 'New')">New</button>
               <button type="button" class="stage-option" data-value="contacted" onclick="selectStage('contacted', 'Contacted')">Contacted</button>
               <button type="button" class="stage-option" data-value="in_progress_cold" onclick="selectStage('in_progress_cold', 'In Progress - cold')">In Progress - cold</button>
@@ -1213,10 +1210,6 @@
             </div>
           </div>
         </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn-cancel" onclick="closeStageModal()">Cancel</button>
-        <button class="btn-save" onclick="saveStageChange()">Save</button>
       </div>
     </div>
   </div>
