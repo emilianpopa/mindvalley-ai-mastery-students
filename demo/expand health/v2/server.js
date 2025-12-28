@@ -349,6 +349,15 @@ app.get('/marketing-templates/sms/create', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'marketing-templates.html'));
 });
 
+// Lead Management
+app.get('/leads', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'marketing-leads.html'));
+});
+
+app.get('/marketing/leads', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'marketing-leads.html'));
+});
+
 app.get('/marketing/referrals', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'marketing-referrals.html'));
 });
