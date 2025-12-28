@@ -1379,6 +1379,74 @@
     </div>
   </div>
 
+  <!-- Send Email Modal -->
+  <div class="modal-overlay" id="sendEmailModal">
+    <div class="modal" style="max-width: 600px;">
+      <div class="modal-header">
+        <h2 class="modal-title">Send email</h2>
+        <button class="modal-close" onclick="closeEmailModal()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">To</label>
+          <input type="email" class="form-input" id="emailTo" readonly style="background: var(--gray-50);">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Subject</label>
+          <input type="text" class="form-input" id="emailSubject" placeholder="Enter subject">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Message</label>
+          <textarea class="form-input" id="emailBody" placeholder="Write your message here..." rows="8" style="resize: vertical;"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" onclick="closeEmailModal()">Cancel</button>
+        <button class="btn-save" onclick="sendEmailMessage()">Send</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Send SMS Modal -->
+  <div class="modal-overlay" id="sendSMSModal">
+    <div class="modal" style="max-width: 480px;">
+      <div class="modal-header">
+        <h2 class="modal-title">Send SMS</h2>
+        <button class="modal-close" onclick="closeSMSModal()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">To</label>
+          <input type="tel" class="form-input" id="smsTo" readonly style="background: var(--gray-50);">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Message</label>
+          <textarea class="form-input" id="smsBody" placeholder="Write your message here..." rows="4" style="resize: vertical;"></textarea>
+          <div style="font-size: 0.75rem; color: var(--gray-400); margin-top: 4px;">
+            <span id="smsCharCount">0</span>/160 characters
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" onclick="closeSMSModal()">Cancel</button>
+        <button class="btn-save" onclick="sendSMSMessage()">Send</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     // Sample lead data (in real app, this would come from API)
     const leadsData = {
@@ -1851,15 +1919,104 @@
 
     function sendEmail() {
       closeActionsMenu();
-      switchTab('messages');
-      alert('Send email feature coming soon!');
+      openEmailModal();
     }
+
+    function openEmailModal() {
+      // Pre-fill the To field with lead email
+      document.getElementById('emailTo').value = lead.email || '';
+      document.getElementById('emailSubject').value = '';
+      document.getElementById('emailBody').value = '';
+
+      // Show modal
+      document.getElementById('sendEmailModal').classList.add('active');
+    }
+
+    function closeEmailModal() {
+      document.getElementById('sendEmailModal').classList.remove('active');
+    }
+
+    function sendEmailMessage() {
+      const emailTo = document.getElementById('emailTo').value;
+      const emailSubject = document.getElementById('emailSubject').value;
+      const emailBody = document.getElementById('emailBody').value;
+
+      if (!emailSubject.trim()) {
+        alert('Please enter a subject');
+        return;
+      }
+
+      if (!emailBody.trim()) {
+        alert('Please enter a message');
+        return;
+      }
+
+      // In a real app, this would make an API call
+      alert('Email sent successfully!');
+      closeEmailModal();
+      switchTab('messages');
+    }
+
+    // Close email modal when clicking overlay
+    document.getElementById('sendEmailModal').addEventListener('click', function(e) {
+      if (e.target === this) {
+        closeEmailModal();
+      }
+    });
 
     function sendSMS() {
       closeActionsMenu();
-      switchTab('messages');
-      alert('Send SMS feature coming soon!');
+      openSMSModal();
     }
+
+    function openSMSModal() {
+      // Pre-fill the To field with lead phone
+      document.getElementById('smsTo').value = lead.phone || 'No phone number';
+      document.getElementById('smsBody').value = '';
+      document.getElementById('smsCharCount').textContent = '0';
+
+      // Show modal
+      document.getElementById('sendSMSModal').classList.add('active');
+
+      // Add character counter
+      document.getElementById('smsBody').addEventListener('input', updateSMSCharCount);
+    }
+
+    function updateSMSCharCount() {
+      const count = document.getElementById('smsBody').value.length;
+      document.getElementById('smsCharCount').textContent = count;
+    }
+
+    function closeSMSModal() {
+      document.getElementById('sendSMSModal').classList.remove('active');
+    }
+
+    function sendSMSMessage() {
+      const smsTo = document.getElementById('smsTo').value;
+      const smsBody = document.getElementById('smsBody').value;
+
+      if (!lead.phone) {
+        alert('This lead has no phone number');
+        return;
+      }
+
+      if (!smsBody.trim()) {
+        alert('Please enter a message');
+        return;
+      }
+
+      // In a real app, this would make an API call
+      alert('SMS sent successfully!');
+      closeSMSModal();
+      switchTab('messages');
+    }
+
+    // Close SMS modal when clicking overlay
+    document.getElementById('sendSMSModal').addEventListener('click', function(e) {
+      if (e.target === this) {
+        closeSMSModal();
+      }
+    });
 
     function viewMessages() {
       closeActionsMenu();
