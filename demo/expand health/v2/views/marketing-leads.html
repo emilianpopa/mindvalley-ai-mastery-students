@@ -563,6 +563,79 @@
       color: var(--gray-900);
     }
 
+    .lead-name-link {
+      color: var(--gray-900);
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .lead-name-link:hover {
+      color: #6366F1;
+      text-decoration: underline;
+    }
+
+    /* Action Menu */
+    .action-cell {
+      position: relative;
+    }
+
+    .action-menu {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 100%;
+      background: white;
+      border: 1px solid var(--gray-200);
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      min-width: 200px;
+      z-index: 100;
+      padding: 8px 0;
+    }
+
+    .action-menu.active {
+      display: block;
+    }
+
+    .action-menu-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 16px;
+      font-size: 0.875rem;
+      color: var(--gray-700);
+      cursor: pointer;
+      text-decoration: none;
+      background: none;
+      border: none;
+      width: 100%;
+      text-align: left;
+    }
+
+    .action-menu-item:hover {
+      background: var(--gray-50);
+    }
+
+    .action-menu-item svg {
+      width: 16px;
+      height: 16px;
+      color: var(--gray-400);
+    }
+
+    .action-menu-item.danger {
+      color: #DC2626;
+    }
+
+    .action-menu-item.danger svg {
+      color: #DC2626;
+    }
+
+    .action-menu-divider {
+      height: 1px;
+      background: var(--gray-200);
+      margin: 8px 0;
+    }
+
     .lead-contact {
       color: var(--gray-600);
     }
@@ -1269,7 +1342,9 @@
           <td class="checkbox-cell">
             <input type="checkbox" class="lead-checkbox" data-id="${lead.id}">
           </td>
-          <td class="lead-name">${escapeHtml(lead.name)}</td>
+          <td class="lead-name">
+            <a href="/leads/${lead.id}" class="lead-name-link">${escapeHtml(lead.name)}</a>
+          </td>
           <td>
             <div class="lead-contact">${escapeHtml(lead.email)}</div>
             ${lead.phone ? `<div class="lead-contact-small">${escapeHtml(lead.phone)}</div>` : ''}
@@ -1292,14 +1367,99 @@
             </div>
           </td>
           <td><span class="health-badge ${lead.health.toLowerCase()}">${lead.health}</span></td>
-          <td>
-            <button class="action-btn">
+          <td class="action-cell">
+            <button class="action-btn" onclick="toggleActionMenu(event, ${lead.id})">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="12" cy="12" r="1"></circle>
                 <circle cx="12" cy="5" r="1"></circle>
                 <circle cx="12" cy="19" r="1"></circle>
               </svg>
             </button>
+            <div class="action-menu" id="actionMenu${lead.id}">
+              <a href="/leads/${lead.id}" class="action-menu-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+                View lead
+              </a>
+              <button class="action-menu-item" onclick="editLead(${lead.id})">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
+                Edit lead
+              </button>
+              <button class="action-menu-item" onclick="changeStage(${lead.id})">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="9 11 12 14 22 4"></polyline>
+                  <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                </svg>
+                Change stage
+              </button>
+              <button class="action-menu-item" onclick="convertToCustomer(${lead.id})">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="8.5" cy="7" r="4"></circle>
+                  <polyline points="17 11 19 13 23 9"></polyline>
+                </svg>
+                Convert to a customer
+              </button>
+              <div class="action-menu-divider"></div>
+              <button class="action-menu-item" onclick="addTask(${lead.id})">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M9 11l3 3L22 4"></path>
+                  <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                </svg>
+                Add task
+              </button>
+              <button class="action-menu-item" onclick="assignStaff(${lead.id})">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="9" cy="7" r="4"></circle>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+                Assign staff member
+              </button>
+              <button class="action-menu-item" onclick="addNote(${lead.id})">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                  <line x1="16" y1="13" x2="8" y2="13"></line>
+                  <line x1="16" y1="17" x2="8" y2="17"></line>
+                </svg>
+                Add a note
+              </button>
+              <div class="action-menu-divider"></div>
+              <button class="action-menu-item" onclick="sendEmail(${lead.id})">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                  <polyline points="22,6 12,13 2,6"></polyline>
+                </svg>
+                Send email
+              </button>
+              <button class="action-menu-item" onclick="sendSMS(${lead.id})">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                </svg>
+                Send SMS
+              </button>
+              <button class="action-menu-item" onclick="viewMessages(${lead.id})">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+                </svg>
+                View sent messages
+              </button>
+              <div class="action-menu-divider"></div>
+              <button class="action-menu-item danger" onclick="deleteLead(${lead.id})">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                </svg>
+                Delete lead
+              </button>
+            </div>
           </td>
         </tr>
       `).join('');
@@ -1344,6 +1504,93 @@
 
     function openNewLeadModal() {
       alert('New lead modal coming soon!');
+    }
+
+    // Action Menu Functions
+    let activeMenu = null;
+
+    function toggleActionMenu(event, leadId) {
+      event.stopPropagation();
+      const menu = document.getElementById(`actionMenu${leadId}`);
+
+      // Close any open menus
+      if (activeMenu && activeMenu !== menu) {
+        activeMenu.classList.remove('active');
+      }
+
+      menu.classList.toggle('active');
+      activeMenu = menu.classList.contains('active') ? menu : null;
+    }
+
+    function closeAllMenus() {
+      document.querySelectorAll('.action-menu').forEach(menu => {
+        menu.classList.remove('active');
+      });
+      activeMenu = null;
+    }
+
+    // Close menus when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.action-cell')) {
+        closeAllMenus();
+      }
+    });
+
+    function editLead(leadId) {
+      closeAllMenus();
+      window.location.href = `/leads/${leadId}?edit=true`;
+    }
+
+    function changeStage(leadId) {
+      closeAllMenus();
+      alert('Change stage modal coming soon!');
+    }
+
+    function convertToCustomer(leadId) {
+      closeAllMenus();
+      const lead = leads.find(l => l.id === leadId);
+      if (confirm(`Convert "${lead.name}" to a customer?`)) {
+        alert('Lead converted to customer!');
+      }
+    }
+
+    function addTask(leadId) {
+      closeAllMenus();
+      alert('Add task modal coming soon!');
+    }
+
+    function assignStaff(leadId) {
+      closeAllMenus();
+      alert('Assign staff modal coming soon!');
+    }
+
+    function addNote(leadId) {
+      closeAllMenus();
+      alert('Add note modal coming soon!');
+    }
+
+    function sendEmail(leadId) {
+      closeAllMenus();
+      window.location.href = `/leads/${leadId}?tab=messages&compose=email`;
+    }
+
+    function sendSMS(leadId) {
+      closeAllMenus();
+      window.location.href = `/leads/${leadId}?tab=messages&compose=sms`;
+    }
+
+    function viewMessages(leadId) {
+      closeAllMenus();
+      window.location.href = `/leads/${leadId}?tab=messages`;
+    }
+
+    function deleteLead(leadId) {
+      closeAllMenus();
+      const lead = leads.find(l => l.id === leadId);
+      if (confirm(`Are you sure you want to delete "${lead.name}"? This action cannot be undone.`)) {
+        leads = leads.filter(l => l.id !== leadId);
+        renderLeads();
+      }
     }
 
     // Initialize
