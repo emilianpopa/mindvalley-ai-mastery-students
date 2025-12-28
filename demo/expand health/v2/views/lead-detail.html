@@ -246,7 +246,7 @@
       border: 1px solid var(--gray-200);
       border-radius: 8px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      z-index: 10;
+      z-index: 1000;
       max-height: 300px;
       overflow-y: auto;
     }
@@ -1444,6 +1444,11 @@
       updateStageDropdownSelection();
 
       document.getElementById('changeStageModal').classList.add('active');
+
+      // Auto-open the dropdown when modal opens
+      setTimeout(() => {
+        document.getElementById('stageDropdown').classList.add('active');
+      }, 100);
     }
 
     function closeStageModal() {
