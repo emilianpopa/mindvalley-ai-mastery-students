@@ -341,6 +341,14 @@ app.get('/marketing/templates', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'marketing-templates.html'));
 });
 
+app.get('/marketing-templates', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'marketing-templates.html'));
+});
+
+app.get('/marketing-templates/sms/create', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'marketing-templates.html'));
+});
+
 app.get('/marketing/referrals', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'marketing-referrals.html'));
 });
