@@ -2128,7 +2128,7 @@
       await loadStaff();
       await loadLocations();
       await loadClassTemplates();
-      loadClasses();
+      // Note: loadClasses() is called by updateCurrentView() after calendar variables are initialized
       setupEventListeners();
     });
 
