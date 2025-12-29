@@ -21,7 +21,7 @@ router.use(authenticateToken);
  */
 router.get('/', async (req, res, next) => {
   try {
-    const tenantId = req.user.tenant_id;
+    const tenantId = req.user.tenantId;
     const { active_only } = req.query;
 
     let query = `
@@ -50,7 +50,7 @@ router.get('/', async (req, res, next) => {
  */
 router.get('/:id', async (req, res, next) => {
   try {
-    const tenantId = req.user.tenant_id;
+    const tenantId = req.user.tenantId;
     const { id } = req.params;
 
     const result = await db.query(
@@ -74,7 +74,7 @@ router.get('/:id', async (req, res, next) => {
  */
 router.post('/', requireRole(['admin', 'manager']), async (req, res, next) => {
   try {
-    const tenantId = req.user.tenant_id;
+    const tenantId = req.user.tenantId;
     const {
       name,
       address,
@@ -119,7 +119,7 @@ router.post('/', requireRole(['admin', 'manager']), async (req, res, next) => {
  */
 router.put('/:id', requireRole(['admin', 'manager']), async (req, res, next) => {
   try {
-    const tenantId = req.user.tenant_id;
+    const tenantId = req.user.tenantId;
     const { id } = req.params;
     const {
       name,
@@ -184,7 +184,7 @@ router.put('/:id', requireRole(['admin', 'manager']), async (req, res, next) => 
  */
 router.delete('/:id', requireRole(['admin']), async (req, res, next) => {
   try {
-    const tenantId = req.user.tenant_id;
+    const tenantId = req.user.tenantId;
     const { id } = req.params;
 
     const result = await db.query(
@@ -210,7 +210,7 @@ router.delete('/:id', requireRole(['admin']), async (req, res, next) => {
  */
 router.post('/seed', requireRole(['admin']), async (req, res, next) => {
   try {
-    const tenantId = req.user.tenant_id;
+    const tenantId = req.user.tenantId;
 
     // Check if locations already exist
     const existing = await db.query(
