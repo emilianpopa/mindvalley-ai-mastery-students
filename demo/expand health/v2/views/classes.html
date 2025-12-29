@@ -3731,11 +3731,24 @@
       const staffSelect = document.getElementById('classStaff');
       const practitionerFilter = document.getElementById('practitionerFilter');
 
+      // Clear and reset the main staff dropdown
+      if (staffSelect) {
+        staffSelect.innerHTML = '<option value="">Select staff</option>';
+      }
+
+      // Clear and reset the filter dropdown
+      if (practitionerFilter) {
+        practitionerFilter.innerHTML = '<option value="">All practitioners</option>';
+      }
+
       staff.forEach(s => {
         const option = document.createElement('option');
         option.value = s.id;
         // Staff has first_name and last_name, not name
-        option.textContent = `${s.first_name} ${s.last_name}`.trim();
+        const displayName = s.first_name && s.last_name
+          ? `${s.first_name} ${s.last_name}`.trim()
+          : s.name || s.email || `Staff ${s.id}`;
+        option.textContent = displayName;
 
         if (staffSelect) {
           staffSelect.appendChild(option.cloneNode(true));
@@ -4335,7 +4348,8 @@
       // Update footer buttons for step 0
       updateFooterButtons();
 
-      // Populate location dropdown
+      // Populate dropdowns
+      populateStaffDropdown();
       populateLocationDropdown();
 
       // Clear additional practitioners
