@@ -665,9 +665,6 @@
 </head>
 <body>
   <div class="app-layout">
-    <!-- Include sidebar via server-side include or JavaScript -->
-    <div id="sidebar-container"></div>
-
     <main class="main-content">
       <div class="class-detail-page">
         <!-- Header -->
@@ -1179,16 +1176,6 @@
       // Navigate to next class
       alert('Navigate to next class');
     }
-
-    // Load sidebar
-    fetch('/views/partials/sidebar.html')
-      .then(response => response.text())
-      .then(html => {
-        document.getElementById('sidebar-container').innerHTML = html;
-      })
-      .catch(() => {
-        // Fallback - just continue without sidebar
-      });
 
     // Initialize
     document.addEventListener('DOMContentLoaded', () => {
