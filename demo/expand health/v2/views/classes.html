@@ -3779,11 +3779,14 @@
       const locationFilter = document.getElementById('locationFilter');
       const classLocation = document.getElementById('classLocation');
 
-      // Clear existing options except first one
+      // Clear and reset location filter dropdown
       if (locationFilter) {
-        while (locationFilter.options.length > 1) {
-          locationFilter.remove(1);
-        }
+        locationFilter.innerHTML = '<option value="">All locations</option>';
+      }
+
+      // Clear and reset class location dropdown
+      if (classLocation) {
+        classLocation.innerHTML = '<option value="">Select location</option>';
       }
 
       locations.forEach(loc => {
