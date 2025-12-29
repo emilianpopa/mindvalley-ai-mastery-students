@@ -293,6 +293,11 @@ app.get('/classes', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'classes.html'));
 });
 
+// Class Detail
+app.get('/classes/:id', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'class-detail.html'));
+});
+
 app.get('/class-templates', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'class-templates.html'));
 });

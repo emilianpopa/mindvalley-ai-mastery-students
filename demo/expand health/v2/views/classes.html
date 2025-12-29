@@ -1041,6 +1041,145 @@
       text-decoration: underline;
     }
 
+    /* Button toggle group - Momence style */
+    .button-toggle-group {
+      display: inline-flex;
+      gap: 0;
+      border: 1px solid var(--gray-300);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .button-toggle {
+      padding: 10px 20px;
+      background: white;
+      border: none;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--gray-700);
+      cursor: pointer;
+      transition: all 0.15s;
+      border-right: 1px solid var(--gray-300);
+    }
+
+    .button-toggle:last-child {
+      border-right: none;
+    }
+
+    .button-toggle:hover {
+      background: var(--gray-50);
+    }
+
+    .button-toggle.active {
+      background: #6366F1;
+      color: white;
+    }
+
+    /* Accordion items */
+    .accordion-item {
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .accordion-item:last-child {
+      border-bottom: none;
+    }
+
+    .accordion-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+      padding: 16px 0;
+      background: none;
+      border: none;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: #6366F1;
+      cursor: pointer;
+      text-align: left;
+    }
+
+    .accordion-header:hover {
+      color: #4F46E5;
+    }
+
+    .accordion-header svg {
+      width: 16px;
+      height: 16px;
+      transition: transform 0.2s;
+      color: var(--gray-400);
+    }
+
+    .accordion-header.open svg {
+      transform: rotate(90deg);
+    }
+
+    .accordion-content {
+      display: none;
+      padding-bottom: 16px;
+    }
+
+    .accordion-content.open {
+      display: block;
+    }
+
+    /* Badge */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 20px;
+      height: 20px;
+      padding: 0 6px;
+      background: var(--gray-200);
+      border-radius: 10px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--gray-600);
+      margin-left: 8px;
+    }
+
+    /* Footer buttons */
+    .btn-back {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 16px;
+      background: white;
+      border: 1px solid var(--gray-300);
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--gray-700);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-back:hover {
+      background: var(--gray-50);
+    }
+
+    .btn-back svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .btn-draft {
+      padding: 10px 16px;
+      background: white;
+      border: 1px solid var(--gray-300);
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--gray-700);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-draft:hover {
+      background: var(--gray-50);
+    }
+
     /* Legacy class type selection - keeping for compatibility */
     .class-type-selection {
       margin-bottom: 24px;
@@ -2523,36 +2662,100 @@
         <!-- Step 2: Payment Settings (hidden initially) -->
         <div id="wizardPaymentSettings" style="display: none;">
           <div class="form-section">
-            <h3 class="form-section-title">Pricing</h3>
+            <h3 class="form-section-title">Payment settings</h3>
 
             <div class="form-row">
               <div class="form-group">
-                <label class="form-label">Price (ZAR)</label>
+                <label class="form-label">Class payment type</label>
+                <div class="button-toggle-group">
+                  <button type="button" class="button-toggle active" data-value="paid" onclick="setPaymentType('paid')">Paid</button>
+                  <button type="button" class="button-toggle" data-value="free" onclick="setPaymentType('free')">Free</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-row" id="payLaterRow">
+              <div class="form-group">
+                <label class="form-label">Allow book for free and pay later bookings</label>
+                <div class="button-toggle-group">
+                  <button type="button" class="button-toggle" data-value="yes" onclick="setPayLater('yes')">Yes</button>
+                  <button type="button" class="button-toggle active" data-value="no" onclick="setPayLater('no')">No</button>
+                </div>
+                <span class="form-hint">If enabled, customers will be able to choose to not have to pay when making their booking. You will be able to pay for their booking using the Point of Sale.</span>
+              </div>
+            </div>
+
+            <div class="form-row" id="priceTypeRow">
+              <div class="form-group">
+                <label class="form-label">Price type</label>
+                <div class="button-toggle-group">
+                  <button type="button" class="button-toggle active" data-value="fixed" onclick="setPriceType('fixed')">Fixed price</button>
+                  <button type="button" class="button-toggle" data-value="customer" onclick="setPriceType('customer')">Customers pick price</button>
+                </div>
+                <span class="form-hint">Fixed price: You set the price of a ticket for this class. Customers pick price: You set the price range within which customers select their drop-in price.</span>
+              </div>
+            </div>
+
+            <div class="form-row" id="priceInputRow">
+              <div class="form-group">
+                <label class="form-label">Drop-in price (ZAR)</label>
                 <input type="number" class="form-input" id="classPrice" placeholder="0.00" step="0.01" min="0">
-                <span class="form-hint">Leave at 0 for free classes</span>
               </div>
             </div>
 
             <div class="toggle-row">
               <div class="toggle-label">
-                <span class="toggle-label-text">Allow drop-in payments</span>
-                <span class="toggle-label-hint">Customers can pay for individual sessions</span>
+                <span class="toggle-label-text">Allow customers to use a Payment Plan</span>
+                <span class="toggle-label-hint">If you turn this on, customers will have the option to divide their payments according to your payment plan instead of having to pay everything in one go.</span>
               </div>
               <label class="toggle-switch">
-                <input type="checkbox" id="classDropIn" checked>
+                <input type="checkbox" id="classPaymentPlan">
                 <span class="toggle-slider"></span>
               </label>
             </div>
+          </div>
 
-            <div class="toggle-row">
-              <div class="toggle-label">
-                <span class="toggle-label-text">Accept membership passes</span>
-                <span class="toggle-label-hint">Members with valid passes can attend this class</span>
+          <div class="form-section">
+            <h3 class="form-section-title">What can be used to pay</h3>
+
+            <div class="accordion-item">
+              <button class="accordion-header" onclick="toggleAccordion(this)">
+                <span>Applicable memberships</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="9 18 15 12 9 6"/>
+                </svg>
+              </button>
+              <div class="accordion-content">
+                <p style="color: var(--gray-500); font-size: 0.875rem;">No memberships configured yet.</p>
               </div>
-              <label class="toggle-switch">
-                <input type="checkbox" id="classMembership" checked>
-                <span class="toggle-slider"></span>
-              </label>
+            </div>
+
+            <div class="accordion-item">
+              <button class="accordion-header" onclick="toggleAccordion(this)">
+                <span>Discount codes</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="9 18 15 12 9 6"/>
+                </svg>
+              </button>
+              <div class="accordion-content">
+                <p style="color: var(--gray-500); font-size: 0.875rem;">No discount codes configured yet.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <h3 class="form-section-title">Optional settings</h3>
+
+            <div class="accordion-item">
+              <button class="accordion-header" onclick="toggleAccordion(this)">
+                <span>Ticket tiers <span class="badge">0</span></span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="9 18 15 12 9 6"/>
+                </svg>
+              </button>
+              <div class="accordion-content">
+                <p style="color: var(--gray-500); font-size: 0.875rem;">No ticket tiers configured yet.</p>
+              </div>
             </div>
           </div>
         </div>
@@ -2560,86 +2763,172 @@
         <!-- Step 3: Additional Settings (hidden initially) -->
         <div id="wizardAdditionalSettings" style="display: none;">
           <div class="form-section">
-            <h3 class="form-section-title">Booking Settings</h3>
+            <h3 class="form-section-title">Additional settings</h3>
 
-            <div class="form-row two-col">
-              <div class="form-group">
-                <label class="form-label">Booking opens</label>
-                <select class="form-select" id="bookingOpens">
-                  <option value="always">Always open</option>
-                  <option value="1_day">1 day before</option>
-                  <option value="3_days">3 days before</option>
-                  <option value="1_week">1 week before</option>
-                  <option value="2_weeks">2 weeks before</option>
-                  <option value="1_month">1 month before</option>
-                </select>
+            <div class="accordion-item">
+              <button class="accordion-header" onclick="toggleAccordion(this)">
+                <span>Eligible substitute practitioners</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="9 18 15 12 9 6"/>
+                </svg>
+              </button>
+              <div class="accordion-content">
+                <p style="color: var(--gray-500); font-size: 0.875rem;">Select practitioners who can substitute for this class.</p>
               </div>
-              <div class="form-group">
-                <label class="form-label">Booking closes</label>
-                <select class="form-select" id="bookingCloses">
-                  <option value="at_start">At class start</option>
-                  <option value="15_min">15 minutes before</option>
-                  <option value="30_min">30 minutes before</option>
-                  <option value="1_hour">1 hour before</option>
-                  <option value="2_hours">2 hours before</option>
-                  <option value="1_day">1 day before</option>
-                </select>
+            </div>
+
+            <div class="accordion-item">
+              <button class="accordion-header" onclick="toggleAccordion(this)">
+                <span>Restrict who is eligible to book and when</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="9 18 15 12 9 6"/>
+                </svg>
+              </button>
+              <div class="accordion-content">
+                <p style="color: var(--gray-500); font-size: 0.875rem;">Set restrictions for booking eligibility.</p>
+              </div>
+            </div>
+
+            <div class="accordion-item">
+              <button class="accordion-header" onclick="toggleAccordion(this)">
+                <span>Collect numbers for SMS</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="9 18 15 12 9 6"/>
+                </svg>
+              </button>
+              <div class="accordion-content">
+                <p style="color: var(--gray-500); font-size: 0.875rem;">Request phone numbers during booking.</p>
+              </div>
+            </div>
+
+            <div class="accordion-item">
+              <button class="accordion-header" onclick="toggleAccordion(this)">
+                <span>Welcome message</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="9 18 15 12 9 6"/>
+                </svg>
+              </button>
+              <div class="accordion-content">
+                <p style="color: var(--gray-500); font-size: 0.875rem;">Set a custom welcome message for attendees.</p>
+              </div>
+            </div>
+
+            <div class="accordion-item">
+              <button class="accordion-header" onclick="toggleAccordion(this)">
+                <span>Custom questions</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="9 18 15 12 9 6"/>
+                </svg>
+              </button>
+              <div class="accordion-content">
+                <p style="color: var(--gray-500); font-size: 0.875rem;">Add custom questions to the booking form.</p>
+              </div>
+            </div>
+
+            <div class="accordion-item">
+              <button class="accordion-header" onclick="toggleAccordion(this)">
+                <span>Email attachment</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="9 18 15 12 9 6"/>
+                </svg>
+              </button>
+              <div class="accordion-content">
+                <p style="color: var(--gray-500); font-size: 0.875rem;">Attach files to confirmation emails.</p>
+              </div>
+            </div>
+
+            <div class="accordion-item">
+              <button class="accordion-header" onclick="toggleAccordion(this)">
+                <span>Spot selection</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="9 18 15 12 9 6"/>
+                </svg>
+              </button>
+              <div class="accordion-content">
+                <p style="color: var(--gray-500); font-size: 0.875rem;">Allow customers to select specific spots.</p>
+              </div>
+            </div>
+
+            <div class="accordion-item">
+              <button class="accordion-header" onclick="toggleAccordion(this)">
+                <span>Cancellation policy</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="9 18 15 12 9 6"/>
+                </svg>
+              </button>
+              <div class="accordion-content">
+                <div class="form-group" style="margin-top: 12px;">
+                  <label class="form-label">Cancellation deadline</label>
+                  <select class="form-select" id="cancellationDeadline">
+                    <option value="anytime">Anytime before class</option>
+                    <option value="1_hour">1 hour before</option>
+                    <option value="2_hours">2 hours before</option>
+                    <option value="12_hours">12 hours before</option>
+                    <option value="24_hours" selected>24 hours before</option>
+                    <option value="48_hours">48 hours before</option>
+                  </select>
+                </div>
               </div>
             </div>
           </div>
 
           <div class="form-section">
-            <h3 class="form-section-title">Cancellation Policy</h3>
+            <div class="accordion-item" style="border: none;">
+              <button class="accordion-header" onclick="toggleAccordion(this)" style="padding: 0;">
+                <span style="font-weight: 600;">More settings</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
+              </button>
+              <div class="accordion-content" style="display: block;">
+                <div class="form-row" style="margin-top: 16px;">
+                  <div class="form-group">
+                    <label class="form-label">Price in class credits</label>
+                    <input type="number" class="form-input" id="classCredits" placeholder="1" value="1" min="0" style="width: 120px;">
+                  </div>
+                </div>
 
-            <div class="form-row">
-              <div class="form-group">
-                <label class="form-label">Cancellation deadline</label>
-                <select class="form-select" id="cancellationDeadline">
-                  <option value="anytime">Anytime before class</option>
-                  <option value="1_hour">1 hour before</option>
-                  <option value="2_hours">2 hours before</option>
-                  <option value="12_hours">12 hours before</option>
-                  <option value="24_hours" selected>24 hours before</option>
-                  <option value="48_hours">48 hours before</option>
-                </select>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label">Sales cut-off</label>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                      <input type="number" class="form-input" id="salesCutoff" placeholder="60" style="width: 80px;">
+                      <span style="color: var(--gray-500); font-size: 0.875rem;">minutes before class starts</span>
+                    </div>
+                    <span class="form-hint">Set a cutoff time to automatically stop ticket sales. After this time, booking for the class is closed. (By default, booking is possible until the end time). To allow for a grace period, you can use a negative number. This allows booking for 'x' minutes after the class starts.</span>
+                  </div>
+                </div>
+
+                <div class="toggle-row">
+                  <div class="toggle-label">
+                    <span class="toggle-label-text">Request shipping address</span>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="requestShipping">
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+
+                <div class="toggle-row">
+                  <div class="toggle-label">
+                    <span class="toggle-label-text">Request billing address</span>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="requestBilling">
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+
+                <div class="toggle-row">
+                  <div class="toggle-label">
+                    <span class="toggle-label-text">Allow customers to book for their children</span>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="allowChildBooking">
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
               </div>
-            </div>
-
-            <div class="toggle-row">
-              <div class="toggle-label">
-                <span class="toggle-label-text">Charge late cancellation fee</span>
-                <span class="toggle-label-hint">Charge customers who cancel after the deadline</span>
-              </div>
-              <label class="toggle-switch">
-                <input type="checkbox" id="lateCancellationFee">
-                <span class="toggle-slider"></span>
-              </label>
-            </div>
-          </div>
-
-          <div class="form-section">
-            <h3 class="form-section-title">Notifications</h3>
-
-            <div class="toggle-row">
-              <div class="toggle-label">
-                <span class="toggle-label-text">Send reminder email</span>
-                <span class="toggle-label-hint">Send email reminder to attendees before class</span>
-              </div>
-              <label class="toggle-switch">
-                <input type="checkbox" id="reminderEmail" checked>
-                <span class="toggle-slider"></span>
-              </label>
-            </div>
-
-            <div class="toggle-row">
-              <div class="toggle-label">
-                <span class="toggle-label-text">Send confirmation email</span>
-                <span class="toggle-label-hint">Send confirmation when booking is made</span>
-              </div>
-              <label class="toggle-switch">
-                <input type="checkbox" id="confirmationEmail" checked>
-                <span class="toggle-slider"></span>
-              </label>
             </div>
           </div>
         </div>
@@ -2647,6 +2936,13 @@
 
       <div class="modal-footer">
         <button class="btn-cancel" onclick="closeCreateModal()">Cancel</button>
+        <button class="btn-back" onclick="goBackInWizard()" id="backBtn" style="display: none;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="15 18 9 12 15 6"/>
+          </svg>
+          Back
+        </button>
+        <button class="btn-draft" onclick="saveAsDraft()" id="draftBtn" style="display: none;">Save as draft</button>
         <button class="btn-next" onclick="handleNextStep()" id="nextBtn">
           Next
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -3172,7 +3468,7 @@
         document.getElementById('wizardBasicInfo').style.display = 'none';
         document.getElementById('wizardPaymentSettings').style.display = 'block';
         updateWizardStepIndicator();
-        updateNextButtonForNext();
+        updateFooterButtons();
 
       } else if (wizardStep === 2) {
         // Move to step 3
@@ -3180,7 +3476,7 @@
         document.getElementById('wizardPaymentSettings').style.display = 'none';
         document.getElementById('wizardAdditionalSettings').style.display = 'block';
         updateWizardStepIndicator();
-        updateNextButtonForSubmit();
+        updateFooterButtons();
 
       } else if (wizardStep === 3) {
         // Submit the form
@@ -3194,14 +3490,78 @@
         document.getElementById('wizardPaymentSettings').style.display = 'none';
         document.getElementById('wizardBasicInfo').style.display = 'block';
         updateWizardStepIndicator();
-        updateNextButtonForNext();
+        updateFooterButtons();
       } else if (wizardStep === 3) {
         wizardStep = 2;
         document.getElementById('wizardAdditionalSettings').style.display = 'none';
         document.getElementById('wizardPaymentSettings').style.display = 'block';
         updateWizardStepIndicator();
-        updateNextButtonForNext();
+        updateFooterButtons();
       }
+    }
+
+    function updateFooterButtons() {
+      const backBtn = document.getElementById('backBtn');
+      const draftBtn = document.getElementById('draftBtn');
+      const nextBtn = document.getElementById('nextBtn');
+
+      if (wizardStep === 1) {
+        backBtn.style.display = 'none';
+        draftBtn.style.display = 'none';
+        nextBtn.innerHTML = `Next <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>`;
+      } else if (wizardStep === 2) {
+        backBtn.style.display = 'flex';
+        draftBtn.style.display = 'none';
+        nextBtn.innerHTML = `Next <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>`;
+      } else if (wizardStep === 3) {
+        backBtn.style.display = 'flex';
+        draftBtn.style.display = 'inline-block';
+        nextBtn.innerHTML = `Create`;
+        nextBtn.style.background = '#6366F1';
+      }
+    }
+
+    // Payment settings helpers
+    let paymentType = 'paid';
+    let payLater = 'no';
+    let priceType = 'fixed';
+
+    function setPaymentType(type) {
+      paymentType = type;
+      document.querySelectorAll('#wizardPaymentSettings .button-toggle-group')[0].querySelectorAll('.button-toggle').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.value === type);
+      });
+      // Show/hide price-related rows when free
+      const priceRows = ['payLaterRow', 'priceTypeRow', 'priceInputRow'];
+      priceRows.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = type === 'free' ? 'none' : 'block';
+      });
+    }
+
+    function setPayLater(value) {
+      payLater = value;
+      document.querySelectorAll('#payLaterRow .button-toggle').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.value === value);
+      });
+    }
+
+    function setPriceType(type) {
+      priceType = type;
+      document.querySelectorAll('#priceTypeRow .button-toggle').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.value === type);
+      });
+    }
+
+    function toggleAccordion(header) {
+      header.classList.toggle('open');
+      const content = header.nextElementSibling;
+      content.classList.toggle('open');
+    }
+
+    function saveAsDraft() {
+      alert('Class saved as draft!');
+      closeCreateModal();
     }
 
     function setLocationType(type) {
@@ -3318,8 +3678,7 @@
     }
 
     function viewClass(id) {
-      // TODO: Implement view class modal/page
-      console.log('View class:', id);
+      window.location.href = `/classes/${id}`;
     }
 
     function editClass(id) {

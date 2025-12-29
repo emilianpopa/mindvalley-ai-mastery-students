@@ -1,0 +1,1199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Class Details - ExpandHealth</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cline x1='20' y1='20' x2='80' y2='80' stroke='%230F766E' stroke-width='12' stroke-linecap='round'/%3E%3Cline x1='80' y1='20' x2='20' y2='80' stroke='%230F766E' stroke-width='12' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/css/main.css">
+  <script src="/js/feature-flags.js"></script>
+  <style>
+    .main-content {
+      flex: 1;
+      margin-left: 260px;
+      overflow-y: auto;
+      background: #f8f9fa;
+    }
+
+    .class-detail-page {
+      padding: 24px 32px;
+    }
+
+    /* Header */
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .back-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      background: none;
+      border: none;
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--gray-900);
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    .back-btn:hover {
+      color: var(--gray-700);
+    }
+
+    .back-btn svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .nav-arrows {
+      display: flex;
+      gap: 4px;
+    }
+
+    .nav-arrow {
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: white;
+      border: 1px solid var(--gray-300);
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .nav-arrow:hover {
+      background: var(--gray-50);
+    }
+
+    .nav-arrow svg {
+      width: 16px;
+      height: 16px;
+      color: var(--gray-600);
+    }
+
+    .actions-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      background: #6366F1;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    .actions-btn:hover {
+      background: #4F46E5;
+    }
+
+    .actions-menu {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 100%;
+      margin-top: 4px;
+      background: white;
+      border: 1px solid var(--gray-200);
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      min-width: 220px;
+      z-index: 100;
+      padding: 8px 0;
+    }
+
+    .actions-menu.active {
+      display: block;
+    }
+
+    .actions-menu-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 16px;
+      font-size: 0.875rem;
+      color: var(--gray-700);
+      cursor: pointer;
+      text-decoration: none;
+      background: none;
+      border: none;
+      width: 100%;
+      text-align: left;
+    }
+
+    .actions-menu-item:hover {
+      background: var(--gray-50);
+    }
+
+    .actions-menu-item svg {
+      width: 16px;
+      height: 16px;
+      color: var(--gray-400);
+    }
+
+    .actions-menu-item.danger {
+      color: #DC2626;
+    }
+
+    .actions-menu-item.danger svg {
+      color: #DC2626;
+    }
+
+    /* Content Layout */
+    .content-grid {
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      gap: 24px;
+    }
+
+    /* General Info Card */
+    .info-card {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .info-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 20px;
+    }
+
+    .info-card-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+
+    .class-badge {
+      display: inline-flex;
+      padding: 4px 12px;
+      background: #EEF2FF;
+      color: #6366F1;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .info-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .info-row:last-child {
+      margin-bottom: 0;
+    }
+
+    .info-icon {
+      width: 36px;
+      height: 36px;
+      background: #F3F4F6;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .info-icon svg {
+      width: 18px;
+      height: 18px;
+      color: var(--gray-500);
+    }
+
+    .info-content {
+      flex: 1;
+    }
+
+    .info-label {
+      font-size: 0.75rem;
+      color: var(--gray-500);
+      margin-bottom: 2px;
+    }
+
+    .info-value {
+      font-size: 0.875rem;
+      color: var(--gray-900);
+    }
+
+    .info-value a {
+      color: #6366F1;
+      text-decoration: none;
+    }
+
+    .info-value a:hover {
+      text-decoration: underline;
+    }
+
+    .request-substitute-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      background: #FEF3C7;
+      color: #92400E;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      cursor: pointer;
+      margin-left: 8px;
+    }
+
+    .sell-products-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      background: #EEF2FF;
+      color: #6366F1;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      margin-top: 16px;
+    }
+
+    /* Right Sidebar Cards */
+    .sidebar-card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      margin-bottom: 16px;
+    }
+
+    .sidebar-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .sidebar-card-icon {
+      width: 40px;
+      height: 40px;
+      background: #F3F4F6;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .sidebar-card-icon svg {
+      width: 20px;
+      height: 20px;
+      color: var(--gray-500);
+    }
+
+    .sidebar-card-title {
+      font-size: 0.75rem;
+      color: var(--gray-500);
+    }
+
+    .sidebar-card-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--gray-900);
+    }
+
+    .sidebar-card-value span {
+      font-size: 0.875rem;
+      font-weight: 400;
+      color: var(--gray-500);
+    }
+
+    .edit-link {
+      font-size: 0.75rem;
+      color: #6366F1;
+      text-decoration: none;
+    }
+
+    .edit-link:hover {
+      text-decoration: underline;
+    }
+
+    /* Note Card */
+    .note-card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      margin-bottom: 16px;
+    }
+
+    .note-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .note-icon {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .note-icon svg {
+      width: 18px;
+      height: 18px;
+      color: var(--gray-400);
+    }
+
+    .note-title {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--gray-900);
+    }
+
+    .note-placeholder {
+      font-size: 0.875rem;
+      color: var(--gray-400);
+    }
+
+    /* Profitability Card */
+    .profitability-card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      margin-bottom: 16px;
+    }
+
+    .profitability-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .profitability-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .profitability-icon {
+      width: 40px;
+      height: 40px;
+      background: #FEF3C7;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .profitability-icon svg {
+      width: 20px;
+      height: 20px;
+      color: #D97706;
+    }
+
+    .profitability-row {
+      margin-bottom: 12px;
+    }
+
+    .profitability-label {
+      font-size: 0.75rem;
+      color: var(--gray-500);
+    }
+
+    .profitability-value {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--gray-900);
+    }
+
+    .admin-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 8px;
+      background: var(--gray-100);
+      border-radius: 4px;
+      font-size: 0.75rem;
+      color: var(--gray-600);
+    }
+
+    /* Duration Card */
+    .duration-card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .duration-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .duration-icon {
+      width: 40px;
+      height: 40px;
+      background: #DBEAFE;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .duration-icon svg {
+      width: 20px;
+      height: 20px;
+      color: #2563EB;
+    }
+
+    .duration-label {
+      font-size: 0.75rem;
+      color: var(--gray-500);
+    }
+
+    .duration-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--gray-900);
+    }
+
+    /* Add Customer Section */
+    .add-customer-section {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      margin-top: 24px;
+    }
+
+    .add-customer-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .add-customer-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+
+    .auto-checkin {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.875rem;
+      color: var(--gray-600);
+    }
+
+    .customer-select-row {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .customer-select {
+      flex: 1;
+      padding: 12px 14px;
+      border: 1px solid var(--gray-300);
+      border-radius: 8px;
+      font-size: 0.875rem;
+    }
+
+    .add-customer-btn {
+      width: 40px;
+      height: 40px;
+      background: var(--gray-100);
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .add-customer-btn svg {
+      width: 20px;
+      height: 20px;
+      color: var(--gray-600);
+    }
+
+    .pos-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      background: white;
+      border: 1px solid var(--gray-300);
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--gray-700);
+      cursor: pointer;
+    }
+
+    .pos-btn:hover {
+      background: var(--gray-50);
+    }
+
+    /* Signups Section */
+    .signups-section {
+      margin-top: 24px;
+    }
+
+    .signups-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .signups-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      background: #6366F1;
+      color: white;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+
+    .signups-badge svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .signups-count {
+      background: white;
+      padding: 2px 8px;
+      border-radius: 4px;
+      color: #6366F1;
+      font-weight: 600;
+      margin-left: 4px;
+    }
+
+    .signups-search {
+      padding: 10px 14px;
+      border: 1px solid var(--gray-300);
+      border-radius: 8px;
+      font-size: 0.875rem;
+      width: 280px;
+      margin-bottom: 16px;
+    }
+
+    .no-signups {
+      color: #6366F1;
+      font-size: 0.875rem;
+    }
+
+    /* Toggle switch */
+    .toggle-switch {
+      position: relative;
+      width: 44px;
+      height: 24px;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: var(--gray-300);
+      transition: 0.2s;
+      border-radius: 24px;
+    }
+
+    .toggle-slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: 0.2s;
+      border-radius: 50%;
+    }
+
+    .toggle-switch input:checked + .toggle-slider {
+      background-color: #6366F1;
+    }
+
+    .toggle-switch input:checked + .toggle-slider:before {
+      transform: translateX(20px);
+    }
+
+    .actions-wrapper {
+      position: relative;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Include sidebar via server-side include or JavaScript -->
+    <div id="sidebar-container"></div>
+
+    <main class="main-content">
+      <div class="class-detail-page">
+        <!-- Header -->
+        <div class="page-header">
+          <div class="header-left">
+            <a href="/classes" class="back-btn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="15 18 9 12 15 6"/>
+              </svg>
+              <span id="className">yoga test</span>
+            </a>
+          </div>
+          <div class="header-right">
+            <div class="nav-arrows">
+              <button class="nav-arrow" onclick="navigatePrev()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="15 18 9 12 15 6"/>
+                </svg>
+              </button>
+              <button class="nav-arrow" onclick="navigateNext()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="9 18 15 12 9 6"/>
+                </svg>
+              </button>
+            </div>
+            <div class="actions-wrapper">
+              <button class="actions-btn" onclick="toggleActionsMenu(event)">
+                Actions
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="1"></circle>
+                  <circle cx="12" cy="5" r="1"></circle>
+                  <circle cx="12" cy="19" r="1"></circle>
+                </svg>
+              </button>
+              <div class="actions-menu" id="actionsMenu">
+                <button class="actions-menu-item" onclick="editClass()">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                  </svg>
+                  Edit this class
+                </button>
+                <button class="actions-menu-item" onclick="duplicateClass()">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                  </svg>
+                  Duplicate class
+                </button>
+                <button class="actions-menu-item" onclick="unpublishClass()">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                  </svg>
+                  Un-publish class
+                </button>
+                <button class="actions-menu-item" onclick="addToCalendar()">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                  </svg>
+                  Add to Google Calendar
+                </button>
+                <button class="actions-menu-item" onclick="addTask()">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 11l3 3L22 4"></path>
+                    <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                  </svg>
+                  Add task to class
+                </button>
+                <button class="actions-menu-item" onclick="editPriceRules()">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="1" x2="12" y2="23"></line>
+                    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                  </svg>
+                  Edit price rules
+                </button>
+                <button class="actions-menu-item" onclick="inviteSomeone()">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="8.5" cy="7" r="4"></circle>
+                    <line x1="20" y1="8" x2="20" y2="14"></line>
+                    <line x1="23" y1="11" x2="17" y2="11"></line>
+                  </svg>
+                  Invite someone
+                </button>
+                <button class="actions-menu-item" onclick="viewReviews()">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                  </svg>
+                  View reviews
+                </button>
+                <button class="actions-menu-item danger" onclick="cancelClass()">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                  Cancel class
+                </button>
+                <button class="actions-menu-item danger" onclick="deleteClass()">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                  </svg>
+                  Delete class
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Content Grid -->
+        <div class="content-grid">
+          <!-- Left Column -->
+          <div class="left-column">
+            <!-- General Info -->
+            <div class="info-card">
+              <div class="info-card-header">
+                <h2 class="info-card-title">General info</h2>
+              </div>
+              <span class="class-badge">Class</span>
+
+              <div style="margin-top: 20px;">
+                <div class="info-row">
+                  <div class="info-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                      <line x1="16" y1="2" x2="16" y2="6"></line>
+                      <line x1="8" y1="2" x2="8" y2="6"></line>
+                      <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg>
+                  </div>
+                  <div class="info-content">
+                    <div class="info-label">Date</div>
+                    <div class="info-value" id="classDate">Monday, December 29, 2025 12:00 PM</div>
+                  </div>
+                </div>
+
+                <div class="info-row">
+                  <div class="info-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                      <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                    </svg>
+                  </div>
+                  <div class="info-content">
+                    <div class="info-label">Class signup link</div>
+                    <div class="info-value"><a href="#" id="signupLink">https://momence.com/l/QQhqoMd1</a></div>
+                  </div>
+                </div>
+
+                <div class="info-row">
+                  <div class="info-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                      <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                  </div>
+                  <div class="info-content">
+                    <div class="info-label">Practitioner</div>
+                    <div class="info-value">
+                      <button class="request-substitute-btn">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <circle cx="12" cy="12" r="10"></circle>
+                          <line x1="12" y1="8" x2="12" y2="12"></line>
+                          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                        </svg>
+                        Request substitute
+                      </button>
+                      <br>
+                      <a href="#" id="practitionerName" style="margin-top: 4px; display: inline-block;">Jack Harland</a>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="info-row">
+                  <div class="info-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                      <circle cx="12" cy="10" r="3"></circle>
+                    </svg>
+                  </div>
+                  <div class="info-content">
+                    <div class="info-label">Location</div>
+                    <div class="info-value"><a href="#" id="locationName">Event Space</a> in Expand Health</div>
+                  </div>
+                </div>
+
+                <div class="info-row">
+                  <div class="info-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+                      <line x1="2" y1="10" x2="22" y2="10"></line>
+                    </svg>
+                  </div>
+                  <div class="info-content">
+                    <div class="info-label">Drop-in price</div>
+                    <div class="info-value" id="classPrice">ZAR 250.00</div>
+                  </div>
+                </div>
+              </div>
+
+              <button class="sell-products-btn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+                  <line x1="2" y1="10" x2="22" y2="10"></line>
+                </svg>
+                Sell products
+              </button>
+            </div>
+
+            <!-- Add Customer Section -->
+            <div class="add-customer-section">
+              <div class="add-customer-header">
+                <h3 class="add-customer-title">Add customer into this class</h3>
+                <div class="auto-checkin">
+                  <span>Auto check-in</span>
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="autoCheckin">
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="customer-select-row">
+                <select class="customer-select" id="customerSelect">
+                  <option value="">Select customer...</option>
+                </select>
+                <button class="add-customer-btn">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                  </svg>
+                </button>
+                <button class="pos-btn">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+                    <line x1="2" y1="10" x2="22" y2="10"></line>
+                  </svg>
+                  Open Point of Sale
+                </button>
+              </div>
+            </div>
+
+            <!-- Signups Section -->
+            <div class="signups-section">
+              <div class="signups-header">
+                <span class="signups-badge">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                  </svg>
+                  Signups
+                  <span class="signups-count" id="signupsCount">0</span>
+                </span>
+              </div>
+
+              <input type="text" class="signups-search" placeholder="Search in signups...">
+
+              <p class="no-signups" id="noSignups">There are no signups yet.</p>
+            </div>
+          </div>
+
+          <!-- Right Column -->
+          <div class="right-column">
+            <!-- Signups Card -->
+            <div class="sidebar-card">
+              <div class="sidebar-card-header">
+                <div class="sidebar-card-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                  </svg>
+                </div>
+              </div>
+              <div class="sidebar-card-title">Signups</div>
+              <div class="sidebar-card-value"><span id="currentSignups">0</span>/<span id="maxSignups">15</span></div>
+            </div>
+
+            <!-- Note Card -->
+            <div class="note-card">
+              <div class="note-card-header">
+                <div class="note-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                  </svg>
+                  <span class="note-title">Note</span>
+                </div>
+                <a href="#" class="edit-link">Edit note</a>
+              </div>
+              <p class="note-placeholder" id="classNote">Add a note for this class.</p>
+            </div>
+
+            <!-- Profitability Card -->
+            <div class="profitability-card">
+              <div class="profitability-header">
+                <div class="profitability-title">
+                  <div class="profitability-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+                      <line x1="2" y1="10" x2="22" y2="10"></line>
+                    </svg>
+                  </div>
+                  <span>Profitability</span>
+                </div>
+                <a href="#" class="edit-link">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                  </svg>
+                </a>
+              </div>
+              <div class="sidebar-card-value" style="margin-bottom: 16px;">?</div>
+
+              <div class="profitability-row">
+                <div class="profitability-label">Earned revenue</div>
+                <div class="profitability-value" id="earnedRevenue">ZAR 0.00</div>
+              </div>
+
+              <div class="profitability-row">
+                <div class="profitability-label">Practitioner payout</div>
+                <div class="profitability-value">Missing pay rate</div>
+              </div>
+
+              <div class="admin-badge">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+                Only admins
+              </div>
+            </div>
+
+            <!-- Duration Card -->
+            <div class="duration-card">
+              <div class="duration-row">
+                <div class="duration-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                  </svg>
+                </div>
+                <div>
+                  <div class="duration-label">Duration</div>
+                  <div class="duration-value" id="classDuration">60 mins</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // Auth check
+    const token = localStorage.getItem('auth_token');
+    if (!token) {
+      window.location.href = '/login';
+    }
+
+    // Get class ID from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const classId = urlParams.get('id');
+
+    // Load class details
+    async function loadClassDetails() {
+      if (!classId) {
+        window.location.href = '/classes';
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/classes/${classId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (!response.ok) throw new Error('Failed to load class');
+
+        const data = await response.json();
+        renderClassDetails(data);
+      } catch (error) {
+        console.error('Error loading class:', error);
+      }
+    }
+
+    function renderClassDetails(classData) {
+      document.getElementById('className').textContent = classData.name;
+      document.title = `${classData.name} - ExpandHealth`;
+
+      // Format date
+      const date = new Date(classData.start_time);
+      const dateStr = date.toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit'
+      });
+      document.getElementById('classDate').textContent = dateStr;
+
+      // Set practitioner
+      if (classData.staff_name) {
+        document.getElementById('practitionerName').textContent = classData.staff_name;
+      }
+
+      // Set location
+      if (classData.location_name) {
+        document.getElementById('locationName').textContent = classData.location_name;
+      }
+
+      // Set price
+      if (classData.price) {
+        document.getElementById('classPrice').textContent = `ZAR ${parseFloat(classData.price).toFixed(2)}`;
+      }
+
+      // Set duration
+      if (classData.duration_minutes) {
+        document.getElementById('classDuration').textContent = `${classData.duration_minutes} mins`;
+      }
+
+      // Set max participants
+      if (classData.max_participants) {
+        document.getElementById('maxSignups').textContent = classData.max_participants;
+      }
+    }
+
+    function toggleActionsMenu(event) {
+      event.stopPropagation();
+      const menu = document.getElementById('actionsMenu');
+      menu.classList.toggle('active');
+    }
+
+    // Close menu when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.actions-wrapper')) {
+        document.getElementById('actionsMenu').classList.remove('active');
+      }
+    });
+
+    // Action functions
+    function editClass() {
+      window.location.href = `/classes?edit=${classId}`;
+    }
+
+    function duplicateClass() {
+      alert('Duplicate class feature coming soon!');
+    }
+
+    function unpublishClass() {
+      if (confirm('Are you sure you want to un-publish this class?')) {
+        alert('Class un-published!');
+      }
+    }
+
+    function addToCalendar() {
+      alert('Add to Google Calendar feature coming soon!');
+    }
+
+    function addTask() {
+      alert('Add task feature coming soon!');
+    }
+
+    function editPriceRules() {
+      alert('Edit price rules feature coming soon!');
+    }
+
+    function inviteSomeone() {
+      alert('Invite someone feature coming soon!');
+    }
+
+    function viewReviews() {
+      alert('View reviews feature coming soon!');
+    }
+
+    function cancelClass() {
+      if (confirm('Are you sure you want to cancel this class?')) {
+        alert('Class cancelled!');
+        window.location.href = '/classes';
+      }
+    }
+
+    function deleteClass() {
+      if (confirm('Are you sure you want to delete this class? This action cannot be undone.')) {
+        alert('Class deleted!');
+        window.location.href = '/classes';
+      }
+    }
+
+    function navigatePrev() {
+      // Navigate to previous class
+      alert('Navigate to previous class');
+    }
+
+    function navigateNext() {
+      // Navigate to next class
+      alert('Navigate to next class');
+    }
+
+    // Load sidebar
+    fetch('/views/partials/sidebar.html')
+      .then(response => response.text())
+      .then(html => {
+        document.getElementById('sidebar-container').innerHTML = html;
+      })
+      .catch(() => {
+        // Fallback - just continue without sidebar
+      });
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      loadClassDetails();
+    });
+  </script>
+</body>
+</html>
