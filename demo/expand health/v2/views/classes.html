@@ -570,7 +570,7 @@
       letter-spacing: 0.05em;
     }
 
-    /* Create class modal */
+    /* Create class modal - Momence wizard style */
     .modal-overlay {
       display: none;
       position: fixed;
@@ -582,6 +582,7 @@
       z-index: 1000;
       justify-content: center;
       align-items: center;
+      padding: 20px;
     }
 
     .modal-overlay.active {
@@ -589,19 +590,21 @@
     }
 
     .modal {
-      background: white;
+      background: #f8f9fa;
       border-radius: 12px;
       width: 100%;
-      max-width: 600px;
+      max-width: 680px;
       max-height: 90vh;
       overflow-y: auto;
+      display: flex;
+      flex-direction: column;
     }
 
     .modal-header {
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      padding: 20px 24px;
+      padding: 16px 24px;
+      background: white;
       border-bottom: 1px solid var(--gray-200);
     }
 
@@ -611,10 +614,20 @@
       gap: 8px;
       background: none;
       border: none;
-      font-size: 1.25rem;
-      font-weight: 600;
+      font-size: 1rem;
+      font-weight: 500;
       cursor: pointer;
+      color: var(--gray-700);
+      padding: 0;
+    }
+
+    .modal-back:hover {
       color: var(--gray-900);
+    }
+
+    .modal-back svg {
+      width: 20px;
+      height: 20px;
     }
 
     .modal-close {
@@ -625,8 +638,81 @@
       color: var(--gray-500);
     }
 
+    /* Step indicator */
+    .wizard-steps {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px 24px;
+      background: white;
+      border-bottom: 1px solid var(--gray-200);
+      gap: 8px;
+    }
+
+    .wizard-step {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .wizard-step-number {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.875rem;
+      font-weight: 600;
+    }
+
+    .wizard-step.active .wizard-step-number {
+      background: #6366F1;
+      color: white;
+    }
+
+    .wizard-step.completed .wizard-step-number {
+      background: #10B981;
+      color: white;
+    }
+
+    .wizard-step:not(.active):not(.completed) .wizard-step-number {
+      background: var(--gray-200);
+      color: var(--gray-500);
+    }
+
+    .wizard-step-label {
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+
+    .wizard-step.active .wizard-step-label {
+      color: #6366F1;
+    }
+
+    .wizard-step.completed .wizard-step-label {
+      color: #10B981;
+    }
+
+    .wizard-step:not(.active):not(.completed) .wizard-step-label {
+      color: var(--gray-400);
+    }
+
+    .wizard-step-connector {
+      width: 40px;
+      height: 2px;
+      background: var(--gray-200);
+      margin: 0 4px;
+    }
+
+    .wizard-step-connector.completed {
+      background: #10B981;
+    }
+
     .modal-body {
       padding: 24px;
+      flex: 1;
+      overflow-y: auto;
     }
 
     .modal-footer {
@@ -634,10 +720,328 @@
       justify-content: flex-end;
       gap: 12px;
       padding: 16px 24px;
+      background: white;
       border-top: 1px solid var(--gray-200);
     }
 
-    /* Class type selection - Momence style */
+    /* Class type card - Momence style */
+    .class-type-card {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      padding: 20px;
+      background: white;
+      border: 2px solid #6366F1;
+      border-radius: 12px;
+      margin-bottom: 24px;
+    }
+
+    .class-type-card-icon {
+      width: 48px;
+      height: 48px;
+      background: #EEF2FF;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .class-type-card-icon svg {
+      width: 24px;
+      height: 24px;
+      color: #6366F1;
+    }
+
+    .class-type-card-content h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #6366F1;
+      margin-bottom: 4px;
+    }
+
+    .class-type-card-content p {
+      font-size: 0.875rem;
+      color: var(--gray-600);
+      margin: 0;
+      line-height: 1.5;
+    }
+
+    /* Form sections */
+    .form-section {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 16px;
+      border: 1px solid var(--gray-200);
+    }
+
+    .form-section-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--gray-900);
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .form-section-title svg {
+      width: 18px;
+      height: 18px;
+      color: var(--gray-500);
+    }
+
+    .form-row {
+      display: grid;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .form-row.two-col {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .form-row:last-child {
+      margin-bottom: 0;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .form-label {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--gray-700);
+      margin-bottom: 8px;
+    }
+
+    .form-label .required {
+      color: #EF4444;
+    }
+
+    .form-label .optional {
+      color: var(--gray-400);
+      font-weight: 400;
+      font-size: 0.75rem;
+    }
+
+    .form-input, .form-select, .form-textarea {
+      padding: 12px 14px;
+      border: 1px solid var(--gray-300);
+      border-radius: 8px;
+      font-size: 0.875rem;
+      color: var(--gray-900);
+      background: white;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+      outline: none;
+      border-color: #6366F1;
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+
+    .form-input::placeholder, .form-textarea::placeholder {
+      color: var(--gray-400);
+    }
+
+    .form-textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+
+    .form-hint {
+      font-size: 0.75rem;
+      color: var(--gray-500);
+      margin-top: 6px;
+    }
+
+    /* Toggle switch */
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 0;
+    }
+
+    .toggle-label {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .toggle-label-text {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--gray-700);
+    }
+
+    .toggle-label-hint {
+      font-size: 0.75rem;
+      color: var(--gray-500);
+    }
+
+    .toggle-switch {
+      position: relative;
+      width: 44px;
+      height: 24px;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: var(--gray-300);
+      transition: 0.2s;
+      border-radius: 24px;
+    }
+
+    .toggle-slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: 0.2s;
+      border-radius: 50%;
+    }
+
+    .toggle-switch input:checked + .toggle-slider {
+      background-color: #6366F1;
+    }
+
+    .toggle-switch input:checked + .toggle-slider:before {
+      transform: translateX(20px);
+    }
+
+    /* Add practitioner link */
+    .add-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: #6366F1;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      margin-top: 12px;
+    }
+
+    .add-link:hover {
+      color: #4F46E5;
+    }
+
+    .add-link svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    /* Image upload area */
+    .image-upload-area {
+      border: 2px dashed var(--gray-300);
+      border-radius: 8px;
+      padding: 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    .image-upload-area:hover {
+      border-color: #6366F1;
+      background: #F5F3FF;
+    }
+
+    .image-upload-area p {
+      font-size: 0.875rem;
+      color: var(--gray-600);
+      margin: 0;
+    }
+
+    .image-upload-area .upload-link {
+      color: #6366F1;
+      font-weight: 500;
+    }
+
+    .image-upload-hint {
+      font-size: 0.75rem;
+      color: var(--gray-400);
+      margin-top: 8px;
+    }
+
+    /* Location toggle tabs */
+    .location-toggle {
+      display: inline-flex;
+      background: var(--gray-100);
+      border-radius: 8px;
+      padding: 4px;
+      margin-bottom: 16px;
+    }
+
+    .location-toggle-btn {
+      padding: 8px 16px;
+      border: none;
+      background: none;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--gray-600);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .location-toggle-btn.active {
+      background: white;
+      color: #6366F1;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .location-toggle-btn svg {
+      width: 14px;
+      height: 14px;
+      margin-right: 6px;
+      vertical-align: -2px;
+    }
+
+    /* Manage tags link */
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .section-header h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--gray-900);
+      margin: 0;
+    }
+
+    .section-header a {
+      font-size: 0.875rem;
+      color: #6366F1;
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .section-header a:hover {
+      text-decoration: underline;
+    }
+
+    /* Legacy class type selection - keeping for compatibility */
     .class-type-selection {
       margin-bottom: 24px;
     }
@@ -1887,194 +2291,366 @@
     </div>
   </div>
 
-  <!-- Create Class Modal -->
+  <!-- Create Class Modal - Momence Style Wizard -->
   <div class="modal-overlay" id="createModal">
     <div class="modal">
+      <!-- Header with back button -->
       <div class="modal-header">
-        <button class="modal-back" onclick="goBackInModal()" id="modalBackBtn" style="display: none;">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <button class="modal-back" onclick="closeCreateModal()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <polyline points="15 18 9 12 15 6"/>
           </svg>
+          Create a new class
         </button>
-        <span id="modalTitle" style="font-size: 1.25rem; font-weight: 600;">Create a new class</span>
-        <button class="modal-close" onclick="closeCreateModal()">&times;</button>
       </div>
+
+      <!-- Step indicator -->
+      <div class="wizard-steps">
+        <div class="wizard-step active" id="wizardStep1">
+          <span class="wizard-step-number">1</span>
+          <span class="wizard-step-label">Basic information</span>
+        </div>
+        <div class="wizard-step-connector" id="wizardConnector1"></div>
+        <div class="wizard-step" id="wizardStep2">
+          <span class="wizard-step-number">2</span>
+          <span class="wizard-step-label">Payment settings</span>
+        </div>
+        <div class="wizard-step-connector" id="wizardConnector2"></div>
+        <div class="wizard-step" id="wizardStep3">
+          <span class="wizard-step-number">3</span>
+          <span class="wizard-step-label">Additional settings</span>
+        </div>
+      </div>
+
       <div class="modal-body">
-        <!-- Step 1: Class Type + Kind Selection (Momence style - both on same page) -->
-        <div id="classTypeStep">
-          <!-- Type selection -->
-          <div class="class-type-selection">
-            <h3>Choose which type of class to create</h3>
-            <div class="class-type-options">
-              <button class="class-type-option active" data-type="one_off">One-off class</button>
-              <button class="class-type-option" data-type="from_template">One-off class from template</button>
-              <button class="class-type-option" data-type="recurring">Recurring class</button>
+        <!-- Step 1: Basic Information -->
+        <div id="wizardBasicInfo">
+          <!-- Class type card -->
+          <div class="class-type-card">
+            <div class="class-type-card-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                <line x1="16" y1="2" x2="16" y2="6"/>
+                <line x1="8" y1="2" x2="8" y2="6"/>
+                <line x1="3" y1="10" x2="21" y2="10"/>
+              </svg>
+            </div>
+            <div class="class-type-card-content">
+              <h3>Class</h3>
+              <p>A regular class provides the fastest checkout experience for your customers.</p>
             </div>
           </div>
 
-          <!-- Kind selection (shown on same page) -->
-          <div class="class-type-selection">
-            <h3>What kind of class are you planning?</h3>
-            <div class="class-kind-options">
-              <button class="class-kind-option active" data-kind="class">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                  <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
-                  <line x1="3" y1="10" x2="21" y2="10"/>
-                </svg>
-                Class
-              </button>
-              <button class="class-kind-option" data-kind="workshop">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
-                </svg>
-                Workshop
-              </button>
-              <button class="class-kind-option" data-kind="course">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
-                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
-                </svg>
-                Course
-              </button>
-              <button class="class-kind-option" data-kind="retreat">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-                  <polyline points="9 22 9 12 15 12 15 22"/>
-                </svg>
-                Retreat
-              </button>
-              <button class="class-kind-option" data-kind="private_class">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                  <circle cx="12" cy="7" r="4"/>
-                </svg>
-                Private Class
-              </button>
-              <button class="class-kind-option" data-kind="semester">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                  <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
-                  <line x1="3" y1="10" x2="21" y2="10"/>
-                  <line x1="9" y1="14" x2="9" y2="18"/><line x1="15" y1="14" x2="15" y2="18"/>
-                </svg>
-                Semester
-              </button>
+          <!-- Basic Information Section -->
+          <div class="form-section">
+            <h3 class="form-section-title">Basic Information</h3>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Class name <span class="required">*</span></label>
+                <input type="text" class="form-input" id="className" placeholder="Friday Morning Class">
+              </div>
             </div>
 
-            <!-- Description box that updates based on selection -->
-            <div class="class-kind-description" id="classKindDescription">
-              <div class="class-kind-description-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                  <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
-                  <line x1="3" y1="10" x2="21" y2="10"/>
-                </svg>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Description</label>
+                <textarea class="form-textarea" id="classDescription" placeholder="All Levels Welcome"></textarea>
               </div>
-              <div class="class-kind-description-text">
-                <h4>Class</h4>
-                <p>A regular class provides the fastest checkout experience for your customers.</p>
+            </div>
+
+            <div class="form-row two-col">
+              <div class="form-group">
+                <label class="form-label">Date/time <span class="required">*</span></label>
+                <input type="datetime-local" class="form-input" id="classDateTime">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Duration</label>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <input type="number" class="form-input" id="classDuration" value="60" min="15" max="480" style="width: 100px;">
+                  <span style="color: var(--gray-500); font-size: 0.875rem;">minutes</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Max participants</label>
+                <input type="number" class="form-input" id="classMaxParticipants" placeholder="Leave empty if infinite">
+                <span class="form-hint">Leave empty if infinite</span>
+              </div>
+            </div>
+
+            <div class="toggle-row">
+              <div class="toggle-label">
+                <span class="toggle-label-text">Enable waitlist</span>
+                <span class="toggle-label-hint">Customers can join the waitlist if the class is full. This is triggered when a customer cancels their spot in the calendar. We will process the waitlist according to your settings.</span>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="classWaitlist">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Studio Settings Section -->
+          <div class="form-section">
+            <h3 class="form-section-title">Studio settings</h3>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Practitioner</label>
+                <select class="form-select" id="classStaff">
+                  <option value="">Select staff</option>
+                </select>
+              </div>
+            </div>
+
+            <a class="add-link" onclick="addAnotherPractitioner()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"/>
+                <line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+              Add additional practitioner
+            </a>
+
+            <div class="toggle-row" style="margin-top: 16px; border-top: 1px solid var(--gray-200); padding-top: 16px;">
+              <div class="toggle-label">
+                <span class="toggle-label-text">Set a pay rate for this class</span>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="classPayRate">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Images Section -->
+          <div class="form-section">
+            <h3 class="form-section-title">Images</h3>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Banner image</label>
+                <div class="image-upload-area" onclick="document.getElementById('bannerImageInput').click()">
+                  <p>Drag 'n' drop some file here, or <span class="upload-link">click to select file</span> (10 MB limit per file)</p>
+                  <input type="file" id="bannerImageInput" accept="image/*" style="display: none;">
+                </div>
+                <span class="form-hint">Use a high quality landscape image. Recommended ratio for this image is 2:1. It will be displayed at the top of the checkout page, as well as within the plugin and the mobile app.</span>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Photo of Host</label>
+                <div class="image-upload-area" onclick="document.getElementById('hostImageInput').click()">
+                  <p>Drag 'n' drop some file here, or <span class="upload-link">click to select file</span> (10 MB limit per file)</p>
+                  <input type="file" id="hostImageInput" accept="image/*" style="display: none;">
+                </div>
+                <span class="form-hint">Use a high quality portrait image. Recommended ratio for this is 1:1. It will be displayed above class description.</span>
               </div>
             </div>
           </div>
-        </div>
 
-        <!-- Step 2 (hidden): Previously was class kind, now merged into step 1 -->
-        <div id="classKindStep" style="display: none;"></div>
+          <!-- Class Location Section -->
+          <div class="form-section">
+            <h3 class="form-section-title">Class location</h3>
 
-        <!-- Step 3: Template Selection (for from_template type) -->
-        <div id="templateSelectStep" style="display: none;">
-          <div class="class-type-selection">
-            <h3>Select a template</h3>
-            <select class="search-input" id="classTemplateSelect" style="width: 100%; padding: 12px; margin-top: 16px;">
-              <option value="">-- Select a template --</option>
+            <div class="location-toggle">
+              <button type="button" class="location-toggle-btn active" data-location="in-person" onclick="setLocationType('in-person')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                  <circle cx="12" cy="10" r="3"/>
+                </svg>
+                In person
+              </button>
+              <button type="button" class="location-toggle-btn" data-location="online" onclick="setLocationType('online')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="2" y1="12" x2="22" y2="12"/>
+                  <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                </svg>
+                Online
+              </button>
+            </div>
+
+            <p style="font-size: 0.75rem; color: var(--gray-500); margin-bottom: 16px;">
+              Note: If this is a Hybrid class (online and in-person), create two versions of the class, one online and the other in-person. It will be recognized as a Hybrid class automatically.
+            </p>
+
+            <div class="form-row" id="locationSelectRow">
+              <div class="form-group">
+                <label class="form-label">Location</label>
+                <select class="form-select" id="classLocation">
+                  <option value="">23 Dalebrook Street</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="toggle-row">
+              <div class="toggle-label">
+                <span class="toggle-label-text">Manually Send Location</span>
+                <span class="toggle-label-hint">If this is a private location, you will be responsible for manually sending out the location to people who sign up.</span>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="classManualLocation">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Tags Section -->
+          <div class="form-section">
+            <div class="section-header">
+              <h3>Tags</h3>
+              <a href="#">Manage tags</a>
+            </div>
+            <p style="font-size: 0.875rem; color: var(--gray-500); margin-bottom: 16px;">
+              Optionally, you can add a tag to help you filter reports.
+            </p>
+            <select class="form-select" id="classTags">
+              <option value="">Select...</option>
             </select>
-            <div id="templatePreview" style="display: none; margin-top: 16px; padding: 16px; background: var(--gray-50); border-radius: 8px;"></div>
+            <span class="form-hint">Assign tags can be used for filtering and for creating custom sales categories or reports.</span>
           </div>
+
+          <!-- Hidden fields for form data -->
+          <input type="hidden" id="classTypeInput" value="one_off">
+          <input type="hidden" id="classKindInput" value="class">
+          <input type="hidden" id="templateIdInput" value="">
         </div>
 
-        <!-- Step 4: Class Details Form -->
-        <div id="classDetailsStep" style="display: none;">
-          <form id="createClassForm">
-            <input type="hidden" id="classTypeInput" name="class_type">
-            <input type="hidden" id="classKindInput" name="class_kind">
-            <input type="hidden" id="templateIdInput" name="template_id">
+        <!-- Step 2: Payment Settings (hidden initially) -->
+        <div id="wizardPaymentSettings" style="display: none;">
+          <div class="form-section">
+            <h3 class="form-section-title">Pricing</h3>
 
-            <div style="margin-bottom: 16px;">
-              <label style="display: block; font-weight: 500; margin-bottom: 6px;">Class name <span style="color: var(--red-500);">*</span></label>
-              <input type="text" class="search-input" id="className" style="width: 100%; padding: 12px;" placeholder="e.g., Morning Yoga Flow" required>
-            </div>
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
-              <div>
-                <label style="display: block; font-weight: 500; margin-bottom: 6px;">Date <span style="color: var(--red-500);">*</span></label>
-                <input type="date" class="search-input" id="classDate" style="width: 100%; padding: 12px;" required>
-              </div>
-              <div>
-                <label style="display: block; font-weight: 500; margin-bottom: 6px;">Time <span style="color: var(--red-500);">*</span></label>
-                <input type="time" class="search-input" id="classTime" style="width: 100%; padding: 12px;" required>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Price (ZAR)</label>
+                <input type="number" class="form-input" id="classPrice" placeholder="0.00" step="0.01" min="0">
+                <span class="form-hint">Leave at 0 for free classes</span>
               </div>
             </div>
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
-              <div>
-                <label style="display: block; font-weight: 500; margin-bottom: 6px;">Duration (minutes)</label>
-                <input type="number" class="search-input" id="classDuration" style="width: 100%; padding: 12px;" value="60" min="15" max="480">
+            <div class="toggle-row">
+              <div class="toggle-label">
+                <span class="toggle-label-text">Allow drop-in payments</span>
+                <span class="toggle-label-hint">Customers can pay for individual sessions</span>
               </div>
-              <div>
-                <label style="display: block; font-weight: 500; margin-bottom: 6px;">Max participants</label>
-                <input type="number" class="search-input" id="classMaxParticipants" style="width: 100%; padding: 12px;" placeholder="Unlimited" min="1">
-              </div>
-            </div>
-
-            <div style="margin-bottom: 16px;">
-              <label style="display: block; font-weight: 500; margin-bottom: 6px;">Practitioner</label>
-              <select class="search-input" id="classStaff" style="width: 100%; padding: 12px;">
-                <option value="">-- Select practitioner --</option>
-              </select>
-            </div>
-
-            <div style="margin-bottom: 16px;">
-              <label style="display: block; font-weight: 500; margin-bottom: 6px;">Price (ZAR)</label>
-              <input type="number" class="search-input" id="classPrice" style="width: 100%; padding: 12px;" placeholder="0.00" step="0.01" min="0">
-            </div>
-
-            <div style="margin-bottom: 16px;">
-              <label style="display: block; font-weight: 500; margin-bottom: 6px;">Description</label>
-              <textarea class="search-input" id="classDescription" style="width: 100%; padding: 12px; min-height: 80px; resize: vertical;" placeholder="Add class description..."></textarea>
-            </div>
-
-            <div style="margin-bottom: 16px;">
-              <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                <input type="checkbox" id="classWaitlist" style="width: 18px; height: 18px;">
-                <span>Enable waitlist</span>
+              <label class="toggle-switch">
+                <input type="checkbox" id="classDropIn" checked>
+                <span class="toggle-slider"></span>
               </label>
             </div>
 
-            <!-- Recurring options (shown only for recurring type) -->
-            <div id="recurringOptions" style="display: none; background: #FEF3C7; padding: 16px; border-radius: 8px; margin-bottom: 16px;">
-              <label style="display: block; font-weight: 500; margin-bottom: 8px; color: #92400E;">Repeat every</label>
-              <div style="display: flex; gap: 12px; align-items: center;">
-                <select class="search-input" id="recurringInterval" style="padding: 8px 12px;">
-                  <option value="daily">Day</option>
-                  <option value="weekly" selected>Week</option>
-                  <option value="biweekly">2 Weeks</option>
-                  <option value="monthly">Month</option>
+            <div class="toggle-row">
+              <div class="toggle-label">
+                <span class="toggle-label-text">Accept membership passes</span>
+                <span class="toggle-label-hint">Members with valid passes can attend this class</span>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="classMembership" checked>
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 3: Additional Settings (hidden initially) -->
+        <div id="wizardAdditionalSettings" style="display: none;">
+          <div class="form-section">
+            <h3 class="form-section-title">Booking Settings</h3>
+
+            <div class="form-row two-col">
+              <div class="form-group">
+                <label class="form-label">Booking opens</label>
+                <select class="form-select" id="bookingOpens">
+                  <option value="always">Always open</option>
+                  <option value="1_day">1 day before</option>
+                  <option value="3_days">3 days before</option>
+                  <option value="1_week">1 week before</option>
+                  <option value="2_weeks">2 weeks before</option>
+                  <option value="1_month">1 month before</option>
                 </select>
-                <span style="color: #6b7280;">until</span>
-                <input type="date" class="search-input" id="recurringEnd" style="padding: 8px 12px;">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Booking closes</label>
+                <select class="form-select" id="bookingCloses">
+                  <option value="at_start">At class start</option>
+                  <option value="15_min">15 minutes before</option>
+                  <option value="30_min">30 minutes before</option>
+                  <option value="1_hour">1 hour before</option>
+                  <option value="2_hours">2 hours before</option>
+                  <option value="1_day">1 day before</option>
+                </select>
               </div>
             </div>
-          </form>
+          </div>
+
+          <div class="form-section">
+            <h3 class="form-section-title">Cancellation Policy</h3>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Cancellation deadline</label>
+                <select class="form-select" id="cancellationDeadline">
+                  <option value="anytime">Anytime before class</option>
+                  <option value="1_hour">1 hour before</option>
+                  <option value="2_hours">2 hours before</option>
+                  <option value="12_hours">12 hours before</option>
+                  <option value="24_hours" selected>24 hours before</option>
+                  <option value="48_hours">48 hours before</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="toggle-row">
+              <div class="toggle-label">
+                <span class="toggle-label-text">Charge late cancellation fee</span>
+                <span class="toggle-label-hint">Charge customers who cancel after the deadline</span>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="lateCancellationFee">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <h3 class="form-section-title">Notifications</h3>
+
+            <div class="toggle-row">
+              <div class="toggle-label">
+                <span class="toggle-label-text">Send reminder email</span>
+                <span class="toggle-label-hint">Send email reminder to attendees before class</span>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="reminderEmail" checked>
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+
+            <div class="toggle-row">
+              <div class="toggle-label">
+                <span class="toggle-label-text">Send confirmation email</span>
+                <span class="toggle-label-hint">Send confirmation when booking is made</span>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="confirmationEmail" checked>
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
         </div>
       </div>
+
       <div class="modal-footer">
         <button class="btn-cancel" onclick="closeCreateModal()">Cancel</button>
         <button class="btn-next" onclick="handleNextStep()" id="nextBtn">
           Next
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="5" y1="12" x2="19" y2="12"/>
-            <polyline points="12 5 19 12 12 19"/>
+            <polyline points="9 18 15 12 9 6"/>
           </svg>
         </button>
       </div>
@@ -2505,53 +3081,49 @@
       loadClasses();
     }
 
+    // Wizard step state
+    let wizardStep = 1;
+    let locationType = 'in-person';
+
     function openCreateModal() {
-      // Reset modal state
-      currentStep = 1;
+      // Reset wizard state
+      wizardStep = 1;
       selectedClassType = 'one_off';
       selectedClassKind = 'class';
       selectedTemplateId = null;
+      locationType = 'in-person';
 
-      // Reset form
-      document.getElementById('createClassForm').reset();
+      // Reset form fields
+      document.getElementById('className').value = '';
+      document.getElementById('classDescription').value = '';
+      document.getElementById('classDuration').value = '60';
+      document.getElementById('classMaxParticipants').value = '';
+      document.getElementById('classWaitlist').checked = false;
+      document.getElementById('classStaff').value = '';
+      document.getElementById('classPayRate').checked = false;
+      document.getElementById('classManualLocation').checked = false;
+      document.getElementById('classPrice').value = '';
 
-      // Set default date to today
-      const today = new Date().toISOString().split('T')[0];
-      document.getElementById('classDate').value = today;
+      // Set default datetime to now + 1 hour, rounded to nearest 15 min
+      const now = new Date();
+      now.setHours(now.getHours() + 1);
+      now.setMinutes(Math.ceil(now.getMinutes() / 15) * 15, 0, 0);
+      const dateTimeStr = now.toISOString().slice(0, 16);
+      document.getElementById('classDateTime').value = dateTimeStr;
 
-      // Show first step, hide others
-      document.getElementById('classTypeStep').style.display = 'block';
-      document.getElementById('templateSelectStep').style.display = 'none';
-      document.getElementById('classDetailsStep').style.display = 'none';
+      // Show step 1, hide others
+      document.getElementById('wizardBasicInfo').style.display = 'block';
+      document.getElementById('wizardPaymentSettings').style.display = 'none';
+      document.getElementById('wizardAdditionalSettings').style.display = 'none';
 
-      // Reset type selection states
-      document.querySelectorAll('#classTypeStep .class-type-option').forEach(o => o.classList.remove('active'));
-      document.querySelector('#classTypeStep .class-type-option[data-type="one_off"]').classList.add('active');
+      // Update step indicator
+      updateWizardStepIndicator();
 
-      // Reset kind selection states (now on same page)
-      document.querySelectorAll('.class-kind-option').forEach(o => o.classList.remove('active'));
-      document.querySelector('.class-kind-option[data-kind="class"]').classList.add('active');
-
-      // Reset description box to default
-      document.getElementById('classKindDescription').innerHTML = `
-        <div class="class-kind-description-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-            <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
-            <line x1="3" y1="10" x2="21" y2="10"/>
-          </svg>
-        </div>
-        <div class="class-kind-description-text">
-          <h4>Class</h4>
-          <p>A regular class provides the fastest checkout experience for your customers.</p>
-        </div>
-      `;
-
-      // Update UI
-      document.getElementById('modalBackBtn').style.display = 'none';
-      document.getElementById('modalTitle').textContent = 'Create a new class';
+      // Update button text
       updateNextButtonForNext();
-      document.getElementById('recurringOptions').style.display = 'none';
+
+      // Populate location dropdown
+      populateLocationDropdown();
 
       document.getElementById('createModal').classList.add('active');
     }
@@ -2560,102 +3132,107 @@
       document.getElementById('createModal').classList.remove('active');
     }
 
-    function goBackInModal() {
-      if (currentStep === 3) {
-        // Go back to step 1 (type + kind selection)
-        currentStep = 1;
-        document.getElementById('classTypeStep').style.display = 'block';
-        document.getElementById('templateSelectStep').style.display = 'none';
-        document.getElementById('modalBackBtn').style.display = 'none';
-        document.getElementById('modalTitle').textContent = 'Create a new class';
-        updateNextButtonForNext();
-      } else if (currentStep === 4) {
-        // Go back to step 3 (template) or step 1 (type + kind)
-        if (selectedClassType === 'from_template') {
-          currentStep = 3;
-          document.getElementById('templateSelectStep').style.display = 'block';
-          document.getElementById('classDetailsStep').style.display = 'none';
-          document.getElementById('modalTitle').textContent = 'Select a template';
-          updateNextButtonForNext();
+    function updateWizardStepIndicator() {
+      // Update step numbers and connectors
+      for (let i = 1; i <= 3; i++) {
+        const stepEl = document.getElementById(`wizardStep${i}`);
+        const connectorEl = document.getElementById(`wizardConnector${i}`);
+
+        stepEl.classList.remove('active', 'completed');
+
+        if (i < wizardStep) {
+          stepEl.classList.add('completed');
+          if (connectorEl) connectorEl.classList.add('completed');
+        } else if (i === wizardStep) {
+          stepEl.classList.add('active');
+          if (connectorEl) connectorEl.classList.remove('completed');
         } else {
-          currentStep = 1;
-          document.getElementById('classTypeStep').style.display = 'block';
-          document.getElementById('classDetailsStep').style.display = 'none';
-          document.getElementById('modalBackBtn').style.display = 'none';
-          document.getElementById('modalTitle').textContent = 'Create a new class';
-          updateNextButtonForNext();
+          if (connectorEl) connectorEl.classList.remove('completed');
         }
-        // Reset recurring options
-        document.getElementById('recurringOptions').style.display = 'none';
       }
     }
 
     function handleNextStep() {
-      if (currentStep === 1) {
-        // Step 1 now has both type AND kind on the same page (Momence style)
-        if (!selectedClassKind) {
-          alert('Please select a class kind');
+      if (wizardStep === 1) {
+        // Validate step 1
+        const name = document.getElementById('className').value.trim();
+        const dateTime = document.getElementById('classDateTime').value;
+
+        if (!name) {
+          alert('Please enter a class name');
+          return;
+        }
+        if (!dateTime) {
+          alert('Please select a date and time');
           return;
         }
 
-        if (selectedClassType === 'from_template') {
-          // Move to template selection
-          currentStep = 3;
-          document.getElementById('classTypeStep').style.display = 'none';
-          document.getElementById('templateSelectStep').style.display = 'block';
-          document.getElementById('modalBackBtn').style.display = 'flex';
-          document.getElementById('modalTitle').textContent = 'Select a template';
-        } else {
-          // Move directly to details form
-          currentStep = 4;
-          document.getElementById('classTypeStep').style.display = 'none';
-          document.getElementById('classDetailsStep').style.display = 'block';
-          document.getElementById('modalBackBtn').style.display = 'flex';
-          document.getElementById('modalTitle').textContent = 'Class details';
-          updateNextButtonForSubmit();
+        // Move to step 2
+        wizardStep = 2;
+        document.getElementById('wizardBasicInfo').style.display = 'none';
+        document.getElementById('wizardPaymentSettings').style.display = 'block';
+        updateWizardStepIndicator();
+        updateNextButtonForNext();
 
-          // Show recurring options if recurring type
-          if (selectedClassType === 'recurring') {
-            document.getElementById('recurringOptions').style.display = 'block';
-          }
-
-          // Set hidden fields
-          document.getElementById('classTypeInput').value = selectedClassType;
-          document.getElementById('classKindInput').value = selectedClassKind;
-        }
-      } else if (currentStep === 3) {
-        if (!selectedTemplateId) {
-          alert('Please select a template');
-          return;
-        }
-
-        // Move to step 4 (details form) with template data
-        currentStep = 4;
-        document.getElementById('templateSelectStep').style.display = 'none';
-        document.getElementById('classDetailsStep').style.display = 'block';
-        document.getElementById('modalTitle').textContent = 'Class details';
+      } else if (wizardStep === 2) {
+        // Move to step 3
+        wizardStep = 3;
+        document.getElementById('wizardPaymentSettings').style.display = 'none';
+        document.getElementById('wizardAdditionalSettings').style.display = 'block';
+        updateWizardStepIndicator();
         updateNextButtonForSubmit();
 
-        // Pre-fill form with template data
-        const template = classTemplates.find(t => t.id == selectedTemplateId);
-        if (template) {
-          document.getElementById('className').value = template.name;
-          document.getElementById('classDuration').value = template.duration_minutes;
-          document.getElementById('classDescription').value = template.description || '';
-          document.getElementById('classPrice').value = template.price || '';
-          document.getElementById('classMaxParticipants').value = template.max_participants || '';
-          if (template.staff_id) {
-            document.getElementById('classStaff').value = template.staff_id;
-          }
-        }
-
-        // Set hidden fields
-        document.getElementById('classTypeInput').value = selectedClassType;
-        document.getElementById('classKindInput').value = selectedClassKind;
-        document.getElementById('templateIdInput').value = selectedTemplateId;
-      } else if (currentStep === 4) {
+      } else if (wizardStep === 3) {
         // Submit the form
         submitCreateClass();
+      }
+    }
+
+    function goBackInWizard() {
+      if (wizardStep === 2) {
+        wizardStep = 1;
+        document.getElementById('wizardPaymentSettings').style.display = 'none';
+        document.getElementById('wizardBasicInfo').style.display = 'block';
+        updateWizardStepIndicator();
+        updateNextButtonForNext();
+      } else if (wizardStep === 3) {
+        wizardStep = 2;
+        document.getElementById('wizardAdditionalSettings').style.display = 'none';
+        document.getElementById('wizardPaymentSettings').style.display = 'block';
+        updateWizardStepIndicator();
+        updateNextButtonForNext();
+      }
+    }
+
+    function setLocationType(type) {
+      locationType = type;
+      document.querySelectorAll('.location-toggle-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.location === type);
+      });
+
+      // Show/hide location dropdown based on type
+      const locationRow = document.getElementById('locationSelectRow');
+      if (type === 'online') {
+        locationRow.style.display = 'none';
+      } else {
+        locationRow.style.display = 'block';
+      }
+    }
+
+    function addAnotherPractitioner() {
+      alert('Add additional practitioner feature coming soon!');
+    }
+
+    function populateLocationDropdown() {
+      const select = document.getElementById('classLocation');
+      select.innerHTML = '<option value="">Select location</option>';
+      if (locations && locations.length > 0) {
+        locations.forEach(loc => {
+          const option = document.createElement('option');
+          option.value = loc.id;
+          option.textContent = loc.name;
+          select.appendChild(option);
+        });
       }
     }
 
@@ -2674,26 +3251,22 @@
       btn.innerHTML = `
         Next
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <line x1="5" y1="12" x2="19" y2="12"/>
-          <polyline points="12 5 19 12 12 19"/>
+          <polyline points="9 18 15 12 9 6"/>
         </svg>
       `;
     }
 
     async function submitCreateClass() {
-      const form = document.getElementById('createClassForm');
-
       // Validate required fields
       const name = document.getElementById('className').value.trim();
-      const date = document.getElementById('classDate').value;
-      const time = document.getElementById('classTime').value;
+      const dateTimeValue = document.getElementById('classDateTime').value;
 
-      if (!name || !date || !time) {
+      if (!name || !dateTimeValue) {
         alert('Please fill in all required fields');
         return;
       }
 
-      const startDateTime = new Date(`${date}T${time}`);
+      const startDateTime = new Date(dateTimeValue);
       const duration = parseInt(document.getElementById('classDuration').value) || 60;
       const endDateTime = new Date(startDateTime.getTime() + duration * 60000);
 
@@ -2706,10 +3279,12 @@
         end_time: endDateTime.toISOString(),
         duration_minutes: duration,
         staff_id: document.getElementById('classStaff').value || null,
+        location_id: locationType === 'in-person' ? (document.getElementById('classLocation').value || null) : null,
         max_participants: document.getElementById('classMaxParticipants').value || null,
         price: document.getElementById('classPrice').value || null,
         description: document.getElementById('classDescription').value || null,
         allow_waitlist: document.getElementById('classWaitlist').checked,
+        is_online: locationType === 'online',
         status: 'scheduled'
       };
 
