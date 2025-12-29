@@ -39,6 +39,7 @@ const messagesRoutes = require('./api/messages');
 const tasksRoutes = require('./api/tasks');
 const classesRoutes = require('./api/classes');
 const locationsRoutes = require('./api/locations');
+const tagsRoutes = require('./api/tags');
 
 // Initialize Express app
 const app = express();
@@ -140,6 +141,7 @@ app.use('/api/messages', messagesRoutes);
 app.use('/api/tasks', tasksRoutes);
 app.use('/api/classes', classesRoutes);
 app.use('/api/locations', locationsRoutes);
+app.use('/api/tags', tagsRoutes);
 
 // Health check endpoint (no auth required) - for Railway health checks
 app.get('/api/health', (req, res) => {

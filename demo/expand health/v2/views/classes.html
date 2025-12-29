@@ -1211,6 +1211,233 @@
       text-decoration: underline;
     }
 
+    /* Tags input row */
+    .tags-input-row {
+      display: flex;
+      gap: 8px;
+      align-items: stretch;
+    }
+
+    .tags-input-row .form-select {
+      flex: 1;
+    }
+
+    .btn-add-tag {
+      width: 44px;
+      min-width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--gray-100);
+      border: 1px solid var(--gray-300);
+      border-radius: 8px;
+      cursor: pointer;
+      color: var(--gray-600);
+      transition: all 0.15s;
+    }
+
+    .btn-add-tag:hover {
+      background: var(--gray-200);
+      color: var(--gray-800);
+    }
+
+    /* Create Tag Modal */
+    .tag-modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.2s;
+    }
+
+    .tag-modal-overlay.open {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .tag-modal {
+      background: white;
+      border-radius: 12px;
+      width: 100%;
+      max-width: 420px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+      transform: scale(0.95);
+      transition: transform 0.2s;
+    }
+
+    .tag-modal-overlay.open .tag-modal {
+      transform: scale(1);
+    }
+
+    .tag-modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .tag-modal-header h3 {
+      font-size: 1.125rem;
+      font-weight: 600;
+      margin: 0;
+    }
+
+    .tag-modal-close {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--gray-500);
+      padding: 4px;
+    }
+
+    .tag-modal-close:hover {
+      color: var(--gray-700);
+    }
+
+    .tag-modal-body {
+      padding: 24px;
+    }
+
+    .tag-modal-body .form-group {
+      margin-bottom: 20px;
+    }
+
+    .tag-modal-body .form-label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--gray-700);
+      margin-bottom: 6px;
+    }
+
+    .tag-modal-body .form-input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--gray-300);
+      border-radius: 8px;
+      font-size: 0.875rem;
+    }
+
+    .tag-modal-body .char-count {
+      text-align: right;
+      font-size: 0.75rem;
+      color: var(--gray-400);
+      margin-top: 4px;
+    }
+
+    .tag-applies-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 10px 12px;
+      border: 1px solid var(--gray-300);
+      border-radius: 8px;
+      min-height: 44px;
+      background: white;
+      cursor: pointer;
+    }
+
+    .tag-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--gray-100);
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      color: var(--gray-700);
+    }
+
+    .tag-chip-remove {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      color: var(--gray-500);
+      font-size: 14px;
+      line-height: 1;
+    }
+
+    .tag-toggle-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--gray-100);
+    }
+
+    .tag-toggle-label {
+      font-size: 0.875rem;
+      color: var(--gray-700);
+    }
+
+    .tag-preview-section {
+      margin-top: 16px;
+    }
+
+    .tag-preview-label {
+      font-size: 0.875rem;
+      color: var(--gray-500);
+      margin-bottom: 8px;
+    }
+
+    .tag-preview-badge {
+      display: inline-block;
+      padding: 6px 12px;
+      background: #7C3AED;
+      color: white;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+
+    .tag-modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      padding: 16px 24px;
+      border-top: 1px solid var(--gray-200);
+      background: var(--gray-50);
+    }
+
+    .tag-modal-footer .btn-cancel {
+      padding: 10px 20px;
+      background: white;
+      border: 1px solid var(--gray-300);
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--gray-700);
+      cursor: pointer;
+    }
+
+    .tag-modal-footer .btn-create {
+      padding: 10px 20px;
+      background: #6366F1;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: white;
+      cursor: pointer;
+    }
+
+    .tag-modal-footer .btn-create:hover {
+      background: #5558E3;
+    }
+
     /* Button toggle group - Momence style */
     .button-toggle-group {
       display: inline-flex;
@@ -2933,15 +3160,22 @@
           <div class="form-section">
             <div class="section-header">
               <h3>Tags</h3>
-              <a href="#">Manage tags</a>
+              <a href="#" onclick="event.preventDefault(); openTagModal();">Manage tags</a>
             </div>
             <p style="font-size: 0.875rem; color: var(--gray-500); margin-bottom: 16px;">
               Optionally, you can add a tag to help you filter reports.
             </p>
-            <select class="form-select" id="classTags">
-              <option value="">Select...</option>
-            </select>
-            <span class="form-hint">Assign tags can be used for filtering and for creating custom sales categories or reports.</span>
+            <div class="tags-input-row">
+              <select class="form-select" id="classTags" multiple style="min-height: 44px;">
+              </select>
+              <button type="button" class="btn-add-tag" onclick="openTagModal()" title="Create new tag">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+              </button>
+            </div>
+            <span class="form-hint">Assigned tags can be used for filtering and for creating custom sales categories in reports.</span>
           </div>
 
           <!-- Hidden fields for form data -->
@@ -3244,6 +3478,67 @@
     </div>
   </div>
 
+  <!-- Create Tag Modal -->
+  <div class="tag-modal-overlay" id="tagModalOverlay" onclick="closeTagModal()">
+    <div class="tag-modal" onclick="event.stopPropagation()">
+      <div class="tag-modal-header">
+        <h3>Create new tag</h3>
+        <button class="tag-modal-close" onclick="closeTagModal()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="tag-modal-body">
+        <div class="form-group">
+          <label class="form-label">Tag name</label>
+          <input type="text" class="form-input" id="newTagName" placeholder="Enter tag name" maxlength="80" oninput="updateTagCharCount(); updateTagPreview();">
+          <div class="char-count"><span id="tagCharCount">0</span>/80</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Choose what can be tagged using this tag</label>
+          <div class="tag-applies-chips" id="tagAppliesChips">
+            <span class="tag-chip">
+              Classes
+              <button class="tag-chip-remove" onclick="removeTagApplies('classes')">×</button>
+            </span>
+          </div>
+        </div>
+
+        <div class="tag-toggle-row">
+          <div>
+            <div class="tag-toggle-label">Customers inherit this tag when they book a class that has this tag</div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="tagInheritToCustomer">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+
+        <div class="tag-toggle-row" style="border-bottom: none;">
+          <div>
+            <div class="tag-toggle-label">Turn into customer badge</div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="tagShowAsBadge">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+
+        <div class="tag-preview-section">
+          <div class="tag-preview-label">Tag preview</div>
+          <span class="tag-preview-badge" id="tagPreviewBadge">Preview</span>
+        </div>
+      </div>
+      <div class="tag-modal-footer">
+        <button class="btn-cancel" onclick="closeTagModal()">Cancel</button>
+        <button class="btn-create" onclick="createTag()">Create</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     // Auth check
     const token = localStorage.getItem('auth_token');
@@ -3254,6 +3549,7 @@
     let classes = [];
     let classTemplates = [];
     let staff = [];
+    let allTags = [];
 
     // Modal state
     let currentStep = 1;
@@ -3291,6 +3587,7 @@
       await loadStaff();
       await loadLocations();
       await loadClassTemplates();
+      await loadTags();
       // Note: loadClasses() is called by updateCurrentView() after calendar variables are initialized
       setupEventListeners();
     });
@@ -3414,6 +3711,117 @@
         }
       });
       console.log('Populated template dropdowns with', classTemplates.length, 'templates');
+    }
+
+    // ============================================
+    // TAGS MANAGEMENT
+    // ============================================
+    async function loadTags() {
+      try {
+        const data = await apiRequest('/api/tags?applies_to=classes');
+        allTags = Array.isArray(data) ? data : [];
+        console.log('Loaded tags:', allTags.length, 'tags');
+        populateTagDropdown();
+      } catch (error) {
+        console.error('Failed to load tags:', error);
+        allTags = [];
+      }
+    }
+
+    function populateTagDropdown() {
+      const tagSelect = document.getElementById('classTags');
+      const tagFilter = document.getElementById('tagsFilter');
+
+      if (tagSelect) {
+        tagSelect.innerHTML = '';
+        allTags.forEach(tag => {
+          const option = document.createElement('option');
+          option.value = tag.id;
+          option.textContent = tag.name;
+          option.style.color = tag.color || '#7C3AED';
+          tagSelect.appendChild(option);
+        });
+      }
+
+      if (tagFilter) {
+        tagFilter.innerHTML = '<option value="">Select...</option>';
+        allTags.forEach(tag => {
+          const option = document.createElement('option');
+          option.value = tag.id;
+          option.textContent = tag.name;
+          tagFilter.appendChild(option);
+        });
+      }
+    }
+
+    function openTagModal() {
+      document.getElementById('tagModalOverlay').classList.add('open');
+      document.getElementById('newTagName').value = '';
+      document.getElementById('tagCharCount').textContent = '0';
+      document.getElementById('tagInheritToCustomer').checked = false;
+      document.getElementById('tagShowAsBadge').checked = false;
+      document.getElementById('tagPreviewBadge').textContent = 'Preview';
+      document.getElementById('newTagName').focus();
+    }
+
+    function closeTagModal() {
+      document.getElementById('tagModalOverlay').classList.remove('open');
+    }
+
+    function updateTagCharCount() {
+      const input = document.getElementById('newTagName');
+      document.getElementById('tagCharCount').textContent = input.value.length;
+    }
+
+    function updateTagPreview() {
+      const name = document.getElementById('newTagName').value.trim() || 'Preview';
+      document.getElementById('tagPreviewBadge').textContent = name;
+    }
+
+    function removeTagApplies(type) {
+      // For now, just prevent removing 'classes' since it's the only option
+      // In the future, this could manage multiple applies_to values
+      console.log('Cannot remove classes - it is required');
+    }
+
+    async function createTag() {
+      const name = document.getElementById('newTagName').value.trim();
+      if (!name) {
+        alert('Please enter a tag name');
+        return;
+      }
+
+      const tagData = {
+        name: name,
+        color: '#7C3AED',
+        applies_to: ['classes'],
+        inherit_to_customer: document.getElementById('tagInheritToCustomer').checked,
+        show_as_badge: document.getElementById('tagShowAsBadge').checked
+      };
+
+      try {
+        const newTag = await apiRequest('/api/tags', {
+          method: 'POST',
+          body: JSON.stringify(tagData)
+        });
+
+        console.log('Created tag:', newTag);
+        closeTagModal();
+        await loadTags();
+
+        // Select the new tag in the dropdown
+        const tagSelect = document.getElementById('classTags');
+        if (tagSelect && newTag.id) {
+          Array.from(tagSelect.options).forEach(opt => {
+            if (parseInt(opt.value) === newTag.id) {
+              opt.selected = true;
+            }
+          });
+        }
+      } catch (error) {
+        console.error('Failed to create tag:', error);
+        alert('Failed to create tag: ' + (error.message || 'Unknown error'));
+      }
     }
 
     async function loadClasses() {

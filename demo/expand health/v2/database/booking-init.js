@@ -659,6 +659,86 @@ async function initClassRegistrations() {
 }
 
 /**
+ * Initialize class_tags table
+ * Tags that can be assigned to classes for filtering and reporting
+ */
+async function initClassTags() {
+  const createTableSQL = `
+    CREATE TABLE IF NOT EXISTS class_tags (
+      id SERIAL PRIMARY KEY,
+      tenant_id INTEGER REFERENCES tenants(id) ON DELETE CASCADE,
+      name VARCHAR(100) NOT NULL,
+      color VARCHAR(20) DEFAULT '#7C3AED',
+      applies_to VARCHAR(50)[] DEFAULT ARRAY['classes']::VARCHAR[],
+      inherit_to_customer BOOLEAN DEFAULT false,
+      show_as_badge BOOLEAN DEFAULT false,
+      is_active BOOLEAN DEFAULT true,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      UNIQUE(tenant_id, name)
+    );
+  `;
+
+  const createIndexesSQL = `
+    CREATE INDEX IF NOT EXISTS idx_class_tags_tenant ON class_tags(tenant_id);
+    CREATE INDEX IF NOT EXISTS idx_class_tags_active ON class_tags(is_active) WHERE is_active = true;
+  `;
+
+  try {
+    await db.query(createTableSQL);
+    console.log('✅ class_tags table ready');
+
+    await db.query(createIndexesSQL);
+    console.log('✅ class_tags indexes ready');
+
+    return true;
+  } catch (error) {
+    console.error('❌ Failed to initialize class_tags:', error.message);
+    return false;
+  }
+}
+
+/**
+ * Initialize class_tag_assignments junction table
+ */
+async function initClassTagAssignments() {
+  const createTableSQL = `
+    CREATE TABLE IF NOT EXISTS class_tag_assignments (
+      id SERIAL PRIMARY KEY,
+      tag_id INTEGER REFERENCES class_tags(id) ON DELETE CASCADE,
+      class_id INTEGER REFERENCES scheduled_classes(id) ON DELETE CASCADE,
+      template_id INTEGER REFERENCES class_templates(id) ON DELETE CASCADE,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      CONSTRAINT class_tag_unique UNIQUE(tag_id, class_id),
+      CONSTRAINT template_tag_unique UNIQUE(tag_id, template_id),
+      CONSTRAINT one_target_required CHECK (
+        (class_id IS NOT NULL AND template_id IS NULL) OR
+        (class_id IS NULL AND template_id IS NOT NULL)
+      )
+    );
+  `;
+
+  const createIndexesSQL = `
+    CREATE INDEX IF NOT EXISTS idx_class_tag_assignments_tag ON class_tag_assignments(tag_id);
+    CREATE INDEX IF NOT EXISTS idx_class_tag_assignments_class ON class_tag_assignments(class_id);
+    CREATE INDEX IF NOT EXISTS idx_class_tag_assignments_template ON class_tag_assignments(template_id);
+  `;
+
+  try {
+    await db.query(createTableSQL);
+    console.log('✅ class_tag_assignments table ready');
+
+    await db.query(createIndexesSQL);
+    console.log('✅ class_tag_assignments indexes ready');
+
+    return true;
+  } catch (error) {
+    console.error('❌ Failed to initialize class_tag_assignments:', error.message);
+    return false;
+  }
+}
+
+/**
  * Seed default staff members for ExpandHealth
  */
 async function seedDefaultStaff() {
@@ -767,6 +847,8 @@ async function initBookingDatabase() {
     await initClassTemplates();
     await initScheduledClasses();
     await initClassRegistrations();
+    await initClassTags();
+    await initClassTagAssignments();
 
     // Seed default staff members
     await seedDefaultStaff();
@@ -794,5 +876,7 @@ module.exports = {
   initClassTemplates,
   initScheduledClasses,
   initClassRegistrations,
+  initClassTags,
+  initClassTagAssignments,
   seedDefaultStaff
 };
