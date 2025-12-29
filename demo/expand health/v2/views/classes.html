@@ -724,6 +724,36 @@
       border-top: 1px solid var(--gray-200);
     }
 
+    /* Class type selection options - Step 0 */
+    .class-type-options {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .class-type-option {
+      padding: 10px 20px;
+      background: white;
+      border: 1px solid var(--gray-300);
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--gray-700);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .class-type-option:hover {
+      border-color: var(--gray-400);
+      background: var(--gray-50);
+    }
+
+    .class-type-option.active {
+      border-color: var(--gray-900);
+      background: white;
+      color: var(--gray-900);
+    }
+
     /* Class type card - Momence style */
     .class-type-card {
       display: flex;
@@ -2443,8 +2473,8 @@
         </button>
       </div>
 
-      <!-- Step indicator -->
-      <div class="wizard-steps">
+      <!-- Step indicator - hidden on step 0 -->
+      <div class="wizard-steps" id="wizardStepsIndicator" style="display: none;">
         <div class="wizard-step active" id="wizardStep1">
           <span class="wizard-step-number">1</span>
           <span class="wizard-step-label">Basic information</span>
@@ -2462,8 +2492,25 @@
       </div>
 
       <div class="modal-body">
+        <!-- Step 0: Class Type Selection -->
+        <div id="wizardClassTypeSelection">
+          <p style="color: var(--gray-600); font-size: 0.9375rem; margin-bottom: 16px;">Choose which type of class to create</p>
+
+          <div class="class-type-options">
+            <button class="class-type-option active" data-type="one_off" onclick="selectClassCreationType('one_off')">
+              One-off class
+            </button>
+            <button class="class-type-option" data-type="from_template" onclick="selectClassCreationType('from_template')">
+              One-off class from template
+            </button>
+            <button class="class-type-option" data-type="recurring" onclick="selectClassCreationType('recurring')">
+              Recurring class
+            </button>
+          </div>
+        </div>
+
         <!-- Step 1: Basic Information -->
-        <div id="wizardBasicInfo">
+        <div id="wizardBasicInfo" style="display: none;">
           <!-- Class type card -->
           <div class="class-type-card">
             <div class="class-type-card-icon">
@@ -3377,17 +3424,31 @@
       loadClasses();
     }
 
-    // Wizard step state
-    let wizardStep = 1;
+    // Wizard step state (0 = class type selection, 1-3 = main steps)
+    let wizardStep = 0;
     let locationType = 'in-person';
+    let selectedCreationType = 'one_off';
+
+    function selectClassCreationType(type) {
+      selectedCreationType = type;
+      document.querySelectorAll('.class-type-option').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.type === type);
+      });
+    }
 
     function openCreateModal() {
-      // Reset wizard state
-      wizardStep = 1;
+      // Reset wizard state - start at step 0 (class type selection)
+      wizardStep = 0;
       selectedClassType = 'one_off';
       selectedClassKind = 'class';
       selectedTemplateId = null;
       locationType = 'in-person';
+      selectedCreationType = 'one_off';
+
+      // Reset class type selection buttons
+      document.querySelectorAll('.class-type-option').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.type === 'one_off');
+      });
 
       // Reset form fields
       document.getElementById('className').value = '';
@@ -3407,16 +3468,17 @@
       const dateTimeStr = now.toISOString().slice(0, 16);
       document.getElementById('classDateTime').value = dateTimeStr;
 
-      // Show step 1, hide others
-      document.getElementById('wizardBasicInfo').style.display = 'block';
+      // Show step 0 (class type selection), hide others
+      document.getElementById('wizardClassTypeSelection').style.display = 'block';
+      document.getElementById('wizardBasicInfo').style.display = 'none';
       document.getElementById('wizardPaymentSettings').style.display = 'none';
       document.getElementById('wizardAdditionalSettings').style.display = 'none';
 
-      // Update step indicator
-      updateWizardStepIndicator();
+      // Hide step indicator on step 0
+      document.getElementById('wizardStepsIndicator').style.display = 'none';
 
-      // Update button text
-      updateNextButtonForNext();
+      // Update footer buttons for step 0
+      updateFooterButtons();
 
       // Populate location dropdown
       populateLocationDropdown();
@@ -3449,7 +3511,17 @@
     }
 
     function handleNextStep() {
-      if (wizardStep === 1) {
+      if (wizardStep === 0) {
+        // Move from class type selection to step 1 (basic info)
+        selectedClassType = selectedCreationType;
+        wizardStep = 1;
+        document.getElementById('wizardClassTypeSelection').style.display = 'none';
+        document.getElementById('wizardBasicInfo').style.display = 'block';
+        document.getElementById('wizardStepsIndicator').style.display = 'flex';
+        updateWizardStepIndicator();
+        updateFooterButtons();
+
+      } else if (wizardStep === 1) {
         // Validate step 1
         const name = document.getElementById('className').value.trim();
         const dateTime = document.getElementById('classDateTime').value;
@@ -3485,7 +3557,14 @@
     }
 
     function goBackInWizard() {
-      if (wizardStep === 2) {
+      if (wizardStep === 1) {
+        // Go back to step 0 (class type selection)
+        wizardStep = 0;
+        document.getElementById('wizardBasicInfo').style.display = 'none';
+        document.getElementById('wizardClassTypeSelection').style.display = 'block';
+        document.getElementById('wizardStepsIndicator').style.display = 'none';
+        updateFooterButtons();
+      } else if (wizardStep === 2) {
         wizardStep = 1;
         document.getElementById('wizardPaymentSettings').style.display = 'none';
         document.getElementById('wizardBasicInfo').style.display = 'block';
@@ -3505,8 +3584,17 @@
       const draftBtn = document.getElementById('draftBtn');
       const nextBtn = document.getElementById('nextBtn');
 
-      if (wizardStep === 1) {
+      // Reset next button style
+      nextBtn.style.background = '';
+
+      if (wizardStep === 0) {
+        // Step 0: Class type selection - just Cancel and Next
         backBtn.style.display = 'none';
+        draftBtn.style.display = 'none';
+        nextBtn.innerHTML = `Next <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>`;
+      } else if (wizardStep === 1) {
+        // Step 1: Show back button to go back to class type selection
+        backBtn.style.display = 'flex';
         draftBtn.style.display = 'none';
         nextBtn.innerHTML = `Next <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>`;
       } else if (wizardStep === 2) {
