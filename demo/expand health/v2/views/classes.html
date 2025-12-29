@@ -3160,9 +3160,33 @@
                 <span class="toggle-label-text">Set a pay rate for this class</span>
               </div>
               <label class="toggle-switch">
-                <input type="checkbox" id="classPayRate">
+                <input type="checkbox" id="classPayRate" onchange="togglePayRateSection()">
                 <span class="toggle-slider"></span>
               </label>
+            </div>
+
+            <!-- Pay Rate Section (shown when toggle is on) -->
+            <div id="payRateSection" style="display: none; margin-top: 16px;">
+              <div class="form-row" style="display: flex; gap: 12px; align-items: flex-end;">
+                <div class="form-group" style="flex: 1;">
+                  <label class="form-label">Pay rate</label>
+                  <select class="form-select" id="mainPayRate">
+                    <option value="">Select a pay rate</option>
+                    <option value="50_50">50 50</option>
+                    <option value="60_per_ticket">60% per ticket</option>
+                    <option value="fixed_1500">Fixed Fee R1500</option>
+                    <option value="fixed_600">Fixed Fee R600</option>
+                    <option value="hourly">Hourly rate</option>
+                    <option value="per_class">Per class flat fee</option>
+                  </select>
+                </div>
+                <button type="button" class="btn-icon btn-add" onclick="openCreatePayRateModal()" title="Create new pay rate">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"/>
+                    <line x1="5" y1="12" x2="19" y2="12"/>
+                  </svg>
+                </button>
+              </div>
             </div>
           </div>
 
@@ -4287,6 +4311,8 @@
       document.getElementById('classWaitlist').checked = false;
       document.getElementById('classStaff').value = '';
       document.getElementById('classPayRate').checked = false;
+      document.getElementById('payRateSection').style.display = 'none';
+      document.getElementById('mainPayRate').value = '';
       document.getElementById('classManualLocation').checked = false;
       document.getElementById('classPrice').value = '';
 
@@ -4497,6 +4523,21 @@
       } else {
         locationRow.style.display = 'block';
       }
+    }
+
+    function togglePayRateSection() {
+      const checkbox = document.getElementById('classPayRate');
+      const section = document.getElementById('payRateSection');
+      section.style.display = checkbox.checked ? 'block' : 'none';
+
+      // Reset pay rate selection when hidden
+      if (!checkbox.checked) {
+        document.getElementById('mainPayRate').value = '';
+      }
+    }
+
+    function openCreatePayRateModal() {
+      alert('Create custom pay rate feature coming soon!');
     }
 
     let additionalPractitionerCount = 0;
