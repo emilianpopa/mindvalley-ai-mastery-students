@@ -2255,7 +2255,36 @@
 
     async function loadClasses() {
       try {
-        const data = await apiRequest('/api/classes/upcoming');
+        // Calculate date range based on current view
+        const startDate = new Date(currentDate);
+        const endDate = new Date(currentDate);
+
+        if (currentView === 'day') {
+          startDate.setHours(0, 0, 0, 0);
+          endDate.setHours(23, 59, 59, 999);
+        } else if (currentView === 'week') {
+          // Start of week (Sunday)
+          startDate.setDate(startDate.getDate() - startDate.getDay());
+          startDate.setHours(0, 0, 0, 0);
+          // End of week (Saturday)
+          endDate.setDate(startDate.getDate() + 6);
+          endDate.setHours(23, 59, 59, 999);
+        } else {
+          // Month view - get entire month
+          startDate.setDate(1);
+          startDate.setHours(0, 0, 0, 0);
+          endDate.setMonth(endDate.getMonth() + 1);
+          endDate.setDate(0);
+          endDate.setHours(23, 59, 59, 999);
+        }
+
+        const params = new URLSearchParams({
+          start_date: startDate.toISOString(),
+          end_date: endDate.toISOString(),
+          limit: '100'
+        });
+
+        const data = await apiRequest(`/api/classes?${params.toString()}`);
         classes = data.classes || [];
         renderClasses();
       } catch (error) {
@@ -3061,7 +3090,7 @@
       }
     }
 
-    function updateCurrentView() {
+    async function updateCurrentView() {
       // Hide all views
       document.getElementById('monthView').style.display = 'none';
       document.getElementById('weekView').style.display = 'none';
@@ -3070,6 +3099,9 @@
       document.getElementById('classesList').style.display = 'none';
 
       updateDateLabel();
+
+      // Reload classes for the current date range
+      await loadClasses();
 
       if (currentView === 'list') {
         renderListView();
@@ -3322,12 +3354,6 @@
       window.print();
     }
 
-    // Make sure to update the view when classes are loaded
-    const originalLoadClasses = loadClasses;
-    loadClasses = async function() {
-      await originalLoadClasses();
-      updateCurrentView();
-    };
   </script>
 </body>
 </html>
