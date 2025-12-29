@@ -888,7 +888,9 @@
         const activeOnly = showInactive ? 'false' : 'true';
 
         const response = await fetch(`/api/locations?active_only=${activeOnly}`, {
-          credentials: 'include'
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+          }
         });
 
         if (!response.ok) {
@@ -1068,8 +1070,10 @@
 
         const response = await fetch(url, {
           method,
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+          },
           body: JSON.stringify(data)
         });
 
@@ -1104,7 +1108,9 @@
       try {
         const response = await fetch(`/api/locations/${deleteLocationId}`, {
           method: 'DELETE',
-          credentials: 'include'
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+          }
         });
 
         if (!response.ok) {
@@ -1128,7 +1134,9 @@
       try {
         const response = await fetch('/api/locations/seed', {
           method: 'POST',
-          credentials: 'include'
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+          }
         });
 
         if (!response.ok) {

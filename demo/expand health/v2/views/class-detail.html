@@ -1039,13 +1039,13 @@
       window.location.href = '/login';
     }
 
-    // Get class ID from URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const classId = urlParams.get('id');
+    // Get class ID from URL path (e.g., /classes/8)
+    const pathParts = window.location.pathname.split('/');
+    const classId = pathParts[pathParts.length - 1];
 
     // Load class details
     async function loadClassDetails() {
-      if (!classId) {
+      if (!classId || isNaN(parseInt(classId))) {
         window.location.href = '/classes';
         return;
       }
