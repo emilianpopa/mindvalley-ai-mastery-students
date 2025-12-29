@@ -21,7 +21,7 @@ router.use(authenticateToken);
  */
 router.get('/templates', async (req, res, next) => {
   try {
-    const tenantId = req.user.tenant_id;
+    const tenantId = req.user.tenantId;
     const { class_kind, active_only = 'true' } = req.query;
 
     let query = `
@@ -62,7 +62,7 @@ router.get('/templates', async (req, res, next) => {
  */
 router.get('/templates/:id', async (req, res, next) => {
   try {
-    const tenantId = req.user.tenant_id;
+    const tenantId = req.user.tenantId;
     const { id } = req.params;
 
     const result = await db.query(`
@@ -92,7 +92,7 @@ router.get('/templates/:id', async (req, res, next) => {
  */
 router.post('/templates', async (req, res, next) => {
   try {
-    const tenantId = req.user.tenant_id;
+    const tenantId = req.user.tenantId;
     const {
       name,
       description,
@@ -137,7 +137,7 @@ router.post('/templates', async (req, res, next) => {
  */
 router.put('/templates/:id', async (req, res, next) => {
   try {
-    const tenantId = req.user.tenant_id;
+    const tenantId = req.user.tenantId;
     const { id } = req.params;
     const {
       name,
@@ -196,7 +196,7 @@ router.put('/templates/:id', async (req, res, next) => {
  */
 router.delete('/templates/:id', requireRole('admin'), async (req, res, next) => {
   try {
-    const tenantId = req.user.tenant_id;
+    const tenantId = req.user.tenantId;
     const { id } = req.params;
 
     const result = await db.query(
@@ -224,7 +224,7 @@ router.delete('/templates/:id', requireRole('admin'), async (req, res, next) => 
  */
 router.get('/', async (req, res, next) => {
   try {
-    const tenantId = req.user.tenant_id;
+    const tenantId = req.user.tenantId;
     const {
       start_date,
       end_date,
@@ -314,7 +314,7 @@ router.get('/', async (req, res, next) => {
  */
 router.get('/upcoming', async (req, res, next) => {
   try {
-    const tenantId = req.user.tenant_id;
+    const tenantId = req.user.tenantId;
     const { limit = 5 } = req.query;
 
     const result = await db.query(`
@@ -372,7 +372,7 @@ router.get('/upcoming', async (req, res, next) => {
  */
 router.get('/calendar', async (req, res, next) => {
   try {
-    const tenantId = req.user.tenant_id;
+    const tenantId = req.user.tenantId;
     const { start, end, staff_id } = req.query;
 
     if (!start || !end) {
@@ -444,7 +444,7 @@ router.get('/calendar', async (req, res, next) => {
  */
 router.get('/:id', async (req, res, next) => {
   try {
-    const tenantId = req.user.tenant_id;
+    const tenantId = req.user.tenantId;
     const { id } = req.params;
 
     const classResult = await db.query(`
@@ -494,7 +494,7 @@ router.get('/:id', async (req, res, next) => {
  */
 router.post('/', async (req, res, next) => {
   try {
-    const tenantId = req.user.tenant_id;
+    const tenantId = req.user.tenantId;
     const {
       template_id,
       name,
@@ -550,7 +550,7 @@ router.post('/', async (req, res, next) => {
  */
 router.put('/:id', async (req, res, next) => {
   try {
-    const tenantId = req.user.tenant_id;
+    const tenantId = req.user.tenantId;
     const { id } = req.params;
     const {
       name,
@@ -617,7 +617,7 @@ router.put('/:id', async (req, res, next) => {
  */
 router.post('/:id/cancel', async (req, res, next) => {
   try {
-    const tenantId = req.user.tenant_id;
+    const tenantId = req.user.tenantId;
     const { id } = req.params;
 
     const result = await db.query(`
@@ -653,7 +653,7 @@ router.post('/:id/cancel', async (req, res, next) => {
  */
 router.delete('/:id', requireRole('admin'), async (req, res, next) => {
   try {
-    const tenantId = req.user.tenant_id;
+    const tenantId = req.user.tenantId;
     const { id } = req.params;
 
     const result = await db.query(
@@ -681,7 +681,7 @@ router.delete('/:id', requireRole('admin'), async (req, res, next) => {
  */
 router.post('/:id/register', async (req, res, next) => {
   try {
-    const tenantId = req.user.tenant_id;
+    const tenantId = req.user.tenantId;
     const { id } = req.params;
     const { client_id, spot_number, payment_amount } = req.body;
 
@@ -758,7 +758,7 @@ router.post('/:id/register', async (req, res, next) => {
  */
 router.post('/:id/registrations/:registrationId/check-in', async (req, res, next) => {
   try {
-    const tenantId = req.user.tenant_id;
+    const tenantId = req.user.tenantId;
     const { id, registrationId } = req.params;
 
     const result = await db.query(`
@@ -786,7 +786,7 @@ router.post('/:id/registrations/:registrationId/check-in', async (req, res, next
  */
 router.post('/:id/registrations/:registrationId/cancel', async (req, res, next) => {
   try {
-    const tenantId = req.user.tenant_id;
+    const tenantId = req.user.tenantId;
     const { id, registrationId } = req.params;
 
     // Get current registration
