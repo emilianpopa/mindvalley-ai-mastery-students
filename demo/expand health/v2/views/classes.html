@@ -1119,6 +1119,81 @@
       height: 16px;
     }
 
+    /* Additional practitioner rows */
+    .additional-practitioners-container {
+      margin-top: 16px;
+    }
+
+    .additional-practitioner-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 12px;
+      padding: 12px;
+      background: var(--gray-50);
+      border-radius: 8px;
+    }
+
+    .additional-practitioner-row .form-group {
+      flex: 1;
+      margin-bottom: 0;
+    }
+
+    .additional-practitioner-row .form-label {
+      font-size: 0.75rem;
+      color: var(--gray-500);
+      margin-bottom: 4px;
+    }
+
+    .practitioner-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      padding-top: 24px;
+    }
+
+    .btn-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 6px;
+      border: 1px solid var(--gray-300);
+      background: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-icon:hover {
+      background: var(--gray-100);
+    }
+
+    .btn-icon.btn-add {
+      background: var(--teal-600);
+      border-color: var(--teal-600);
+      color: white;
+    }
+
+    .btn-icon.btn-add:hover {
+      background: var(--teal-700);
+    }
+
+    .btn-icon.btn-remove {
+      color: var(--gray-500);
+    }
+
+    .btn-icon.btn-remove:hover {
+      background: #FEE2E2;
+      border-color: #EF4444;
+      color: #EF4444;
+    }
+
+    .btn-icon svg {
+      width: 18px;
+      height: 18px;
+    }
+
     /* Image upload area */
     .image-upload-area {
       border: 2px dashed var(--gray-300);
@@ -3054,14 +3129,23 @@
           <div class="form-section">
             <h3 class="form-section-title">Studio settings</h3>
 
-            <div class="form-row">
-              <div class="form-group">
+            <div class="form-row" style="display: flex; gap: 12px; align-items: flex-end;">
+              <div class="form-group" style="flex: 1;">
                 <label class="form-label">Practitioner</label>
                 <select class="form-select" id="classStaff">
                   <option value="">Select staff</option>
                 </select>
               </div>
+              <button type="button" class="btn-icon btn-add" onclick="addAnotherPractitioner()" title="Add practitioner">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="12" y1="5" x2="12" y2="19"/>
+                  <line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+              </button>
             </div>
+
+            <!-- Container for additional practitioners -->
+            <div id="additionalPractitionersContainer" class="additional-practitioners-container"></div>
 
             <a class="add-link" onclick="addAnotherPractitioner()">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -4228,6 +4312,9 @@
       // Populate location dropdown
       populateLocationDropdown();
 
+      // Clear additional practitioners
+      clearAdditionalPractitioners();
+
       document.getElementById('createModal').classList.add('active');
     }
 
@@ -4412,8 +4499,94 @@
       }
     }
 
+    let additionalPractitionerCount = 0;
+
     function addAnotherPractitioner() {
-      alert('Add additional practitioner feature coming soon!');
+      additionalPractitionerCount++;
+      const container = document.getElementById('additionalPractitionersContainer');
+      const rowId = `additionalPractitioner_${additionalPractitionerCount}`;
+
+      // Build staff options from the staff array
+      let staffOptions = '<option value="">Select staff</option>';
+      if (staff && staff.length > 0) {
+        staff.forEach(s => {
+          const displayName = s.first_name && s.last_name
+            ? `${s.first_name} ${s.last_name}`
+            : s.name || s.email;
+          const email = s.email ? `<br><small style="color: var(--gray-500);">${s.email}</small>` : '';
+          staffOptions += `<option value="${s.id}">${displayName}</option>`;
+        });
+      }
+
+      const row = document.createElement('div');
+      row.className = 'additional-practitioner-row';
+      row.id = rowId;
+      row.innerHTML = `
+        <div class="form-group">
+          <label class="form-label">Additional practitioner ${additionalPractitionerCount}:</label>
+          <select class="form-select additional-staff-select">
+            ${staffOptions}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Pay rate</label>
+          <select class="form-select additional-payrate-select">
+            <option value="">Select a pay rate...</option>
+            <option value="hourly">Hourly rate</option>
+            <option value="per_class">Per class</option>
+            <option value="percentage">Percentage</option>
+          </select>
+        </div>
+        <div class="practitioner-actions">
+          <button type="button" class="btn-icon btn-add" onclick="addAnotherPractitioner()" title="Add more">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="5" x2="12" y2="19"/>
+              <line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+          </button>
+          <button type="button" class="btn-icon btn-remove" onclick="removeAdditionalPractitioner('${rowId}')" title="Remove">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+      `;
+
+      container.appendChild(row);
+    }
+
+    function removeAdditionalPractitioner(rowId) {
+      const row = document.getElementById(rowId);
+      if (row) {
+        row.remove();
+      }
+    }
+
+    function getAdditionalPractitioners() {
+      const container = document.getElementById('additionalPractitionersContainer');
+      const rows = container.querySelectorAll('.additional-practitioner-row');
+      const practitioners = [];
+
+      rows.forEach(row => {
+        const staffSelect = row.querySelector('.additional-staff-select');
+        const payrateSelect = row.querySelector('.additional-payrate-select');
+
+        if (staffSelect.value) {
+          practitioners.push({
+            staff_id: staffSelect.value,
+            pay_rate_type: payrateSelect.value || null
+          });
+        }
+      });
+
+      return practitioners;
+    }
+
+    function clearAdditionalPractitioners() {
+      const container = document.getElementById('additionalPractitionersContainer');
+      container.innerHTML = '';
+      additionalPractitionerCount = 0;
     }
 
     function populateLocationDropdown() {
