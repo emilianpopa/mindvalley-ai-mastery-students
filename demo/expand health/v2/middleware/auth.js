@@ -43,7 +43,7 @@ async function authenticateToken(req, res, next) {
       // Get user from database with tenant info
       result = await db.query(`
         SELECT
-          u.id, u.email, u.first_name, u.last_name, u.status,
+          u.id, u.email, u.first_name, u.last_name, u.status, u.role,
           u.tenant_id, u.is_platform_admin,
           t.name as tenant_name, t.slug as tenant_slug
         FROM users u
@@ -53,7 +53,7 @@ async function authenticateToken(req, res, next) {
     } else {
       // Legacy mode: no multi-tenancy
       result = await db.query(
-        'SELECT id, email, first_name, last_name, status FROM users WHERE id = $1',
+        'SELECT id, email, first_name, last_name, status, role FROM users WHERE id = $1',
         [decoded.userId]
       );
     }
@@ -75,6 +75,7 @@ async function authenticateToken(req, res, next) {
       firstName: user.first_name,
       lastName: user.last_name,
       status: user.status,
+      role: user.role || null,
       tenantId: user.tenant_id || null,
       isPlatformAdmin: user.is_platform_admin || false,
       tenantName: user.tenant_name || null,
@@ -96,8 +97,22 @@ async function authenticateToken(req, res, next) {
 
 // Check if user has specific role
 function requireRole(...roles) {
+  // Flatten roles array in case it was passed as nested array
+  const flatRoles = roles.flat();
+
   return async (req, res, next) => {
     try {
+      // First check the direct role column on the user (faster)
+      if (req.user.role && flatRoles.includes(req.user.role)) {
+        return next();
+      }
+
+      // Also check if platform admin (they have all permissions)
+      if (req.user.isPlatformAdmin) {
+        return next();
+      }
+
+      // Fall back to checking the user_roles junction table
       const result = await db.query(`
         SELECT r.name
         FROM user_roles ur
@@ -107,7 +122,7 @@ function requireRole(...roles) {
 
       const userRoles = result.rows.map(row => row.name);
 
-      const hasRole = roles.some(role => userRoles.includes(role));
+      const hasRole = flatRoles.some(role => userRoles.includes(role));
 
       if (!hasRole) {
         return res.status(403).json({ error: 'Insufficient permissions' });
