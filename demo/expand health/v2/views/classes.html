@@ -1220,6 +1220,56 @@
       font-weight: 500;
     }
 
+    .image-upload-area.has-image {
+      padding: 8px;
+      border-style: solid;
+      border-color: var(--gray-300);
+    }
+
+    .image-upload-area.has-image:hover {
+      border-color: #6366F1;
+    }
+
+    .image-upload-area.dragover {
+      border-color: #6366F1;
+      background: #F5F3FF;
+    }
+
+    .image-preview-container {
+      position: relative;
+      display: inline-block;
+      width: 100%;
+    }
+
+    .image-preview {
+      max-width: 100%;
+      max-height: 150px;
+      border-radius: 6px;
+      object-fit: cover;
+    }
+
+    .image-remove-btn {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: rgba(0, 0, 0, 0.6);
+      color: white;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      line-height: 1;
+    }
+
+    .image-remove-btn:hover {
+      background: rgba(239, 68, 68, 0.9);
+    }
+
     .image-upload-hint {
       font-size: 0.75rem;
       color: var(--gray-400);
@@ -3197,9 +3247,9 @@
             <div class="form-row">
               <div class="form-group">
                 <label class="form-label">Banner image</label>
-                <div class="image-upload-area" onclick="document.getElementById('bannerImageInput').click()">
-                  <p>Drag 'n' drop some file here, or <span class="upload-link">click to select file</span> (10 MB limit per file)</p>
-                  <input type="file" id="bannerImageInput" accept="image/*" style="display: none;">
+                <div class="image-upload-area" id="bannerUploadArea" onclick="triggerImageUpload('banner')">
+                  <p id="bannerUploadText">Drag 'n' drop some file here, or <span class="upload-link">click to select file</span> (10 MB limit per file)</p>
+                  <input type="file" id="bannerImageInput" accept="image/*" style="display: none;" onchange="handleImageSelect(event, 'banner')">
                 </div>
                 <span class="form-hint">Use a high quality landscape image. Recommended ratio for this image is 2:1. It will be displayed at the top of the checkout page, as well as within the plugin and the mobile app.</span>
               </div>
@@ -3208,9 +3258,9 @@
             <div class="form-row">
               <div class="form-group">
                 <label class="form-label">Photo of Host</label>
-                <div class="image-upload-area" onclick="document.getElementById('hostImageInput').click()">
-                  <p>Drag 'n' drop some file here, or <span class="upload-link">click to select file</span> (10 MB limit per file)</p>
-                  <input type="file" id="hostImageInput" accept="image/*" style="display: none;">
+                <div class="image-upload-area" id="hostUploadArea" onclick="triggerImageUpload('host')">
+                  <p id="hostUploadText">Drag 'n' drop some file here, or <span class="upload-link">click to select file</span> (10 MB limit per file)</p>
+                  <input type="file" id="hostImageInput" accept="image/*" style="display: none;" onchange="handleImageSelect(event, 'host')">
                 </div>
                 <span class="form-hint">Use a high quality portrait image. Recommended ratio for this is 1:1. It will be displayed above class description.</span>
               </div>
@@ -3698,6 +3748,7 @@
       await loadTags();
       // Note: loadClasses() is called by updateCurrentView() after calendar variables are initialized
       setupEventListeners();
+      setupImageDragDrop();
     });
 
     async function loadUserInfo() {
@@ -4358,6 +4409,9 @@
       // Clear additional practitioners
       clearAdditionalPractitioners();
 
+      // Clear image uploads
+      clearImageUploads();
+
       document.getElementById('createModal').classList.add('active');
     }
 
@@ -4645,6 +4699,134 @@
       const container = document.getElementById('additionalPractitionersContainer');
       container.innerHTML = '';
       additionalPractitionerCount = 0;
+    }
+
+    // Image upload state
+    let bannerImageData = null;
+    let hostImageData = null;
+
+    function triggerImageUpload(type) {
+      const input = document.getElementById(type === 'banner' ? 'bannerImageInput' : 'hostImageInput');
+      input.click();
+    }
+
+    function handleImageSelect(event, type) {
+      const file = event.target.files[0];
+      if (file) {
+        processImageFile(file, type);
+      }
+    }
+
+    function processImageFile(file, type) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        alert('Please select an image file');
+        return;
+      }
+
+      // Validate file size (10 MB limit)
+      if (file.size > 10 * 1024 * 1024) {
+        alert('File size must be less than 10 MB');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const imageData = e.target.result;
+
+        if (type === 'banner') {
+          bannerImageData = imageData;
+          showImagePreview('banner', imageData, file.name);
+        } else {
+          hostImageData = imageData;
+          showImagePreview('host', imageData, file.name);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function showImagePreview(type, imageData, fileName) {
+      const uploadArea = document.getElementById(type === 'banner' ? 'bannerUploadArea' : 'hostUploadArea');
+      const uploadText = document.getElementById(type === 'banner' ? 'bannerUploadText' : 'hostUploadText');
+
+      uploadArea.classList.add('has-image');
+      uploadText.innerHTML = `
+        <div class="image-preview-container">
+          <img src="${imageData}" alt="${fileName}" class="image-preview">
+          <button type="button" class="image-remove-btn" onclick="removeImage(event, '${type}')" title="Remove image">×</button>
+        </div>
+      `;
+    }
+
+    function removeImage(event, type) {
+      event.stopPropagation();
+
+      const uploadArea = document.getElementById(type === 'banner' ? 'bannerUploadArea' : 'hostUploadArea');
+      const uploadText = document.getElementById(type === 'banner' ? 'bannerUploadText' : 'hostUploadText');
+      const input = document.getElementById(type === 'banner' ? 'bannerImageInput' : 'hostImageInput');
+
+      uploadArea.classList.remove('has-image');
+      uploadText.innerHTML = `Drag 'n' drop some file here, or <span class="upload-link">click to select file</span> (10 MB limit per file)`;
+      input.value = '';
+
+      if (type === 'banner') {
+        bannerImageData = null;
+      } else {
+        hostImageData = null;
+      }
+    }
+
+    function clearImageUploads() {
+      bannerImageData = null;
+      hostImageData = null;
+
+      const bannerArea = document.getElementById('bannerUploadArea');
+      const bannerText = document.getElementById('bannerUploadText');
+      const bannerInput = document.getElementById('bannerImageInput');
+
+      const hostArea = document.getElementById('hostUploadArea');
+      const hostText = document.getElementById('hostUploadText');
+      const hostInput = document.getElementById('hostImageInput');
+
+      if (bannerArea) {
+        bannerArea.classList.remove('has-image');
+        bannerText.innerHTML = `Drag 'n' drop some file here, or <span class="upload-link">click to select file</span> (10 MB limit per file)`;
+        bannerInput.value = '';
+      }
+
+      if (hostArea) {
+        hostArea.classList.remove('has-image');
+        hostText.innerHTML = `Drag 'n' drop some file here, or <span class="upload-link">click to select file</span> (10 MB limit per file)`;
+        hostInput.value = '';
+      }
+    }
+
+    // Setup drag and drop for image upload areas
+    function setupImageDragDrop() {
+      ['banner', 'host'].forEach(type => {
+        const uploadArea = document.getElementById(type === 'banner' ? 'bannerUploadArea' : 'hostUploadArea');
+        if (!uploadArea) return;
+
+        uploadArea.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', (e) => {
+          e.preventDefault();
+          uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+          e.preventDefault();
+          uploadArea.classList.remove('dragover');
+
+          const file = e.dataTransfer.files[0];
+          if (file) {
+            processImageFile(file, type);
+          }
+        });
+      });
     }
 
     function populateLocationDropdown() {
