@@ -440,6 +440,10 @@ app.get('/studio/tax-settings', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'studio-tax-settings.html'));
 });
 
+app.get('/studio/class-settings', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'studio-class-settings.html'));
+});
+
 // Public booking page (no auth required)
 app.get('/book/:tenantSlug', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'booking-public.html'));

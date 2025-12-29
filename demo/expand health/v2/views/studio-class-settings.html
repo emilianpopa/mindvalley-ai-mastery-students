@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Class Settings - ExpandHealth</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cline x1='20' y1='20' x2='80' y2='80' stroke='%230F766E' stroke-width='12' stroke-linecap='round'/%3E%3Cline x1='80' y1='20' x2='20' y2='80' stroke='%230F766E' stroke-width='12' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/css/main.css">
+  <script src="/js/feature-flags.js"></script>
+  <style>
+    .main-content {
+      overflow-y: auto;
+    }
+
+    .settings-page {
+      padding: 24px 32px;
+      padding-bottom: 48px;
+      background: #f8f9fa;
+      min-height: auto;
+    }
+
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .back-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      border: 1px solid var(--gray-300);
+      background: white;
+      cursor: pointer;
+      text-decoration: none;
+      color: var(--gray-600);
+    }
+
+    .back-btn:hover {
+      background: var(--gray-50);
+    }
+
+    .page-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 12px;
+    }
+
+    .btn-save {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      background: var(--teal-600);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: 500;
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-save:hover {
+      background: var(--teal-700);
+    }
+
+    /* Settings sections */
+    .settings-grid {
+      display: grid;
+      gap: 24px;
+    }
+
+    .settings-section {
+      background: white;
+      border-radius: 12px;
+      border: 1px solid var(--gray-200);
+      overflow: hidden;
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--gray-100);
+    }
+
+    .section-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+
+    .section-description {
+      font-size: 0.813rem;
+      color: var(--gray-500);
+      margin-top: 4px;
+    }
+
+    .section-body {
+      padding: 20px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group:last-child {
+      margin-bottom: 0;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--gray-700);
+      margin-bottom: 6px;
+    }
+
+    .form-help {
+      font-size: 0.75rem;
+      color: var(--gray-500);
+      margin-top: 4px;
+    }
+
+    .form-input,
+    .form-select,
+    .form-textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--gray-300);
+      border-radius: 8px;
+      font-size: 0.875rem;
+      background: white;
+    }
+
+    .form-input:focus,
+    .form-select:focus,
+    .form-textarea:focus {
+      outline: none;
+      border-color: var(--teal-500);
+      box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
+    }
+
+    .form-textarea {
+      min-height: 100px;
+      resize: vertical;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    /* Toggle switch */
+    .toggle-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--gray-100);
+    }
+
+    .toggle-row:last-child {
+      border-bottom: none;
+    }
+
+    .toggle-info {
+      flex: 1;
+    }
+
+    .toggle-label {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--gray-900);
+    }
+
+    .toggle-description {
+      font-size: 0.75rem;
+      color: var(--gray-500);
+      margin-top: 2px;
+    }
+
+    .toggle-switch {
+      position: relative;
+      width: 44px;
+      height: 24px;
+      flex-shrink: 0;
+      margin-left: 16px;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: var(--gray-300);
+      transition: 0.2s;
+      border-radius: 24px;
+    }
+
+    .toggle-slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: 0.2s;
+      border-radius: 50%;
+    }
+
+    .toggle-switch input:checked + .toggle-slider {
+      background-color: var(--teal-600);
+    }
+
+    .toggle-switch input:checked + .toggle-slider:before {
+      transform: translateX(20px);
+    }
+
+    /* Color picker */
+    .color-options {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .color-option {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: all 0.2s;
+    }
+
+    .color-option:hover {
+      transform: scale(1.1);
+    }
+
+    .color-option.selected {
+      border-color: var(--gray-900);
+    }
+
+    /* Info box */
+    .info-box {
+      display: flex;
+      gap: 12px;
+      padding: 12px 16px;
+      background: #EEF2FF;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+
+    .info-box svg {
+      flex-shrink: 0;
+      width: 20px;
+      height: 20px;
+      color: #6366F1;
+    }
+
+    .info-box p {
+      font-size: 0.813rem;
+      color: #4338CA;
+      margin: 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <main class="main-content">
+      <div class="settings-page">
+        <!-- Header -->
+        <div class="page-header">
+          <div class="header-left">
+            <a href="/classes" class="back-btn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="15 18 9 12 15 6"/>
+              </svg>
+            </a>
+            <h1 class="page-title">Class Settings</h1>
+          </div>
+          <div class="header-actions">
+            <button class="btn-save" onclick="saveSettings()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+              Save Changes
+            </button>
+          </div>
+        </div>
+
+        <!-- Settings Sections -->
+        <div class="settings-grid">
+          <!-- General Settings -->
+          <div class="settings-section">
+            <div class="section-header">
+              <div>
+                <h2 class="section-title">General Settings</h2>
+                <p class="section-description">Configure default settings for all classes</p>
+              </div>
+            </div>
+            <div class="section-body">
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Default Duration (minutes)</label>
+                  <input type="number" class="form-input" id="defaultDuration" value="60" min="15" max="480">
+                  <p class="form-help">Default class duration when creating new classes</p>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Default Capacity</label>
+                  <input type="number" class="form-input" id="defaultCapacity" value="15" min="1" max="500">
+                  <p class="form-help">Maximum participants per class</p>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Default Price (ZAR)</label>
+                  <input type="number" class="form-input" id="defaultPrice" value="250" min="0" step="10">
+                  <p class="form-help">Drop-in price for classes</p>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Currency</label>
+                  <select class="form-select" id="currency">
+                    <option value="ZAR" selected>ZAR - South African Rand</option>
+                    <option value="USD">USD - US Dollar</option>
+                    <option value="EUR">EUR - Euro</option>
+                    <option value="GBP">GBP - British Pound</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Default Class Color</label>
+                <div class="color-options">
+                  <div class="color-option selected" style="background: #6366F1;" data-color="#6366F1"></div>
+                  <div class="color-option" style="background: #8B5CF6;" data-color="#8B5CF6"></div>
+                  <div class="color-option" style="background: #EC4899;" data-color="#EC4899"></div>
+                  <div class="color-option" style="background: #EF4444;" data-color="#EF4444"></div>
+                  <div class="color-option" style="background: #F97316;" data-color="#F97316"></div>
+                  <div class="color-option" style="background: #EAB308;" data-color="#EAB308"></div>
+                  <div class="color-option" style="background: #22C55E;" data-color="#22C55E"></div>
+                  <div class="color-option" style="background: #14B8A6;" data-color="#14B8A6"></div>
+                  <div class="color-option" style="background: #0EA5E9;" data-color="#0EA5E9"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Booking Settings -->
+          <div class="settings-section">
+            <div class="section-header">
+              <div>
+                <h2 class="section-title">Booking Settings</h2>
+                <p class="section-description">Control how customers can book classes</p>
+              </div>
+            </div>
+            <div class="section-body">
+              <div class="toggle-row">
+                <div class="toggle-info">
+                  <div class="toggle-label">Enable Waitlist</div>
+                  <div class="toggle-description">Allow customers to join a waitlist when class is full</div>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="enableWaitlist" checked>
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+              <div class="toggle-row">
+                <div class="toggle-info">
+                  <div class="toggle-label">Auto-promote from Waitlist</div>
+                  <div class="toggle-description">Automatically promote waitlisted customers when spots open</div>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="autoPromote" checked>
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+              <div class="toggle-row">
+                <div class="toggle-info">
+                  <div class="toggle-label">Allow Same-day Booking</div>
+                  <div class="toggle-description">Customers can book classes on the same day</div>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="sameDayBooking" checked>
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+              <div class="toggle-row">
+                <div class="toggle-info">
+                  <div class="toggle-label">Require Membership</div>
+                  <div class="toggle-description">Only members can book classes (no drop-ins)</div>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="requireMembership">
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+              <div class="form-group" style="margin-top: 16px;">
+                <label class="form-label">Booking Window (days)</label>
+                <input type="number" class="form-input" id="bookingWindow" value="14" min="1" max="365" style="max-width: 200px;">
+                <p class="form-help">How far in advance customers can book classes</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Cancellation Policy -->
+          <div class="settings-section">
+            <div class="section-header">
+              <div>
+                <h2 class="section-title">Cancellation Policy</h2>
+                <p class="section-description">Set cancellation rules and late fees</p>
+              </div>
+            </div>
+            <div class="section-body">
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Cancellation Deadline (hours)</label>
+                  <input type="number" class="form-input" id="cancelDeadline" value="24" min="0" max="168">
+                  <p class="form-help">Hours before class start when free cancellation ends</p>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Late Cancellation Fee (ZAR)</label>
+                  <input type="number" class="form-input" id="lateCancelFee" value="50" min="0" step="10">
+                  <p class="form-help">Fee charged for late cancellations</p>
+                </div>
+              </div>
+              <div class="toggle-row">
+                <div class="toggle-info">
+                  <div class="toggle-label">Charge No-shows</div>
+                  <div class="toggle-description">Charge full class price for no-shows</div>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="chargeNoShows" checked>
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Notifications -->
+          <div class="settings-section">
+            <div class="section-header">
+              <div>
+                <h2 class="section-title">Notifications</h2>
+                <p class="section-description">Configure email and SMS reminders</p>
+              </div>
+            </div>
+            <div class="section-body">
+              <div class="toggle-row">
+                <div class="toggle-info">
+                  <div class="toggle-label">Email Confirmation</div>
+                  <div class="toggle-description">Send booking confirmation emails</div>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="emailConfirmation" checked>
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+              <div class="toggle-row">
+                <div class="toggle-info">
+                  <div class="toggle-label">Email Reminders</div>
+                  <div class="toggle-description">Send reminder emails before class</div>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="emailReminders" checked>
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+              <div class="toggle-row">
+                <div class="toggle-info">
+                  <div class="toggle-label">SMS Reminders</div>
+                  <div class="toggle-description">Send SMS reminders before class</div>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="smsReminders">
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+              <div class="form-group" style="margin-top: 16px;">
+                <label class="form-label">Reminder Time (hours before)</label>
+                <input type="number" class="form-input" id="reminderTime" value="24" min="1" max="168" style="max-width: 200px;">
+                <p class="form-help">When to send reminders before class starts</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Welcome Message -->
+          <div class="settings-section">
+            <div class="section-header">
+              <div>
+                <h2 class="section-title">Default Welcome Message</h2>
+                <p class="section-description">Message shown to customers after booking</p>
+              </div>
+            </div>
+            <div class="section-body">
+              <div class="form-group">
+                <textarea class="form-textarea" id="welcomeMessage" rows="4" placeholder="Thank you for booking! We look forward to seeing you at our studio. Please arrive 10 minutes early to check in."></textarea>
+                <p class="form-help">This message will be included in booking confirmation emails</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // Auth check
+    const token = localStorage.getItem('auth_token');
+    if (!token) {
+      window.location.href = '/login';
+    }
+
+    // Color picker
+    document.querySelectorAll('.color-option').forEach(option => {
+      option.addEventListener('click', function() {
+        document.querySelectorAll('.color-option').forEach(o => o.classList.remove('selected'));
+        this.classList.add('selected');
+      });
+    });
+
+    // Save settings
+    async function saveSettings() {
+      const settings = {
+        defaultDuration: parseInt(document.getElementById('defaultDuration').value),
+        defaultCapacity: parseInt(document.getElementById('defaultCapacity').value),
+        defaultPrice: parseFloat(document.getElementById('defaultPrice').value),
+        currency: document.getElementById('currency').value,
+        defaultColor: document.querySelector('.color-option.selected')?.dataset.color || '#6366F1',
+        enableWaitlist: document.getElementById('enableWaitlist').checked,
+        autoPromote: document.getElementById('autoPromote').checked,
+        sameDayBooking: document.getElementById('sameDayBooking').checked,
+        requireMembership: document.getElementById('requireMembership').checked,
+        bookingWindow: parseInt(document.getElementById('bookingWindow').value),
+        cancelDeadline: parseInt(document.getElementById('cancelDeadline').value),
+        lateCancelFee: parseFloat(document.getElementById('lateCancelFee').value),
+        chargeNoShows: document.getElementById('chargeNoShows').checked,
+        emailConfirmation: document.getElementById('emailConfirmation').checked,
+        emailReminders: document.getElementById('emailReminders').checked,
+        smsReminders: document.getElementById('smsReminders').checked,
+        reminderTime: parseInt(document.getElementById('reminderTime').value),
+        welcomeMessage: document.getElementById('welcomeMessage').value
+      };
+
+      try {
+        // For now, just save to localStorage
+        localStorage.setItem('classSettings', JSON.stringify(settings));
+        alert('Settings saved successfully!');
+      } catch (error) {
+        console.error('Error saving settings:', error);
+        alert('Failed to save settings');
+      }
+    }
+
+    // Load settings
+    function loadSettings() {
+      try {
+        const saved = localStorage.getItem('classSettings');
+        if (saved) {
+          const settings = JSON.parse(saved);
+
+          if (settings.defaultDuration) document.getElementById('defaultDuration').value = settings.defaultDuration;
+          if (settings.defaultCapacity) document.getElementById('defaultCapacity').value = settings.defaultCapacity;
+          if (settings.defaultPrice) document.getElementById('defaultPrice').value = settings.defaultPrice;
+          if (settings.currency) document.getElementById('currency').value = settings.currency;
+          if (settings.defaultColor) {
+            document.querySelectorAll('.color-option').forEach(o => o.classList.remove('selected'));
+            const colorOption = document.querySelector(`.color-option[data-color="${settings.defaultColor}"]`);
+            if (colorOption) colorOption.classList.add('selected');
+          }
+          if (settings.enableWaitlist !== undefined) document.getElementById('enableWaitlist').checked = settings.enableWaitlist;
+          if (settings.autoPromote !== undefined) document.getElementById('autoPromote').checked = settings.autoPromote;
+          if (settings.sameDayBooking !== undefined) document.getElementById('sameDayBooking').checked = settings.sameDayBooking;
+          if (settings.requireMembership !== undefined) document.getElementById('requireMembership').checked = settings.requireMembership;
+          if (settings.bookingWindow) document.getElementById('bookingWindow').value = settings.bookingWindow;
+          if (settings.cancelDeadline) document.getElementById('cancelDeadline').value = settings.cancelDeadline;
+          if (settings.lateCancelFee) document.getElementById('lateCancelFee').value = settings.lateCancelFee;
+          if (settings.chargeNoShows !== undefined) document.getElementById('chargeNoShows').checked = settings.chargeNoShows;
+          if (settings.emailConfirmation !== undefined) document.getElementById('emailConfirmation').checked = settings.emailConfirmation;
+          if (settings.emailReminders !== undefined) document.getElementById('emailReminders').checked = settings.emailReminders;
+          if (settings.smsReminders !== undefined) document.getElementById('smsReminders').checked = settings.smsReminders;
+          if (settings.reminderTime) document.getElementById('reminderTime').value = settings.reminderTime;
+          if (settings.welcomeMessage) document.getElementById('welcomeMessage').value = settings.welcomeMessage;
+        }
+      } catch (error) {
+        console.error('Error loading settings:', error);
+      }
+    }
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', loadSettings);
+  </script>
+</body>
+</html>

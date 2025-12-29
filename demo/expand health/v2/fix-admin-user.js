@@ -1,7 +1,9 @@
 const { Pool } = require('pg');
 const bcrypt = require('bcrypt');
 
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+// Use public URL for running locally, or DATABASE_URL for Railway
+const connectionString = process.env.DATABASE_URL || 'postgresql://postgres:LHOzOWDEpqqpSXGjojvCUhxyObfmXuZO@metro.proxy.rlwy.net:36811/railway';
+const pool = new Pool({ connectionString });
 
 async function fixAdminUser() {
   try {
@@ -14,7 +16,7 @@ async function fixAdminUser() {
 
     if (adminCheck.rows.length === 0) {
       console.log('Admin user not found, creating...');
-      const hashedPassword = await bcrypt.hash('admin@123', 10);
+      const hashedPassword = await bcrypt.hash('admin123', 10);
 
       // Get or create tenant
       let tenantId;
@@ -39,10 +41,10 @@ async function fixAdminUser() {
       console.log('Created admin user:', result.rows[0]);
     } else {
       console.log('Admin user exists:', adminCheck.rows[0].email);
-      // Update password
-      const hashedPassword = await bcrypt.hash('admin@123', 10);
+      // Update password only (keep status as 'enabled')
+      const hashedPassword = await bcrypt.hash('admin123', 10);
       await pool.query(
-        "UPDATE users SET password_hash = $1, status = 'active' WHERE email = 'admin@expandhealth.io'",
+        "UPDATE users SET password_hash = $1 WHERE email = 'admin@expandhealth.io'",
         [hashedPassword]
       );
       console.log('Updated admin password');
