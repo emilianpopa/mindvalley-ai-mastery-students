@@ -52,15 +52,21 @@
           </svg>
           <span>Point of sale</span>
         </a>
-        <a href="/classes" class="nav-item">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-            <line x1="16" y1="2" x2="16" y2="6"></line>
-            <line x1="8" y1="2" x2="8" y2="6"></line>
-            <line x1="3" y1="10" x2="21" y2="10"></line>
-          </svg>
-          <span>Classes</span>
-        </a>
+        <div class="nav-dropdown">
+          <div class="nav-dropdown-trigger">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+            <span>Classes</span>
+            <svg class="nav-dropdown-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </div>
+          <div class="nav-dropdown-menu">
+            <div class="nav-dropdown-header">CLASSES</div>
+            <div class="nav-dropdown-section">SCHEDULING</div>
+            <a href="/classes" class="nav-dropdown-item">Schedule</a>
+            <a href="/class-templates" class="nav-dropdown-item">Class templates</a>
+            <div class="nav-dropdown-section">PRACTITIONERS</div>
+            <a href="/substitution-requests" class="nav-dropdown-item">Substitution requests</a>
+          </div>
+        </div>
         <a href="/appointments" class="nav-item">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>

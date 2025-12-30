@@ -739,6 +739,192 @@ async function initClassTagAssignments() {
 }
 
 /**
+ * Initialize memberships table
+ */
+async function initMemberships() {
+  const createTableSQL = `
+    CREATE TABLE IF NOT EXISTS memberships (
+      id SERIAL PRIMARY KEY,
+      tenant_id INTEGER REFERENCES tenants(id) ON DELETE CASCADE,
+      name VARCHAR(255) NOT NULL,
+      description TEXT,
+      type VARCHAR(50) DEFAULT 'unlimited' CHECK (type IN ('unlimited', 'limited', 'class_pack', 'credits')),
+      price DECIMAL(10, 2) NOT NULL,
+      billing_period VARCHAR(30) DEFAULT 'monthly' CHECK (billing_period IN ('weekly', 'monthly', 'quarterly', 'yearly', 'one_time')),
+      duration_days INTEGER,
+      class_limit INTEGER,
+      credits_amount INTEGER,
+      color VARCHAR(7) DEFAULT '#6366F1',
+      is_active BOOLEAN DEFAULT true,
+      allow_freeze BOOLEAN DEFAULT false,
+      freeze_limit_days INTEGER,
+      cancellation_notice_days INTEGER DEFAULT 30,
+      applicable_class_kinds TEXT[],
+      applicable_locations INTEGER[],
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    );
+  `;
+
+  const createIndexesSQL = `
+    CREATE INDEX IF NOT EXISTS idx_memberships_tenant ON memberships(tenant_id);
+    CREATE INDEX IF NOT EXISTS idx_memberships_active ON memberships(is_active) WHERE is_active = true;
+    CREATE INDEX IF NOT EXISTS idx_memberships_type ON memberships(type);
+  `;
+
+  try {
+    await db.query(createTableSQL);
+    console.log('✅ memberships table ready');
+
+    await db.query(createIndexesSQL);
+    console.log('✅ memberships indexes ready');
+
+    return true;
+  } catch (error) {
+    console.error('❌ Failed to initialize memberships:', error.message);
+    return false;
+  }
+}
+
+/**
+ * Initialize membership benefits table (what each membership includes)
+ */
+async function initMembershipBenefits() {
+  const createTableSQL = `
+    CREATE TABLE IF NOT EXISTS membership_benefits (
+      id SERIAL PRIMARY KEY,
+      membership_id INTEGER REFERENCES memberships(id) ON DELETE CASCADE,
+      benefit_type VARCHAR(50) NOT NULL CHECK (benefit_type IN ('unlimited_classes', 'class_discount', 'service_discount', 'guest_passes', 'retail_discount', 'priority_booking', 'free_amenities')),
+      description TEXT,
+      value DECIMAL(10, 2),
+      percentage_discount INTEGER,
+      quantity INTEGER,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    );
+  `;
+
+  const createIndexesSQL = `
+    CREATE INDEX IF NOT EXISTS idx_membership_benefits_membership ON membership_benefits(membership_id);
+  `;
+
+  try {
+    await db.query(createTableSQL);
+    console.log('✅ membership_benefits table ready');
+
+    await db.query(createIndexesSQL);
+    console.log('✅ membership_benefits indexes ready');
+
+    return true;
+  } catch (error) {
+    console.error('❌ Failed to initialize membership_benefits:', error.message);
+    return false;
+  }
+}
+
+/**
+ * Initialize client memberships table (purchased memberships)
+ */
+async function initClientMemberships() {
+  const createTableSQL = `
+    CREATE TABLE IF NOT EXISTS client_memberships (
+      id SERIAL PRIMARY KEY,
+      tenant_id INTEGER REFERENCES tenants(id) ON DELETE CASCADE,
+      client_id INTEGER REFERENCES clients(id) ON DELETE CASCADE,
+      membership_id INTEGER REFERENCES memberships(id) ON DELETE SET NULL,
+      status VARCHAR(30) DEFAULT 'active' CHECK (status IN ('active', 'paused', 'cancelled', 'expired')),
+      start_date DATE NOT NULL,
+      end_date DATE,
+      next_billing_date DATE,
+      classes_remaining INTEGER,
+      credits_remaining INTEGER,
+      pause_start_date DATE,
+      pause_end_date DATE,
+      auto_renew BOOLEAN DEFAULT true,
+      payment_method_id VARCHAR(255),
+      stripe_subscription_id VARCHAR(255),
+      cancelled_at TIMESTAMP WITH TIME ZONE,
+      cancellation_reason TEXT,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    );
+  `;
+
+  const createIndexesSQL = `
+    CREATE INDEX IF NOT EXISTS idx_client_memberships_tenant ON client_memberships(tenant_id);
+    CREATE INDEX IF NOT EXISTS idx_client_memberships_client ON client_memberships(client_id);
+    CREATE INDEX IF NOT EXISTS idx_client_memberships_membership ON client_memberships(membership_id);
+    CREATE INDEX IF NOT EXISTS idx_client_memberships_status ON client_memberships(status);
+    CREATE INDEX IF NOT EXISTS idx_client_memberships_billing ON client_memberships(next_billing_date);
+  `;
+
+  try {
+    await db.query(createTableSQL);
+    console.log('✅ client_memberships table ready');
+
+    await db.query(createIndexesSQL);
+    console.log('✅ client_memberships indexes ready');
+
+    return true;
+  } catch (error) {
+    console.error('❌ Failed to initialize client_memberships:', error.message);
+    return false;
+  }
+}
+
+/**
+ * Initialize discount codes table
+ */
+async function initDiscountCodes() {
+  const createTableSQL = `
+    CREATE TABLE IF NOT EXISTS discount_codes (
+      id SERIAL PRIMARY KEY,
+      tenant_id INTEGER REFERENCES tenants(id) ON DELETE CASCADE,
+      code VARCHAR(50) NOT NULL,
+      name VARCHAR(255),
+      description TEXT,
+      discount_type VARCHAR(30) NOT NULL CHECK (discount_type IN ('percentage', 'fixed_amount', 'free_trial')),
+      discount_value DECIMAL(10, 2) NOT NULL,
+      applies_to VARCHAR(50) DEFAULT 'all' CHECK (applies_to IN ('all', 'classes', 'memberships', 'services', 'retail', 'specific_items')),
+      applicable_item_ids INTEGER[],
+      min_purchase_amount DECIMAL(10, 2),
+      max_discount_amount DECIMAL(10, 2),
+      usage_limit INTEGER,
+      usage_count INTEGER DEFAULT 0,
+      per_customer_limit INTEGER DEFAULT 1,
+      start_date DATE,
+      end_date DATE,
+      is_active BOOLEAN DEFAULT true,
+      first_time_only BOOLEAN DEFAULT false,
+      stackable BOOLEAN DEFAULT false,
+      created_by INTEGER REFERENCES users(id),
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      CONSTRAINT discount_codes_unique UNIQUE(tenant_id, code)
+    );
+  `;
+
+  const createIndexesSQL = `
+    CREATE INDEX IF NOT EXISTS idx_discount_codes_tenant ON discount_codes(tenant_id);
+    CREATE INDEX IF NOT EXISTS idx_discount_codes_code ON discount_codes(code);
+    CREATE INDEX IF NOT EXISTS idx_discount_codes_active ON discount_codes(is_active) WHERE is_active = true;
+    CREATE INDEX IF NOT EXISTS idx_discount_codes_dates ON discount_codes(start_date, end_date);
+  `;
+
+  try {
+    await db.query(createTableSQL);
+    console.log('✅ discount_codes table ready');
+
+    await db.query(createIndexesSQL);
+    console.log('✅ discount_codes indexes ready');
+
+    return true;
+  } catch (error) {
+    console.error('❌ Failed to initialize discount_codes:', error.message);
+    return false;
+  }
+}
+
+/**
  * Seed default staff members for ExpandHealth
  */
 async function seedDefaultStaff() {
@@ -850,6 +1036,12 @@ async function initBookingDatabase() {
     await initClassTags();
     await initClassTagAssignments();
 
+    // Initialize membership and discount tables
+    await initMemberships();
+    await initMembershipBenefits();
+    await initClientMemberships();
+    await initDiscountCodes();
+
     // Seed default staff members
     await seedDefaultStaff();
 
@@ -878,5 +1070,9 @@ module.exports = {
   initClassRegistrations,
   initClassTags,
   initClassTagAssignments,
+  initMemberships,
+  initMembershipBenefits,
+  initClientMemberships,
+  initDiscountCodes,
   seedDefaultStaff
 };

@@ -40,6 +40,8 @@ const tasksRoutes = require('./api/tasks');
 const classesRoutes = require('./api/classes');
 const locationsRoutes = require('./api/locations');
 const tagsRoutes = require('./api/tags');
+const membershipsRoutes = require('./api/memberships');
+const discountsRoutes = require('./api/discounts');
 
 // Initialize Express app
 const app = express();
@@ -142,6 +144,8 @@ app.use('/api/tasks', tasksRoutes);
 app.use('/api/classes', classesRoutes);
 app.use('/api/locations', locationsRoutes);
 app.use('/api/tags', tagsRoutes);
+app.use('/api/memberships', membershipsRoutes);
+app.use('/api/discounts', discountsRoutes);
 
 // Health check endpoint (no auth required) - for Railway health checks
 app.get('/api/health', (req, res) => {
@@ -426,6 +430,10 @@ app.get('/studio/plugins', (req, res) => {
 
 app.get('/studio/locations', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'studio-locations.html'));
+});
+
+app.get('/memberships', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'memberships.html'));
 });
 
 app.get('/studio/franchise', (req, res) => {

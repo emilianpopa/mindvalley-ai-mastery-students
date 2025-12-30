@@ -1,0 +1,1380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Memberships - ExpandHealth</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cline x1='20' y1='20' x2='80' y2='80' stroke='%230F766E' stroke-width='12' stroke-linecap='round'/%3E%3Cline x1='80' y1='20' x2='20' y2='80' stroke='%230F766E' stroke-width='12' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/css/main.css">
+  <script src="/js/feature-flags.js"></script>
+  <style>
+    .main-content {
+      overflow-y: auto;
+    }
+
+    .memberships-page {
+      padding: 24px 32px;
+      padding-bottom: 48px;
+      background: #f8f9fa;
+      min-height: auto;
+    }
+
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .page-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 12px;
+    }
+
+    .btn-add {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      background: var(--teal-600);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: 500;
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-add:hover {
+      background: var(--teal-700);
+    }
+
+    /* Tabs */
+    .page-tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 24px;
+      background: var(--gray-100);
+      padding: 4px;
+      border-radius: 8px;
+      width: fit-content;
+    }
+
+    .page-tab {
+      padding: 8px 16px;
+      border: none;
+      background: transparent;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--gray-600);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .page-tab.active {
+      background: white;
+      color: var(--gray-900);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .page-tab:hover:not(.active) {
+      color: var(--gray-900);
+    }
+
+    /* Content card */
+    .content-card {
+      background: white;
+      border-radius: 12px;
+      border: 1px solid var(--gray-200);
+      overflow: hidden;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--gray-100);
+    }
+
+    .total-count {
+      font-size: 0.875rem;
+      color: var(--gray-500);
+    }
+
+    .total-count strong {
+      font-size: 1rem;
+      color: var(--gray-900);
+      display: block;
+      margin-bottom: 2px;
+    }
+
+    /* Table */
+    .memberships-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .memberships-table th,
+    .memberships-table td {
+      text-align: left;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--gray-100);
+      font-size: 0.875rem;
+    }
+
+    .memberships-table th {
+      font-weight: 500;
+      color: var(--gray-500);
+      background: var(--gray-50);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .memberships-table td {
+      color: var(--gray-900);
+    }
+
+    .memberships-table tbody tr:hover {
+      background: var(--gray-50);
+    }
+
+    .membership-name {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .membership-color {
+      width: 8px;
+      height: 32px;
+      border-radius: 4px;
+      flex-shrink: 0;
+    }
+
+    .membership-info .name {
+      font-weight: 500;
+      color: var(--gray-900);
+    }
+
+    .membership-info .description {
+      font-size: 0.813rem;
+      color: var(--gray-500);
+      max-width: 250px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .type-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      text-transform: capitalize;
+    }
+
+    .type-badge.unlimited { background: #dbeafe; color: #1e40af; }
+    .type-badge.limited { background: #fef3c7; color: #92400e; }
+    .type-badge.class_pack { background: #d1fae5; color: #065f46; }
+    .type-badge.credits { background: #ede9fe; color: #5b21b6; }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+
+    .status-badge.active {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .status-badge.inactive {
+      background: var(--gray-100);
+      color: var(--gray-600);
+    }
+
+    .price-cell {
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+
+    .billing-period {
+      font-size: 0.75rem;
+      color: var(--gray-500);
+      font-weight: normal;
+    }
+
+    .action-btn {
+      padding: 6px;
+      background: transparent;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      color: var(--gray-400);
+      transition: all 0.2s;
+    }
+
+    .action-btn:hover {
+      background: var(--gray-100);
+      color: var(--gray-600);
+    }
+
+    /* Slide panel */
+    .slide-panel-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.3);
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s;
+    }
+
+    .slide-panel-overlay.open {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .slide-panel {
+      position: fixed;
+      top: 0;
+      right: -600px;
+      width: 600px;
+      height: 100vh;
+      background: white;
+      z-index: 1001;
+      transition: right 0.3s ease;
+      display: flex;
+      flex-direction: column;
+      box-shadow: -4px 0 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .slide-panel.open {
+      right: 0;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--gray-200);
+      background: white;
+    }
+
+    .panel-back {
+      padding: 8px;
+      background: transparent;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      color: var(--gray-600);
+    }
+
+    .panel-back:hover {
+      background: var(--gray-100);
+    }
+
+    .panel-title {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+
+    .panel-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+    }
+
+    .form-section {
+      margin-bottom: 24px;
+    }
+
+    .form-section-title {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--gray-900);
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--gray-100);
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--gray-700);
+      margin-bottom: 6px;
+    }
+
+    .form-input,
+    .form-select,
+    .form-textarea {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid var(--gray-300);
+      border-radius: 8px;
+      font-size: 0.875rem;
+      color: var(--gray-900);
+      background: white;
+    }
+
+    .form-textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+
+    .form-input:focus,
+    .form-select:focus,
+    .form-textarea:focus {
+      outline: none;
+      border-color: var(--teal-500);
+      box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
+    }
+
+    .form-hint {
+      font-size: 0.75rem;
+      color: var(--gray-500);
+      margin-top: 4px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .form-row-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px;
+    }
+
+    .color-picker-wrapper {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .color-picker {
+      width: 40px;
+      height: 40px;
+      border: 1px solid var(--gray-300);
+      border-radius: 8px;
+      cursor: pointer;
+      padding: 0;
+    }
+
+    .form-checkbox {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .form-checkbox input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--teal-600);
+    }
+
+    .form-checkbox label {
+      font-size: 0.875rem;
+      color: var(--gray-700);
+    }
+
+    .panel-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      padding: 16px 24px;
+      background: white;
+      border-top: 1px solid var(--gray-200);
+    }
+
+    .btn-cancel {
+      padding: 10px 20px;
+      background: white;
+      color: var(--gray-700);
+      border: 1px solid var(--gray-300);
+      border-radius: 8px;
+      font-weight: 500;
+      font-size: 0.875rem;
+      cursor: pointer;
+    }
+
+    .btn-cancel:hover {
+      background: var(--gray-50);
+    }
+
+    .btn-save {
+      padding: 10px 24px;
+      background: var(--teal-600);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: 500;
+      font-size: 0.875rem;
+      cursor: pointer;
+    }
+
+    .btn-save:hover {
+      background: var(--teal-700);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+    }
+
+    .empty-state svg {
+      width: 64px;
+      height: 64px;
+      color: var(--gray-300);
+      margin-bottom: 16px;
+    }
+
+    .empty-state h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--gray-900);
+      margin-bottom: 8px;
+    }
+
+    .empty-state p {
+      font-size: 0.875rem;
+      color: var(--gray-500);
+      margin-bottom: 20px;
+    }
+
+    /* Hidden content */
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <img src="/images/expand-logo.svg" alt="ExpandHealth" onerror="this.style.display='none'">
+        <div class="logo-text">
+          <span class="logo-expand">EXPAND</span>
+          <span class="logo-health">HEALTH</span>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <a href="/" class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7"></rect>
+            <rect x="14" y="3" width="7" height="7"></rect>
+            <rect x="14" y="14" width="7" height="7"></rect>
+            <rect x="3" y="14" width="7" height="7"></rect>
+          </svg>
+          <span>Dashboard</span>
+        </a>
+        <a href="/inbox" class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+            <polyline points="22,6 12,13 2,6"></polyline>
+          </svg>
+          <span>Inbox</span>
+        </a>
+        <a href="/pos" class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+            <line x1="1" y1="10" x2="23" y2="10"></line>
+          </svg>
+          <span>Point of sale</span>
+        </a>
+        <div class="nav-dropdown">
+          <div class="nav-dropdown-trigger">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+            <span>Classes</span>
+            <svg class="nav-dropdown-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </div>
+          <div class="nav-dropdown-menu">
+            <div class="nav-dropdown-header">CLASSES</div>
+            <div class="nav-dropdown-section">SCHEDULING</div>
+            <a href="/classes" class="nav-dropdown-item">Schedule</a>
+            <a href="/class-templates" class="nav-dropdown-item">Class templates</a>
+            <div class="nav-dropdown-section">PRACTITIONERS</div>
+            <a href="/substitution-requests" class="nav-dropdown-item">Substitution requests</a>
+          </div>
+        </div>
+        <a href="/appointments" class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
+          <span>Appointments</span>
+        </a>
+        <a href="/memberships" class="nav-item active">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="4" width="18" height="18" rx="2"></rect>
+            <path d="M7 8h10"></path>
+            <path d="M7 12h10"></path>
+            <path d="M7 16h6"></path>
+          </svg>
+          <span>Memberships</span>
+        </a>
+        <a href="/clients" class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+          </svg>
+          <span>Customers</span>
+        </a>
+        <a href="/leads" class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+          </svg>
+          <span>Marketing</span>
+        </a>
+
+        <div class="nav-section-title">STUDIO SET-UP</div>
+        <a href="/studio/practitioners" class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+          </svg>
+          <span>Practitioners</span>
+        </a>
+        <a href="/services" class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+            <line x1="7" y1="7" x2="7.01" y2="7"></line>
+          </svg>
+          <span>Services</span>
+        </a>
+        <a href="/studio/locations" class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+            <circle cx="12" cy="10" r="3"></circle>
+          </svg>
+          <span>Locations</span>
+        </a>
+      </nav>
+    </aside>
+
+    <main class="main-content">
+      <div class="memberships-page">
+        <!-- Page Header -->
+        <div class="page-header">
+          <h1 class="page-title">Memberships & Discounts</h1>
+          <div class="header-actions">
+            <button class="btn-add" id="addBtn" onclick="openMembershipModal()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+              <span id="addBtnText">Add membership</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="page-tabs">
+          <button class="page-tab active" data-tab="memberships" onclick="switchTab('memberships')">Memberships</button>
+          <button class="page-tab" data-tab="discounts" onclick="switchTab('discounts')">Discount Codes</button>
+        </div>
+
+        <!-- Memberships Tab -->
+        <div class="tab-content active" id="membershipsTab">
+          <div class="content-card">
+            <div class="card-header">
+              <div class="total-count">
+                <strong>Total</strong>
+                <span id="membershipCount">0 memberships</span>
+              </div>
+            </div>
+
+            <table class="memberships-table">
+              <thead>
+                <tr>
+                  <th>Membership</th>
+                  <th>Type</th>
+                  <th>Price</th>
+                  <th>Active Members</th>
+                  <th>Status</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="membershipsBody">
+                <tr>
+                  <td colspan="6" style="text-align: center; padding: 40px;">
+                    Loading memberships...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Discounts Tab -->
+        <div class="tab-content" id="discountsTab">
+          <div class="content-card">
+            <div class="card-header">
+              <div class="total-count">
+                <strong>Total</strong>
+                <span id="discountCount">0 discount codes</span>
+              </div>
+            </div>
+
+            <table class="memberships-table">
+              <thead>
+                <tr>
+                  <th>Code</th>
+                  <th>Name</th>
+                  <th>Discount</th>
+                  <th>Usage</th>
+                  <th>Valid Period</th>
+                  <th>Status</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="discountsBody">
+                <tr>
+                  <td colspan="7" style="text-align: center; padding: 40px;">
+                    Loading discount codes...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Membership Panel -->
+  <div class="slide-panel-overlay" id="membershipPanelOverlay" onclick="closeMembershipModal()"></div>
+  <div class="slide-panel" id="membershipPanel">
+    <div class="panel-header">
+      <button class="panel-back" onclick="closeMembershipModal()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+      </button>
+      <h2 class="panel-title" id="membershipPanelTitle">Add membership</h2>
+    </div>
+
+    <div class="panel-body">
+      <form id="membershipForm">
+        <input type="hidden" id="membershipId">
+
+        <div class="form-section">
+          <div class="form-section-title">Basic Information</div>
+
+          <div class="form-group">
+            <label class="form-label">Name *</label>
+            <input type="text" class="form-input" id="membershipName" placeholder="e.g. Unlimited Monthly" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Description</label>
+            <textarea class="form-textarea" id="membershipDescription" placeholder="Describe what's included..."></textarea>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Type *</label>
+              <select class="form-select" id="membershipType" onchange="updateTypeFields()">
+                <option value="unlimited">Unlimited</option>
+                <option value="limited">Limited Classes</option>
+                <option value="class_pack">Class Pack</option>
+                <option value="credits">Credits</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Color</label>
+              <div class="color-picker-wrapper">
+                <input type="color" class="color-picker" id="membershipColor" value="#6366F1">
+                <input type="text" class="form-input" id="membershipColorText" value="#6366F1" style="width: 100px;">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <div class="form-section-title">Pricing</div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Price (ZAR) *</label>
+              <input type="number" class="form-input" id="membershipPrice" placeholder="0.00" step="0.01" min="0" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Billing Period</label>
+              <select class="form-select" id="membershipBillingPeriod">
+                <option value="monthly">Monthly</option>
+                <option value="weekly">Weekly</option>
+                <option value="quarterly">Quarterly</option>
+                <option value="yearly">Yearly</option>
+                <option value="one_time">One-time</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section" id="limitsSection">
+          <div class="form-section-title">Limits</div>
+
+          <div class="form-row">
+            <div class="form-group" id="classLimitGroup" style="display: none;">
+              <label class="form-label">Class Limit</label>
+              <input type="number" class="form-input" id="membershipClassLimit" placeholder="Number of classes" min="1">
+              <span class="form-hint">Classes allowed per billing period</span>
+            </div>
+            <div class="form-group" id="creditsGroup" style="display: none;">
+              <label class="form-label">Credits Amount</label>
+              <input type="number" class="form-input" id="membershipCredits" placeholder="Number of credits" min="1">
+              <span class="form-hint">Credits to add to account</span>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Duration (days)</label>
+              <input type="number" class="form-input" id="membershipDuration" placeholder="Leave empty for recurring">
+              <span class="form-hint">For class packs or limited memberships</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <div class="form-section-title">Options</div>
+
+          <div class="form-group">
+            <div class="form-checkbox">
+              <input type="checkbox" id="membershipAllowFreeze">
+              <label for="membershipAllowFreeze">Allow members to freeze membership</label>
+            </div>
+          </div>
+
+          <div class="form-group" id="freezeLimitGroup" style="display: none;">
+            <label class="form-label">Max freeze days per year</label>
+            <input type="number" class="form-input" id="membershipFreezeLimit" placeholder="e.g. 30" min="1">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Cancellation notice (days)</label>
+            <input type="number" class="form-input" id="membershipCancellationNotice" value="30" min="0">
+          </div>
+
+          <div class="form-group">
+            <div class="form-checkbox">
+              <input type="checkbox" id="membershipActive" checked>
+              <label for="membershipActive">Membership is active</label>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <div class="panel-footer">
+      <button class="btn-cancel" onclick="closeMembershipModal()">Cancel</button>
+      <button class="btn-save" onclick="saveMembership()">Save membership</button>
+    </div>
+  </div>
+
+  <!-- Discount Panel -->
+  <div class="slide-panel-overlay" id="discountPanelOverlay" onclick="closeDiscountModal()"></div>
+  <div class="slide-panel" id="discountPanel">
+    <div class="panel-header">
+      <button class="panel-back" onclick="closeDiscountModal()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+      </button>
+      <h2 class="panel-title" id="discountPanelTitle">Add discount code</h2>
+    </div>
+
+    <div class="panel-body">
+      <form id="discountForm">
+        <input type="hidden" id="discountId">
+
+        <div class="form-section">
+          <div class="form-section-title">Basic Information</div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Code *</label>
+              <input type="text" class="form-input" id="discountCode" placeholder="e.g. WELCOME20" required style="text-transform: uppercase;">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Name</label>
+              <input type="text" class="form-input" id="discountName" placeholder="e.g. Welcome Discount">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Description</label>
+            <textarea class="form-textarea" id="discountDescription" placeholder="Internal notes about this code..."></textarea>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <div class="form-section-title">Discount</div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Discount Type *</label>
+              <select class="form-select" id="discountType" required>
+                <option value="percentage">Percentage (%)</option>
+                <option value="fixed_amount">Fixed Amount (ZAR)</option>
+                <option value="free_trial">Free Trial</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Discount Value *</label>
+              <input type="number" class="form-input" id="discountValue" placeholder="e.g. 20" step="0.01" min="0" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Applies To</label>
+              <select class="form-select" id="discountAppliesTo">
+                <option value="all">All purchases</option>
+                <option value="classes">Classes only</option>
+                <option value="memberships">Memberships only</option>
+                <option value="services">Services only</option>
+                <option value="retail">Retail only</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Max Discount Amount</label>
+              <input type="number" class="form-input" id="discountMaxAmount" placeholder="Leave empty for no limit" step="0.01" min="0">
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <div class="form-section-title">Limits & Validity</div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Usage Limit</label>
+              <input type="number" class="form-input" id="discountUsageLimit" placeholder="Total uses (empty = unlimited)" min="1">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Per Customer Limit</label>
+              <input type="number" class="form-input" id="discountPerCustomerLimit" value="1" min="1">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Start Date</label>
+              <input type="date" class="form-input" id="discountStartDate">
+            </div>
+            <div class="form-group">
+              <label class="form-label">End Date</label>
+              <input type="date" class="form-input" id="discountEndDate">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Minimum Purchase Amount</label>
+            <input type="number" class="form-input" id="discountMinPurchase" placeholder="Leave empty for no minimum" step="0.01" min="0">
+          </div>
+        </div>
+
+        <div class="form-section">
+          <div class="form-section-title">Options</div>
+
+          <div class="form-group">
+            <div class="form-checkbox">
+              <input type="checkbox" id="discountFirstTimeOnly">
+              <label for="discountFirstTimeOnly">First-time customers only</label>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <div class="form-checkbox">
+              <input type="checkbox" id="discountStackable">
+              <label for="discountStackable">Can be combined with other discounts</label>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <div class="form-checkbox">
+              <input type="checkbox" id="discountActive" checked>
+              <label for="discountActive">Discount code is active</label>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <div class="panel-footer">
+      <button class="btn-cancel" onclick="closeDiscountModal()">Cancel</button>
+      <button class="btn-save" onclick="saveDiscount()">Save discount code</button>
+    </div>
+  </div>
+
+  <script>
+    let allMemberships = [];
+    let allDiscounts = [];
+    let currentTab = 'memberships';
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', () => {
+      loadMemberships();
+      loadDiscounts();
+
+      // Color picker sync
+      document.getElementById('membershipColor').addEventListener('input', (e) => {
+        document.getElementById('membershipColorText').value = e.target.value;
+      });
+      document.getElementById('membershipColorText').addEventListener('input', (e) => {
+        document.getElementById('membershipColor').value = e.target.value;
+      });
+
+      // Freeze checkbox toggle
+      document.getElementById('membershipAllowFreeze').addEventListener('change', (e) => {
+        document.getElementById('freezeLimitGroup').style.display = e.target.checked ? 'block' : 'none';
+      });
+    });
+
+    function switchTab(tab) {
+      currentTab = tab;
+      document.querySelectorAll('.page-tab').forEach(t => t.classList.remove('active'));
+      document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
+
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      document.getElementById(`${tab}Tab`).classList.add('active');
+
+      // Update add button
+      const addBtn = document.getElementById('addBtn');
+      const addBtnText = document.getElementById('addBtnText');
+      if (tab === 'memberships') {
+        addBtnText.textContent = 'Add membership';
+        addBtn.onclick = openMembershipModal;
+      } else {
+        addBtnText.textContent = 'Add discount code';
+        addBtn.onclick = openDiscountModal;
+      }
+    }
+
+    // MEMBERSHIPS
+    async function loadMemberships() {
+      try {
+        const response = await fetch('/api/memberships?active_only=false', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+          }
+        });
+
+        if (!response.ok) throw new Error('Failed to load memberships');
+
+        allMemberships = await response.json();
+        renderMemberships(allMemberships);
+        document.getElementById('membershipCount').textContent = `${allMemberships.length} membership${allMemberships.length !== 1 ? 's' : ''}`;
+      } catch (error) {
+        console.error('Error loading memberships:', error);
+        document.getElementById('membershipsBody').innerHTML = `
+          <tr>
+            <td colspan="6" style="text-align: center; padding: 40px; color: var(--gray-500);">
+              Failed to load memberships. Please try again.
+            </td>
+          </tr>
+        `;
+      }
+    }
+
+    function renderMemberships(memberships) {
+      const tbody = document.getElementById('membershipsBody');
+
+      if (memberships.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="6">
+              <div class="empty-state">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <rect x="3" y="4" width="18" height="18" rx="2"></rect>
+                  <path d="M7 8h10"></path>
+                  <path d="M7 12h10"></path>
+                  <path d="M7 16h6"></path>
+                </svg>
+                <h3>No memberships found</h3>
+                <p>Create your first membership plan to get started</p>
+                <button class="btn-add" onclick="openMembershipModal()">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                  </svg>
+                  Add membership
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = memberships.map(m => `
+        <tr>
+          <td>
+            <div class="membership-name">
+              <div class="membership-color" style="background: ${m.color || '#6366F1'}"></div>
+              <div class="membership-info">
+                <span class="name">${escapeHtml(m.name)}</span>
+                ${m.description ? `<span class="description">${escapeHtml(m.description)}</span>` : ''}
+              </div>
+            </div>
+          </td>
+          <td><span class="type-badge ${m.type}">${formatType(m.type)}</span></td>
+          <td class="price-cell">
+            R${parseFloat(m.price).toFixed(2)}
+            <span class="billing-period">/${m.billing_period === 'one_time' ? 'once' : m.billing_period}</span>
+          </td>
+          <td>${m.active_members || 0}</td>
+          <td>
+            <span class="status-badge ${m.is_active ? 'active' : 'inactive'}">
+              ${m.is_active ? 'Active' : 'Inactive'}
+            </span>
+          </td>
+          <td>
+            <button class="action-btn" onclick="editMembership(${m.id})" title="Edit">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+              </svg>
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function formatType(type) {
+      const types = {
+        unlimited: 'Unlimited',
+        limited: 'Limited',
+        class_pack: 'Class Pack',
+        credits: 'Credits'
+      };
+      return types[type] || type;
+    }
+
+    function openMembershipModal(membership = null) {
+      document.getElementById('membershipPanelOverlay').classList.add('open');
+      document.getElementById('membershipPanel').classList.add('open');
+
+      if (membership) {
+        document.getElementById('membershipPanelTitle').textContent = 'Edit membership';
+        document.getElementById('membershipId').value = membership.id;
+        document.getElementById('membershipName').value = membership.name || '';
+        document.getElementById('membershipDescription').value = membership.description || '';
+        document.getElementById('membershipType').value = membership.type || 'unlimited';
+        document.getElementById('membershipColor').value = membership.color || '#6366F1';
+        document.getElementById('membershipColorText').value = membership.color || '#6366F1';
+        document.getElementById('membershipPrice').value = membership.price || '';
+        document.getElementById('membershipBillingPeriod').value = membership.billing_period || 'monthly';
+        document.getElementById('membershipClassLimit').value = membership.class_limit || '';
+        document.getElementById('membershipCredits').value = membership.credits_amount || '';
+        document.getElementById('membershipDuration').value = membership.duration_days || '';
+        document.getElementById('membershipAllowFreeze').checked = membership.allow_freeze || false;
+        document.getElementById('membershipFreezeLimit').value = membership.freeze_limit_days || '';
+        document.getElementById('membershipCancellationNotice').value = membership.cancellation_notice_days || 30;
+        document.getElementById('membershipActive').checked = membership.is_active !== false;
+        updateTypeFields();
+      } else {
+        document.getElementById('membershipPanelTitle').textContent = 'Add membership';
+        document.getElementById('membershipForm').reset();
+        document.getElementById('membershipId').value = '';
+        document.getElementById('membershipColor').value = '#6366F1';
+        document.getElementById('membershipColorText').value = '#6366F1';
+        document.getElementById('membershipActive').checked = true;
+        updateTypeFields();
+      }
+    }
+
+    function closeMembershipModal() {
+      document.getElementById('membershipPanelOverlay').classList.remove('open');
+      document.getElementById('membershipPanel').classList.remove('open');
+    }
+
+    function updateTypeFields() {
+      const type = document.getElementById('membershipType').value;
+      document.getElementById('classLimitGroup').style.display = (type === 'limited' || type === 'class_pack') ? 'block' : 'none';
+      document.getElementById('creditsGroup').style.display = type === 'credits' ? 'block' : 'none';
+    }
+
+    function editMembership(id) {
+      const membership = allMemberships.find(m => m.id === id);
+      if (membership) {
+        openMembershipModal(membership);
+      }
+    }
+
+    async function saveMembership() {
+      const id = document.getElementById('membershipId').value;
+      const data = {
+        name: document.getElementById('membershipName').value.trim(),
+        description: document.getElementById('membershipDescription').value.trim() || null,
+        type: document.getElementById('membershipType').value,
+        color: document.getElementById('membershipColor').value,
+        price: parseFloat(document.getElementById('membershipPrice').value) || 0,
+        billing_period: document.getElementById('membershipBillingPeriod').value,
+        class_limit: parseInt(document.getElementById('membershipClassLimit').value) || null,
+        credits_amount: parseInt(document.getElementById('membershipCredits').value) || null,
+        duration_days: parseInt(document.getElementById('membershipDuration').value) || null,
+        allow_freeze: document.getElementById('membershipAllowFreeze').checked,
+        freeze_limit_days: parseInt(document.getElementById('membershipFreezeLimit').value) || null,
+        cancellation_notice_days: parseInt(document.getElementById('membershipCancellationNotice').value) || 30,
+        is_active: document.getElementById('membershipActive').checked
+      };
+
+      if (!data.name || !data.price) {
+        alert('Please enter a name and price');
+        return;
+      }
+
+      try {
+        const url = id ? `/api/memberships/${id}` : '/api/memberships';
+        const method = id ? 'PUT' : 'POST';
+
+        const response = await fetch(url, {
+          method,
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+          },
+          body: JSON.stringify(data)
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'Failed to save membership');
+        }
+
+        closeMembershipModal();
+        loadMemberships();
+      } catch (error) {
+        console.error('Error saving membership:', error);
+        alert(error.message);
+      }
+    }
+
+    // DISCOUNTS
+    async function loadDiscounts() {
+      try {
+        const response = await fetch('/api/discounts', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+          }
+        });
+
+        if (!response.ok) throw new Error('Failed to load discounts');
+
+        allDiscounts = await response.json();
+        renderDiscounts(allDiscounts);
+        document.getElementById('discountCount').textContent = `${allDiscounts.length} discount code${allDiscounts.length !== 1 ? 's' : ''}`;
+      } catch (error) {
+        console.error('Error loading discounts:', error);
+        document.getElementById('discountsBody').innerHTML = `
+          <tr>
+            <td colspan="7" style="text-align: center; padding: 40px; color: var(--gray-500);">
+              Failed to load discount codes. Please try again.
+            </td>
+          </tr>
+        `;
+      }
+    }
+
+    function renderDiscounts(discounts) {
+      const tbody = document.getElementById('discountsBody');
+
+      if (discounts.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="7">
+              <div class="empty-state">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+                  <line x1="7" y1="7" x2="7.01" y2="7"></line>
+                </svg>
+                <h3>No discount codes found</h3>
+                <p>Create your first discount code to get started</p>
+                <button class="btn-add" onclick="openDiscountModal()">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                  </svg>
+                  Add discount code
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = discounts.map(d => `
+        <tr>
+          <td><strong style="font-family: monospace; font-size: 0.9rem;">${escapeHtml(d.code)}</strong></td>
+          <td>${escapeHtml(d.name || '-')}</td>
+          <td>
+            ${d.discount_type === 'percentage' ? `${d.discount_value}%` : `R${parseFloat(d.discount_value).toFixed(2)}`}
+            ${d.discount_type === 'free_trial' ? ' free trial' : ''}
+          </td>
+          <td>${d.usage_count || 0}${d.usage_limit ? ` / ${d.usage_limit}` : ''}</td>
+          <td>
+            ${d.start_date || d.end_date ?
+              `${d.start_date ? formatDate(d.start_date) : 'Any'} - ${d.end_date ? formatDate(d.end_date) : 'Forever'}` :
+              'Always valid'}
+          </td>
+          <td>
+            <span class="status-badge ${d.is_active ? 'active' : 'inactive'}">
+              ${d.is_active ? 'Active' : 'Inactive'}
+            </span>
+          </td>
+          <td>
+            <button class="action-btn" onclick="editDiscount(${d.id})" title="Edit">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+              </svg>
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function formatDate(dateStr) {
+      const date = new Date(dateStr);
+      return date.toLocaleDateString('en-ZA', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+
+    function openDiscountModal(discount = null) {
+      document.getElementById('discountPanelOverlay').classList.add('open');
+      document.getElementById('discountPanel').classList.add('open');
+
+      if (discount) {
+        document.getElementById('discountPanelTitle').textContent = 'Edit discount code';
+        document.getElementById('discountId').value = discount.id;
+        document.getElementById('discountCode').value = discount.code || '';
+        document.getElementById('discountName').value = discount.name || '';
+        document.getElementById('discountDescription').value = discount.description || '';
+        document.getElementById('discountType').value = discount.discount_type || 'percentage';
+        document.getElementById('discountValue').value = discount.discount_value || '';
+        document.getElementById('discountAppliesTo').value = discount.applies_to || 'all';
+        document.getElementById('discountMaxAmount').value = discount.max_discount_amount || '';
+        document.getElementById('discountUsageLimit').value = discount.usage_limit || '';
+        document.getElementById('discountPerCustomerLimit').value = discount.per_customer_limit || 1;
+        document.getElementById('discountStartDate').value = discount.start_date ? discount.start_date.split('T')[0] : '';
+        document.getElementById('discountEndDate').value = discount.end_date ? discount.end_date.split('T')[0] : '';
+        document.getElementById('discountMinPurchase').value = discount.min_purchase_amount || '';
+        document.getElementById('discountFirstTimeOnly').checked = discount.first_time_only || false;
+        document.getElementById('discountStackable').checked = discount.stackable || false;
+        document.getElementById('discountActive').checked = discount.is_active !== false;
+      } else {
+        document.getElementById('discountPanelTitle').textContent = 'Add discount code';
+        document.getElementById('discountForm').reset();
+        document.getElementById('discountId').value = '';
+        document.getElementById('discountPerCustomerLimit').value = 1;
+        document.getElementById('discountActive').checked = true;
+      }
+    }
+
+    function closeDiscountModal() {
+      document.getElementById('discountPanelOverlay').classList.remove('open');
+      document.getElementById('discountPanel').classList.remove('open');
+    }
+
+    function editDiscount(id) {
+      const discount = allDiscounts.find(d => d.id === id);
+      if (discount) {
+        openDiscountModal(discount);
+      }
+    }
+
+    async function saveDiscount() {
+      const id = document.getElementById('discountId').value;
+      const data = {
+        code: document.getElementById('discountCode').value.trim().toUpperCase(),
+        name: document.getElementById('discountName').value.trim() || null,
+        description: document.getElementById('discountDescription').value.trim() || null,
+        discount_type: document.getElementById('discountType').value,
+        discount_value: parseFloat(document.getElementById('discountValue').value) || 0,
+        applies_to: document.getElementById('discountAppliesTo').value,
+        max_discount_amount: parseFloat(document.getElementById('discountMaxAmount').value) || null,
+        usage_limit: parseInt(document.getElementById('discountUsageLimit').value) || null,
+        per_customer_limit: parseInt(document.getElementById('discountPerCustomerLimit').value) || 1,
+        start_date: document.getElementById('discountStartDate').value || null,
+        end_date: document.getElementById('discountEndDate').value || null,
+        min_purchase_amount: parseFloat(document.getElementById('discountMinPurchase').value) || null,
+        first_time_only: document.getElementById('discountFirstTimeOnly').checked,
+        stackable: document.getElementById('discountStackable').checked,
+        is_active: document.getElementById('discountActive').checked
+      };
+
+      if (!data.code || !data.discount_value) {
+        alert('Please enter a code and discount value');
+        return;
+      }
+
+      try {
+        const url = id ? `/api/discounts/${id}` : '/api/discounts';
+        const method = id ? 'PUT' : 'POST';
+
+        const response = await fetch(url, {
+          method,
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+          },
+          body: JSON.stringify(data)
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'Failed to save discount code');
+        }
+
+        closeDiscountModal();
+        loadDiscounts();
+      } catch (error) {
+        console.error('Error saving discount:', error);
+        alert(error.message);
+      }
+    }
+
+    function escapeHtml(text) {
+      if (!text) return '';
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+  </script>
+</body>
+</html>
