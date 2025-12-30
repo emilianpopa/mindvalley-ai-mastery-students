@@ -221,6 +221,28 @@ body {
   stroke: var(--primary);
 }
 
+/* Direct SVG icons in nav-item (without .nav-icon wrapper) */
+.nav-item > svg {
+  width: 20px !important;
+  height: 20px !important;
+  min-width: 20px !important;
+  min-height: 20px !important;
+  max-width: 20px !important;
+  max-height: 20px !important;
+  flex-shrink: 0;
+  stroke: var(--text-muted);
+  stroke-width: 1.5;
+  fill: none;
+}
+
+.nav-item:hover > svg {
+  stroke: var(--text-dark);
+}
+
+.nav-item.active > svg {
+  stroke: var(--primary);
+}
+
 /* Nav dropdown menu */
 .nav-dropdown {
   position: relative;
