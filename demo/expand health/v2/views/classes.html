@@ -3884,6 +3884,13 @@
     let staff = [];
     let allTags = [];
 
+    // Calendar & Date state (initialized early for refresh button)
+    let currentView = 'month';
+    let currentDate = new Date();
+    let selectedDate = new Date();
+    let calendarDisplayMonth = new Date().getMonth();
+    let calendarDisplayYear = new Date().getFullYear();
+
     // Modal state
     let currentStep = 1;
     let selectedClassType = 'one_off';
@@ -5478,11 +5485,8 @@
     // Calendar & Date Navigation (Momence-style)
     // ============================================
 
-    let currentView = 'month';
-    let currentDate = new Date();
-    let selectedDate = new Date();
-    let calendarDisplayMonth = new Date().getMonth();
-    let calendarDisplayYear = new Date().getFullYear();
+    // Note: currentView, currentDate, selectedDate, calendarDisplayMonth, calendarDisplayYear
+    // are declared at the top of the script for the refresh button to work
 
     // Initialize calendar on page load
     document.addEventListener('DOMContentLoaded', () => {
