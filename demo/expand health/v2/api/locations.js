@@ -36,7 +36,43 @@ router.get('/', async (req, res, next) => {
 
     query += ` ORDER BY is_primary DESC, name ASC`;
 
-    const result = await db.query(query, [tenantId]);
+    let result = await db.query(query, [tenantId]);
+
+    // Auto-seed default locations if none exist for this tenant
+    if (result.rows.length === 0 && tenantId) {
+      console.log(`No locations for tenant ${tenantId}, auto-seeding defaults...`);
+      const defaultLocations = [
+        { name: '28 DeWolfe Street', is_primary: true },
+        { name: 'Compression boot location', is_primary: false },
+        { name: 'Consult Room 1', is_primary: false },
+        { name: 'Consult Room 2', is_primary: false },
+        { name: 'Consult Room 3', is_primary: false },
+        { name: 'Drip Location', is_primary: false },
+        { name: 'Event Space', is_primary: false },
+        { name: 'HBOT', is_primary: false },
+        { name: 'Hocatt + Massage', is_primary: false },
+        { name: 'Ice bath 1', is_primary: false },
+        { name: 'Ice bath 2', is_primary: false },
+        { name: 'Infrared Sauna', is_primary: false },
+        { name: 'PEMF', is_primary: false },
+        { name: 'Reception / meeting space', is_primary: false },
+        { name: 'Red Light Therapy Room', is_primary: false },
+        { name: 'Somadome', is_primary: false },
+        { name: 'Online', is_primary: false }
+      ];
+
+      for (const loc of defaultLocations) {
+        await db.query(
+          `INSERT INTO locations (tenant_id, name, is_primary, is_active)
+           VALUES ($1, $2, $3, true)`,
+          [tenantId, loc.name, loc.is_primary]
+        );
+      }
+      console.log(`✅ Auto-seeded ${defaultLocations.length} locations for tenant ${tenantId}`);
+
+      // Re-fetch locations
+      result = await db.query(query, [tenantId]);
+    }
 
     res.json(result.rows);
   } catch (error) {
