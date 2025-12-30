@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Class Template - ExpandHealth</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cline x1='20' y1='20' x2='80' y2='80' stroke='%230F766E' stroke-width='12' stroke-linecap='round'/%3E%3Cline x1='80' y1='20' x2='20' y2='80' stroke='%230F766E' stroke-width='12' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/css/main.css">
+  <script src="/js/feature-flags.js"></script>
+  <script src="/js/nav.js"></script>
+  <style>
+    .template-detail-page {
+      padding: 24px;
+      max-width: 1200px;
+    }
+
+    /* Back link */
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--gray-600);
+      text-decoration: none;
+      font-size: 0.875rem;
+      margin-bottom: 16px;
+    }
+
+    .back-link:hover {
+      color: var(--gray-900);
+    }
+
+    .back-link svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    /* Page header */
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .page-title {
+      font-size: 1.75rem;
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+
+    /* Actions button */
+    .btn-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      background: var(--teal-50);
+      color: var(--teal-700);
+      border: 1px solid var(--teal-200);
+      border-radius: 8px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+    }
+
+    .btn-actions:hover {
+      background: var(--teal-100);
+    }
+
+    .btn-actions svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    /* Actions dropdown */
+    .actions-dropdown-wrapper {
+      position: relative;
+      display: inline-block;
+    }
+
+    .actions-dropdown {
+      position: absolute;
+      right: 0;
+      top: calc(100% + 4px);
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.05);
+      min-width: 280px;
+      padding: 8px 0;
+      z-index: 100;
+      display: none;
+    }
+
+    .actions-dropdown.show {
+      display: block;
+    }
+
+    .actions-dropdown-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      font-size: 0.875rem;
+      color: var(--gray-700);
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .actions-dropdown-item:hover {
+      background: var(--gray-50);
+    }
+
+    .actions-dropdown-item svg {
+      width: 18px;
+      height: 18px;
+      color: var(--gray-500);
+    }
+
+    .actions-dropdown-item.danger {
+      color: #dc2626;
+    }
+
+    .actions-dropdown-item.danger svg {
+      color: #dc2626;
+    }
+
+    .actions-dropdown-item.danger:hover {
+      background: #fef2f2;
+    }
+
+    /* Template info card */
+    .template-info-card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    .info-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      padding: 12px 0;
+    }
+
+    .info-row:not(:last-child) {
+      border-bottom: 1px solid var(--gray-100);
+    }
+
+    .info-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      background: var(--gray-100);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .info-icon svg {
+      width: 18px;
+      height: 18px;
+      color: var(--gray-600);
+    }
+
+    .info-icon.color-icon {
+      background: none;
+    }
+
+    .color-dot {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+    }
+
+    .info-content {
+      flex: 1;
+    }
+
+    .info-label {
+      font-size: 0.75rem;
+      color: var(--gray-500);
+      margin-bottom: 2px;
+    }
+
+    .info-value {
+      font-size: 0.9375rem;
+      font-weight: 500;
+      color: var(--gray-900);
+    }
+
+    /* Tabs */
+    .tabs-container {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+
+    .tabs-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--gray-200);
+      padding: 0 24px;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 0;
+    }
+
+    .tab {
+      padding: 16px 20px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--gray-500);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s;
+    }
+
+    .tab:hover {
+      color: var(--gray-700);
+    }
+
+    .tab.active {
+      color: var(--teal-700);
+      border-bottom-color: var(--teal-600);
+    }
+
+    .btn-new-recurring {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      background: white;
+      color: var(--teal-700);
+      border: 1px solid var(--teal-300);
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-new-recurring:hover {
+      background: var(--teal-50);
+    }
+
+    .btn-new-recurring svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .tab-content {
+      padding: 24px;
+    }
+
+    .tab-panel {
+      display: none;
+    }
+
+    .tab-panel.active {
+      display: block;
+    }
+
+    .empty-tab-state {
+      color: var(--gray-500);
+      font-size: 0.875rem;
+    }
+
+    /* Classes table */
+    .classes-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .classes-table th {
+      text-align: left;
+      padding: 12px 16px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--gray-500);
+      background: var(--gray-50);
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .classes-table td {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--gray-100);
+      font-size: 0.875rem;
+      color: var(--gray-700);
+    }
+
+    .classes-table tr:hover {
+      background: var(--gray-50);
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">
+          <svg class="logo-icon" width="28" height="28" viewBox="0 0 24 24" fill="none">
+            <path d="M4 4L11 12L4 20" stroke="#0F766E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M20 4L13 12L20 20" stroke="#0F766E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <div class="logo-text">
+            <span class="logo-expand">EXPAND</span>
+            <span class="logo-health">HEALTH</span>
+          </div>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section-title">AI</div>
+        <a href="/" class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+          <span>Dashboard</span>
+        </a>
+        <a href="/clients" class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+          <span>Clients</span>
+        </a>
+
+        <div class="nav-section-title">AI ADMIN</div>
+        <a href="/forms" class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+          <span>Forms</span>
+        </a>
+        <a href="/protocol-templates" class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+          <span>Protocol Templates</span>
+        </a>
+        <a href="/admin" class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+          <span>Admin Settings</span>
+        </a>
+        <a href="/kb-admin" class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+          <span>AI Knowledge Base</span>
+        </a>
+
+        <div class="nav-section booking-nav">
+          <div class="nav-section-title">BOOKING</div>
+          <a href="/schedule" class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect></svg>
+            <span>Dashboard</span>
+          </a>
+          <a href="/inbox" class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+            <span>Inbox</span>
+          </a>
+          <a href="/pos" class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+            <span>Point of sale</span>
+          </a>
+          <div class="nav-dropdown">
+            <div class="nav-dropdown-trigger">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+              <span>Classes</span>
+              <svg class="nav-dropdown-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </div>
+            <div class="nav-dropdown-menu">
+              <div class="nav-dropdown-header">CLASSES</div>
+              <div class="nav-dropdown-section">SCHEDULING</div>
+              <a href="/classes" class="nav-dropdown-item">Schedule</a>
+              <a href="/class-templates" class="nav-dropdown-item">Class templates</a>
+              <div class="nav-dropdown-section">PRACTITIONERS</div>
+              <a href="/substitution-requests" class="nav-dropdown-item">Substitution requests</a>
+            </div>
+          </div>
+          <a href="/appointments" class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+            <span>Appointments</span>
+          </a>
+          <a href="/community" class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+            <span>Community</span>
+          </a>
+          <a href="/on-demand" class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+            <span>On-Demand</span>
+          </a>
+          <a href="/memberships" class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            <span>Memberships</span>
+          </a>
+          <a href="/customers" class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+            <span>Customers</span>
+          </a>
+          <a href="/leads" class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
+            <span>Marketing</span>
+          </a>
+          <a href="/analytics" class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+            <span>Analytics</span>
+          </a>
+          <a href="/financials" class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+            <span>Financials</span>
+          </a>
+        </div>
+
+        <div class="nav-section booking-nav">
+          <div class="nav-section-title">STUDIO SET-UP</div>
+          <a href="/studio/practitioners" class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+            <span>Practitioners</span>
+          </a>
+          <a href="/services" class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
+            <span>Services</span>
+          </a>
+          <a href="/studio/locations" class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+            <span>Locations</span>
+          </a>
+        </div>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="user-info">
+          <div class="user-avatar" id="userAvatar">U</div>
+          <div class="user-details">
+            <span class="user-name" id="userName">Loading...</span>
+            <span class="user-role" id="userRole">...</span>
+          </div>
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="logout()">Logout</button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <div class="template-detail-page">
+        <!-- Back link -->
+        <a href="/class-templates" class="back-link">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 12H5"/>
+            <polyline points="12 19 5 12 12 5"/>
+          </svg>
+          <span id="templateName">Loading...</span>
+        </a>
+
+        <!-- Page header -->
+        <div class="page-header">
+          <h1 class="page-title" id="pageTitle">Loading...</h1>
+          <div class="actions-dropdown-wrapper">
+            <button class="btn-actions" onclick="toggleActionsDropdown()">
+              Actions
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="1"/>
+                <circle cx="12" cy="5" r="1"/>
+                <circle cx="12" cy="19" r="1"/>
+              </svg>
+            </button>
+            <div class="actions-dropdown" id="actionsDropdown">
+              <div class="actions-dropdown-item" onclick="editTemplate()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                </svg>
+                Edit class template
+              </div>
+              <div class="actions-dropdown-item" onclick="duplicateTemplate()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                </svg>
+                Duplicate template
+              </div>
+              <div class="actions-dropdown-item" onclick="createRecurringClass()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M17 2l4 4-4 4"/>
+                  <path d="M3 11v-1a4 4 0 0 1 4-4h14"/>
+                  <path d="M7 22l-4-4 4-4"/>
+                  <path d="M21 13v1a4 4 0 0 1-4 4H3"/>
+                </svg>
+                Create recurring class from template
+              </div>
+              <div class="actions-dropdown-item" onclick="createClassFromTemplate()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="12" y1="5" x2="12" y2="19"/>
+                  <line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+                Create class from template
+              </div>
+              <div class="actions-dropdown-item danger" onclick="deleteTemplate()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="3 6 5 6 21 6"/>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                  <line x1="10" y1="11" x2="10" y2="17"/>
+                  <line x1="14" y1="11" x2="14" y2="17"/>
+                </svg>
+                Delete template
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Template info card -->
+        <div class="template-info-card">
+          <div class="info-row">
+            <div class="info-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                <line x1="16" y1="2" x2="16" y2="6"/>
+                <line x1="8" y1="2" x2="8" y2="6"/>
+                <line x1="3" y1="10" x2="21" y2="10"/>
+              </svg>
+            </div>
+            <div class="info-content">
+              <div class="info-label">Class name</div>
+              <div class="info-value" id="infoClassName">-</div>
+            </div>
+          </div>
+          <div class="info-row">
+            <div class="info-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                <line x1="3" y1="9" x2="21" y2="9"/>
+                <line x1="9" y1="21" x2="9" y2="9"/>
+              </svg>
+            </div>
+            <div class="info-content">
+              <div class="info-label">Class Type</div>
+              <div class="info-value" id="infoClassType">-</div>
+            </div>
+          </div>
+          <div class="info-row">
+            <div class="info-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                <circle cx="12" cy="10" r="3"/>
+              </svg>
+            </div>
+            <div class="info-content">
+              <div class="info-label">Location</div>
+              <div class="info-value" id="infoLocation">-</div>
+            </div>
+          </div>
+          <div class="info-row">
+            <div class="info-icon color-icon">
+              <div class="color-dot" id="infoColorDot" style="background: #ec4899;"></div>
+            </div>
+            <div class="info-content">
+              <div class="info-label">Color</div>
+              <div class="info-value" id="infoColor">-</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs-container">
+          <div class="tabs-header">
+            <div class="tabs">
+              <div class="tab active" data-tab="recurring">Recurring classes</div>
+              <div class="tab" data-tab="classes">Classes</div>
+              <div class="tab" data-tab="memberships">Applicable memberships</div>
+            </div>
+            <button class="btn-new-recurring" onclick="createRecurringClass()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"/>
+                <line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+              New recurring class
+            </button>
+          </div>
+          <div class="tab-content">
+            <div class="tab-panel active" id="panel-recurring">
+              <div class="empty-tab-state" id="recurringEmpty">No recurring class created from this template yet.</div>
+              <table class="classes-table" id="recurringTable" style="display: none;">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Schedule</th>
+                    <th>Instructor</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="recurringBody"></tbody>
+              </table>
+            </div>
+            <div class="tab-panel" id="panel-classes">
+              <div class="empty-tab-state" id="classesEmpty">No classes created from this template yet.</div>
+              <table class="classes-table" id="classesTable" style="display: none;">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Instructor</th>
+                  </tr>
+                </thead>
+                <tbody id="classesBody"></tbody>
+              </table>
+            </div>
+            <div class="tab-panel" id="panel-memberships">
+              <div class="empty-tab-state" id="membershipsEmpty">No memberships linked to this template yet.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // Auth check
+    const token = localStorage.getItem('auth_token');
+    if (!token) {
+      window.location.href = '/login';
+    }
+
+    // Get template ID from URL
+    const urlParts = window.location.pathname.split('/');
+    const templateId = urlParts[urlParts.length - 1];
+
+    let template = null;
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', async () => {
+      await loadUserInfo();
+      await loadTemplate();
+      setupEventListeners();
+    });
+
+    async function loadUserInfo() {
+      try {
+        const response = await fetch('/api/auth/me', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.ok) {
+          const user = await response.json();
+          document.getElementById('userName').textContent = user.email.split('@')[0];
+          document.getElementById('userRole').textContent = user.role;
+          document.getElementById('userAvatar').textContent = user.email[0].toUpperCase();
+        }
+      } catch (error) {
+        console.error('Failed to load user info:', error);
+      }
+    }
+
+    async function loadTemplate() {
+      try {
+        const response = await fetch(`/api/class-templates/${templateId}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.ok) {
+          template = await response.json();
+          renderTemplate();
+        } else {
+          alert('Template not found');
+          window.location.href = '/class-templates';
+        }
+      } catch (error) {
+        console.error('Failed to load template:', error);
+      }
+    }
+
+    function renderTemplate() {
+      if (!template) return;
+
+      // Update page title
+      document.title = `${template.name} - ExpandHealth`;
+      document.getElementById('templateName').textContent = template.name;
+      document.getElementById('pageTitle').textContent = template.name;
+
+      // Update info card
+      document.getElementById('infoClassName').textContent = template.name;
+      document.getElementById('infoClassType').textContent = template.class_kind || 'Class';
+      document.getElementById('infoLocation').textContent = template.location_type === 'online' ? 'Online' : 'In person';
+
+      // Color
+      const colorMap = {
+        'pink': { hex: '#ec4899', name: 'Pink' },
+        'purple': { hex: '#a855f7', name: 'Purple' },
+        'blue': { hex: '#3b82f6', name: 'Blue' },
+        'green': { hex: '#22c55e', name: 'Green' },
+        'teal': { hex: '#14b8a6', name: 'Teal' },
+        'orange': { hex: '#f97316', name: 'Orange' },
+        'red': { hex: '#ef4444', name: 'Red' },
+        'yellow': { hex: '#eab308', name: 'Yellow' }
+      };
+      const color = colorMap[template.color] || colorMap['teal'];
+      document.getElementById('infoColorDot').style.background = color.hex;
+      document.getElementById('infoColor').textContent = color.name;
+    }
+
+    function setupEventListeners() {
+      // Tab switching
+      document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          // Update active tab
+          document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+
+          // Update active panel
+          document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+          const panelId = `panel-${tab.dataset.tab}`;
+          document.getElementById(panelId).classList.add('active');
+        });
+      });
+
+      // Close dropdown when clicking outside
+      document.addEventListener('click', (e) => {
+        if (!e.target.closest('.actions-dropdown-wrapper')) {
+          closeActionsDropdown();
+        }
+      });
+    }
+
+    function toggleActionsDropdown() {
+      event.stopPropagation();
+      const dropdown = document.getElementById('actionsDropdown');
+      dropdown.classList.toggle('show');
+    }
+
+    function closeActionsDropdown() {
+      document.getElementById('actionsDropdown').classList.remove('show');
+    }
+
+    function editTemplate() {
+      closeActionsDropdown();
+      window.location.href = `/class-templates/${templateId}/edit`;
+    }
+
+    async function duplicateTemplate() {
+      closeActionsDropdown();
+      try {
+        const response = await fetch(`/api/class-templates/${templateId}/duplicate`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          window.location.href = `/class-templates/${data.id}`;
+        } else {
+          alert('Failed to duplicate template');
+        }
+      } catch (error) {
+        console.error('Error duplicating template:', error);
+        alert('Failed to duplicate template');
+      }
+    }
+
+    function createRecurringClass() {
+      closeActionsDropdown();
+      window.location.href = `/classes/new?template=${templateId}&type=recurring`;
+    }
+
+    function createClassFromTemplate() {
+      closeActionsDropdown();
+      window.location.href = `/classes/new?template=${templateId}`;
+    }
+
+    async function deleteTemplate() {
+      closeActionsDropdown();
+      if (!confirm('Are you sure you want to delete this template? This action cannot be undone.')) {
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/class-templates/${templateId}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.ok) {
+          window.location.href = '/class-templates';
+        } else {
+          alert('Failed to delete template');
+        }
+      } catch (error) {
+        console.error('Error deleting template:', error);
+        alert('Failed to delete template');
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem('auth_token');
+      window.location.href = '/login';
+    }
+  </script>
+</body>
+</html>

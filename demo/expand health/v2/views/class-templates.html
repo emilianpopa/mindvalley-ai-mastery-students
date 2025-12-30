@@ -160,6 +160,18 @@
       color: var(--gray-900);
     }
 
+    .template-name-link {
+      font-weight: 500;
+      color: var(--gray-900);
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .template-name-link:hover {
+      color: var(--teal-600);
+      text-decoration: underline;
+    }
+
     /* Location badge */
     .location-badge {
       display: inline-flex;
@@ -614,10 +626,10 @@
                   <line x1="3" y1="10" x2="21" y2="10"/>
                 </svg>
               </div>
-              <span class="template-name">${template.internal_label || template.name}</span>
+              <a href="/class-templates/${template.id}" class="template-name-link">${template.internal_label || template.name}</a>
             </div>
           </td>
-          <td>${template.name}</td>
+          <td><a href="/class-templates/${template.id}" class="template-name-link">${template.name}</a></td>
           <td>${template.class_kind || 'Class'}</td>
           <td>
             <span class="location-badge">

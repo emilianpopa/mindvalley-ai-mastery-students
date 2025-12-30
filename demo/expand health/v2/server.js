@@ -308,6 +308,11 @@ app.get('/class-templates', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'class-templates.html'));
 });
 
+// Class Template Detail
+app.get('/class-templates/:id', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'class-template-detail.html'));
+});
+
 app.get('/substitution-requests', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'substitution-requests.html'));
 });
