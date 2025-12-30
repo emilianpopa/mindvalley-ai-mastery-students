@@ -1710,11 +1710,13 @@
 
     async function loadCustomersForClass() {
       try {
-        const response = await fetch('/api/clients', {
+        const response = await fetch('/api/clients?limit=100', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (response.ok) {
-          classCustomers = await response.json();
+          const data = await response.json();
+          // API returns { clients: [...], pagination: {...} }
+          classCustomers = data.clients || data;
           const select = document.getElementById('customerSelect');
           select.innerHTML = '<option value="">Select customer...</option>';
           classCustomers.forEach(c => {
