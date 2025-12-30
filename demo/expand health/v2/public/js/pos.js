@@ -216,58 +216,48 @@
     updateCategoryContent();
   }
 
+  function getAuthToken() {
+    return localStorage.getItem('auth_token');
+  }
+
   async function loadStaff() {
     try {
-      const response = await fetch('/api/staff?active_only=true');
+      const token = getAuthToken();
+      const response = await fetch('/api/staff?active_only=true', {
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+      });
       if (response.ok) {
-        staff = await response.json();
+        const data = await response.json();
+        // API returns array directly or { staff: [...] }
+        staff = Array.isArray(data) ? data : (data.staff || []);
       } else {
-        // Fallback demo data
-        staff = [
-          { id: 1, first_name: 'Dr Daniel', last_name: 'Blanckenberg', title: 'Medical Director' },
-          { id: 2, first_name: 'Dr Melody', last_name: 'Fourie', title: 'Functional Medicine' },
-          { id: 3, first_name: 'Avela', last_name: 'Jafta', title: 'IV Therapy Specialist' },
-          { id: 4, first_name: 'Maryke', last_name: 'Gallagher', title: 'Nutritionist' },
-          { id: 5, first_name: 'Jack', last_name: 'Hardland', title: 'Wellness Coach' }
-        ];
+        console.warn('Failed to load staff, using fallback data');
+        staff = [];
       }
     } catch (error) {
       console.error('Error loading staff:', error);
-      staff = [
-        { id: 1, first_name: 'Dr Daniel', last_name: 'Blanckenberg', title: 'Medical Director' },
-        { id: 2, first_name: 'Dr Melody', last_name: 'Fourie', title: 'Functional Medicine' },
-        { id: 3, first_name: 'Avela', last_name: 'Jafta', title: 'IV Therapy Specialist' },
-        { id: 4, first_name: 'Maryke', last_name: 'Gallagher', title: 'Nutritionist' },
-        { id: 5, first_name: 'Jack', last_name: 'Hardland', title: 'Wellness Coach' }
-      ];
+      staff = [];
     }
     renderSellerDropdown();
   }
 
   async function loadCustomers() {
     try {
-      const response = await fetch('/api/clients');
+      const token = getAuthToken();
+      const response = await fetch('/api/clients?limit=100', {
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+      });
       if (response.ok) {
-        customers = await response.json();
+        const data = await response.json();
+        // API returns { clients: [...], pagination: {...} }
+        customers = data.clients || (Array.isArray(data) ? data : []);
       } else {
-        // Fallback demo data
-        customers = [
-          { id: 1, first_name: 'Sarah', last_name: 'Johnson', email: 'sarah@example.com' },
-          { id: 2, first_name: 'Michael', last_name: 'Chen', email: 'michael@example.com' },
-          { id: 3, first_name: 'Emma', last_name: 'Williams', email: 'emma@example.com' },
-          { id: 4, first_name: 'James', last_name: 'Brown', email: 'james@example.com' },
-          { id: 5, first_name: 'Olivia', last_name: 'Davis', email: 'olivia@example.com' }
-        ];
+        console.warn('Failed to load customers, using empty list');
+        customers = [];
       }
     } catch (error) {
       console.error('Error loading customers:', error);
-      customers = [
-        { id: 1, first_name: 'Sarah', last_name: 'Johnson', email: 'sarah@example.com' },
-        { id: 2, first_name: 'Michael', last_name: 'Chen', email: 'michael@example.com' },
-        { id: 3, first_name: 'Emma', last_name: 'Williams', email: 'emma@example.com' },
-        { id: 4, first_name: 'James', last_name: 'Brown', email: 'james@example.com' },
-        { id: 5, first_name: 'Olivia', last_name: 'Davis', email: 'olivia@example.com' }
-      ];
+      customers = [];
     }
     renderCustomerDropdown();
   }
