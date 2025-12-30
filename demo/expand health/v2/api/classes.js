@@ -49,7 +49,40 @@ router.get('/templates', async (req, res, next) => {
 
     query += ` ORDER BY ct.name ASC`;
 
-    const result = await db.query(query, params);
+    let result = await db.query(query, params);
+
+    // Auto-seed default class templates if none exist for this tenant
+    if (result.rows.length === 0 && tenantId) {
+      const defaultTemplates = [
+        { name: 'Vinyasa Fusion', class_kind: 'class', duration_minutes: 60, color: '#6366F1', description: 'A dynamic flow combining traditional Vinyasa with modern movement patterns' },
+        { name: 'Sound Bath', class_kind: 'class', duration_minutes: 75, color: '#8B5CF6', description: 'Immersive healing experience with crystal bowls and gongs' },
+        { name: 'Qigong', class_kind: 'class', duration_minutes: 60, color: '#10B981', description: 'Ancient Chinese practice combining movement, breath, and meditation' },
+        { name: 'WHM + Cold Plunge', class_kind: 'class', duration_minutes: 90, color: '#3B82F6', description: 'Wim Hof Method breathing followed by cold water immersion' },
+        { name: 'Workshop', class_kind: 'workshop', duration_minutes: 120, color: '#F59E0B', description: 'Special topic workshop - customize for your event' },
+        { name: 'Hatha Yoga', class_kind: 'class', duration_minutes: 75, color: '#EC4899', description: 'Traditional yoga practice focusing on postures and breath control' },
+        { name: 'Yin Yoga', class_kind: 'class', duration_minutes: 75, color: '#14B8A6', description: 'Slow-paced style holding poses for longer periods' },
+        { name: 'Power Yoga', class_kind: 'class', duration_minutes: 60, color: '#EF4444', description: 'Vigorous, fitness-based approach to Vinyasa-style yoga' },
+        { name: 'Meditation', class_kind: 'class', duration_minutes: 45, color: '#6366F1', description: 'Guided meditation for stress relief and mental clarity' },
+        { name: 'Breathwork', class_kind: 'class', duration_minutes: 60, color: '#0EA5E9', description: 'Conscious breathing techniques for healing and transformation' },
+        { name: 'Pilates', class_kind: 'class', duration_minutes: 55, color: '#F97316', description: 'Core-strengthening exercises emphasizing alignment and control' },
+        { name: 'Restorative Yoga', class_kind: 'class', duration_minutes: 75, color: '#A855F7', description: 'Deeply relaxing practice using props for full support' },
+        { name: 'Private Session', class_kind: 'private', duration_minutes: 60, color: '#64748B', description: 'One-on-one personalized instruction' },
+        { name: 'Wellness Retreat', class_kind: 'retreat', duration_minutes: 180, color: '#059669', description: 'Extended program combining multiple wellness practices' },
+        { name: 'Yoga Fundamentals', class_kind: 'course', duration_minutes: 90, color: '#7C3AED', description: 'Multi-week course covering yoga basics for beginners' }
+      ];
+
+      // Insert all default templates
+      for (const template of defaultTemplates) {
+        await db.query(`
+          INSERT INTO class_templates (tenant_id, name, class_kind, duration_minutes, color, description, is_active)
+          VALUES ($1, $2, $3, $4, $5, $6, true)
+        `, [tenantId, template.name, template.class_kind, template.duration_minutes, template.color, template.description]);
+      }
+
+      // Re-fetch the templates
+      result = await db.query(query, params);
+    }
+
     res.json(result.rows);
   } catch (error) {
     next(error);
