@@ -1,25 +1,7 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Protocol Builder - ExpandHealth</title>
-  <link rel="stylesheet" href="/css/main.css">
-  <link rel="stylesheet" href="/css/protocol-builder.css">
-  <link rel="stylesheet" href="/css/chat-widget.css">
-</head>
-<body>
-  <div class="app-container">
-    <!-- Sidebar -->
-    <aside class="sidebar">
-      <div class="sidebar-header">
-        <div class="logo-small">
-          <span class="logo-icon">✦</span>
-          <span class="logo-text">ExpandHealth</span>
-        </div>
-      </div>
+const fs = require('fs');
 
-                              <nav class="sidebar-nav">
+// Full navigation with AI + Booking sections
+const fullNav = `      <nav class="sidebar-nav">
         <div class="nav-section-title">AI</div>
         <a href="/" class="nav-item">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
@@ -35,7 +17,7 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
           <span>Forms</span>
         </a>
-        <a href="/protocol-templates" class="nav-item active">
+        <a href="/protocol-templates" class="nav-item">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
           <span>Protocol Templates</span>
         </a>
@@ -126,141 +108,127 @@
             <span>Locations</span>
           </a>
         </div>
-      </nav>
+      </nav>`;
 
-      <div class="sidebar-footer">
-        <button class="ask-ai-btn" onclick="window.chatWidget && window.chatWidget.toggleChat()">
-          <span>✨</span>
-          <span>Ask AI</span>
-        </button>
-      </div>
-    </aside>
+// ALL pages that should have full nav (AI + Booking)
+const allPages = [
+  // AI pages
+  'views/dashboard.html',
+  'views/clients.html',
+  'views/forms.html',
+  'views/protocol-templates.html',
+  'views/admin.html',
+  'views/kb-admin.html',
+  'views/client-profile.html',
+  'views/client-edit.html',
+  'views/client-new.html',
+  'views/form-builder.html',
+  'views/form-responses.html',
+  'views/protocol-builder.html',
+  'views/protocols.html',
+  'views/labs.html',
+  'views/lab-upload.html',
+  'views/lab-viewer.html',
+  'views/submission-detail.html',
+  'views/client-dashboard.html',
+  // Booking pages
+  'views/booking-dashboard.html',
+  'views/appointments.html',
+  'views/appointment-types.html',
+  'views/classes.html',
+  'views/class-detail.html',
+  'views/class-templates.html',
+  'views/customers.html',
+  'views/customer-profile.html',
+  'views/inbox.html',
+  'views/marketing-leads.html',
+  'views/marketing-templates.html',
+  'views/lead-detail.html',
+  'views/memberships.html',
+  'views/pos.html',
+  'views/reservations.html',
+  'views/sequences.html',
+  'views/services.html',
+  'views/studio-practitioners.html',
+  'views/studio-locations.html',
+  'views/studio-class-settings.html',
+  'views/studio-staff-tasks.html',
+  'views/substitution-requests.html',
+  'views/forms-unlinked.html'
+];
 
-    <!-- Main Content -->
-    <main class="main-content">
-      <!-- Header -->
-      <header class="header">
-        <div class="header-left">
-          <h1 id="pageTitle">Create Protocol Template</h1>
-          <p class="breadcrumb">
-            <a href="/protocol-templates">Protocol Templates</a> → <span id="breadcrumbTitle">New Template</span>
-          </p>
-        </div>
-        <div class="header-right">
-          <button class="icon-btn">🔔</button>
-          <div class="user-menu">
-            <img src="https://ui-avatars.com/api/?name=Admin+User&background=0F766E&color=fff" alt="User" class="user-avatar">
-            <div class="user-info">
-              <p class="user-name" id="userName">Loading...</p>
-              <p class="user-role" id="userRole">Admin</p>
-            </div>
-            <button class="icon-btn" onclick="window.auth.logout()">🚪</button>
-          </div>
-        </div>
-      </header>
+// Active page mapping
+const activePages = {
+  // AI pages
+  'views/dashboard.html': '/',
+  'views/clients.html': '/clients',
+  'views/client-profile.html': '/clients',
+  'views/client-edit.html': '/clients',
+  'views/client-new.html': '/clients',
+  'views/client-dashboard.html': '/clients',
+  'views/forms.html': '/forms',
+  'views/form-builder.html': '/forms',
+  'views/form-responses.html': '/forms',
+  'views/submission-detail.html': '/forms',
+  'views/protocol-templates.html': '/protocol-templates',
+  'views/protocol-builder.html': '/protocol-templates',
+  'views/protocols.html': '/protocol-templates',
+  'views/admin.html': '/admin',
+  'views/kb-admin.html': '/kb-admin',
+  'views/labs.html': '/clients',
+  'views/lab-upload.html': '/clients',
+  'views/lab-viewer.html': '/clients',
+  // Booking pages
+  'views/booking-dashboard.html': '/schedule',
+  'views/appointments.html': '/appointments',
+  'views/appointment-types.html': '/appointments',
+  'views/classes.html': '/classes',
+  'views/class-detail.html': '/classes',
+  'views/class-templates.html': '/class-templates',
+  'views/customers.html': '/customers',
+  'views/customer-profile.html': '/customers',
+  'views/inbox.html': '/inbox',
+  'views/marketing-leads.html': '/leads',
+  'views/marketing-templates.html': '/leads',
+  'views/lead-detail.html': '/leads',
+  'views/memberships.html': '/memberships',
+  'views/pos.html': '/pos',
+  'views/reservations.html': '/schedule',
+  'views/sequences.html': '/leads',
+  'views/services.html': '/services',
+  'views/studio-practitioners.html': '/studio/practitioners',
+  'views/studio-locations.html': '/studio/locations',
+  'views/studio-class-settings.html': '/classes',
+  'views/studio-staff-tasks.html': '/studio/practitioners',
+  'views/substitution-requests.html': '/substitution-requests',
+  'views/forms-unlinked.html': '/forms'
+};
 
-      <!-- Builder Content -->
-      <div class="content">
-        <!-- Loading State -->
-        <div id="loadingState" class="loading-container" style="display: none;">
-          <div class="loader"></div>
-          <p>Loading template...</p>
-        </div>
+allPages.forEach(file => {
+  if (!fs.existsSync(file)) {
+    console.log('Skipping ' + file + ' (not found)');
+    return;
+  }
 
-        <!-- Builder Form -->
-        <div id="builderForm">
-          <!-- Basic Info Section -->
-          <div class="builder-section">
-            <div class="section-header">
-              <h2>📋 Basic Information</h2>
-              <p class="section-description">Core details about this protocol template</p>
-            </div>
+  let content = fs.readFileSync(file, 'utf8');
 
-            <div class="form-grid">
-              <div class="form-group full-width">
-                <label for="templateName">Template Name *</label>
-                <input
-                  type="text"
-                  id="templateName"
-                  class="form-input"
-                  placeholder="e.g., Hormone Balance Protocol"
-                  required
-                >
-              </div>
+  // Find and replace the nav section
+  const navStartPattern = /<nav class="sidebar-nav">[\s\S]*?<\/nav>/;
 
-              <div class="form-group">
-                <label for="category">Category *</label>
-                <select id="category" class="form-input" required>
-                  <option value="">Select category...</option>
-                  <option value="Hormone Health">Hormone Health</option>
-                  <option value="Gut Health">Gut Health</option>
-                  <option value="Detox">Detox</option>
-                  <option value="Energy & Vitality">Energy & Vitality</option>
-                  <option value="Weight Management">Weight Management</option>
-                  <option value="Sleep">Sleep</option>
-                  <option value="Stress & Anxiety">Stress & Anxiety</option>
-                  <option value="Immune Support">Immune Support</option>
-                </select>
-              </div>
+  if (navStartPattern.test(content)) {
+    // Determine active page
+    const activePath = activePages[file] || '/';
+    let navWithActive = fullNav.replace(
+      '<a href="' + activePath + '" class="nav-item">',
+      '<a href="' + activePath + '" class="nav-item active">'
+    );
 
-              <div class="form-group">
-                <label for="duration">Duration (weeks)</label>
-                <input
-                  type="number"
-                  id="duration"
-                  class="form-input"
-                  placeholder="e.g., 12"
-                  min="1"
-                >
-                <small class="form-hint">Leave blank for flexible duration</small>
-              </div>
+    content = content.replace(navStartPattern, navWithActive);
+    fs.writeFileSync(file, content);
+    console.log('Updated: ' + file);
+  } else {
+    console.log('Nav not found in: ' + file);
+  }
+});
 
-              <div class="form-group full-width">
-                <label for="description">Description</label>
-                <textarea
-                  id="description"
-                  class="form-input"
-                  rows="3"
-                  placeholder="Brief overview of this protocol and what it addresses..."
-                ></textarea>
-              </div>
-            </div>
-          </div>
-
-          <!-- Modules Section -->
-          <div class="builder-section">
-            <div class="section-header">
-              <h2>🗂️ Protocol Modules</h2>
-              <p class="section-description">Define the phases and steps of this protocol</p>
-            </div>
-
-            <div id="modulesList" class="modules-list">
-              <!-- Modules will be added here -->
-            </div>
-
-            <button type="button" class="btn-secondary" onclick="addModule()">
-              <span>➕</span>
-              <span>Add Module</span>
-            </button>
-          </div>
-
-          <!-- Action Buttons -->
-          <div class="builder-actions">
-            <button type="button" class="btn-secondary" onclick="window.location.href='/protocol-templates'">
-              Cancel
-            </button>
-            <button type="button" class="btn-primary" onclick="saveTemplate()" id="saveBtn">
-              <span>💾</span>
-              <span id="saveBtnText">Save Template</span>
-            </button>
-          </div>
-        </div>
-      </div>
-    </main>
-  </div>
-
-  <script src="/js/dashboard.js"></script>
-  <script src="/js/protocol-builder.js"></script>
-  <script src="/js/chat-widget.js"></script>
-</body>
-</html>
+console.log('Done!');
