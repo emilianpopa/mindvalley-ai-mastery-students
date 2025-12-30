@@ -651,7 +651,7 @@
 
     async function loadTemplate() {
       try {
-        const response = await fetch(`/api/class-templates/${templateId}`, {
+        const response = await fetch(`/api/classes/templates/${templateId}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (response.ok) {
@@ -736,7 +736,7 @@
     async function duplicateTemplate() {
       closeActionsDropdown();
       try {
-        const response = await fetch(`/api/class-templates/${templateId}/duplicate`, {
+        const response = await fetch(`/api/classes/templates/${templateId}/duplicate`, {
           method: 'POST',
           headers: { 'Authorization': `Bearer ${token}` }
         });
@@ -769,7 +769,7 @@
       }
 
       try {
-        const response = await fetch(`/api/class-templates/${templateId}`, {
+        const response = await fetch(`/api/classes/templates/${templateId}`, {
           method: 'DELETE',
           headers: { 'Authorization': `Bearer ${token}` }
         });
