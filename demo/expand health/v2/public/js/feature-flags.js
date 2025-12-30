@@ -45,44 +45,48 @@
 
     // Hide booking/Momence features if disabled
     if (!flags.enableBooking) {
-      // Hide the BOOKING nav section
-      const bookingSections = document.querySelectorAll('.nav-section');
-      bookingSections.forEach(section => {
-        const title = section.querySelector('.nav-section-title');
-        if (title && title.textContent.trim() === 'BOOKING') {
-          section.style.display = 'none';
-        }
+      // Hide all elements with .booking-nav class (BOOKING and STUDIO SET-UP sections)
+      const bookingNavSections = document.querySelectorAll('.booking-nav');
+      bookingNavSections.forEach(section => {
+        section.style.display = 'none';
       });
 
-      // Hide Inbox link (Momence feature)
-      const inboxLinks = document.querySelectorAll('a[href="/inbox"]');
-      inboxLinks.forEach(link => {
-        const navItem = link.closest('.nav-item') || link;
-        navItem.style.display = 'none';
+      // Hide the Classes dropdown menu
+      const navDropdowns = document.querySelectorAll('.nav-dropdown');
+      navDropdowns.forEach(dropdown => {
+        dropdown.style.display = 'none';
       });
 
-      // Hide Point of Sale link (Momence feature)
+      // Hide nav items by checking span text (nav uses <span> not .nav-text)
       const navItems = document.querySelectorAll('.nav-item');
       navItems.forEach(item => {
-        const text = item.querySelector('.nav-text');
-        if (text) {
-          const textContent = text.textContent.trim();
-          // Hide Momence-specific nav items
+        const span = item.querySelector('span');
+        if (span) {
+          const textContent = span.textContent.trim();
+          // Hide booking-related nav items
           if (textContent === 'Point of sale' ||
+              textContent === 'Inbox' ||
+              textContent === 'Appointments' ||
+              textContent === 'Community' ||
+              textContent === 'On-Demand' ||
+              textContent === 'Memberships' ||
+              textContent === 'Customers' ||
               textContent === 'Marketing' ||
               textContent === 'Analytics' ||
               textContent === 'Financials' ||
-              textContent === 'Studio set-up') {
+              textContent === 'Practitioners' ||
+              textContent === 'Services' ||
+              textContent === 'Locations') {
             item.style.display = 'none';
           }
         }
       });
 
-      // Hide BUSINESS section entirely (Momence feature)
-      const navSections = document.querySelectorAll('.nav-section');
-      navSections.forEach(section => {
+      // Hide the BOOKING nav section (old structure)
+      const bookingSections = document.querySelectorAll('.nav-section');
+      bookingSections.forEach(section => {
         const title = section.querySelector('.nav-section-title');
-        if (title && title.textContent.trim() === 'BUSINESS') {
+        if (title && (title.textContent.trim() === 'BOOKING' || title.textContent.trim() === 'STUDIO SET-UP')) {
           section.style.display = 'none';
         }
       });
