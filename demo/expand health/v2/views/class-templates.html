@@ -194,6 +194,61 @@
       color: var(--gray-600);
     }
 
+    /* Actions dropdown */
+    .actions-wrapper {
+      position: relative;
+    }
+
+    .actions-dropdown {
+      position: absolute;
+      right: 0;
+      top: 100%;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.05);
+      min-width: 260px;
+      padding: 8px 0;
+      z-index: 100;
+      display: none;
+    }
+
+    .actions-dropdown.show {
+      display: block;
+    }
+
+    .actions-dropdown-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 16px;
+      font-size: 0.875rem;
+      color: var(--gray-700);
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .actions-dropdown-item:hover {
+      background: var(--gray-50);
+    }
+
+    .actions-dropdown-item svg {
+      width: 18px;
+      height: 18px;
+      color: var(--gray-500);
+    }
+
+    .actions-dropdown-item.danger {
+      color: #dc2626;
+    }
+
+    .actions-dropdown-item.danger svg {
+      color: #dc2626;
+    }
+
+    .actions-dropdown-item.danger:hover {
+      background: #fef2f2;
+    }
+
     /* Empty state */
     .empty-state {
       text-align: center;
@@ -460,220 +515,10 @@
               </tr>
             </thead>
             <tbody id="templatesBody">
+              <!-- Templates will be loaded dynamically -->
               <tr>
-                <td class="checkbox-col"><input type="checkbox"></td>
-                <td>
-                  <div class="template-name-cell">
-                    <div class="template-color color-green">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                        <line x1="16" y1="2" x2="16" y2="6"/>
-                        <line x1="8" y1="2" x2="8" y2="6"/>
-                        <line x1="3" y1="10" x2="21" y2="10"/>
-                      </svg>
-                    </div>
-                    <span class="template-name">Vinyasa Fusion</span>
-                  </div>
-                </td>
-                <td>Vinyasa Fusion</td>
-                <td>Class</td>
-                <td>
-                  <span class="location-badge">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-                      <circle cx="12" cy="10" r="3"/>
-                    </svg>
-                    In person
-                  </span>
-                </td>
-                <td class="actions-cell">
-                  <button class="actions-btn">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <circle cx="12" cy="12" r="1"/>
-                      <circle cx="12" cy="5" r="1"/>
-                      <circle cx="12" cy="19" r="1"/>
-                    </svg>
-                  </button>
-                </td>
-              </tr>
-              <tr>
-                <td class="checkbox-col"><input type="checkbox"></td>
-                <td>
-                  <div class="template-name-cell">
-                    <div class="template-color color-green">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                        <line x1="16" y1="2" x2="16" y2="6"/>
-                        <line x1="8" y1="2" x2="8" y2="6"/>
-                        <line x1="3" y1="10" x2="21" y2="10"/>
-                      </svg>
-                    </div>
-                    <span class="template-name">Sound Bath</span>
-                  </div>
-                </td>
-                <td>Sound Bath</td>
-                <td>Class</td>
-                <td>
-                  <span class="location-badge">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-                      <circle cx="12" cy="10" r="3"/>
-                    </svg>
-                    In person
-                  </span>
-                </td>
-                <td class="actions-cell">
-                  <button class="actions-btn">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <circle cx="12" cy="12" r="1"/>
-                      <circle cx="12" cy="5" r="1"/>
-                      <circle cx="12" cy="19" r="1"/>
-                    </svg>
-                  </button>
-                </td>
-              </tr>
-              <tr>
-                <td class="checkbox-col"><input type="checkbox"></td>
-                <td>
-                  <div class="template-name-cell">
-                    <div class="template-color color-green">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                        <line x1="16" y1="2" x2="16" y2="6"/>
-                        <line x1="8" y1="2" x2="8" y2="6"/>
-                        <line x1="3" y1="10" x2="21" y2="10"/>
-                      </svg>
-                    </div>
-                    <span class="template-name">Qigong</span>
-                  </div>
-                </td>
-                <td>Qigong</td>
-                <td>Class</td>
-                <td>
-                  <span class="location-badge">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-                      <circle cx="12" cy="10" r="3"/>
-                    </svg>
-                    In person
-                  </span>
-                </td>
-                <td class="actions-cell">
-                  <button class="actions-btn">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <circle cx="12" cy="12" r="1"/>
-                      <circle cx="12" cy="5" r="1"/>
-                      <circle cx="12" cy="19" r="1"/>
-                    </svg>
-                  </button>
-                </td>
-              </tr>
-              <tr>
-                <td class="checkbox-col"><input type="checkbox"></td>
-                <td>
-                  <div class="template-name-cell">
-                    <div class="template-color color-green">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                        <line x1="16" y1="2" x2="16" y2="6"/>
-                        <line x1="8" y1="2" x2="8" y2="6"/>
-                        <line x1="3" y1="10" x2="21" y2="10"/>
-                      </svg>
-                    </div>
-                    <span class="template-name">WHM + Cold Plunge</span>
-                  </div>
-                </td>
-                <td>WHM Breathwork + Ice Plunge</td>
-                <td>Class</td>
-                <td>
-                  <span class="location-badge">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-                      <circle cx="12" cy="10" r="3"/>
-                    </svg>
-                    In person
-                  </span>
-                </td>
-                <td class="actions-cell">
-                  <button class="actions-btn">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <circle cx="12" cy="12" r="1"/>
-                      <circle cx="12" cy="5" r="1"/>
-                      <circle cx="12" cy="19" r="1"/>
-                    </svg>
-                  </button>
-                </td>
-              </tr>
-              <tr>
-                <td class="checkbox-col"><input type="checkbox"></td>
-                <td>
-                  <div class="template-name-cell">
-                    <div class="template-color color-green">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                        <line x1="16" y1="2" x2="16" y2="6"/>
-                        <line x1="8" y1="2" x2="8" y2="6"/>
-                        <line x1="3" y1="10" x2="21" y2="10"/>
-                      </svg>
-                    </div>
-                    <span class="template-name">Workshop</span>
-                  </div>
-                </td>
-                <td>Soul Collage</td>
-                <td>Class</td>
-                <td>
-                  <span class="location-badge">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-                      <circle cx="12" cy="10" r="3"/>
-                    </svg>
-                    In person
-                  </span>
-                </td>
-                <td class="actions-cell">
-                  <button class="actions-btn">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <circle cx="12" cy="12" r="1"/>
-                      <circle cx="12" cy="5" r="1"/>
-                      <circle cx="12" cy="19" r="1"/>
-                    </svg>
-                  </button>
-                </td>
-              </tr>
-              <tr>
-                <td class="checkbox-col"><input type="checkbox"></td>
-                <td>
-                  <div class="template-name-cell">
-                    <div class="template-color color-green">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                        <line x1="16" y1="2" x2="16" y2="6"/>
-                        <line x1="8" y1="2" x2="8" y2="6"/>
-                        <line x1="3" y1="10" x2="21" y2="10"/>
-                      </svg>
-                    </div>
-                    <span class="template-name">Kundalini Yoga</span>
-                  </div>
-                </td>
-                <td>Kundalini Yoga</td>
-                <td>Class</td>
-                <td>
-                  <span class="location-badge">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-                      <circle cx="12" cy="10" r="3"/>
-                    </svg>
-                    In person
-                  </span>
-                </td>
-                <td class="actions-cell">
-                  <button class="actions-btn">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <circle cx="12" cy="12" r="1"/>
-                      <circle cx="12" cy="5" r="1"/>
-                      <circle cx="12" cy="19" r="1"/>
-                    </svg>
-                  </button>
+                <td colspan="6" style="text-align: center; padding: 40px; color: var(--gray-500);">
+                  Loading templates...
                 </td>
               </tr>
             </tbody>
@@ -690,9 +535,13 @@
       window.location.href = '/login';
     }
 
+    // Store templates
+    let templates = [];
+
     // Initialize
     document.addEventListener('DOMContentLoaded', async () => {
       await loadUserInfo();
+      await loadTemplates();
       setupEventListeners();
     });
 
@@ -712,6 +561,129 @@
       }
     }
 
+    async function loadTemplates() {
+      try {
+        const response = await fetch('/api/class-templates', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          templates = data.templates || [];
+          renderTemplates();
+        }
+      } catch (error) {
+        console.error('Failed to load templates:', error);
+      }
+    }
+
+    function renderTemplates() {
+      const tbody = document.getElementById('templatesBody');
+
+      if (templates.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="6">
+              <div class="empty-state">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                  <line x1="16" y1="2" x2="16" y2="6"/>
+                  <line x1="8" y1="2" x2="8" y2="6"/>
+                  <line x1="3" y1="10" x2="21" y2="10"/>
+                </svg>
+                <h3>No templates yet</h3>
+                <p>Create your first class template to get started</p>
+              </div>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      const colors = ['color-green', 'color-blue', 'color-purple', 'color-orange', 'color-teal'];
+
+      tbody.innerHTML = templates.map((template, index) => `
+        <tr data-id="${template.id}">
+          <td class="checkbox-col"><input type="checkbox"></td>
+          <td>
+            <div class="template-name-cell">
+              <div class="template-color ${template.color || colors[index % colors.length]}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                  <line x1="16" y1="2" x2="16" y2="6"/>
+                  <line x1="8" y1="2" x2="8" y2="6"/>
+                  <line x1="3" y1="10" x2="21" y2="10"/>
+                </svg>
+              </div>
+              <span class="template-name">${template.internal_label || template.name}</span>
+            </div>
+          </td>
+          <td>${template.name}</td>
+          <td>${template.class_kind || 'Class'}</td>
+          <td>
+            <span class="location-badge">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                <circle cx="12" cy="10" r="3"/>
+              </svg>
+              ${template.location_type === 'online' ? 'Online' : 'In person'}
+            </span>
+          </td>
+          <td class="actions-cell">
+            <div class="actions-wrapper">
+              <button class="actions-btn" onclick="toggleActionsMenu(event, ${template.id})">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="1"/>
+                  <circle cx="12" cy="5" r="1"/>
+                  <circle cx="12" cy="19" r="1"/>
+                </svg>
+              </button>
+              <div class="actions-dropdown" id="dropdown-${template.id}">
+                <div class="actions-dropdown-item" onclick="editTemplate(${template.id})">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                  </svg>
+                  Edit class template
+                </div>
+                <div class="actions-dropdown-item" onclick="duplicateTemplate(${template.id})">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                  </svg>
+                  Duplicate template
+                </div>
+                <div class="actions-dropdown-item" onclick="createRecurringClass(${template.id})">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M17 2l4 4-4 4"/>
+                    <path d="M3 11v-1a4 4 0 0 1 4-4h14"/>
+                    <path d="M7 22l-4-4 4-4"/>
+                    <path d="M21 13v1a4 4 0 0 1-4 4H3"/>
+                  </svg>
+                  Create recurring class from template
+                </div>
+                <div class="actions-dropdown-item" onclick="createClassFromTemplate(${template.id})">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"/>
+                    <line x1="5" y1="12" x2="19" y2="12"/>
+                  </svg>
+                  Create class from template
+                </div>
+                <div class="actions-dropdown-item danger" onclick="deleteTemplate(${template.id})">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="3 6 5 6 21 6"/>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                    <line x1="10" y1="11" x2="10" y2="17"/>
+                    <line x1="14" y1="11" x2="14" y2="17"/>
+                  </svg>
+                  Delete template
+                </div>
+              </div>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
     function setupEventListeners() {
       // Search
       document.getElementById('searchInput').addEventListener('input', (e) => {
@@ -728,11 +700,94 @@
         const checkboxes = document.querySelectorAll('#templatesBody input[type="checkbox"]');
         checkboxes.forEach(cb => cb.checked = e.target.checked);
       });
+
+      // Close dropdowns when clicking outside
+      document.addEventListener('click', (e) => {
+        if (!e.target.closest('.actions-wrapper')) {
+          closeAllDropdowns();
+        }
+      });
+    }
+
+    function toggleActionsMenu(event, templateId) {
+      event.stopPropagation();
+      const dropdown = document.getElementById(`dropdown-${templateId}`);
+      const isOpen = dropdown.classList.contains('show');
+
+      // Close all other dropdowns
+      closeAllDropdowns();
+
+      // Toggle this dropdown
+      if (!isOpen) {
+        dropdown.classList.add('show');
+      }
+    }
+
+    function closeAllDropdowns() {
+      document.querySelectorAll('.actions-dropdown').forEach(d => d.classList.remove('show'));
+    }
+
+    function editTemplate(templateId) {
+      closeAllDropdowns();
+      // Navigate to edit template page or open modal
+      window.location.href = `/class-templates/${templateId}/edit`;
+    }
+
+    async function duplicateTemplate(templateId) {
+      closeAllDropdowns();
+      try {
+        const response = await fetch(`/api/class-templates/${templateId}/duplicate`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.ok) {
+          await loadTemplates();
+        } else {
+          alert('Failed to duplicate template');
+        }
+      } catch (error) {
+        console.error('Error duplicating template:', error);
+        alert('Failed to duplicate template');
+      }
+    }
+
+    function createRecurringClass(templateId) {
+      closeAllDropdowns();
+      // Navigate to create recurring class page with template pre-selected
+      window.location.href = `/classes/new?template=${templateId}&type=recurring`;
+    }
+
+    function createClassFromTemplate(templateId) {
+      closeAllDropdowns();
+      // Navigate to create class page with template pre-selected
+      window.location.href = `/classes/new?template=${templateId}`;
+    }
+
+    async function deleteTemplate(templateId) {
+      closeAllDropdowns();
+      if (!confirm('Are you sure you want to delete this template? This action cannot be undone.')) {
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/class-templates/${templateId}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.ok) {
+          await loadTemplates();
+        } else {
+          alert('Failed to delete template');
+        }
+      } catch (error) {
+        console.error('Error deleting template:', error);
+        alert('Failed to delete template');
+      }
     }
 
     function openCreateModal() {
-      // TODO: Implement create template modal
-      alert('Create template functionality coming soon');
+      // Navigate to create template page
+      window.location.href = '/class-templates/new';
     }
 
     function toggleSubmenu(event) {
