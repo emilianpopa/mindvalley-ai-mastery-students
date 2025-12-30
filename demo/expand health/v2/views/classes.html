@@ -1276,6 +1276,39 @@
       margin-top: 8px;
     }
 
+    /* File preview for attachments */
+    .file-preview {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px;
+      background: var(--gray-50);
+      border-radius: 6px;
+      font-size: 0.875rem;
+      color: var(--gray-700);
+    }
+
+    .remove-file-btn {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--gray-200);
+      color: var(--gray-600);
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+
+    .remove-file-btn:hover {
+      background: #EF4444;
+      color: white;
+    }
+
     /* Location toggle tabs */
     .location-toggle {
       display: inline-flex;
@@ -3402,7 +3435,7 @@
             <h3 class="form-section-title">What can be used to pay</h3>
 
             <div class="accordion-item">
-              <button class="accordion-header" onclick="toggleAccordion(this)">
+              <button type="button" class="accordion-header" onclick="toggleAccordion(this)">
                 <span>Applicable memberships</span>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polyline points="9 18 15 12 9 6"/>
@@ -3414,7 +3447,7 @@
             </div>
 
             <div class="accordion-item">
-              <button class="accordion-header" onclick="toggleAccordion(this)">
+              <button type="button" class="accordion-header" onclick="toggleAccordion(this)">
                 <span>Discount codes</span>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polyline points="9 18 15 12 9 6"/>
@@ -3430,7 +3463,7 @@
             <h3 class="form-section-title">Optional settings</h3>
 
             <div class="accordion-item">
-              <button class="accordion-header" onclick="toggleAccordion(this)">
+              <button type="button" class="accordion-header" onclick="toggleAccordion(this)">
                 <span>Ticket tiers <span class="badge">0</span></span>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polyline points="9 18 15 12 9 6"/>
@@ -3449,91 +3482,214 @@
             <h3 class="form-section-title">Additional settings</h3>
 
             <div class="accordion-item">
-              <button class="accordion-header" onclick="toggleAccordion(this)">
+              <button type="button" class="accordion-header" onclick="toggleAccordion(this)">
                 <span>Eligible substitute practitioners</span>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polyline points="9 18 15 12 9 6"/>
                 </svg>
               </button>
               <div class="accordion-content">
-                <p style="color: var(--gray-500); font-size: 0.875rem;">Select practitioners who can substitute for this class.</p>
+                <div style="margin-top: 8px;">
+                  <p style="color: var(--gray-500); font-size: 0.875rem; margin-bottom: 12px;">Select practitioners who can substitute for this class.</p>
+                  <div id="substituteStaffContainer">
+                    <select class="form-select" id="substituteStaff" multiple style="min-height: 100px;">
+                      <!-- Populated dynamically from staff -->
+                    </select>
+                  </div>
+                  <span class="form-hint">Hold Ctrl/Cmd to select multiple practitioners</span>
+                </div>
               </div>
             </div>
 
             <div class="accordion-item">
-              <button class="accordion-header" onclick="toggleAccordion(this)">
+              <button type="button" class="accordion-header" onclick="toggleAccordion(this)">
                 <span>Restrict who is eligible to book and when</span>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polyline points="9 18 15 12 9 6"/>
                 </svg>
               </button>
               <div class="accordion-content">
-                <p style="color: var(--gray-500); font-size: 0.875rem;">Set restrictions for booking eligibility.</p>
+                <div style="margin-top: 8px;">
+                  <div class="toggle-row" style="margin-bottom: 12px;">
+                    <div class="toggle-label">
+                      <span class="toggle-label-text">Membership required</span>
+                      <span class="toggle-label-hint">Only members can book this class</span>
+                    </div>
+                    <label class="toggle-switch">
+                      <input type="checkbox" id="membershipRequired">
+                      <span class="toggle-slider"></span>
+                    </label>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Booking window opens</label>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                      <input type="number" class="form-input" id="bookingWindowOpen" placeholder="7" style="width: 80px;" value="7">
+                      <span style="color: var(--gray-500); font-size: 0.875rem;">days before class</span>
+                    </div>
+                  </div>
+                  <div class="form-group" style="margin-top: 12px;">
+                    <label class="form-label">Booking window closes</label>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                      <input type="number" class="form-input" id="bookingWindowClose" placeholder="1" style="width: 80px;" value="1">
+                      <span style="color: var(--gray-500); font-size: 0.875rem;">hours before class</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
             <div class="accordion-item">
-              <button class="accordion-header" onclick="toggleAccordion(this)">
+              <button type="button" class="accordion-header" onclick="toggleAccordion(this)">
                 <span>Collect numbers for SMS</span>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polyline points="9 18 15 12 9 6"/>
                 </svg>
               </button>
               <div class="accordion-content">
-                <p style="color: var(--gray-500); font-size: 0.875rem;">Request phone numbers during booking.</p>
+                <div style="margin-top: 8px;">
+                  <div class="toggle-row">
+                    <div class="toggle-label">
+                      <span class="toggle-label-text">Request phone number</span>
+                      <span class="toggle-label-hint">Collect phone numbers during booking for SMS reminders</span>
+                    </div>
+                    <label class="toggle-switch">
+                      <input type="checkbox" id="collectPhoneNumber">
+                      <span class="toggle-slider"></span>
+                    </label>
+                  </div>
+                  <div class="toggle-row" style="margin-top: 12px;">
+                    <div class="toggle-label">
+                      <span class="toggle-label-text">Phone number required</span>
+                      <span class="toggle-label-hint">Make phone number mandatory for booking</span>
+                    </div>
+                    <label class="toggle-switch">
+                      <input type="checkbox" id="phoneRequired">
+                      <span class="toggle-slider"></span>
+                    </label>
+                  </div>
+                </div>
               </div>
             </div>
 
             <div class="accordion-item">
-              <button class="accordion-header" onclick="toggleAccordion(this)">
+              <button type="button" class="accordion-header" onclick="toggleAccordion(this)">
                 <span>Welcome message</span>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polyline points="9 18 15 12 9 6"/>
                 </svg>
               </button>
               <div class="accordion-content">
-                <p style="color: var(--gray-500); font-size: 0.875rem;">Set a custom welcome message for attendees.</p>
+                <div style="margin-top: 8px;">
+                  <div class="form-group">
+                    <label class="form-label">Message to attendees</label>
+                    <textarea class="form-textarea" id="welcomeMessage" rows="4" placeholder="Welcome! We're excited to have you join us..."></textarea>
+                    <span class="form-hint">This message will be shown in the booking confirmation and reminder emails</span>
+                  </div>
+                </div>
               </div>
             </div>
 
             <div class="accordion-item">
-              <button class="accordion-header" onclick="toggleAccordion(this)">
+              <button type="button" class="accordion-header" onclick="toggleAccordion(this)">
                 <span>Custom questions</span>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polyline points="9 18 15 12 9 6"/>
                 </svg>
               </button>
               <div class="accordion-content">
-                <p style="color: var(--gray-500); font-size: 0.875rem;">Add custom questions to the booking form.</p>
+                <div style="margin-top: 8px;">
+                  <p style="color: var(--gray-500); font-size: 0.875rem; margin-bottom: 12px;">Add custom questions to the booking form</p>
+                  <div id="customQuestionsContainer">
+                    <!-- Custom questions will be added here -->
+                  </div>
+                  <button type="button" class="btn btn-secondary" onclick="addCustomQuestion()" style="margin-top: 8px;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <line x1="12" y1="5" x2="12" y2="19"></line>
+                      <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    Add question
+                  </button>
+                </div>
               </div>
             </div>
 
             <div class="accordion-item">
-              <button class="accordion-header" onclick="toggleAccordion(this)">
+              <button type="button" class="accordion-header" onclick="toggleAccordion(this)">
                 <span>Email attachment</span>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polyline points="9 18 15 12 9 6"/>
                 </svg>
               </button>
               <div class="accordion-content">
-                <p style="color: var(--gray-500); font-size: 0.875rem;">Attach files to confirmation emails.</p>
+                <div style="margin-top: 8px;">
+                  <p style="color: var(--gray-500); font-size: 0.875rem; margin-bottom: 12px;">Attach files to confirmation emails (PDF, images, etc.)</p>
+                  <div class="image-upload-zone" id="emailAttachmentZone" ondrop="handleEmailAttachmentDrop(event)" ondragover="handleDragOver(event, 'emailAttachmentZone')" ondragleave="handleDragLeave(event, 'emailAttachmentZone')">
+                    <div class="image-upload-placeholder" id="emailAttachmentPlaceholder">
+                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/>
+                      </svg>
+                      <p>Drag and drop file here or click to browse</p>
+                      <span>PDF, DOC, or images up to 5MB</span>
+                    </div>
+                    <div class="file-preview" id="emailAttachmentPreview" style="display: none;">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--gray-400);">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                      </svg>
+                      <span id="emailAttachmentName" style="flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></span>
+                      <button type="button" class="remove-file-btn" onclick="removeEmailAttachment()">×</button>
+                    </div>
+                    <input type="file" id="emailAttachmentInput" style="display: none;" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg" onchange="handleEmailAttachmentSelect(event)">
+                  </div>
+                </div>
               </div>
             </div>
 
             <div class="accordion-item">
-              <button class="accordion-header" onclick="toggleAccordion(this)">
+              <button type="button" class="accordion-header" onclick="toggleAccordion(this)">
                 <span>Spot selection</span>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polyline points="9 18 15 12 9 6"/>
                 </svg>
               </button>
               <div class="accordion-content">
-                <p style="color: var(--gray-500); font-size: 0.875rem;">Allow customers to select specific spots.</p>
+                <div style="margin-top: 8px;">
+                  <div class="toggle-row">
+                    <div class="toggle-label">
+                      <span class="toggle-label-text">Enable spot selection</span>
+                      <span class="toggle-label-hint">Allow customers to select specific spots/mats in the room</span>
+                    </div>
+                    <label class="toggle-switch">
+                      <input type="checkbox" id="enableSpotSelection">
+                      <span class="toggle-slider"></span>
+                    </label>
+                  </div>
+                  <div id="spotLayoutSection" style="display: none; margin-top: 12px;">
+                    <div class="form-group">
+                      <label class="form-label">Room layout</label>
+                      <select class="form-select" id="spotLayout">
+                        <option value="grid">Grid layout</option>
+                        <option value="rows">Row layout</option>
+                        <option value="custom">Custom layout</option>
+                      </select>
+                    </div>
+                    <div class="form-row" style="margin-top: 12px;">
+                      <div class="form-group">
+                        <label class="form-label">Rows</label>
+                        <input type="number" class="form-input" id="spotRows" value="4" min="1" max="20" style="width: 80px;">
+                      </div>
+                      <div class="form-group">
+                        <label class="form-label">Columns</label>
+                        <input type="number" class="form-input" id="spotColumns" value="5" min="1" max="20" style="width: 80px;">
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
             <div class="accordion-item">
-              <button class="accordion-header" onclick="toggleAccordion(this)">
+              <button type="button" class="accordion-header" onclick="toggleAccordion(this)">
                 <span>Cancellation policy</span>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polyline points="9 18 15 12 9 6"/>
@@ -3551,13 +3707,32 @@
                     <option value="48_hours">48 hours before</option>
                   </select>
                 </div>
+                <div class="toggle-row" style="margin-top: 12px;">
+                  <div class="toggle-label">
+                    <span class="toggle-label-text">Late cancel fee</span>
+                    <span class="toggle-label-hint">Charge a fee for late cancellations</span>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="lateCancelFee" onchange="toggleLateCancelFeeSection()">
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+                <div id="lateCancelFeeSection" style="display: none; margin-top: 12px;">
+                  <div class="form-group">
+                    <label class="form-label">Fee amount</label>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                      <span style="color: var(--gray-500);">$</span>
+                      <input type="number" class="form-input" id="lateCancelFeeAmount" placeholder="10" style="width: 100px;" min="0" step="0.01">
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
 
           <div class="form-section">
             <div class="accordion-item" style="border: none;">
-              <button class="accordion-header" onclick="toggleAccordion(this)" style="padding: 0;">
+              <button type="button" class="accordion-header" onclick="toggleAccordion(this)" style="padding: 0;">
                 <span style="font-weight: 600;">More settings</span>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polyline points="6 9 12 15 18 9"/>
@@ -3745,6 +3920,7 @@
       await loadStaff();
       await loadLocations();
       await loadClassTemplates();
+      await loadRecurringClasses();
       await loadTags();
       // Note: loadClasses() is called by updateCurrentView() after calendar variables are initialized
       setupEventListeners();
@@ -3886,6 +4062,39 @@
         }
       });
       console.log('Populated template dropdowns with', classTemplates.length, 'templates');
+    }
+
+    // ============================================
+    // RECURRING CLASSES
+    // ============================================
+    let recurringClasses = [];
+
+    async function loadRecurringClasses() {
+      try {
+        const data = await apiRequest('/api/classes/recurring');
+        // API returns array directly
+        recurringClasses = Array.isArray(data) ? data : [];
+        console.log('Loaded recurring classes:', recurringClasses.length, 'classes');
+        populateRecurringDropdown();
+      } catch (error) {
+        console.error('Failed to load recurring classes:', error);
+        recurringClasses = [];
+      }
+    }
+
+    function populateRecurringDropdown() {
+      const recurringFilter = document.getElementById('recurringFilter');
+
+      if (recurringFilter) {
+        recurringFilter.innerHTML = '<option value="">Select...</option>';
+        recurringClasses.forEach(rc => {
+          const option = document.createElement('option');
+          option.value = rc.id;
+          option.textContent = rc.name;
+          recurringFilter.appendChild(option);
+        });
+      }
+      console.log('Populated recurring dropdown with', recurringClasses.length, 'recurring classes');
     }
 
     // ============================================
@@ -4405,9 +4614,13 @@
       // Populate dropdowns
       populateStaffDropdown();
       populateLocationDropdown();
+      populateSubstituteStaffDropdown();
 
       // Clear additional practitioners
       clearAdditionalPractitioners();
+
+      // Reset additional settings
+      resetAdditionalSettings();
 
       // Clear image uploads
       clearImageUploads();
@@ -4574,6 +4787,214 @@
       header.classList.toggle('open');
       const content = header.nextElementSibling;
       content.classList.toggle('open');
+    }
+
+    // Additional settings helper functions
+    let customQuestionCount = 0;
+    let emailAttachmentData = null;
+
+    function addCustomQuestion() {
+      customQuestionCount++;
+      const container = document.getElementById('customQuestionsContainer');
+      const questionId = `customQuestion_${customQuestionCount}`;
+
+      const questionRow = document.createElement('div');
+      questionRow.id = questionId;
+      questionRow.className = 'custom-question-row';
+      questionRow.style.cssText = 'padding: 12px; background: var(--gray-50); border-radius: 8px; margin-bottom: 8px;';
+      questionRow.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
+          <div class="form-group" style="flex: 1; margin-right: 12px;">
+            <label class="form-label">Question</label>
+            <input type="text" class="form-input" placeholder="Enter your question..." data-question-id="${customQuestionCount}">
+          </div>
+          <button type="button" class="btn btn-icon" onclick="removeCustomQuestion('${questionId}')" style="margin-top: 24px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Answer type</label>
+          <select class="form-select" data-answer-type-id="${customQuestionCount}">
+            <option value="text">Short text</option>
+            <option value="textarea">Long text</option>
+            <option value="select">Dropdown</option>
+            <option value="checkbox">Checkbox</option>
+          </select>
+        </div>
+        <div class="toggle-row" style="margin-top: 8px;">
+          <div class="toggle-label">
+            <span class="toggle-label-text">Required</span>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" data-required-id="${customQuestionCount}">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      `;
+      container.appendChild(questionRow);
+    }
+
+    function removeCustomQuestion(questionId) {
+      const element = document.getElementById(questionId);
+      if (element) {
+        element.remove();
+      }
+    }
+
+    function handleEmailAttachmentDrop(event) {
+      event.preventDefault();
+      const zone = document.getElementById('emailAttachmentZone');
+      zone.classList.remove('drag-over');
+
+      const files = event.dataTransfer.files;
+      if (files.length > 0) {
+        processEmailAttachment(files[0]);
+      }
+    }
+
+    function handleEmailAttachmentSelect(event) {
+      const files = event.target.files;
+      if (files.length > 0) {
+        processEmailAttachment(files[0]);
+      }
+    }
+
+    function processEmailAttachment(file) {
+      const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'image/png', 'image/jpeg'];
+      if (!allowedTypes.some(type => file.type.startsWith(type.split('/')[0]) || file.type === type)) {
+        alert('Please select a PDF, DOC, or image file');
+        return;
+      }
+
+      if (file.size > 5 * 1024 * 1024) {
+        alert('File size must be less than 5 MB');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        emailAttachmentData = {
+          name: file.name,
+          type: file.type,
+          data: e.target.result
+        };
+
+        const placeholder = document.getElementById('emailAttachmentPlaceholder');
+        const preview = document.getElementById('emailAttachmentPreview');
+        if (placeholder) placeholder.style.display = 'none';
+        if (preview) {
+          preview.style.display = 'flex';
+          document.getElementById('emailAttachmentName').textContent = file.name;
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function removeEmailAttachment() {
+      emailAttachmentData = null;
+      const placeholder = document.getElementById('emailAttachmentPlaceholder');
+      const preview = document.getElementById('emailAttachmentPreview');
+      const input = document.getElementById('emailAttachmentInput');
+      if (placeholder) placeholder.style.display = 'flex';
+      if (preview) preview.style.display = 'none';
+      if (input) input.value = '';
+    }
+
+    function toggleLateCancelFeeSection() {
+      const checkbox = document.getElementById('lateCancelFee');
+      const section = document.getElementById('lateCancelFeeSection');
+      section.style.display = checkbox.checked ? 'block' : 'none';
+    }
+
+    // Enable spot selection toggle
+    document.addEventListener('DOMContentLoaded', function() {
+      const spotCheckbox = document.getElementById('enableSpotSelection');
+      if (spotCheckbox) {
+        spotCheckbox.addEventListener('change', function() {
+          const section = document.getElementById('spotLayoutSection');
+          section.style.display = this.checked ? 'block' : 'none';
+        });
+      }
+
+      // Make email attachment zone clickable
+      const attachmentZone = document.getElementById('emailAttachmentZone');
+      if (attachmentZone) {
+        attachmentZone.addEventListener('click', function(e) {
+          if (e.target.closest('.remove-image-btn')) return;
+          document.getElementById('emailAttachmentInput').click();
+        });
+      }
+    });
+
+    // Populate substitute staff dropdown when modal opens
+    function populateSubstituteStaffDropdown() {
+      const substituteStaff = document.getElementById('substituteStaff');
+      if (substituteStaff) {
+        substituteStaff.innerHTML = '';
+        staff.forEach(s => {
+          const option = document.createElement('option');
+          option.value = s.id;
+          const displayName = s.first_name && s.last_name
+            ? `${s.first_name} ${s.last_name}`.trim()
+            : s.name || s.email || `Staff ${s.id}`;
+          option.textContent = displayName;
+          substituteStaff.appendChild(option);
+        });
+      }
+    }
+
+    // Reset additional settings when modal opens
+    function resetAdditionalSettings() {
+      // Reset booking restrictions
+      const membershipRequired = document.getElementById('membershipRequired');
+      if (membershipRequired) membershipRequired.checked = false;
+      const bookingWindowOpen = document.getElementById('bookingWindowOpen');
+      if (bookingWindowOpen) bookingWindowOpen.value = '7';
+      const bookingWindowClose = document.getElementById('bookingWindowClose');
+      if (bookingWindowClose) bookingWindowClose.value = '1';
+
+      // Reset SMS settings
+      const collectPhone = document.getElementById('collectPhoneNumber');
+      if (collectPhone) collectPhone.checked = false;
+      const phoneRequired = document.getElementById('phoneRequired');
+      if (phoneRequired) phoneRequired.checked = false;
+
+      // Reset welcome message
+      const welcomeMessage = document.getElementById('welcomeMessage');
+      if (welcomeMessage) welcomeMessage.value = '';
+
+      // Reset custom questions
+      const customQuestionsContainer = document.getElementById('customQuestionsContainer');
+      if (customQuestionsContainer) customQuestionsContainer.innerHTML = '';
+      customQuestionCount = 0;
+
+      // Reset email attachment
+      removeEmailAttachment();
+
+      // Reset spot selection
+      const enableSpotSelection = document.getElementById('enableSpotSelection');
+      if (enableSpotSelection) enableSpotSelection.checked = false;
+      const spotLayoutSection = document.getElementById('spotLayoutSection');
+      if (spotLayoutSection) spotLayoutSection.style.display = 'none';
+
+      // Reset cancellation settings
+      const cancellationDeadline = document.getElementById('cancellationDeadline');
+      if (cancellationDeadline) cancellationDeadline.value = '24_hours';
+      const lateCancelFee = document.getElementById('lateCancelFee');
+      if (lateCancelFee) lateCancelFee.checked = false;
+      const lateCancelFeeSection = document.getElementById('lateCancelFeeSection');
+      if (lateCancelFeeSection) lateCancelFeeSection.style.display = 'none';
+
+      // Close all accordions
+      document.querySelectorAll('.accordion-header.open').forEach(header => {
+        header.classList.remove('open');
+      });
+      document.querySelectorAll('.accordion-content.open').forEach(content => {
+        content.classList.remove('open');
+      });
     }
 
     function saveAsDraft() {

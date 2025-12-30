@@ -215,6 +215,43 @@ router.delete('/templates/:id', requireRole('admin'), async (req, res, next) => 
 });
 
 // ============================================
+// RECURRING CLASSES
+// ============================================
+
+/**
+ * GET /api/classes/recurring
+ * List parent recurring classes (for filter dropdown)
+ */
+router.get('/recurring', async (req, res, next) => {
+  try {
+    const tenantId = req.user.tenantId;
+
+    const result = await db.query(`
+      SELECT DISTINCT
+        sc.id,
+        sc.name,
+        sc.recurring_rule,
+        sc.staff_id,
+        s.first_name || ' ' || s.last_name as staff_name,
+        sc.location_id,
+        l.name as location_name
+      FROM scheduled_classes sc
+      LEFT JOIN staff s ON sc.staff_id = s.id
+      LEFT JOIN locations l ON sc.location_id = l.id
+      WHERE sc.tenant_id = $1
+        AND sc.class_type = 'recurring'
+        AND sc.recurring_parent_id IS NULL
+        AND sc.status != 'cancelled'
+      ORDER BY sc.name ASC
+    `, [tenantId]);
+
+    res.json(result.rows);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// ============================================
 // SCHEDULED CLASSES CRUD
 // ============================================
 
