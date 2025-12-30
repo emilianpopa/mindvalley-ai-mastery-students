@@ -79,7 +79,6 @@ body {
   left: 0;
   top: 0;
   z-index: 100;
-  overflow: visible;
 }
 
 .sidebar-header {
@@ -139,7 +138,6 @@ body {
   flex: 1;
   padding: 24px 0;
   overflow-y: auto;
-  overflow-x: visible;
 }
 
 .nav-section {
@@ -331,15 +329,14 @@ body {
 }
 
 .nav-dropdown-menu {
-  position: absolute;
-  left: calc(100% + 8px);
-  top: 0;
+  position: fixed;
+  left: 268px;
   background: white;
   border-radius: 12px;
   box-shadow: 0 4px 24px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.05);
   min-width: 220px;
   padding: 12px 0;
-  z-index: 1000;
+  z-index: 1001;
   display: none;
 }
 

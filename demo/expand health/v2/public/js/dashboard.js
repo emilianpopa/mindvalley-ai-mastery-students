@@ -215,8 +215,28 @@ function loadUserInfo() {
   }
 }
 
+// Initialize nav dropdown positioning
+function initNavDropdowns() {
+  const dropdowns = document.querySelectorAll('.nav-dropdown');
+  dropdowns.forEach(dropdown => {
+    const trigger = dropdown.querySelector('.nav-dropdown-trigger');
+    const menu = dropdown.querySelector('.nav-dropdown-menu');
+
+    if (trigger && menu) {
+      // Position menu on hover
+      dropdown.addEventListener('mouseenter', () => {
+        const triggerRect = trigger.getBoundingClientRect();
+        menu.style.top = triggerRect.top + 'px';
+      });
+    }
+  });
+}
+
 // Initialize dashboard
 document.addEventListener('DOMContentLoaded', () => {
+  // Initialize nav dropdowns
+  initNavDropdowns();
+
   // Check authentication
   if (!checkAuth()) {
     return;
