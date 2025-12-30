@@ -245,23 +245,26 @@ body {
 
 /* Ensure all SVGs in sidebar nav are properly sized */
 .sidebar-nav svg {
+  display: block !important;
   width: 20px !important;
   height: 20px !important;
   min-width: 20px !important;
   min-height: 20px !important;
   max-width: 20px !important;
   max-height: 20px !important;
+  flex-shrink: 0 !important;
 }
 
 /* Exception for dropdown arrow - smaller */
 .nav-dropdown-arrow {
+  display: block !important;
   width: 16px !important;
   height: 16px !important;
   min-width: 16px !important;
   min-height: 16px !important;
   max-width: 16px !important;
   max-height: 16px !important;
-  margin-left: auto;
+  margin-left: auto !important;
   transition: transform 0.2s ease;
 }
 
