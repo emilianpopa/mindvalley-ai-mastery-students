@@ -223,10 +223,21 @@ function initNavDropdowns() {
     const menu = dropdown.querySelector('.nav-dropdown-menu');
 
     if (trigger && menu) {
-      // Position menu on hover
-      dropdown.addEventListener('mouseenter', () => {
+      // Position menu immediately and on hover/scroll
+      const positionMenu = () => {
         const triggerRect = trigger.getBoundingClientRect();
         menu.style.top = triggerRect.top + 'px';
+      };
+
+      // Position on mouseenter
+      trigger.addEventListener('mouseenter', positionMenu);
+      dropdown.addEventListener('mouseenter', positionMenu);
+
+      // Also handle scroll repositioning
+      document.querySelector('.sidebar-nav')?.addEventListener('scroll', () => {
+        if (menu.style.display !== 'none') {
+          positionMenu();
+        }
       });
     }
   });
