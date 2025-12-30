@@ -4512,16 +4512,21 @@
         btn.classList.toggle('active', btn.dataset.type === type);
       });
 
-      // Show/hide template selector
+      // Show/hide template selector and adjust class kinds based on type
       const templateSelector = document.getElementById('templateSelector');
-      if (type === 'from_template') {
-        templateSelector.classList.add('visible');
-        // When using template, only show Class, Workshop, Private options
-        updateClassKindOptions(['class', 'workshop', 'private']);
-      } else {
+
+      if (type === 'one_off') {
+        // One-off class: hide template selector, show all class kinds
         templateSelector.classList.remove('visible');
-        // Show all options
         updateClassKindOptions(['class', 'workshop', 'course', 'retreat', 'private', 'semester']);
+      } else if (type === 'from_template') {
+        // One-off from template: show template selector, limited class kinds
+        templateSelector.classList.add('visible');
+        updateClassKindOptions(['class', 'workshop', 'private']);
+      } else if (type === 'recurring') {
+        // Recurring class: show template selector, limited class kinds (like Momence)
+        templateSelector.classList.add('visible');
+        updateClassKindOptions(['class', 'workshop', 'private']);
       }
     }
 
