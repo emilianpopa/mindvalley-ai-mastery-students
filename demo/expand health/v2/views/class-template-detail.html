@@ -623,15 +623,139 @@
     // Get template ID from URL
     const urlParts = window.location.pathname.split('/');
     const templateId = urlParts[urlParts.length - 1];
+    const isNewTemplate = templateId === 'new';
 
     let template = null;
 
     // Initialize
     document.addEventListener('DOMContentLoaded', async () => {
       await loadUserInfo();
-      await loadTemplate();
+      if (isNewTemplate) {
+        showCreateForm();
+      } else {
+        await loadTemplate();
+      }
       setupEventListeners();
     });
+
+    function showCreateForm() {
+      // Update page for create mode
+      document.title = 'New Class Template - ExpandHealth';
+      document.getElementById('templateName').textContent = 'New Class Template';
+      document.getElementById('pageTitle').textContent = 'New Class Template';
+
+      // Hide actions dropdown, show save button
+      const actionsWrapper = document.querySelector('.actions-dropdown-wrapper');
+      if (actionsWrapper) {
+        actionsWrapper.innerHTML = `
+          <button class="btn-actions" onclick="saveNewTemplate()" style="background: var(--teal-600); color: white; border-color: var(--teal-600);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+              <polyline points="17 21 17 13 7 13 7 21"/>
+              <polyline points="7 3 7 8 15 8"/>
+            </svg>
+            Save Template
+          </button>
+        `;
+      }
+
+      // Make info card editable
+      const infoCard = document.querySelector('.info-card');
+      if (infoCard) {
+        infoCard.innerHTML = `
+          <div class="info-card-title">Template Details</div>
+          <div class="info-row">
+            <label class="info-label">Class name *</label>
+            <input type="text" id="newTemplateName" placeholder="Enter class name" style="padding: 8px 12px; border: 1px solid var(--gray-300); border-radius: 6px; width: 100%;">
+          </div>
+          <div class="info-row">
+            <label class="info-label">Description</label>
+            <textarea id="newTemplateDescription" placeholder="Describe this class..." rows="3" style="padding: 8px 12px; border: 1px solid var(--gray-300); border-radius: 6px; width: 100%; resize: vertical;"></textarea>
+          </div>
+          <div class="info-row">
+            <label class="info-label">Class Type</label>
+            <select id="newTemplateKind" style="padding: 8px 12px; border: 1px solid var(--gray-300); border-radius: 6px; width: 100%;">
+              <option value="class">Class</option>
+              <option value="workshop">Workshop</option>
+              <option value="course">Course</option>
+              <option value="retreat">Retreat</option>
+              <option value="private_class">Private Class</option>
+            </select>
+          </div>
+          <div class="info-row">
+            <label class="info-label">Duration (minutes)</label>
+            <input type="number" id="newTemplateDuration" value="60" min="15" step="5" style="padding: 8px 12px; border: 1px solid var(--gray-300); border-radius: 6px; width: 100%;">
+          </div>
+          <div class="info-row">
+            <label class="info-label">Max Participants</label>
+            <input type="number" id="newTemplateMaxParticipants" placeholder="Leave empty for unlimited" min="1" style="padding: 8px 12px; border: 1px solid var(--gray-300); border-radius: 6px; width: 100%;">
+          </div>
+          <div class="info-row">
+            <label class="info-label">Color</label>
+            <select id="newTemplateColor" style="padding: 8px 12px; border: 1px solid var(--gray-300); border-radius: 6px; width: 100%;">
+              <option value="#14B8A6">Teal</option>
+              <option value="#3B82F6">Blue</option>
+              <option value="#22C55E">Green</option>
+              <option value="#A855F7">Purple</option>
+              <option value="#EC4899">Pink</option>
+              <option value="#F97316">Orange</option>
+              <option value="#EF4444">Red</option>
+              <option value="#EAB308">Yellow</option>
+              <option value="#6366F1">Indigo</option>
+            </select>
+          </div>
+        `;
+      }
+
+      // Hide tabs section for new templates
+      const tabsSection = document.querySelector('.tabs');
+      const tabPanels = document.querySelector('.tab-panels');
+      if (tabsSection) tabsSection.style.display = 'none';
+      if (tabPanels) tabPanels.style.display = 'none';
+    }
+
+    async function saveNewTemplate() {
+      const name = document.getElementById('newTemplateName').value.trim();
+      const description = document.getElementById('newTemplateDescription').value.trim();
+      const classKind = document.getElementById('newTemplateKind').value;
+      const durationMinutes = parseInt(document.getElementById('newTemplateDuration').value) || 60;
+      const maxParticipants = document.getElementById('newTemplateMaxParticipants').value ? parseInt(document.getElementById('newTemplateMaxParticipants').value) : null;
+      const color = document.getElementById('newTemplateColor').value;
+
+      if (!name) {
+        alert('Please enter a class name');
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/classes/templates', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            name,
+            description: description || null,
+            class_kind: classKind,
+            duration_minutes: durationMinutes,
+            max_participants: maxParticipants,
+            color
+          })
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          window.location.href = `/class-templates/${data.id}`;
+        } else {
+          const error = await response.json();
+          alert(error.error || 'Failed to create template');
+        }
+      } catch (error) {
+        console.error('Error creating template:', error);
+        alert('Failed to create template');
+      }
+    }
 
     async function loadUserInfo() {
       try {
