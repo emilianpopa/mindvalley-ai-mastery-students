@@ -329,7 +329,7 @@ body {
 }
 
 .nav-dropdown-menu {
-  position: absolute;
+  position: fixed;
   left: 260px;
   background: white;
   border-radius: 12px;
@@ -338,7 +338,7 @@ body {
   padding: 12px 0 12px 8px;
   z-index: 1001;
   display: none;
-  top: var(--dropdown-top, 400px);
+  top: 400px;
 }
 
 /* Bridge to keep hover when moving to dropdown */

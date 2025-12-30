@@ -211,6 +211,7 @@ allPages.forEach(file => {
   }
 
   let content = fs.readFileSync(file, 'utf8');
+  let updated = false;
 
   // Find and replace the nav section
   const navStartPattern = /<nav class="sidebar-nav">[\s\S]*?<\/nav>/;
@@ -224,10 +225,34 @@ allPages.forEach(file => {
     );
 
     content = content.replace(navStartPattern, navWithActive);
-    fs.writeFileSync(file, content);
-    console.log('Updated: ' + file);
+    updated = true;
   } else {
     console.log('Nav not found in: ' + file);
+  }
+
+  // Add nav.js script if not already present
+  if (!content.includes('/js/nav.js')) {
+    // Add after feature-flags.js if present, otherwise after first <script> in head
+    if (content.includes('/js/feature-flags.js')) {
+      content = content.replace(
+        '<script src="/js/feature-flags.js"></script>',
+        '<script src="/js/feature-flags.js"></script>\n  <script src="/js/nav.js"></script>'
+      );
+      updated = true;
+      console.log('Added nav.js to: ' + file);
+    } else if (content.includes('</head>')) {
+      content = content.replace(
+        '</head>',
+        '  <script src="/js/nav.js"></script>\n</head>'
+      );
+      updated = true;
+      console.log('Added nav.js to: ' + file);
+    }
+  }
+
+  if (updated) {
+    fs.writeFileSync(file, content);
+    console.log('Updated: ' + file);
   }
 });
 
