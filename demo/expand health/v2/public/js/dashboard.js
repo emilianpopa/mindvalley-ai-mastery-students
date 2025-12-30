@@ -218,27 +218,26 @@ function loadUserInfo() {
 // Initialize nav dropdown positioning
 function initNavDropdowns() {
   const dropdowns = document.querySelectorAll('.nav-dropdown');
+
   dropdowns.forEach(dropdown => {
     const trigger = dropdown.querySelector('.nav-dropdown-trigger');
     const menu = dropdown.querySelector('.nav-dropdown-menu');
 
     if (trigger && menu) {
-      // Position menu immediately and on hover/scroll
+      // Position menu on hover
       const positionMenu = () => {
         const triggerRect = trigger.getBoundingClientRect();
         menu.style.top = triggerRect.top + 'px';
       };
 
-      // Position on mouseenter
-      trigger.addEventListener('mouseenter', positionMenu);
-      dropdown.addEventListener('mouseenter', positionMenu);
+      // Use mouseover for immediate response before CSS :hover kicks in
+      trigger.addEventListener('mouseover', positionMenu);
 
-      // Also handle scroll repositioning
-      document.querySelector('.sidebar-nav')?.addEventListener('scroll', () => {
-        if (menu.style.display !== 'none') {
-          positionMenu();
-        }
-      });
+      // Also position when menu itself is hovered (for bridge area)
+      menu.addEventListener('mouseover', positionMenu);
+
+      // Initial position call
+      positionMenu();
     }
   });
 }
