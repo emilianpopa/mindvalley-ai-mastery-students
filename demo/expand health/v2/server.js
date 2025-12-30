@@ -1,6 +1,7 @@
 /**
  * ExpandHealth V2 - Main Server
  * Express-based API server with PostgreSQL
+ * Updated: 2025-12-30
  */
 
 require('dotenv').config();
