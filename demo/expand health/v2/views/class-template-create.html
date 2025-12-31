@@ -396,6 +396,130 @@
       background: var(--teal-700);
     }
 
+    /* New tag link */
+    .new-tag-link {
+      font-size: 0.875rem;
+      color: var(--teal-600);
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .new-tag-link:hover {
+      color: var(--teal-700);
+      text-decoration: underline;
+    }
+
+    /* Modal styles */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: 12px;
+      width: 100%;
+      max-width: 480px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .modal-title {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--gray-900);
+      margin: 0;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--gray-500);
+      padding: 4px;
+    }
+
+    .modal-close:hover {
+      color: var(--gray-700);
+    }
+
+    .modal-body {
+      padding: 24px;
+    }
+
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      padding: 16px 24px;
+      border-top: 1px solid var(--gray-200);
+    }
+
+    /* Tag chips */
+    .tag-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .tag-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      background: var(--gray-100);
+      border: 1px solid var(--gray-300);
+      border-radius: 6px;
+      font-size: 0.875rem;
+      color: var(--gray-700);
+    }
+
+    .tag-chip.active {
+      background: var(--teal-50);
+      border-color: var(--teal-300);
+      color: var(--teal-700);
+    }
+
+    .chip-remove {
+      cursor: pointer;
+      font-size: 1rem;
+      line-height: 1;
+      color: var(--gray-500);
+    }
+
+    .chip-remove:hover {
+      color: var(--gray-700);
+    }
+
+    /* Tag preview */
+    .tag-preview {
+      display: inline-block;
+      padding: 6px 16px;
+      background: var(--teal-500);
+      color: white;
+      border-radius: 20px;
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+
     /* Two column layout for some fields */
     .two-col {
       display: grid;
@@ -715,7 +839,10 @@
 
         <!-- Tags Section -->
         <div class="form-section">
-          <div class="section-title">Tags</div>
+          <div class="section-title" style="display: flex; justify-content: space-between; align-items: center;">
+            Tags
+            <a href="#" class="new-tag-link" onclick="openTagModal(event)">New tag</a>
+          </div>
           <div class="form-group">
             <label class="form-label">Optionally, you can add a tag to help you filter reports.</label>
             <select id="templateTags" class="form-select">
@@ -972,6 +1099,78 @@
         </div>
       </div>
     </main>
+  </div>
+
+  <!-- Create New Tag Modal -->
+  <div class="modal-overlay" id="tagModal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">Create new tag</h2>
+        <button type="button" class="modal-close" onclick="closeTagModal()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Tag name</label>
+          <input type="text" id="newTagName" class="form-input" maxlength="80" oninput="updateTagCharCount()">
+          <div style="text-align: right; font-size: 0.75rem; color: var(--gray-500);" id="tagCharCount">0/80</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Choose what can be tagged using this tag</label>
+          <div class="tag-chips" id="tagTargets">
+            <span class="tag-chip active" data-value="classes">Classes <span class="chip-remove" onclick="removeTagTarget(event, 'classes')">&times;</span></span>
+          </div>
+          <select class="form-select" id="addTagTarget" onchange="addTagTarget()">
+            <option value="">Add more...</option>
+            <option value="appointments">Appointments</option>
+            <option value="products">Products</option>
+            <option value="memberships">Memberships</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <div class="switch-row" style="border-bottom: none; padding: 8px 0;">
+            <div>
+              <div class="switch-label">Customers inherit this tag when they book a class that has this tag</div>
+              <div style="margin-top: 4px; font-size: 0.875rem; color: var(--gray-600);" id="inheritTagLabel">No</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="inheritTag" onchange="updateInheritLabel()">
+              <span class="switch-slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <div class="switch-row" style="border-bottom: none; padding: 8px 0;">
+            <div>
+              <div class="switch-label">Turn into customer badge <span style="color: var(--gray-400); cursor: help;">&#9432;</span></div>
+              <div style="margin-top: 4px; font-size: 0.875rem; color: var(--gray-600);" id="badgeTagLabel">No</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="badgeTag" onchange="updateBadgeLabel()">
+              <span class="switch-slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Tag preview</label>
+          <div>
+            <span class="tag-preview" id="tagPreview">Preview</span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-cancel" onclick="closeTagModal()">Cancel</button>
+        <button type="button" class="btn-create" onclick="createTag()">Create</button>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -1249,6 +1448,101 @@
         alert('Failed to create template');
       }
     }
+
+    // Tag modal functions
+    let tagTargets = ['classes'];
+
+    function openTagModal(event) {
+      event.preventDefault();
+      document.getElementById('tagModal').style.display = 'flex';
+      document.getElementById('newTagName').value = '';
+      document.getElementById('tagCharCount').textContent = '0/80';
+      document.getElementById('inheritTag').checked = false;
+      document.getElementById('badgeTag').checked = false;
+      document.getElementById('inheritTagLabel').textContent = 'No';
+      document.getElementById('badgeTagLabel').textContent = 'No';
+      document.getElementById('tagPreview').textContent = 'Preview';
+      tagTargets = ['classes'];
+      renderTagTargets();
+    }
+
+    function closeTagModal() {
+      document.getElementById('tagModal').style.display = 'none';
+    }
+
+    function updateTagCharCount() {
+      const input = document.getElementById('newTagName');
+      const counter = document.getElementById('tagCharCount');
+      const preview = document.getElementById('tagPreview');
+      if (input && counter) {
+        counter.textContent = `${input.value.length}/80`;
+        preview.textContent = input.value || 'Preview';
+      }
+    }
+
+    function updateInheritLabel() {
+      const checkbox = document.getElementById('inheritTag');
+      document.getElementById('inheritTagLabel').textContent = checkbox.checked ? 'Yes' : 'No';
+    }
+
+    function updateBadgeLabel() {
+      const checkbox = document.getElementById('badgeTag');
+      document.getElementById('badgeTagLabel').textContent = checkbox.checked ? 'Yes' : 'No';
+    }
+
+    function renderTagTargets() {
+      const container = document.getElementById('tagTargets');
+      container.innerHTML = tagTargets.map(target =>
+        `<span class="tag-chip active" data-value="${target}">${target.charAt(0).toUpperCase() + target.slice(1)} <span class="chip-remove" onclick="removeTagTarget(event, '${target}')">&times;</span></span>`
+      ).join('');
+    }
+
+    function removeTagTarget(event, target) {
+      event.stopPropagation();
+      tagTargets = tagTargets.filter(t => t !== target);
+      renderTagTargets();
+      // Re-enable the option in the dropdown
+      const option = document.querySelector(`#addTagTarget option[value="${target}"]`);
+      if (option) option.disabled = false;
+    }
+
+    function addTagTarget() {
+      const select = document.getElementById('addTagTarget');
+      const value = select.value;
+      if (value && !tagTargets.includes(value)) {
+        tagTargets.push(value);
+        renderTagTargets();
+        // Disable the option
+        const option = select.querySelector(`option[value="${value}"]`);
+        if (option) option.disabled = true;
+      }
+      select.value = '';
+    }
+
+    async function createTag() {
+      const tagName = document.getElementById('newTagName').value.trim();
+      if (!tagName) {
+        alert('Please enter a tag name');
+        return;
+      }
+
+      // For now, just add it to the dropdown (in a real app, this would save to the server)
+      const select = document.getElementById('templateTags');
+      const option = document.createElement('option');
+      option.value = tagName.toLowerCase().replace(/\s+/g, '-');
+      option.textContent = tagName;
+      select.appendChild(option);
+      select.value = option.value;
+
+      closeTagModal();
+    }
+
+    // Close modal when clicking outside
+    document.getElementById('tagModal').addEventListener('click', function(e) {
+      if (e.target === this) {
+        closeTagModal();
+      }
+    });
   </script>
 </body>
 </html>
