@@ -551,18 +551,44 @@
 
           <div class="form-group">
             <label class="form-label">Internal label</label>
-            <input type="text" id="internalLabel" class="form-input" placeholder="e.g. Vinyasa Classes">
-            <div class="form-label-hint">Customers won't see the internal label</div>
+            <input type="text" id="internalLabel" class="form-input" placeholder="Morning Classes" maxlength="75" oninput="updateCharCount()">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div class="form-label-hint">Customers won't see the internal label</div>
+              <div class="form-label-hint" id="charCount">0/75</div>
+            </div>
           </div>
 
           <div class="form-group">
             <label class="form-label">Class type</label>
             <div class="toggle-group" id="classTypeToggle">
-              <button type="button" class="toggle-btn active" data-value="class">Class</button>
-              <button type="button" class="toggle-btn" data-value="workshop">Workshop</button>
-              <button type="button" class="toggle-btn" data-value="private_class">Private Class</button>
+              <button type="button" class="toggle-btn active" data-value="class">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" style="margin-right: 6px;">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                  <line x1="16" y1="2" x2="16" y2="6"></line>
+                  <line x1="8" y1="2" x2="8" y2="6"></line>
+                  <line x1="3" y1="10" x2="21" y2="10"></line>
+                </svg>
+                Class
+              </button>
+              <button type="button" class="toggle-btn" data-value="workshop">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" style="margin-right: 6px;">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                  <line x1="12" y1="8" x2="12" y2="16"></line>
+                  <line x1="8" y1="12" x2="16" y2="12"></line>
+                </svg>
+                Workshop
+              </button>
+              <button type="button" class="toggle-btn" data-value="private_class">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" style="margin-right: 6px;">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="9" cy="7" r="4"></circle>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+                Private Class
+              </button>
             </div>
-            <div class="form-label-hint">A regular class provides the fastest checkout experience for your customers.</div>
+            <div class="form-label-hint" id="classTypeDescription">A regular class provides the fastest checkout experience for your customers.</div>
           </div>
         </div>
 
@@ -955,10 +981,22 @@
       window.location.href = '/login';
     }
 
+    // Class type descriptions
+    const classTypeDescriptions = {
+      'class': 'A regular class provides the fastest checkout experience for your customers.',
+      'workshop': 'A workshop lets you add images and has a more exclusive feel.',
+      'private_class': 'Private classes don\'t show on your schedule, so you can distribute the signup link to specific customers.'
+    };
+
     function setupToggleGroups() {
       // Class type toggle
       setupToggle('classTypeToggle', (value) => {
         formData.class_kind = value;
+        // Update description text
+        const descEl = document.getElementById('classTypeDescription');
+        if (descEl && classTypeDescriptions[value]) {
+          descEl.textContent = classTypeDescriptions[value];
+        }
       });
 
       // Location toggle
@@ -994,6 +1032,14 @@
           onChange(btn.dataset.value);
         });
       });
+    }
+
+    function updateCharCount() {
+      const input = document.getElementById('internalLabel');
+      const counter = document.getElementById('charCount');
+      if (input && counter) {
+        counter.textContent = `${input.value.length}/75`;
+      }
     }
 
     function setupColorPicker() {
