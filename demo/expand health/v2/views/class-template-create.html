@@ -911,7 +911,7 @@
   </div>
 
   <script>
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('auth_token');
     if (!token) {
       window.location.href = '/login';
     }
@@ -951,7 +951,7 @@
     }
 
     function logout() {
-      localStorage.removeItem('token');
+      localStorage.removeItem('auth_token');
       window.location.href = '/login';
     }
 
