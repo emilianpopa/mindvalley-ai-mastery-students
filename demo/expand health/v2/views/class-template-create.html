@@ -1060,15 +1060,87 @@
       const imageInput = document.getElementById('imageInput');
 
       if (uploadArea && imageInput) {
+        // Click to upload
         uploadArea.addEventListener('click', () => imageInput.click());
+
+        // File input change
         imageInput.addEventListener('change', (e) => {
           if (e.target.files.length > 0) {
-            const file = e.target.files[0];
-            formData.image = file;
-            uploadArea.innerHTML = `<div class="upload-text">Selected: ${file.name}</div>`;
+            handleImageFile(e.target.files[0]);
+          }
+        });
+
+        // Drag and drop
+        uploadArea.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          uploadArea.style.borderColor = 'var(--teal-500)';
+          uploadArea.style.background = 'var(--teal-50)';
+        });
+
+        uploadArea.addEventListener('dragleave', (e) => {
+          e.preventDefault();
+          uploadArea.style.borderColor = 'var(--teal-300)';
+          uploadArea.style.background = 'var(--gray-50)';
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+          e.preventDefault();
+          uploadArea.style.borderColor = 'var(--teal-300)';
+          uploadArea.style.background = 'var(--gray-50)';
+
+          if (e.dataTransfer.files.length > 0) {
+            const file = e.dataTransfer.files[0];
+            if (file.type.startsWith('image/')) {
+              handleImageFile(file);
+            } else {
+              alert('Please upload an image file');
+            }
           }
         });
       }
+    }
+
+    function handleImageFile(file) {
+      // Check file size (10MB limit)
+      if (file.size > 10 * 1024 * 1024) {
+        alert('File size must be less than 10MB');
+        return;
+      }
+
+      formData.image = file;
+      const uploadArea = document.getElementById('imageUploadArea');
+
+      // Create image preview
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        uploadArea.innerHTML = `
+          <div class="image-preview-container" style="position: relative; width: 100%;">
+            <img src="${e.target.result}" alt="Preview" style="max-width: 100%; max-height: 200px; border-radius: 8px; object-fit: cover;">
+            <button type="button" onclick="removeImage(event)" style="position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,0.6); color: white; border: none; border-radius: 50%; width: 28px; height: 28px; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+            <div style="margin-top: 8px; font-size: 0.875rem; color: var(--gray-600);">${file.name}</div>
+          </div>
+        `;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function removeImage(event) {
+      event.stopPropagation();
+      formData.image = null;
+      document.getElementById('imageInput').value = '';
+      const uploadArea = document.getElementById('imageUploadArea');
+      uploadArea.innerHTML = `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+        </svg>
+        <div class="upload-text">Drag 'n' drop some file here, or click to select file (10 MB limit per file)</div>
+        <div class="upload-hint">Use a high quality landscape image. Recommended ratio for this image is 2:1. It will be displayed at the top of the checkout page, as well as within the plugins and the mobile app.</div>
+      `;
     }
 
     function toggleCollapsible(header) {
