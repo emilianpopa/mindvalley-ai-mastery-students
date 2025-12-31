@@ -551,6 +551,160 @@
         grid-template-columns: 1fr;
       }
     }
+
+    /* Membership controls */
+    .membership-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 16px;
+      margin-bottom: 12px;
+    }
+
+    .checkbox-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+    }
+
+    .checkbox-row input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--teal-600);
+      cursor: pointer;
+    }
+
+    .checkbox-label {
+      font-size: 0.875rem;
+      color: var(--gray-700);
+    }
+
+    .select-all-row .checkbox-label {
+      font-weight: 500;
+    }
+
+    /* Filters dropdown */
+    .filters-dropdown-container {
+      position: relative;
+    }
+
+    .filters-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      background: white;
+      border: 1px solid var(--gray-300);
+      border-radius: 8px;
+      font-size: 0.875rem;
+      color: var(--gray-700);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .filters-btn:hover {
+      border-color: var(--gray-400);
+    }
+
+    .filters-btn svg {
+      color: var(--gray-500);
+    }
+
+    .filters-dropdown {
+      display: none;
+      position: absolute;
+      top: calc(100% + 4px);
+      right: 0;
+      background: white;
+      border: 1px solid var(--gray-200);
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      min-width: 220px;
+      z-index: 100;
+    }
+
+    .filters-dropdown.show {
+      display: block;
+    }
+
+    .filters-dropdown-section {
+      padding: 16px;
+    }
+
+    .filters-dropdown-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--gray-500);
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .toggle-buttons.small {
+      display: flex;
+      gap: 0;
+      background: var(--gray-100);
+      border-radius: 6px;
+      padding: 2px;
+    }
+
+    .toggle-buttons.small .toggle-btn {
+      padding: 6px 12px;
+      font-size: 0.75rem;
+      border: none;
+      border-radius: 4px;
+      background: transparent;
+      color: var(--gray-600);
+      flex: 1;
+      text-align: center;
+    }
+
+    .toggle-buttons.small .toggle-btn.active {
+      background: white;
+      color: var(--gray-900);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    }
+
+    .toggle-buttons.small .toggle-btn:hover:not(.active) {
+      color: var(--gray-800);
+    }
+
+    /* Membership list */
+    .membership-list {
+      max-height: 250px;
+      overflow-y: auto;
+      border: 1px solid var(--gray-200);
+      border-radius: 8px;
+      padding: 8px 0;
+    }
+
+    .membership-item {
+      padding: 10px 16px;
+      transition: background 0.15s;
+    }
+
+    .membership-item:hover {
+      background: var(--gray-50);
+    }
+
+    /* Price input with currency */
+    .price-input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .price-currency {
+      position: absolute;
+      left: 12px;
+      color: var(--gray-500);
+      font-size: 0.875rem;
+      pointer-events: none;
+    }
+
+    .price-input {
+      padding-left: 48px !important;
+    }
   </style>
 </head>
 <body>
@@ -902,14 +1056,35 @@
               </div>
               <div class="form-label-hint">Fixed price: You set the price of a ticket for this class. Customers pick price: You set the price range within which customers select their drop-in price.</div>
 
-              <div class="two-col" style="margin-top: 16px;">
-                <div>
-                  <label class="form-label">Price</label>
-                  <input type="number" id="classPrice" class="form-input" placeholder="0.00" min="0" step="0.01">
+              <!-- Fixed price option -->
+              <div id="fixedPriceFields" style="margin-top: 16px;">
+                <div class="form-group">
+                  <label class="form-label">Drop-in price</label>
+                  <div class="price-input-wrapper">
+                    <span class="price-currency">ZAR</span>
+                    <input type="number" id="classPrice" class="form-input price-input" placeholder="10" min="0" step="0.01">
+                  </div>
+                  <div class="form-label-hint">The price if the customer isn't using a membership to book.</div>
                 </div>
-                <div>
-                  <label class="form-label">Duration (minutes)</label>
-                  <input type="number" id="classDuration" class="form-input" value="60" min="15" step="5">
+              </div>
+
+              <!-- Customers pick price option -->
+              <div id="customerPicksPriceFields" style="display: none; margin-top: 16px;">
+                <div class="two-col">
+                  <div class="form-group">
+                    <label class="form-label">Minimum price</label>
+                    <div class="price-input-wrapper">
+                      <span class="price-currency">ZAR</span>
+                      <input type="number" id="minPrice" class="form-input price-input" placeholder="5" min="0" step="0.01">
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Maximum price</label>
+                    <div class="price-input-wrapper">
+                      <span class="price-currency">ZAR</span>
+                      <input type="number" id="maxPrice" class="form-input price-input" placeholder="15" min="0" step="0.01">
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -929,14 +1104,83 @@
           <!-- Free options - Applicable memberships (shown when Free is selected) -->
           <div id="freeOptions" style="display: none;">
             <!-- Collapsible: Applicable memberships -->
-            <div class="collapsible-header" onclick="toggleCollapsible(this)">
+            <div class="collapsible-header expanded" onclick="toggleCollapsible(this)">
               <span class="collapsible-title">Applicable memberships</span>
               <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polyline points="6 9 12 15 18 9"></polyline>
               </svg>
             </div>
-            <div class="collapsible-content">
-              <div class="form-label-hint">Select which memberships can be used to book this class.</div>
+            <div class="collapsible-content show">
+              <div class="form-label-hint">Selected memberships can be used to purchase this class.</div>
+
+              <!-- Select all row with Filters -->
+              <div class="membership-controls">
+                <label class="checkbox-row select-all-row">
+                  <input type="checkbox" id="selectAllMemberships" checked onchange="toggleAllMemberships(this)">
+                  <span class="checkbox-label">Select all</span>
+                </label>
+                <div class="filters-dropdown-container">
+                  <button type="button" class="filters-btn" onclick="toggleFiltersDropdown(this)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                      <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                    </svg>
+                    Filters
+                  </button>
+                  <div class="filters-dropdown">
+                    <div class="filters-dropdown-section">
+                      <div class="filters-dropdown-label">State</div>
+                      <div class="toggle-buttons small" id="membershipStateFilter">
+                        <button type="button" class="toggle-btn active" data-value="enabled">Only enabled</button>
+                        <button type="button" class="toggle-btn" data-value="disabled">Only disabled</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Membership list -->
+              <div class="membership-list" id="membershipList">
+                <label class="checkbox-row membership-item">
+                  <input type="checkbox" checked data-membership="1week-rlt">
+                  <span class="checkbox-label">1 Week Red Light Therapy</span>
+                </label>
+                <label class="checkbox-row membership-item">
+                  <input type="checkbox" checked data-membership="1week-pemf">
+                  <span class="checkbox-label">1 Week PEMF</span>
+                </label>
+                <label class="checkbox-row membership-item">
+                  <input type="checkbox" checked data-membership="1week-infrared">
+                  <span class="checkbox-label">1 Week Infrared Sauna</span>
+                </label>
+                <label class="checkbox-row membership-item">
+                  <input type="checkbox" checked data-membership="10pack-rlt">
+                  <span class="checkbox-label">10 Pack Red Light Therapy</span>
+                </label>
+                <label class="checkbox-row membership-item">
+                  <input type="checkbox" checked data-membership="10pack-pemf">
+                  <span class="checkbox-label">10 Pack PEMF</span>
+                </label>
+                <label class="checkbox-row membership-item">
+                  <input type="checkbox" checked data-membership="10pack-infrared">
+                  <span class="checkbox-label">10 Pack Infrared Sauna</span>
+                </label>
+                <label class="checkbox-row membership-item">
+                  <input type="checkbox" checked data-membership="monthly-unlimited">
+                  <span class="checkbox-label">Monthly Unlimited</span>
+                </label>
+                <label class="checkbox-row membership-item">
+                  <input type="checkbox" checked data-membership="annual-membership">
+                  <span class="checkbox-label">Annual Membership</span>
+                </label>
+                <label class="checkbox-row membership-item">
+                  <input type="checkbox" checked data-membership="founders-membership">
+                  <span class="checkbox-label">Founders Membership</span>
+                </label>
+                <label class="checkbox-row membership-item">
+                  <input type="checkbox" checked data-membership="vip-membership">
+                  <span class="checkbox-label">VIP Membership</span>
+                </label>
+              </div>
             </div>
 
             <!-- Collapsible: Discount codes -->
@@ -1314,6 +1558,15 @@
       // Price type toggle
       setupToggle('priceTypeToggle', (value) => {
         formData.price_type = value;
+        const fixedPriceFields = document.getElementById('fixedPriceFields');
+        const customerPicksPriceFields = document.getElementById('customerPicksPriceFields');
+        if (value === 'fixed') {
+          fixedPriceFields.style.display = 'block';
+          customerPicksPriceFields.style.display = 'none';
+        } else {
+          fixedPriceFields.style.display = 'none';
+          customerPicksPriceFields.style.display = 'block';
+        }
       });
     }
 
@@ -1596,6 +1849,72 @@
     // Add tier function (placeholder)
     function addTier() {
       alert('Add tier functionality coming soon');
+    }
+
+    // Membership functions
+    function toggleAllMemberships(selectAllCheckbox) {
+      const membershipList = document.getElementById('membershipList');
+      const checkboxes = membershipList.querySelectorAll('input[type="checkbox"]');
+      checkboxes.forEach(checkbox => {
+        checkbox.checked = selectAllCheckbox.checked;
+      });
+    }
+
+    function toggleFiltersDropdown(btn) {
+      const dropdown = btn.nextElementSibling;
+      dropdown.classList.toggle('show');
+
+      // Close on outside click
+      const closeHandler = (e) => {
+        if (!btn.contains(e.target) && !dropdown.contains(e.target)) {
+          dropdown.classList.remove('show');
+          document.removeEventListener('click', closeHandler);
+        }
+      };
+
+      if (dropdown.classList.contains('show')) {
+        setTimeout(() => {
+          document.addEventListener('click', closeHandler);
+        }, 0);
+      }
+    }
+
+    // Setup membership state filter toggle
+    document.addEventListener('DOMContentLoaded', () => {
+      const stateFilter = document.getElementById('membershipStateFilter');
+      if (stateFilter) {
+        const buttons = stateFilter.querySelectorAll('.toggle-btn');
+        buttons.forEach(btn => {
+          btn.addEventListener('click', () => {
+            buttons.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            // Filter logic would go here - for now just visual toggle
+          });
+        });
+      }
+
+      // Update select all checkbox when individual checkboxes change
+      const membershipList = document.getElementById('membershipList');
+      if (membershipList) {
+        membershipList.addEventListener('change', (e) => {
+          if (e.target.type === 'checkbox') {
+            updateSelectAllState();
+          }
+        });
+      }
+    });
+
+    function updateSelectAllState() {
+      const membershipList = document.getElementById('membershipList');
+      const selectAll = document.getElementById('selectAllMemberships');
+      if (!membershipList || !selectAll) return;
+
+      const checkboxes = membershipList.querySelectorAll('input[type="checkbox"]');
+      const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+      const someChecked = Array.from(checkboxes).some(cb => cb.checked);
+
+      selectAll.checked = allChecked;
+      selectAll.indeterminate = someChecked && !allChecked;
     }
   </script>
 </body>
