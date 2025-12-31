@@ -601,6 +601,7 @@
       color: var(--gray-700);
       cursor: pointer;
       transition: all 0.2s;
+      position: relative;
     }
 
     .filters-btn:hover {
@@ -609,6 +610,40 @@
 
     .filters-btn svg {
       color: var(--gray-500);
+    }
+
+    .filters-btn.active {
+      background: var(--purple-600, #7C3AED);
+      border-color: var(--purple-600, #7C3AED);
+      color: white;
+    }
+
+    .filters-btn.active svg {
+      color: white;
+    }
+
+    .filters-badge {
+      position: absolute;
+      top: -6px;
+      right: -6px;
+      background: #EF4444;
+      color: white;
+      font-size: 0.625rem;
+      font-weight: 600;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Empty state message */
+    .membership-empty {
+      padding: 16px;
+      font-size: 0.875rem;
+      color: var(--gray-600);
+      display: none;
     }
 
     .filters-dropdown {
@@ -1120,11 +1155,12 @@
                   <span class="checkbox-label">Select all</span>
                 </label>
                 <div class="filters-dropdown-container">
-                  <button type="button" class="filters-btn" onclick="toggleFiltersDropdown(this)">
+                  <button type="button" class="filters-btn" id="membershipFiltersBtn" onclick="toggleFiltersDropdown(this)">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
                       <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
                     </svg>
                     Filters
+                    <span class="filters-badge" id="filtersBadge" style="display: none;">1</span>
                   </button>
                   <div class="filters-dropdown">
                     <div class="filters-dropdown-section">
@@ -1180,6 +1216,11 @@
                   <input type="checkbox" checked data-membership="vip-membership">
                   <span class="checkbox-label">VIP Membership</span>
                 </label>
+              </div>
+
+              <!-- Empty state for disabled filter -->
+              <div class="membership-empty" id="membershipEmpty">
+                You don't have any excludable disabled memberships.
               </div>
             </div>
 
@@ -1888,7 +1929,32 @@
           btn.addEventListener('click', () => {
             buttons.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
-            // Filter logic would go here - for now just visual toggle
+
+            // Update filter button appearance and membership list visibility
+            const filterBtn = document.getElementById('membershipFiltersBtn');
+            const filterBadge = document.getElementById('filtersBadge');
+            const membershipList = document.getElementById('membershipList');
+            const membershipEmpty = document.getElementById('membershipEmpty');
+            const selectAllRow = document.querySelector('.select-all-row');
+
+            const isDisabledFilter = btn.dataset.value === 'disabled';
+
+            // Toggle active state on filter button
+            if (isDisabledFilter) {
+              filterBtn.classList.add('active');
+              filterBadge.style.display = 'flex';
+              // Show empty state, hide membership list
+              membershipList.style.display = 'none';
+              membershipEmpty.style.display = 'block';
+              selectAllRow.style.display = 'none';
+            } else {
+              filterBtn.classList.remove('active');
+              filterBadge.style.display = 'none';
+              // Show membership list, hide empty state
+              membershipList.style.display = 'block';
+              membershipEmpty.style.display = 'none';
+              selectAllRow.style.display = 'flex';
+            }
           });
         });
       }
