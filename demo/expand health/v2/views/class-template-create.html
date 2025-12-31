@@ -208,36 +208,46 @@
     .switch-row {
       display: flex;
       justify-content: space-between;
-      align-items: center;
+      align-items: flex-start;
       padding: 12px 0;
       border-bottom: 1px solid var(--gray-100);
+      gap: 16px;
     }
 
     .switch-row:last-child {
       border-bottom: none;
     }
 
+    .switch-row > div:first-child {
+      flex: 1;
+    }
+
     .switch-label {
       font-size: 0.875rem;
+      font-weight: 500;
       color: var(--gray-700);
     }
 
     .switch-hint {
       font-size: 0.75rem;
       color: var(--gray-500);
-      margin-top: 2px;
+      margin-top: 4px;
+      line-height: 1.4;
     }
 
     .switch {
       position: relative;
+      display: inline-block;
       width: 44px;
       height: 24px;
+      flex-shrink: 0;
     }
 
     .switch input {
       opacity: 0;
       width: 0;
       height: 0;
+      position: absolute;
     }
 
     .switch-slider {
