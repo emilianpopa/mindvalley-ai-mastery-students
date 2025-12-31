@@ -309,6 +309,11 @@ app.get('/class-templates', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'class-templates.html'));
 });
 
+// Create Class Template (must come before :id route)
+app.get('/class-templates/new', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'class-template-create.html'));
+});
+
 // Class Template Detail
 app.get('/class-templates/:id', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'class-template-detail.html'));

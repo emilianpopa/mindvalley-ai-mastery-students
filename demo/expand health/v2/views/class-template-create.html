@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Class Template - ExpandHealth</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cline x1='20' y1='20' x2='80' y2='80' stroke='%230F766E' stroke-width='12' stroke-linecap='round'/%3E%3Cline x1='80' y1='20' x2='20' y2='80' stroke='%230F766E' stroke-width='12' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/css/main.css">
+  <script src="/js/feature-flags.js"></script>
+  <script src="/js/nav.js"></script>
+  <style>
+    .create-template-page {
+      padding: 24px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .page-header {
+      margin-bottom: 32px;
+    }
+
+    .page-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+
+    /* Form sections */
+    .form-section {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .section-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--gray-900);
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group:last-child {
+      margin-bottom: 0;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--gray-700);
+      margin-bottom: 6px;
+    }
+
+    .form-label-hint {
+      font-size: 0.75rem;
+      color: var(--gray-500);
+      font-weight: 400;
+      margin-top: 4px;
+    }
+
+    .form-input, .form-select, .form-textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--gray-300);
+      border-radius: 8px;
+      font-size: 0.875rem;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+      outline: none;
+      border-color: var(--teal-500);
+      box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
+    }
+
+    .form-textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    /* Toggle buttons (Class type) */
+    .toggle-group {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .toggle-btn {
+      padding: 8px 16px;
+      border: 1px solid var(--gray-300);
+      border-radius: 20px;
+      background: white;
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .toggle-btn:hover {
+      border-color: var(--teal-400);
+    }
+
+    .toggle-btn.active {
+      background: var(--teal-50);
+      border-color: var(--teal-500);
+      color: var(--teal-700);
+    }
+
+    /* Color picker */
+    .color-options {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .color-option {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 2px solid transparent;
+      cursor: pointer;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+
+    .color-option:hover {
+      transform: scale(1.1);
+    }
+
+    .color-option.active {
+      border-color: var(--gray-900);
+    }
+
+    /* Image upload area */
+    .image-upload-area {
+      border: 2px dashed var(--gray-300);
+      border-radius: 8px;
+      padding: 40px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    .image-upload-area:hover {
+      border-color: var(--teal-400);
+      background: var(--gray-50);
+    }
+
+    .image-upload-area svg {
+      width: 48px;
+      height: 48px;
+      color: var(--gray-400);
+      margin-bottom: 12px;
+    }
+
+    .upload-text {
+      color: var(--gray-600);
+      font-size: 0.875rem;
+    }
+
+    .upload-hint {
+      color: var(--gray-400);
+      font-size: 0.75rem;
+      margin-top: 8px;
+    }
+
+    /* Location toggles */
+    .location-toggles {
+      display: flex;
+      gap: 12px;
+    }
+
+    .location-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      border: 1px solid var(--gray-300);
+      border-radius: 20px;
+      background: white;
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .location-toggle:hover {
+      border-color: var(--teal-400);
+    }
+
+    .location-toggle.active {
+      background: var(--teal-50);
+      border-color: var(--teal-500);
+      color: var(--teal-700);
+    }
+
+    .location-toggle svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    /* Switch toggle */
+    .switch-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--gray-100);
+    }
+
+    .switch-row:last-child {
+      border-bottom: none;
+    }
+
+    .switch-label {
+      font-size: 0.875rem;
+      color: var(--gray-700);
+    }
+
+    .switch-hint {
+      font-size: 0.75rem;
+      color: var(--gray-500);
+      margin-top: 2px;
+    }
+
+    .switch {
+      position: relative;
+      width: 44px;
+      height: 24px;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .switch-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: var(--gray-300);
+      transition: 0.3s;
+      border-radius: 24px;
+    }
+
+    .switch-slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: 0.3s;
+      border-radius: 50%;
+    }
+
+    .switch input:checked + .switch-slider {
+      background-color: var(--teal-500);
+    }
+
+    .switch input:checked + .switch-slider:before {
+      transform: translateX(20px);
+    }
+
+    /* Collapsible sections */
+    .collapsible-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 0;
+      cursor: pointer;
+      border-bottom: 1px solid var(--gray-100);
+    }
+
+    .collapsible-header:hover {
+      color: var(--teal-600);
+    }
+
+    .collapsible-title {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--gray-700);
+    }
+
+    .collapsible-content {
+      display: none;
+      padding: 16px 0;
+    }
+
+    .collapsible-content.show {
+      display: block;
+    }
+
+    .chevron {
+      width: 20px;
+      height: 20px;
+      color: var(--gray-400);
+      transition: transform 0.2s;
+    }
+
+    .collapsible-header.expanded .chevron {
+      transform: rotate(180deg);
+    }
+
+    /* Yes/No toggles */
+    .yes-no-toggle {
+      display: flex;
+      gap: 8px;
+    }
+
+    .yes-no-btn {
+      padding: 8px 20px;
+      border: 1px solid var(--gray-300);
+      border-radius: 6px;
+      background: white;
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .yes-no-btn.active {
+      background: var(--teal-50);
+      border-color: var(--teal-500);
+      color: var(--teal-700);
+    }
+
+    /* Price type toggle */
+    .price-type-toggle {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    /* Footer actions */
+    .form-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      padding: 24px;
+      background: white;
+      border-top: 1px solid var(--gray-200);
+      position: sticky;
+      bottom: 0;
+      margin: 0 -24px -24px -24px;
+      border-radius: 0 0 12px 12px;
+    }
+
+    .btn-cancel {
+      padding: 10px 24px;
+      border: 1px solid var(--gray-300);
+      border-radius: 8px;
+      background: white;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-cancel:hover {
+      background: var(--gray-50);
+    }
+
+    .btn-create {
+      padding: 10px 24px;
+      border: none;
+      border-radius: 8px;
+      background: var(--teal-600);
+      color: white;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-create:hover {
+      background: var(--teal-700);
+    }
+
+    /* Two column layout for some fields */
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    @media (max-width: 600px) {
+      .two-col {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" id="sidebar"></aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <div class="create-template-page">
+        <div class="page-header">
+          <h1 class="page-title">Create class template</h1>
+        </div>
+
+        <!-- Template Section -->
+        <div class="form-section">
+          <div class="section-title">Template</div>
+
+          <div class="form-group">
+            <label class="form-label">Internal label</label>
+            <input type="text" id="internalLabel" class="form-input" placeholder="e.g. Vinyasa Classes">
+            <div class="form-label-hint">Customers won't see the internal label</div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Class type</label>
+            <div class="toggle-group" id="classTypeToggle">
+              <button type="button" class="toggle-btn active" data-value="class">Class</button>
+              <button type="button" class="toggle-btn" data-value="workshop">Workshop</button>
+              <button type="button" class="toggle-btn" data-value="private_class">Private Class</button>
+            </div>
+            <div class="form-label-hint">A regular class provides the fastest checkout experience for your customers.</div>
+          </div>
+        </div>
+
+        <!-- Basic Information Section -->
+        <div class="form-section">
+          <div class="section-title">Basic Information</div>
+
+          <div class="form-group">
+            <label class="form-label">Class name *</label>
+            <input type="text" id="className" class="form-input" placeholder="e.g. Friday Morning Class">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Description</label>
+            <textarea id="classDescription" class="form-textarea" placeholder="All Levels Welcome"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Color</label>
+            <div class="color-options" id="colorPicker">
+              <div class="color-option" data-color="#6366F1" style="background: #6366F1;"></div>
+              <div class="color-option active" data-color="#14B8A6" style="background: #14B8A6;"></div>
+              <div class="color-option" data-color="#22C55E" style="background: #22C55E;"></div>
+              <div class="color-option" data-color="#EAB308" style="background: #EAB308;"></div>
+              <div class="color-option" data-color="#F97316" style="background: #F97316;"></div>
+              <div class="color-option" data-color="#EF4444" style="background: #EF4444;"></div>
+              <div class="color-option" data-color="#EC4899" style="background: #EC4899;"></div>
+              <div class="color-option" data-color="#A855F7" style="background: #A855F7;"></div>
+              <div class="color-option" data-color="#3B82F6" style="background: #3B82F6;"></div>
+            </div>
+            <div class="form-label-hint">This color is used to display the color of classes in your schedule. It will not be visible to customers.</div>
+          </div>
+        </div>
+
+        <!-- Images Section -->
+        <div class="form-section">
+          <div class="section-title">Images</div>
+
+          <div class="form-group">
+            <label class="form-label">Banner image</label>
+            <div class="image-upload-area" id="imageUploadArea">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+              </svg>
+              <div class="upload-text">Drag 'n' drop some file here, or click to select file (10 MB limit per file)</div>
+              <div class="upload-hint">Use a high quality landscape image. Recommended ratio for this image is 2:1. It will be displayed at the top of the checkout page, as well as within the plugins and the mobile app.</div>
+            </div>
+            <input type="file" id="imageInput" style="display: none;" accept="image/*">
+          </div>
+        </div>
+
+        <!-- Class Location Section -->
+        <div class="form-section">
+          <div class="section-title">Class location</div>
+
+          <div class="form-group">
+            <div class="location-toggles" id="locationToggle">
+              <button type="button" class="location-toggle active" data-value="in_person">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                  <path d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+                In-person
+              </button>
+              <button type="button" class="location-toggle" data-value="online">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                </svg>
+                Online
+              </button>
+            </div>
+            <div class="form-label-hint">Note: If this is a mixed class (online and in-person), create two versions of the class, one online and the other in person. It will be displayed as a hybrid class automatically.</div>
+          </div>
+
+          <div class="switch-row">
+            <div>
+              <div class="switch-label">Manually Send Location</div>
+              <div class="switch-hint">Select if this is a private location. You will be responsible for manually sending out the location to people who sign-up.</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="manuallySendLocation">
+              <span class="switch-slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Tags Section -->
+        <div class="form-section">
+          <div class="section-title">Tags</div>
+          <div class="form-group">
+            <label class="form-label">Optionally, you can add a tag to help you filter reports.</label>
+            <select id="templateTags" class="form-select">
+              <option value="">Select...</option>
+            </select>
+            <div class="form-label-hint">Assigned tags can be used for filtering and for creating custom sales categories in reports.</div>
+          </div>
+        </div>
+
+        <!-- Payment Settings Section -->
+        <div class="form-section">
+          <div class="section-title">Payment settings</div>
+
+          <div class="form-group">
+            <label class="form-label">Class payment type</label>
+            <div class="toggle-group" id="paymentTypeToggle">
+              <button type="button" class="toggle-btn active" data-value="paid">Paid</button>
+              <button type="button" class="toggle-btn" data-value="free">Free</button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Allow book for free and pay later bookings</label>
+            <div class="yes-no-toggle" id="payLaterToggle">
+              <button type="button" class="yes-no-btn" data-value="yes">Yes</button>
+              <button type="button" class="yes-no-btn active" data-value="no">No</button>
+            </div>
+            <div class="form-label-hint">If enabled, customers will be able to choose to not have to pay when making their booking. You will be able to pay for their booking using the Point of Sale.</div>
+          </div>
+
+          <div class="form-group" id="priceSection">
+            <label class="form-label">Price type</label>
+            <div class="price-type-toggle" id="priceTypeToggle">
+              <button type="button" class="toggle-btn active" data-value="fixed">Fixed price</button>
+              <button type="button" class="toggle-btn" data-value="customer_picks">Customers pick price</button>
+            </div>
+            <div class="form-label-hint">Fixed price: You set the price of a ticket for this class. Customers pick price: You set the price range within which customers select their drop-in price.</div>
+
+            <div class="two-col" style="margin-top: 16px;">
+              <div>
+                <label class="form-label">Price</label>
+                <input type="number" id="classPrice" class="form-input" placeholder="0.00" min="0" step="0.01">
+              </div>
+              <div>
+                <label class="form-label">Duration (minutes)</label>
+                <input type="number" id="classDuration" class="form-input" value="60" min="15" step="5">
+              </div>
+            </div>
+          </div>
+
+          <div class="switch-row">
+            <div>
+              <div class="switch-label">Allow customers to use a Payment Plan</div>
+              <div class="switch-hint">If you turn this on, customers will have the option to divide their payments according to your payment plan instead of having to pay everything in one go.</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="allowPaymentPlan">
+              <span class="switch-slider"></span>
+            </label>
+          </div>
+
+          <!-- Collapsible: Applicable memberships -->
+          <div class="collapsible-header" onclick="toggleCollapsible(this)">
+            <span class="collapsible-title">Applicable memberships</span>
+            <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </div>
+          <div class="collapsible-content">
+            <div class="form-label-hint">Select which memberships can be used to book this class.</div>
+          </div>
+
+          <!-- Collapsible: Discount codes -->
+          <div class="collapsible-header" onclick="toggleCollapsible(this)">
+            <span class="collapsible-title">Discount codes</span>
+            <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </div>
+          <div class="collapsible-content">
+            <div class="form-label-hint">Add discount codes that can be applied to this class.</div>
+          </div>
+        </div>
+
+        <!-- Optional Payment Settings -->
+        <div class="form-section">
+          <div class="section-title">Optional payment settings</div>
+
+          <div class="collapsible-header" onclick="toggleCollapsible(this)">
+            <span class="collapsible-title">Ticket tiers</span>
+            <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </div>
+          <div class="collapsible-content">
+            <div class="form-label-hint">Create different pricing tiers for this class.</div>
+          </div>
+        </div>
+
+        <!-- Additional Settings -->
+        <div class="form-section">
+          <div class="section-title">Additional settings</div>
+
+          <div class="collapsible-header" onclick="toggleCollapsible(this)">
+            <span class="collapsible-title">Default practitioner pay rates</span>
+            <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </div>
+          <div class="collapsible-content">
+            <div class="form-label-hint">Set default pay rates for practitioners teaching this class.</div>
+          </div>
+
+          <div class="collapsible-header" onclick="toggleCollapsible(this)">
+            <span class="collapsible-title">Restrict who is eligible to book and when</span>
+            <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </div>
+          <div class="collapsible-content">
+            <div class="form-label-hint">Add restrictions on who can book this class.</div>
+          </div>
+
+          <div class="collapsible-header" onclick="toggleCollapsible(this)">
+            <span class="collapsible-title">Collect numbers for SMS</span>
+            <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </div>
+          <div class="collapsible-content">
+            <div class="form-label-hint">Collect phone numbers for SMS notifications.</div>
+          </div>
+
+          <div class="collapsible-header" onclick="toggleCollapsible(this)">
+            <span class="collapsible-title">Welcome message</span>
+            <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </div>
+          <div class="collapsible-content">
+            <div class="form-label-hint">Add a custom welcome message for attendees.</div>
+          </div>
+
+          <div class="collapsible-header" onclick="toggleCollapsible(this)">
+            <span class="collapsible-title">Custom questions</span>
+            <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </div>
+          <div class="collapsible-content">
+            <div class="form-label-hint">Add custom questions to ask during booking.</div>
+          </div>
+
+          <div class="collapsible-header" onclick="toggleCollapsible(this)">
+            <span class="collapsible-title">Email attachment</span>
+            <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </div>
+          <div class="collapsible-content">
+            <div class="form-label-hint">Add attachments to confirmation emails.</div>
+          </div>
+
+          <div class="collapsible-header" onclick="toggleCollapsible(this)">
+            <span class="collapsible-title">Cancellation policy</span>
+            <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </div>
+          <div class="collapsible-content">
+            <div class="form-label-hint">Set the cancellation policy for this class.</div>
+          </div>
+
+          <div class="collapsible-header" onclick="toggleCollapsible(this)">
+            <span class="collapsible-title">Healthcare provider codes</span>
+            <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </div>
+          <div class="collapsible-content">
+            <div class="form-label-hint">Add healthcare provider codes for insurance purposes.</div>
+          </div>
+        </div>
+
+        <!-- More Settings -->
+        <div class="form-section">
+          <div class="section-title">More settings</div>
+
+          <div class="two-col">
+            <div class="form-group">
+              <label class="form-label">Price in class credits</label>
+              <input type="number" id="classCredits" class="form-input" value="1" min="0">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Sales cut-off</label>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <input type="number" id="salesCutoff" class="form-input" value="60" min="0" style="width: 80px;">
+                <span style="font-size: 0.875rem; color: var(--gray-600);">minutes before class starts</span>
+              </div>
+              <div class="form-label-hint">Set a cutoff time to automatically stop ticket sales.</div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Max participants</label>
+            <input type="number" id="maxParticipants" class="form-input" placeholder="Leave empty for unlimited" min="1">
+          </div>
+
+          <div class="switch-row">
+            <div class="switch-label">Request shipping address</div>
+            <label class="switch">
+              <input type="checkbox" id="requestShipping">
+              <span class="switch-slider"></span>
+            </label>
+          </div>
+
+          <div class="switch-row">
+            <div class="switch-label">Request billing address</div>
+            <label class="switch">
+              <input type="checkbox" id="requestBilling">
+              <span class="switch-slider"></span>
+            </label>
+          </div>
+
+          <div class="switch-row">
+            <div class="switch-label">Allow customers to book for their children</div>
+            <label class="switch">
+              <input type="checkbox" id="allowChildBooking">
+              <span class="switch-slider"></span>
+            </label>
+          </div>
+
+          <div class="switch-row">
+            <div class="switch-label">Allow customers to book themselves into the entire series</div>
+            <label class="switch">
+              <input type="checkbox" id="allowSeriesBooking">
+              <span class="switch-slider"></span>
+            </label>
+          </div>
+
+          <div class="switch-row">
+            <div class="switch-label">Create as draft</div>
+            <label class="switch">
+              <input type="checkbox" id="createAsDraft">
+              <span class="switch-slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Footer Actions -->
+        <div class="form-footer">
+          <button type="button" class="btn-cancel" onclick="cancelCreate()">Cancel</button>
+          <button type="button" class="btn-create" onclick="createTemplate()">Create</button>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const token = localStorage.getItem('token');
+    if (!token) {
+      window.location.href = '/login';
+    }
+
+    // Form state
+    let formData = {
+      class_kind: 'class',
+      color: '#14B8A6',
+      location_type: 'in_person',
+      payment_type: 'paid',
+      pay_later: false,
+      price_type: 'fixed'
+    };
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      initNavigation();
+      setupToggleGroups();
+      setupColorPicker();
+      setupImageUpload();
+    });
+
+    function initNavigation() {
+      if (typeof initializeNavigation === 'function') {
+        initializeNavigation();
+      }
+    }
+
+    function setupToggleGroups() {
+      // Class type toggle
+      setupToggle('classTypeToggle', (value) => {
+        formData.class_kind = value;
+      });
+
+      // Location toggle
+      setupToggle('locationToggle', (value) => {
+        formData.location_type = value;
+      });
+
+      // Payment type toggle
+      setupToggle('paymentTypeToggle', (value) => {
+        formData.payment_type = value;
+        document.getElementById('priceSection').style.display = value === 'paid' ? 'block' : 'none';
+      });
+
+      // Pay later toggle
+      setupToggle('payLaterToggle', (value) => {
+        formData.pay_later = value === 'yes';
+      });
+
+      // Price type toggle
+      setupToggle('priceTypeToggle', (value) => {
+        formData.price_type = value;
+      });
+    }
+
+    function setupToggle(containerId, onChange) {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+
+      container.querySelectorAll('.toggle-btn, .location-toggle, .yes-no-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          container.querySelectorAll('.toggle-btn, .location-toggle, .yes-no-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          onChange(btn.dataset.value);
+        });
+      });
+    }
+
+    function setupColorPicker() {
+      const colorPicker = document.getElementById('colorPicker');
+      if (!colorPicker) return;
+
+      colorPicker.querySelectorAll('.color-option').forEach(option => {
+        option.addEventListener('click', () => {
+          colorPicker.querySelectorAll('.color-option').forEach(o => o.classList.remove('active'));
+          option.classList.add('active');
+          formData.color = option.dataset.color;
+        });
+      });
+    }
+
+    function setupImageUpload() {
+      const uploadArea = document.getElementById('imageUploadArea');
+      const imageInput = document.getElementById('imageInput');
+
+      if (uploadArea && imageInput) {
+        uploadArea.addEventListener('click', () => imageInput.click());
+        imageInput.addEventListener('change', (e) => {
+          if (e.target.files.length > 0) {
+            const file = e.target.files[0];
+            formData.image = file;
+            uploadArea.innerHTML = `<div class="upload-text">Selected: ${file.name}</div>`;
+          }
+        });
+      }
+    }
+
+    function toggleCollapsible(header) {
+      header.classList.toggle('expanded');
+      const content = header.nextElementSibling;
+      if (content && content.classList.contains('collapsible-content')) {
+        content.classList.toggle('show');
+      }
+    }
+
+    function cancelCreate() {
+      window.location.href = '/class-templates';
+    }
+
+    async function createTemplate() {
+      const name = document.getElementById('className').value.trim();
+      const internalLabel = document.getElementById('internalLabel').value.trim();
+      const description = document.getElementById('classDescription').value.trim();
+      const duration = parseInt(document.getElementById('classDuration').value) || 60;
+      const price = parseFloat(document.getElementById('classPrice').value) || null;
+      const maxParticipants = document.getElementById('maxParticipants').value ? parseInt(document.getElementById('maxParticipants').value) : null;
+
+      if (!name) {
+        alert('Please enter a class name');
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/classes/templates', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            name,
+            internal_label: internalLabel || null,
+            description: description || null,
+            class_kind: formData.class_kind,
+            duration_minutes: duration,
+            price: formData.payment_type === 'paid' ? price : null,
+            color: formData.color,
+            max_participants: maxParticipants,
+            enable_waitlist: false,
+            enable_spot_selection: false
+          })
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          window.location.href = `/class-templates/${data.id}`;
+        } else {
+          const error = await response.json();
+          alert(error.error || 'Failed to create template');
+        }
+      } catch (error) {
+        console.error('Error creating template:', error);
+        alert('Failed to create template');
+      }
+    }
+  </script>
+</body>
+</html>
