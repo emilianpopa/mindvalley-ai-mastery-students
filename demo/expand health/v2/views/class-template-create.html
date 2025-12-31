@@ -651,7 +651,7 @@
                   <path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
                   <path d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
                 </svg>
-                In-person
+                In person
               </button>
               <button type="button" class="location-toggle" data-value="online">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -660,18 +660,46 @@
                 Online
               </button>
             </div>
-            <div class="form-label-hint">Note: If this is a mixed class (online and in-person), create two versions of the class, one online and the other in person. It will be displayed as a hybrid class automatically.</div>
+            <div class="form-label-hint">Note: If this is a hybrid class (online and in-person), create two versions of the class, one online and the other in-person. It will be recognized as a hybrid class automatically.</div>
           </div>
 
-          <div class="switch-row">
-            <div>
-              <div class="switch-label">Manually Send Location</div>
-              <div class="switch-hint">Select if this is a private location. You will be responsible for manually sending out the location to people who sign-up.</div>
+          <!-- In-person options -->
+          <div id="inPersonOptions">
+            <div class="switch-row">
+              <div>
+                <div class="switch-label">Manually Send Location</div>
+                <div class="switch-hint">Select if this is a private location. You will be responsible for manually sending out the location to people who sign up.</div>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="manuallySendLocation">
+                <span class="switch-slider"></span>
+              </label>
             </div>
-            <label class="switch">
-              <input type="checkbox" id="manuallySendLocation">
-              <span class="switch-slider"></span>
-            </label>
+          </div>
+
+          <!-- Online options -->
+          <div id="onlineOptions" style="display: none;">
+            <div class="switch-row">
+              <div>
+                <div class="switch-label">Automatic Zoom link</div>
+                <div class="switch-hint">A Zoom link and password will be created for this class and any recurring occurrence of this class. See Zoom Integration section for details.</div>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="automaticZoomLink">
+                <span class="switch-slider"></span>
+              </label>
+            </div>
+
+            <div class="form-group" style="margin-top: 1rem;">
+              <label class="form-label">Stream link (eg Zoom)</label>
+              <input type="text" id="streamLink" class="form-input" placeholder="https://zoom.us/j/86458984">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Stream password</label>
+              <input type="text" id="streamPassword" class="form-input" placeholder="Tn2GfsUL">
+              <div class="form-label-hint">Leave it empty if there is no password</div>
+            </div>
           </div>
         </div>
 
@@ -1002,6 +1030,16 @@
       // Location toggle
       setupToggle('locationToggle', (value) => {
         formData.location_type = value;
+        // Show/hide location-specific options
+        const inPersonOptions = document.getElementById('inPersonOptions');
+        const onlineOptions = document.getElementById('onlineOptions');
+        if (value === 'in_person') {
+          inPersonOptions.style.display = 'block';
+          onlineOptions.style.display = 'none';
+        } else {
+          inPersonOptions.style.display = 'none';
+          onlineOptions.style.display = 'block';
+        }
       });
 
       // Payment type toggle
