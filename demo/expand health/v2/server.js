@@ -323,6 +323,15 @@ app.get('/substitution-requests', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'substitution-requests.html'));
 });
 
+// Discount codes
+app.get('/discounts', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'discounts.html'));
+});
+
+app.get('/discounts/create', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'discount-create.html'));
+});
+
 // Reservations (Appointments list view)
 app.get('/reservations', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'reservations.html'));
