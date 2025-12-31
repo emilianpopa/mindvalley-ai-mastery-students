@@ -520,6 +520,25 @@
       font-weight: 500;
     }
 
+    /* Add tier button */
+    .add-tier-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      background: none;
+      border: none;
+      color: var(--teal-600);
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+
+    .add-tier-btn:hover {
+      color: var(--teal-700);
+    }
+
     /* Two column layout for some fields */
     .two-col {
       display: grid;
@@ -864,66 +883,75 @@
             </div>
           </div>
 
-          <div class="form-group">
-            <label class="form-label">Allow book for free and pay later bookings</label>
-            <div class="yes-no-toggle" id="payLaterToggle">
-              <button type="button" class="yes-no-btn" data-value="yes">Yes</button>
-              <button type="button" class="yes-no-btn active" data-value="no">No</button>
-            </div>
-            <div class="form-label-hint">If enabled, customers will be able to choose to not have to pay when making their booking. You will be able to pay for their booking using the Point of Sale.</div>
-          </div>
-
-          <div class="form-group" id="priceSection">
-            <label class="form-label">Price type</label>
-            <div class="price-type-toggle" id="priceTypeToggle">
-              <button type="button" class="toggle-btn active" data-value="fixed">Fixed price</button>
-              <button type="button" class="toggle-btn" data-value="customer_picks">Customers pick price</button>
-            </div>
-            <div class="form-label-hint">Fixed price: You set the price of a ticket for this class. Customers pick price: You set the price range within which customers select their drop-in price.</div>
-
-            <div class="two-col" style="margin-top: 16px;">
-              <div>
-                <label class="form-label">Price</label>
-                <input type="number" id="classPrice" class="form-input" placeholder="0.00" min="0" step="0.01">
+          <!-- Paid options -->
+          <div id="paidOptions">
+            <div class="form-group">
+              <label class="form-label">Allow book for free and pay later bookings</label>
+              <div class="yes-no-toggle" id="payLaterToggle">
+                <button type="button" class="yes-no-btn" data-value="yes">Yes</button>
+                <button type="button" class="yes-no-btn active" data-value="no">No</button>
               </div>
-              <div>
-                <label class="form-label">Duration (minutes)</label>
-                <input type="number" id="classDuration" class="form-input" value="60" min="15" step="5">
+              <div class="form-label-hint">If enabled, customers will be able to choose to not have to pay when making their booking. You will be able to pay for their booking using the Point of Sale.</div>
+            </div>
+
+            <div class="form-group" id="priceSection">
+              <label class="form-label">Price type</label>
+              <div class="price-type-toggle" id="priceTypeToggle">
+                <button type="button" class="toggle-btn active" data-value="fixed">Fixed price</button>
+                <button type="button" class="toggle-btn" data-value="customer_picks">Customers pick price</button>
+              </div>
+              <div class="form-label-hint">Fixed price: You set the price of a ticket for this class. Customers pick price: You set the price range within which customers select their drop-in price.</div>
+
+              <div class="two-col" style="margin-top: 16px;">
+                <div>
+                  <label class="form-label">Price</label>
+                  <input type="number" id="classPrice" class="form-input" placeholder="0.00" min="0" step="0.01">
+                </div>
+                <div>
+                  <label class="form-label">Duration (minutes)</label>
+                  <input type="number" id="classDuration" class="form-input" value="60" min="15" step="5">
+                </div>
               </div>
             </div>
-          </div>
 
-          <div class="switch-row">
-            <div>
-              <div class="switch-label">Allow customers to use a Payment Plan</div>
-              <div class="switch-hint">If you turn this on, customers will have the option to divide their payments according to your payment plan instead of having to pay everything in one go.</div>
+            <div class="switch-row">
+              <div>
+                <div class="switch-label">Allow customers to use a Payment Plan</div>
+                <div class="switch-hint">If you turn this on, customers will have the option to divide their payments according to your payment plan instead of having to pay everything in one go.</div>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="allowPaymentPlan">
+                <span class="switch-slider"></span>
+              </label>
             </div>
-            <label class="switch">
-              <input type="checkbox" id="allowPaymentPlan">
-              <span class="switch-slider"></span>
-            </label>
           </div>
 
-          <!-- Collapsible: Applicable memberships -->
-          <div class="collapsible-header" onclick="toggleCollapsible(this)">
-            <span class="collapsible-title">Applicable memberships</span>
-            <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="6 9 12 15 18 9"></polyline>
-            </svg>
-          </div>
-          <div class="collapsible-content">
-            <div class="form-label-hint">Select which memberships can be used to book this class.</div>
-          </div>
+          <!-- Free options - Applicable memberships (shown when Free is selected) -->
+          <div id="freeOptions" style="display: none;">
+            <!-- Collapsible: Applicable memberships -->
+            <div class="collapsible-header" onclick="toggleCollapsible(this)">
+              <span class="collapsible-title">Applicable memberships</span>
+              <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </div>
+            <div class="collapsible-content">
+              <div class="form-label-hint">Select which memberships can be used to book this class.</div>
+            </div>
 
-          <!-- Collapsible: Discount codes -->
-          <div class="collapsible-header" onclick="toggleCollapsible(this)">
-            <span class="collapsible-title">Discount codes</span>
-            <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="6 9 12 15 18 9"></polyline>
-            </svg>
-          </div>
-          <div class="collapsible-content">
-            <div class="form-label-hint">Add discount codes that can be applied to this class.</div>
+            <!-- Collapsible: Discount codes -->
+            <div class="collapsible-header expanded" onclick="toggleCollapsible(this)">
+              <span class="collapsible-title">Discount codes</span>
+              <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </div>
+            <div class="collapsible-content show">
+              <div class="form-label-hint">Selected discount codes can be used on this class. Discount codes which are applicable to everything are not displayed in this list.</div>
+              <div style="margin-top: 12px; font-size: 0.875rem; color: var(--gray-600);">
+                You don't have any discounts. <a href="/discounts" class="new-tag-link">Manage discount codes</a>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -931,14 +959,27 @@
         <div class="form-section">
           <div class="section-title">Optional payment settings</div>
 
-          <div class="collapsible-header" onclick="toggleCollapsible(this)">
-            <span class="collapsible-title">Ticket tiers</span>
+          <div class="collapsible-header expanded" onclick="toggleCollapsible(this)">
+            <span class="collapsible-title">Ticket tiers <span style="background: var(--gray-200); color: var(--gray-600); font-size: 0.75rem; padding: 2px 8px; border-radius: 10px; margin-left: 8px;">0</span></span>
             <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <polyline points="6 9 12 15 18 9"></polyline>
             </svg>
           </div>
-          <div class="collapsible-content">
-            <div class="form-label-hint">Create different pricing tiers for this class.</div>
+          <div class="collapsible-content show">
+            <div class="form-label-hint">Optionally, add ticket tiers that customers can pick from.</div>
+
+            <div class="form-group" style="margin-top: 16px;">
+              <label class="form-label">Initial tier name (defined above)</label>
+              <input type="text" id="initialTierName" class="form-input" placeholder="">
+            </div>
+
+            <button type="button" class="add-tier-btn" onclick="addTier()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+              Add tier
+            </button>
           </div>
         </div>
 
@@ -1254,7 +1295,15 @@
       // Payment type toggle
       setupToggle('paymentTypeToggle', (value) => {
         formData.payment_type = value;
-        document.getElementById('priceSection').style.display = value === 'paid' ? 'block' : 'none';
+        const paidOptions = document.getElementById('paidOptions');
+        const freeOptions = document.getElementById('freeOptions');
+        if (value === 'paid') {
+          paidOptions.style.display = 'block';
+          freeOptions.style.display = 'none';
+        } else {
+          paidOptions.style.display = 'none';
+          freeOptions.style.display = 'block';
+        }
       });
 
       // Pay later toggle
@@ -1543,6 +1592,11 @@
         closeTagModal();
       }
     });
+
+    // Add tier function (placeholder)
+    function addTier() {
+      alert('Add tier functionality coming soon');
+    }
   </script>
 </body>
 </html>
