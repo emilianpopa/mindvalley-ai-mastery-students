@@ -1416,6 +1416,28 @@
                   <span class="checkbox-label">Discount</span>
                 </label>
               </div>
+
+              <!-- When customers with this tag can book -->
+              <div style="padding: 8px 0;">
+                <select class="form-select" style="width: 100%;">
+                  <option value="">Select when customers with this tag can book...</option>
+                  <option value="any_time">Any time</option>
+                  <option value="from_start_of_month">From start of month when workshop takes place</option>
+                  <option value="from_start_of_week_sunday">From start of week when workshop takes place (Sunday)</option>
+                  <option value="from_start_of_week_monday">From start of week when workshop takes place (Monday)</option>
+                  <option value="specific_days_prior">From a specific number of days prior to workshop taking place</option>
+                  <option value="x_time_prior_monday">From X time prior to the start of week when workshop takes place (Monday)</option>
+                  <option value="x_time_prior_sunday">From X time prior to the start of week when workshop takes place (Sunday)</option>
+                </select>
+              </div>
+
+              <!-- SMS notice -->
+              <div class="form-label-hint" style="margin-top: 16px; line-height: 1.5;">
+                Collecting people's numbers will let you send texts from your dashboard directly to people who have bought tickets. You can send both broadcast texts and individual texts.
+              </div>
+              <div class="form-label-hint" style="margin-top: 8px;">
+                Phone number is unavailable in your country
+              </div>
             </div>
 
             <!-- Disable booking with memberships -->
