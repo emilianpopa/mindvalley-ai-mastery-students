@@ -869,13 +869,6 @@
       </nav>
 
       <div class="sidebar-footer">
-        <div class="user-info">
-          <div class="user-avatar" id="userAvatar">U</div>
-          <div class="user-details">
-            <span class="user-name" id="userName">Loading...</span>
-            <span class="user-role" id="userRole">...</span>
-          </div>
-        </div>
         <button class="btn btn-secondary btn-sm" onclick="logout()">Logout</button>
       </div>
     </aside>
@@ -1640,28 +1633,11 @@
 
     // Initialize
     document.addEventListener('DOMContentLoaded', () => {
-      loadUserInfo();
       setupToggleGroups();
       setupColorPicker();
       setupImageUpload();
       loadPractitionersForPay();
     });
-
-    async function loadUserInfo() {
-      try {
-        const response = await fetch('/api/auth/me', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (response.ok) {
-          const user = await response.json();
-          document.getElementById('userName').textContent = user.email.split('@')[0];
-          document.getElementById('userRole').textContent = user.role;
-          document.getElementById('userAvatar').textContent = user.email[0].toUpperCase();
-        }
-      } catch (error) {
-        console.error('Failed to load user info:', error);
-      }
-    }
 
     function logout() {
       localStorage.removeItem('auth_token');
