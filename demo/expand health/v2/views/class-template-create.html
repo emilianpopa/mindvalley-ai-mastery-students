@@ -1374,9 +1374,21 @@
                   </div>
                 </div>
                 <label class="switch">
-                  <input type="checkbox" id="allowWithoutTag">
+                  <input type="checkbox" id="allowWithoutTag" onchange="toggleAllowWithoutTagOptions(this)">
                   <span class="switch-slider"></span>
                 </label>
+              </div>
+              <div id="allowWithoutTagOptions" style="display: none; padding: 8px 0 16px 0;">
+                <select class="form-select" style="width: 100%;">
+                  <option value="">Select when customers without tags can book...</option>
+                  <option value="any_time">Any time</option>
+                  <option value="from_start_of_month">From start of month when workshop takes place</option>
+                  <option value="from_start_of_week_sunday">From start of week when workshop takes place (Sunday)</option>
+                  <option value="from_start_of_week_monday">From start of week when workshop takes place (Monday)</option>
+                  <option value="specific_days_prior">From a specific number of days prior to workshop taking place</option>
+                  <option value="x_time_prior_monday">From X time prior to the start of week when workshop takes place (Monday)</option>
+                  <option value="x_time_prior_sunday">From X time prior to the start of week when workshop takes place (Sunday)</option>
+                </select>
               </div>
 
               <!-- Customer must have all tags -->
@@ -2294,6 +2306,11 @@
     // Restriction toggle functions
     function toggleTagRestriction(checkbox) {
       const options = document.getElementById('tagRestrictionOptions');
+      options.style.display = checkbox.checked ? 'block' : 'none';
+    }
+
+    function toggleAllowWithoutTagOptions(checkbox) {
+      const options = document.getElementById('allowWithoutTagOptions');
       options.style.display = checkbox.checked ? 'block' : 'none';
     }
 
