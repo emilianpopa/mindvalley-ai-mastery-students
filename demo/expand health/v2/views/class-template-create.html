@@ -1356,57 +1356,67 @@
                 <span class="switch-slider"></span>
               </label>
             </div>
-            <div id="tagRestrictionOptions" style="display: none; padding: 16px 0; border-bottom: 1px solid var(--gray-100);">
+            <div id="tagRestrictionOptions" style="display: none; padding: 16px 0;">
               <div class="form-label-hint" style="margin-bottom: 16px; line-height: 1.5;">
                 Select which customer tags can book this workshop. Depends on the setting below e.g. customer either must have all tags or at least one from the selected, they will be able to book the workshop. You can also choose the timeframe from which customers with a given tag can book the workshop. For example: Customers with an Unlimited membership tag can book workshops 14 days before everyone else. You can also indicate when customers who don't have any of the selected tags can book. For example: Unlimited members can book 30 days in advance of a workshop while all other customers can book only 14 days in advance of the workshop. Note that the class needs to be published in order for these settings to kick in (if it is un-published, no one will be able to book).
               </div>
 
-              <!-- Tags selection -->
-              <div class="form-group" style="margin-bottom: 16px;">
-                <label class="form-label">Customer tags that can book</label>
-                <select class="form-select" style="max-width: 400px;">
-                  <option value="">Select tags...</option>
-                  <option value="vip">VIP</option>
-                  <option value="member">Member</option>
-                  <option value="unlimited">Unlimited Membership</option>
-                  <option value="new-customer">New Customer</option>
-                </select>
+              <!-- Allow customers without a tag -->
+              <div class="switch-row" style="border-bottom: none; padding: 8px 0;">
+                <div>
+                  <div class="switch-label" style="display: flex; align-items: center; gap: 6px;">
+                    Allow customers without a tag to book as well
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" style="color: var(--gray-400);">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <line x1="12" y1="16" x2="12" y2="12"></line>
+                      <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                    </svg>
+                  </div>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" id="allowWithoutTag">
+                  <span class="switch-slider"></span>
+                </label>
               </div>
 
-              <!-- Tag matching rule -->
-              <div class="form-group" style="margin-bottom: 16px;">
-                <label class="form-label">Tag matching rule</label>
-                <div class="toggle-group">
-                  <button type="button" class="toggle-btn active" data-value="any">Customer has ANY of the tags</button>
-                  <button type="button" class="toggle-btn" data-value="all">Customer has ALL tags</button>
+              <!-- Customer must have all tags -->
+              <div class="switch-row" style="border-bottom: none; padding: 8px 0;">
+                <div>
+                  <div class="switch-label" style="display: flex; align-items: center; gap: 6px;">
+                    Customer must have all tags
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" style="color: var(--gray-400);">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <line x1="12" y1="16" x2="12" y2="12"></line>
+                      <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                    </svg>
+                  </div>
                 </div>
+                <label class="switch">
+                  <input type="checkbox" id="mustHaveAllTags">
+                  <span class="switch-slider"></span>
+                </label>
               </div>
 
-              <!-- Early booking for tagged customers -->
-              <div class="form-group" style="margin-bottom: 16px;">
-                <label class="form-label">Tagged customers can book</label>
-                <div style="display: flex; align-items: center; gap: 8px;">
-                  <input type="number" class="form-input" style="width: 80px;" value="14" min="0">
-                  <span style="font-size: 0.875rem; color: var(--gray-600);">days before class starts</span>
-                </div>
-              </div>
-
-              <!-- Non-tagged customers booking -->
-              <div class="form-group">
-                <label class="form-label">Other customers (without tags) can book</label>
-                <div style="display: flex; align-items: center; gap: 8px;">
-                  <input type="number" class="form-input" style="width: 80px;" value="7" min="0">
-                  <span style="font-size: 0.875rem; color: var(--gray-600);">days before class starts</span>
-                </div>
-                <div class="form-label-hint">Set to 0 to prevent non-tagged customers from booking</div>
+              <!-- Discount checkbox -->
+              <div style="padding: 8px 0;">
+                <label class="checkbox-row" style="cursor: pointer;">
+                  <input type="checkbox" id="tagDiscount" style="accent-color: var(--teal-600);">
+                  <span class="checkbox-label">Discount</span>
+                </label>
               </div>
             </div>
 
             <!-- Disable booking with memberships -->
-            <div class="switch-row">
+            <div class="switch-row" style="border-bottom: none; padding: 8px 0;">
               <div>
-                <div class="switch-label">Disable booking with memberships completely</div>
-                <div class="switch-hint">Customers will not be able to use any membership to book this class.</div>
+                <div class="switch-label" style="display: flex; align-items: center; gap: 6px;">
+                  Disable booking with memberships completely
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" style="color: var(--gray-400);">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                  </svg>
+                </div>
               </div>
               <label class="switch">
                 <input type="checkbox" id="disableMembershipBooking">
@@ -1415,10 +1425,16 @@
             </div>
 
             <!-- Require booking with memberships only -->
-            <div class="switch-row">
+            <div class="switch-row" style="border-bottom: none; padding: 8px 0;">
               <div>
-                <div class="switch-label">Require booking with memberships only</div>
-                <div class="switch-hint">Only customers with an applicable membership will be able to book this class.</div>
+                <div class="switch-label" style="display: flex; align-items: center; gap: 6px;">
+                  Require booking with memberships only
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" style="color: var(--gray-400);">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                  </svg>
+                </div>
               </div>
               <label class="switch">
                 <input type="checkbox" id="requireMembershipBooking">
@@ -1427,10 +1443,16 @@
             </div>
 
             <!-- Restrict by age -->
-            <div class="switch-row" style="border-bottom: none;">
+            <div class="switch-row" style="border-bottom: none; padding: 8px 0;">
               <div>
-                <div class="switch-label">Restrict bookings to customers of specific ages</div>
-                <div class="switch-hint">Only customers within the specified age range will be able to book.</div>
+                <div class="switch-label" style="display: flex; align-items: center; gap: 6px;">
+                  Restrict bookings to customers of specific ages
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" style="color: var(--gray-400);">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                  </svg>
+                </div>
               </div>
               <label class="switch">
                 <input type="checkbox" id="restrictByAge" onchange="toggleAgeRestriction(this)">
