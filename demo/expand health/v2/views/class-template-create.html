@@ -1305,69 +1305,10 @@
                   </tr>
                 </thead>
                 <tbody id="practitionerPayTableBody">
-                  <tr class="practitioner-pay-row" style="border-bottom: 1px solid var(--gray-100);">
-                    <td style="padding: 12px 8px;">
-                      <input type="checkbox" data-practitioner-pay="sarah-johnson" style="accent-color: var(--teal-600);">
-                    </td>
-                    <td style="padding: 12px 8px; color: var(--gray-900);">Sarah Johnson</td>
-                    <td style="padding: 12px 8px; color: var(--gray-600);">sarah.johnson@expandhealth.com</td>
-                    <td style="padding: 12px 8px;">
-                      <div style="display: flex; align-items: center; gap: 4px;">
-                        <span style="color: var(--gray-500);">ZAR</span>
-                        <input type="number" class="form-input" style="width: 80px; padding: 6px 8px;" placeholder="0" min="0">
-                      </div>
-                    </td>
-                  </tr>
-                  <tr class="practitioner-pay-row" style="border-bottom: 1px solid var(--gray-100);">
-                    <td style="padding: 12px 8px;">
-                      <input type="checkbox" data-practitioner-pay="michael-chen" style="accent-color: var(--teal-600);">
-                    </td>
-                    <td style="padding: 12px 8px; color: var(--gray-900);">Michael Chen</td>
-                    <td style="padding: 12px 8px; color: var(--gray-600);">michael.chen@expandhealth.com</td>
-                    <td style="padding: 12px 8px;">
-                      <div style="display: flex; align-items: center; gap: 4px;">
-                        <span style="color: var(--gray-500);">ZAR</span>
-                        <input type="number" class="form-input" style="width: 80px; padding: 6px 8px;" placeholder="0" min="0">
-                      </div>
-                    </td>
-                  </tr>
-                  <tr class="practitioner-pay-row" style="border-bottom: 1px solid var(--gray-100);">
-                    <td style="padding: 12px 8px;">
-                      <input type="checkbox" data-practitioner-pay="emma-wilson" style="accent-color: var(--teal-600);">
-                    </td>
-                    <td style="padding: 12px 8px; color: var(--gray-900);">Emma Wilson</td>
-                    <td style="padding: 12px 8px; color: var(--gray-600);">emma.wilson@expandhealth.com</td>
-                    <td style="padding: 12px 8px;">
-                      <div style="display: flex; align-items: center; gap: 4px;">
-                        <span style="color: var(--gray-500);">ZAR</span>
-                        <input type="number" class="form-input" style="width: 80px; padding: 6px 8px;" placeholder="0" min="0">
-                      </div>
-                    </td>
-                  </tr>
-                  <tr class="practitioner-pay-row" style="border-bottom: 1px solid var(--gray-100);">
-                    <td style="padding: 12px 8px;">
-                      <input type="checkbox" data-practitioner-pay="david-miller" style="accent-color: var(--teal-600);">
-                    </td>
-                    <td style="padding: 12px 8px; color: var(--gray-900);">David Miller</td>
-                    <td style="padding: 12px 8px; color: var(--gray-600);">david.miller@expandhealth.com</td>
-                    <td style="padding: 12px 8px;">
-                      <div style="display: flex; align-items: center; gap: 4px;">
-                        <span style="color: var(--gray-500);">ZAR</span>
-                        <input type="number" class="form-input" style="width: 80px; padding: 6px 8px;" placeholder="0" min="0">
-                      </div>
-                    </td>
-                  </tr>
-                  <tr class="practitioner-pay-row" style="border-bottom: 1px solid var(--gray-100);">
-                    <td style="padding: 12px 8px;">
-                      <input type="checkbox" data-practitioner-pay="lisa-anderson" style="accent-color: var(--teal-600);">
-                    </td>
-                    <td style="padding: 12px 8px; color: var(--gray-900);">Lisa Anderson</td>
-                    <td style="padding: 12px 8px; color: var(--gray-600);">lisa.anderson@expandhealth.com</td>
-                    <td style="padding: 12px 8px;">
-                      <div style="display: flex; align-items: center; gap: 4px;">
-                        <span style="color: var(--gray-500);">ZAR</span>
-                        <input type="number" class="form-input" style="width: 80px; padding: 6px 8px;" placeholder="0" min="0">
-                      </div>
+                  <!-- Practitioners loaded dynamically from API -->
+                  <tr>
+                    <td colspan="4" style="padding: 24px; text-align: center; color: var(--gray-500);">
+                      Loading practitioners...
                     </td>
                   </tr>
                 </tbody>
@@ -1375,19 +1316,19 @@
             </div>
 
             <!-- Select all visible + Pagination -->
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--gray-100);">
+            <div id="practitionerPayFooter" style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--gray-100);">
               <label class="checkbox-row" style="cursor: pointer;">
-                <input type="checkbox" id="selectAllVisiblePractitioners" style="accent-color: var(--teal-600);">
+                <input type="checkbox" id="selectAllVisiblePractitioners" onchange="toggleAllVisiblePractitioners(this)" style="accent-color: var(--teal-600);">
                 <span class="checkbox-label">Select all visible</span>
               </label>
-              <div style="display: flex; align-items: center; gap: 8px; font-size: 0.875rem; color: var(--gray-600);">
-                <button type="button" style="background: none; border: none; cursor: pointer; padding: 4px; color: var(--gray-400);" disabled>
+              <div id="practitionerPayPagination" style="display: none; align-items: center; gap: 8px; font-size: 0.875rem; color: var(--gray-600);">
+                <button type="button" id="practitionerPayPrevBtn" onclick="changePractitionerPayPage(-1)" style="background: none; border: none; cursor: pointer; padding: 4px; color: var(--gray-400);" disabled>
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
                     <polyline points="15 18 9 12 15 6"></polyline>
                   </svg>
                 </button>
-                <span>1 of 2</span>
-                <button type="button" style="background: none; border: none; cursor: pointer; padding: 4px; color: var(--gray-600);">
+                <span id="practitionerPayPageInfo">1 of 1</span>
+                <button type="button" id="practitionerPayNextBtn" onclick="changePractitionerPayPage(1)" style="background: none; border: none; cursor: pointer; padding: 4px; color: var(--gray-600);">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
                     <polyline points="9 18 15 12 9 6"></polyline>
                   </svg>
@@ -1703,6 +1644,7 @@
       setupToggleGroups();
       setupColorPicker();
       setupImageUpload();
+      loadPractitionersForPay();
     });
 
     async function loadUserInfo() {
@@ -2165,13 +2107,118 @@
       selectAll.indeterminate = someChecked && !allChecked;
     }
 
-    // Practitioner pay table functions
+    // Practitioner pay table state
+    let practitionerPayData = [];
+    let practitionerPayPage = 1;
+    const practitionerPayPerPage = 10;
+
+    // Load practitioners from API
+    async function loadPractitionersForPay() {
+      try {
+        const response = await fetch('/api/practitioners', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.ok) {
+          practitionerPayData = await response.json();
+          renderPractitionerPayTable();
+        } else {
+          document.getElementById('practitionerPayTableBody').innerHTML = `
+            <tr>
+              <td colspan="4" style="padding: 24px; text-align: center; color: var(--gray-500);">
+                Failed to load practitioners
+              </td>
+            </tr>
+          `;
+        }
+      } catch (error) {
+        console.error('Error loading practitioners:', error);
+        document.getElementById('practitionerPayTableBody').innerHTML = `
+          <tr>
+            <td colspan="4" style="padding: 24px; text-align: center; color: var(--gray-500);">
+              Error loading practitioners
+            </td>
+          </tr>
+        `;
+      }
+    }
+
+    function renderPractitionerPayTable() {
+      const tableBody = document.getElementById('practitionerPayTableBody');
+      const footer = document.getElementById('practitionerPayFooter');
+      const pagination = document.getElementById('practitionerPayPagination');
+
+      if (practitionerPayData.length === 0) {
+        tableBody.innerHTML = `
+          <tr>
+            <td colspan="4" style="padding: 24px; text-align: center; color: var(--gray-500);">
+              No practitioners found. <a href="/studio/practitioners" style="color: var(--teal-600);">Add practitioners</a>
+            </td>
+          </tr>
+        `;
+        footer.style.display = 'none';
+        return;
+      }
+
+      footer.style.display = 'flex';
+
+      // Calculate pagination
+      const totalPages = Math.ceil(practitionerPayData.length / practitionerPayPerPage);
+      const startIdx = (practitionerPayPage - 1) * practitionerPayPerPage;
+      const endIdx = Math.min(startIdx + practitionerPayPerPage, practitionerPayData.length);
+      const currentPageData = practitionerPayData.slice(startIdx, endIdx);
+
+      // Render rows
+      tableBody.innerHTML = currentPageData.map(p => `
+        <tr class="practitioner-pay-row" style="border-bottom: 1px solid var(--gray-100);">
+          <td style="padding: 12px 8px;">
+            <input type="checkbox" data-practitioner-pay="${p.id}" style="accent-color: var(--teal-600);">
+          </td>
+          <td style="padding: 12px 8px; color: var(--gray-900);">${p.name}</td>
+          <td style="padding: 12px 8px; color: var(--gray-600);">${p.email}</td>
+          <td style="padding: 12px 8px;">
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <span style="color: var(--gray-500);">ZAR</span>
+              <input type="number" class="form-input" style="width: 80px; padding: 6px 8px;" placeholder="0" min="0" data-practitioner-rate="${p.id}">
+            </div>
+          </td>
+        </tr>
+      `).join('');
+
+      // Update pagination
+      if (totalPages > 1) {
+        pagination.style.display = 'flex';
+        document.getElementById('practitionerPayPageInfo').textContent = `${practitionerPayPage} of ${totalPages}`;
+        document.getElementById('practitionerPayPrevBtn').disabled = practitionerPayPage === 1;
+        document.getElementById('practitionerPayPrevBtn').style.color = practitionerPayPage === 1 ? 'var(--gray-400)' : 'var(--gray-600)';
+        document.getElementById('practitionerPayNextBtn').disabled = practitionerPayPage === totalPages;
+        document.getElementById('practitionerPayNextBtn').style.color = practitionerPayPage === totalPages ? 'var(--gray-400)' : 'var(--gray-600)';
+      } else {
+        pagination.style.display = 'none';
+      }
+    }
+
+    function changePractitionerPayPage(delta) {
+      const totalPages = Math.ceil(practitionerPayData.length / practitionerPayPerPage);
+      practitionerPayPage = Math.max(1, Math.min(totalPages, practitionerPayPage + delta));
+      renderPractitionerPayTable();
+    }
+
     function toggleAllPractitionersPay(selectAllCheckbox) {
       const tableBody = document.getElementById('practitionerPayTableBody');
       const checkboxes = tableBody.querySelectorAll('input[type="checkbox"]');
       checkboxes.forEach(checkbox => {
         checkbox.checked = selectAllCheckbox.checked;
       });
+    }
+
+    function toggleAllVisiblePractitioners(selectAllCheckbox) {
+      const tableBody = document.getElementById('practitionerPayTableBody');
+      const checkboxes = tableBody.querySelectorAll('input[type="checkbox"][data-practitioner-pay]');
+      checkboxes.forEach(checkbox => {
+        checkbox.checked = selectAllCheckbox.checked;
+      });
+      // Also update header checkbox
+      document.getElementById('selectAllPractitionersPay').checked = selectAllCheckbox.checked;
     }
 
     function filterPractitionerPayTable(searchTerm) {
