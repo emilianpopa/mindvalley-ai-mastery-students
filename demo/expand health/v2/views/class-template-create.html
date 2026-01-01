@@ -1536,13 +1536,41 @@
           </div>
 
           <div class="collapsible-header" onclick="toggleCollapsible(this)">
-            <span class="collapsible-title">Custom questions</span>
+            <span class="collapsible-title" style="display: flex; align-items: center; gap: 8px;">
+              Custom questions
+              <span id="customQuestionsCount" class="count-badge" style="display: none; background: var(--purple-600); color: white; font-size: 0.75rem; padding: 2px 8px; border-radius: 10px;">0</span>
+            </span>
             <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <polyline points="6 9 12 15 18 9"></polyline>
             </svg>
           </div>
           <div class="collapsible-content">
-            <div class="form-label-hint">Add custom questions to ask during booking.</div>
+            <div class="form-label-hint" style="margin-bottom: 16px;">
+              You can add custom questions that customers need to answer when purchasing this class.
+            </div>
+
+            <!-- Questions list -->
+            <div id="customQuestionsList">
+              <div class="custom-question-row" style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                <span style="font-size: 0.875rem; color: var(--gray-600); min-width: 70px;">I. Question</span>
+                <input type="text" class="form-input" placeholder="Your Question..." style="flex: 1;">
+                <button type="button" onclick="removeCustomQuestion(this)" style="background: none; border: none; cursor: pointer; padding: 4px; color: var(--gray-400);">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- Add question link -->
+            <button type="button" onclick="addCustomQuestion()" style="background: none; border: none; cursor: pointer; color: var(--purple-600); font-size: 0.875rem; display: flex; align-items: center; gap: 4px; padding: 0;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+              Add Question
+            </button>
           </div>
 
           <div class="collapsible-header" onclick="toggleCollapsible(this)">
@@ -2360,6 +2388,63 @@
       const options = document.getElementById('ageRestrictionOptions');
       options.style.display = checkbox.checked ? 'block' : 'none';
     }
+
+    // Custom questions functions
+    function addCustomQuestion() {
+      const list = document.getElementById('customQuestionsList');
+      const count = list.querySelectorAll('.custom-question-row').length + 1;
+      const romanNumeral = toRoman(count);
+
+      const row = document.createElement('div');
+      row.className = 'custom-question-row';
+      row.style.cssText = 'display: flex; align-items: center; gap: 12px; margin-bottom: 12px;';
+      row.innerHTML = `
+        <span style="font-size: 0.875rem; color: var(--gray-600); min-width: 70px;">${romanNumeral}. Question</span>
+        <input type="text" class="form-input" placeholder="Your Question..." style="flex: 1;">
+        <button type="button" onclick="removeCustomQuestion(this)" style="background: none; border: none; cursor: pointer; padding: 4px; color: var(--gray-400);">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      `;
+      list.appendChild(row);
+      updateQuestionCount();
+    }
+
+    function removeCustomQuestion(btn) {
+      const row = btn.closest('.custom-question-row');
+      row.remove();
+      renumberQuestions();
+      updateQuestionCount();
+    }
+
+    function renumberQuestions() {
+      const rows = document.querySelectorAll('.custom-question-row');
+      rows.forEach((row, index) => {
+        const label = row.querySelector('span');
+        label.textContent = `${toRoman(index + 1)}. Question`;
+      });
+    }
+
+    function updateQuestionCount() {
+      const count = document.querySelectorAll('.custom-question-row').length;
+      const badge = document.getElementById('customQuestionsCount');
+      if (count > 0) {
+        badge.textContent = count;
+        badge.style.display = 'inline-block';
+      } else {
+        badge.style.display = 'none';
+      }
+    }
+
+    function toRoman(num) {
+      const romanNumerals = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
+      return romanNumerals[num - 1] || num;
+    }
+
+    // Initialize question count on load
+    document.addEventListener('DOMContentLoaded', updateQuestionCount);
   </script>
 </body>
 </html>
