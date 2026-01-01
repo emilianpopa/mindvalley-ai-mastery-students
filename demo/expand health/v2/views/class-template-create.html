@@ -1279,7 +1279,121 @@
             </svg>
           </div>
           <div class="collapsible-content">
-            <div class="form-label-hint">Set default pay rates for practitioners teaching this class.</div>
+            <div class="form-label-hint" style="margin-bottom: 16px;">Set default pay rates for practitioners teaching this class.</div>
+
+            <!-- Search input -->
+            <div class="form-group" style="margin-bottom: 12px;">
+              <input type="text" class="form-input" placeholder="Search practitioners..." id="practitionerPaySearch" oninput="filterPractitionerPayTable(this.value)">
+            </div>
+
+            <!-- Practitioners table -->
+            <div class="practitioners-pay-table">
+              <table style="width: 100%; border-collapse: collapse; font-size: 0.875rem;">
+                <thead>
+                  <tr style="border-bottom: 1px solid var(--gray-200);">
+                    <th style="padding: 12px 8px; text-align: left; width: 40px;">
+                      <input type="checkbox" id="selectAllPractitionersPay" onchange="toggleAllPractitionersPay(this)" style="accent-color: var(--teal-600);">
+                    </th>
+                    <th style="padding: 12px 8px; text-align: left; font-weight: 500; color: var(--gray-700); cursor: pointer;" onclick="sortPractitionerPayTable('name')">
+                      Practitioner name
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" style="vertical-align: middle; margin-left: 4px; color: var(--gray-400);">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                      </svg>
+                    </th>
+                    <th style="padding: 12px 8px; text-align: left; font-weight: 500; color: var(--gray-700);">Practitioner email</th>
+                    <th style="padding: 12px 8px; text-align: left; font-weight: 500; color: var(--gray-700);">Pay rate</th>
+                  </tr>
+                </thead>
+                <tbody id="practitionerPayTableBody">
+                  <tr class="practitioner-pay-row" style="border-bottom: 1px solid var(--gray-100);">
+                    <td style="padding: 12px 8px;">
+                      <input type="checkbox" data-practitioner-pay="sarah-johnson" style="accent-color: var(--teal-600);">
+                    </td>
+                    <td style="padding: 12px 8px; color: var(--gray-900);">Sarah Johnson</td>
+                    <td style="padding: 12px 8px; color: var(--gray-600);">sarah.johnson@expandhealth.com</td>
+                    <td style="padding: 12px 8px;">
+                      <div style="display: flex; align-items: center; gap: 4px;">
+                        <span style="color: var(--gray-500);">ZAR</span>
+                        <input type="number" class="form-input" style="width: 80px; padding: 6px 8px;" placeholder="0" min="0">
+                      </div>
+                    </td>
+                  </tr>
+                  <tr class="practitioner-pay-row" style="border-bottom: 1px solid var(--gray-100);">
+                    <td style="padding: 12px 8px;">
+                      <input type="checkbox" data-practitioner-pay="michael-chen" style="accent-color: var(--teal-600);">
+                    </td>
+                    <td style="padding: 12px 8px; color: var(--gray-900);">Michael Chen</td>
+                    <td style="padding: 12px 8px; color: var(--gray-600);">michael.chen@expandhealth.com</td>
+                    <td style="padding: 12px 8px;">
+                      <div style="display: flex; align-items: center; gap: 4px;">
+                        <span style="color: var(--gray-500);">ZAR</span>
+                        <input type="number" class="form-input" style="width: 80px; padding: 6px 8px;" placeholder="0" min="0">
+                      </div>
+                    </td>
+                  </tr>
+                  <tr class="practitioner-pay-row" style="border-bottom: 1px solid var(--gray-100);">
+                    <td style="padding: 12px 8px;">
+                      <input type="checkbox" data-practitioner-pay="emma-wilson" style="accent-color: var(--teal-600);">
+                    </td>
+                    <td style="padding: 12px 8px; color: var(--gray-900);">Emma Wilson</td>
+                    <td style="padding: 12px 8px; color: var(--gray-600);">emma.wilson@expandhealth.com</td>
+                    <td style="padding: 12px 8px;">
+                      <div style="display: flex; align-items: center; gap: 4px;">
+                        <span style="color: var(--gray-500);">ZAR</span>
+                        <input type="number" class="form-input" style="width: 80px; padding: 6px 8px;" placeholder="0" min="0">
+                      </div>
+                    </td>
+                  </tr>
+                  <tr class="practitioner-pay-row" style="border-bottom: 1px solid var(--gray-100);">
+                    <td style="padding: 12px 8px;">
+                      <input type="checkbox" data-practitioner-pay="david-miller" style="accent-color: var(--teal-600);">
+                    </td>
+                    <td style="padding: 12px 8px; color: var(--gray-900);">David Miller</td>
+                    <td style="padding: 12px 8px; color: var(--gray-600);">david.miller@expandhealth.com</td>
+                    <td style="padding: 12px 8px;">
+                      <div style="display: flex; align-items: center; gap: 4px;">
+                        <span style="color: var(--gray-500);">ZAR</span>
+                        <input type="number" class="form-input" style="width: 80px; padding: 6px 8px;" placeholder="0" min="0">
+                      </div>
+                    </td>
+                  </tr>
+                  <tr class="practitioner-pay-row" style="border-bottom: 1px solid var(--gray-100);">
+                    <td style="padding: 12px 8px;">
+                      <input type="checkbox" data-practitioner-pay="lisa-anderson" style="accent-color: var(--teal-600);">
+                    </td>
+                    <td style="padding: 12px 8px; color: var(--gray-900);">Lisa Anderson</td>
+                    <td style="padding: 12px 8px; color: var(--gray-600);">lisa.anderson@expandhealth.com</td>
+                    <td style="padding: 12px 8px;">
+                      <div style="display: flex; align-items: center; gap: 4px;">
+                        <span style="color: var(--gray-500);">ZAR</span>
+                        <input type="number" class="form-input" style="width: 80px; padding: 6px 8px;" placeholder="0" min="0">
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Select all visible + Pagination -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--gray-100);">
+              <label class="checkbox-row" style="cursor: pointer;">
+                <input type="checkbox" id="selectAllVisiblePractitioners" style="accent-color: var(--teal-600);">
+                <span class="checkbox-label">Select all visible</span>
+              </label>
+              <div style="display: flex; align-items: center; gap: 8px; font-size: 0.875rem; color: var(--gray-600);">
+                <button type="button" style="background: none; border: none; cursor: pointer; padding: 4px; color: var(--gray-400);" disabled>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                    <polyline points="15 18 9 12 15 6"></polyline>
+                  </svg>
+                </button>
+                <span>1 of 2</span>
+                <button type="button" style="background: none; border: none; cursor: pointer; padding: 4px; color: var(--gray-600);">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                  </svg>
+                </button>
+              </div>
+            </div>
           </div>
 
           <div class="collapsible-header" onclick="toggleCollapsible(this)">
@@ -1289,7 +1403,75 @@
             </svg>
           </div>
           <div class="collapsible-content">
-            <div class="form-label-hint">Add restrictions on who can book this class.</div>
+            <div class="form-label-hint" style="margin-bottom: 16px;">Add restrictions on who can book this class.</div>
+
+            <!-- Restrict to specific tags -->
+            <div class="switch-row">
+              <div>
+                <div class="switch-label">Restrict bookings to customers with specific tags</div>
+                <div class="switch-hint">Only customers with selected tags will be able to book this class.</div>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="restrictByTags" onchange="toggleTagRestriction(this)">
+                <span class="switch-slider"></span>
+              </label>
+            </div>
+            <div id="tagRestrictionOptions" style="display: none; padding: 12px 0 12px 24px;">
+              <select class="form-select" style="max-width: 300px;">
+                <option value="">Select tags...</option>
+                <option value="vip">VIP</option>
+                <option value="member">Member</option>
+                <option value="new-customer">New Customer</option>
+              </select>
+            </div>
+
+            <!-- Disable booking with memberships -->
+            <div class="switch-row">
+              <div>
+                <div class="switch-label">Disable booking with memberships completely</div>
+                <div class="switch-hint">Customers will not be able to use any membership to book this class.</div>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="disableMembershipBooking">
+                <span class="switch-slider"></span>
+              </label>
+            </div>
+
+            <!-- Require booking with memberships only -->
+            <div class="switch-row">
+              <div>
+                <div class="switch-label">Require booking with memberships only</div>
+                <div class="switch-hint">Only customers with an applicable membership will be able to book this class.</div>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="requireMembershipBooking">
+                <span class="switch-slider"></span>
+              </label>
+            </div>
+
+            <!-- Restrict by age -->
+            <div class="switch-row" style="border-bottom: none;">
+              <div>
+                <div class="switch-label">Restrict bookings to customers of specific ages</div>
+                <div class="switch-hint">Only customers within the specified age range will be able to book.</div>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="restrictByAge" onchange="toggleAgeRestriction(this)">
+                <span class="switch-slider"></span>
+              </label>
+            </div>
+            <div id="ageRestrictionOptions" style="display: none; padding: 12px 0 12px 24px;">
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <div>
+                  <label class="form-label" style="font-size: 0.75rem;">Min age</label>
+                  <input type="number" class="form-input" style="width: 80px;" placeholder="18" min="0" max="120">
+                </div>
+                <div>
+                  <label class="form-label" style="font-size: 0.75rem;">Max age</label>
+                  <input type="number" class="form-input" style="width: 80px;" placeholder="65" min="0" max="120">
+                </div>
+              </div>
+            </div>
           </div>
 
           <div class="collapsible-header" onclick="toggleCollapsible(this)">
@@ -1981,6 +2163,47 @@
 
       selectAll.checked = allChecked;
       selectAll.indeterminate = someChecked && !allChecked;
+    }
+
+    // Practitioner pay table functions
+    function toggleAllPractitionersPay(selectAllCheckbox) {
+      const tableBody = document.getElementById('practitionerPayTableBody');
+      const checkboxes = tableBody.querySelectorAll('input[type="checkbox"]');
+      checkboxes.forEach(checkbox => {
+        checkbox.checked = selectAllCheckbox.checked;
+      });
+    }
+
+    function filterPractitionerPayTable(searchTerm) {
+      const tableBody = document.getElementById('practitionerPayTableBody');
+      const rows = tableBody.querySelectorAll('.practitioner-pay-row');
+      const term = searchTerm.toLowerCase();
+
+      rows.forEach(row => {
+        const name = row.cells[1].textContent.toLowerCase();
+        const email = row.cells[2].textContent.toLowerCase();
+        if (name.includes(term) || email.includes(term)) {
+          row.style.display = '';
+        } else {
+          row.style.display = 'none';
+        }
+      });
+    }
+
+    function sortPractitionerPayTable(column) {
+      // Placeholder for sorting functionality
+      console.log('Sort by:', column);
+    }
+
+    // Restriction toggle functions
+    function toggleTagRestriction(checkbox) {
+      const options = document.getElementById('tagRestrictionOptions');
+      options.style.display = checkbox.checked ? 'block' : 'none';
+    }
+
+    function toggleAgeRestriction(checkbox) {
+      const options = document.getElementById('ageRestrictionOptions');
+      options.style.display = checkbox.checked ? 'block' : 'none';
     }
   </script>
 </body>
