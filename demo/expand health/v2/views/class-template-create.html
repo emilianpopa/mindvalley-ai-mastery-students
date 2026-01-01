@@ -2112,14 +2112,20 @@
     let practitionerPayPage = 1;
     const practitionerPayPerPage = 10;
 
-    // Load practitioners from API
+    // Load practitioners from API (staff endpoint)
     async function loadPractitionersForPay() {
       try {
-        const response = await fetch('/api/practitioners', {
+        const response = await fetch('/api/staff', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (response.ok) {
-          practitionerPayData = await response.json();
+          const staffData = await response.json();
+          // Map staff data to practitioner format
+          practitionerPayData = staffData.map(s => ({
+            id: s.id,
+            name: s.name,
+            email: s.email
+          }));
           renderPractitionerPayTable();
         } else {
           document.getElementById('practitionerPayTableBody').innerHTML = `
