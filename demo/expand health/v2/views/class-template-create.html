@@ -2120,11 +2120,11 @@
         });
         if (response.ok) {
           const staffData = await response.json();
-          // Map staff data to practitioner format
+          // Map staff data to practitioner format (combining first_name + last_name)
           practitionerPayData = staffData.map(s => ({
             id: s.id,
-            name: s.name,
-            email: s.email
+            name: `${s.first_name || ''} ${s.last_name || ''}`.trim(),
+            email: s.email || s.user_email || ''
           }));
           renderPractitionerPayTable();
         } else {
