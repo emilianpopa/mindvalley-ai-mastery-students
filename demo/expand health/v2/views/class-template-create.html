@@ -2128,10 +2128,12 @@
           }));
           renderPractitionerPayTable();
         } else {
+          const errorText = await response.text();
+          console.error('Staff API error:', response.status, errorText);
           document.getElementById('practitionerPayTableBody').innerHTML = `
             <tr>
               <td colspan="4" style="padding: 24px; text-align: center; color: var(--gray-500);">
-                Failed to load practitioners
+                Failed to load practitioners (${response.status})
               </td>
             </tr>
           `;
