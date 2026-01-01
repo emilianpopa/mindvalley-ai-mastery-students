@@ -1453,7 +1453,7 @@
                 </div>
               </div>
               <label class="switch">
-                <input type="checkbox" id="disableMembershipBooking">
+                <input type="checkbox" id="disableMembershipBooking" onchange="toggleMembershipOption('disable')">
                 <span class="switch-slider"></span>
               </label>
             </div>
@@ -1471,7 +1471,7 @@
                 </div>
               </div>
               <label class="switch">
-                <input type="checkbox" id="requireMembershipBooking">
+                <input type="checkbox" id="requireMembershipBooking" onchange="toggleMembershipOption('require')">
                 <span class="switch-slider"></span>
               </label>
             </div>
@@ -2329,6 +2329,18 @@
     function toggleTagRestriction(checkbox) {
       const options = document.getElementById('tagRestrictionOptions');
       options.style.display = checkbox.checked ? 'block' : 'none';
+    }
+
+    function toggleMembershipOption(option) {
+      const disableCheckbox = document.getElementById('disableMembershipBooking');
+      const requireCheckbox = document.getElementById('requireMembershipBooking');
+
+      // These options are mutually exclusive
+      if (option === 'disable' && disableCheckbox.checked) {
+        requireCheckbox.checked = false;
+      } else if (option === 'require' && requireCheckbox.checked) {
+        disableCheckbox.checked = false;
+      }
     }
 
     function toggleAllowWithoutTagOptions(checkbox) {
