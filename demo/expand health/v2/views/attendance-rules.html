@@ -774,6 +774,96 @@
     .membership-select-group.show {
       display: block;
     }
+
+    /* Settings modal specific */
+    .settings-modal .modal {
+      max-width: 480px;
+    }
+
+    .settings-modal .modal-body {
+      padding: 20px 24px;
+    }
+
+    .settings-toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .settings-toggle-label {
+      font-size: 0.9375rem;
+      color: var(--gray-700);
+    }
+
+    .retry-settings {
+      display: none;
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid var(--gray-200);
+    }
+
+    .retry-settings.show {
+      display: block;
+    }
+
+    .retry-settings-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--gray-700);
+      margin-bottom: 16px;
+    }
+
+    .retry-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .retry-label {
+      font-size: 0.875rem;
+      color: var(--gray-600);
+      min-width: 70px;
+    }
+
+    .retry-input {
+      width: 60px;
+      padding: 8px 12px;
+      border: 1px solid var(--gray-300);
+      border-radius: 6px;
+      font-size: 0.875rem;
+      text-align: center;
+    }
+
+    .retry-input:focus {
+      outline: none;
+      border-color: var(--teal-500);
+      box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
+    }
+
+    .retry-text {
+      font-size: 0.875rem;
+      color: var(--gray-600);
+    }
+
+    .btn-save {
+      padding: 10px 20px;
+      background: var(--purple-600, #7C3AED);
+      color: white;
+      border: none;
+      font-size: 0.875rem;
+      font-weight: 500;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-save:hover {
+      background: var(--purple-700, #6D28D9);
+    }
   </style>
 </head>
 <body>
@@ -1007,7 +1097,7 @@
                     </svg>
                     Add new rule
                   </button>
-                  <button class="btn-settings">
+                  <button class="btn-settings" onclick="openSettingsModal()">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <circle cx="12" cy="12" r="3"></circle>
                       <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
@@ -1104,7 +1194,7 @@
                     </svg>
                     Add new rule
                   </button>
-                  <button class="btn-settings">
+                  <button class="btn-settings" onclick="openSettingsModal()">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <circle cx="12" cy="12" r="3"></circle>
                       <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
@@ -1280,6 +1370,67 @@
     </div>
   </div>
 
+  <!-- Settings Modal -->
+  <div class="modal-overlay settings-modal" id="settingsModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title">Settings</h2>
+        <button class="modal-close" onclick="closeSettingsModal()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Enable auto-charge retries toggle -->
+        <div class="settings-toggle-row">
+          <label class="toggle-switch">
+            <input type="checkbox" id="enableAutoChargeRetries" onchange="toggleRetrySettings()">
+            <span class="toggle-slider"></span>
+          </label>
+          <span class="settings-toggle-label">Enable auto-charge retries</span>
+        </div>
+
+        <!-- Retry settings (shown when toggle is on) -->
+        <div class="retry-settings" id="retrySettings">
+          <label class="retry-settings-label">
+            Delays between re-run attempts
+            <svg class="info-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px; color: var(--gray-400); cursor: help;">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="16" x2="12" y2="12"></line>
+              <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg>
+          </label>
+
+          <div class="retry-row">
+            <span class="retry-label">1st re-run</span>
+            <input type="number" class="retry-input" value="3" min="1" id="retry1Days">
+            <span class="retry-text">days after failed payment</span>
+          </div>
+
+          <div class="retry-row">
+            <span class="retry-label">2nd re-run</span>
+            <input type="number" class="retry-input" value="3" min="1" id="retry2Days">
+            <span class="retry-text">days after previous re-run</span>
+          </div>
+
+          <div class="retry-row">
+            <span class="retry-label">3rd re-run</span>
+            <input type="number" class="retry-input" value="3" min="1" id="retry3Days">
+            <span class="retry-text">days after previous re-run</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-cancel" onclick="closeSettingsModal()">Cancel</button>
+        <button class="btn-save" onclick="saveSettings()">Save</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     const token = localStorage.getItem('auth_token');
     if (!token) {
@@ -1344,6 +1495,41 @@
     function closeAddRuleModal() {
       document.getElementById('addRuleModal').classList.remove('show');
     }
+
+    // Settings modal functions
+    function openSettingsModal() {
+      document.getElementById('settingsModal').classList.add('show');
+    }
+
+    function closeSettingsModal() {
+      document.getElementById('settingsModal').classList.remove('show');
+    }
+
+    function toggleRetrySettings() {
+      const checkbox = document.getElementById('enableAutoChargeRetries');
+      const retrySettings = document.getElementById('retrySettings');
+      retrySettings.classList.toggle('show', checkbox.checked);
+    }
+
+    function saveSettings() {
+      // TODO: Save settings to backend
+      const settings = {
+        enableRetries: document.getElementById('enableAutoChargeRetries').checked,
+        retry1Days: document.getElementById('retry1Days').value,
+        retry2Days: document.getElementById('retry2Days').value,
+        retry3Days: document.getElementById('retry3Days').value
+      };
+      console.log('Saving settings:', settings);
+      closeSettingsModal();
+      alert('Settings saved!');
+    }
+
+    // Close settings modal on overlay click
+    document.getElementById('settingsModal').addEventListener('click', function(e) {
+      if (e.target === this) {
+        closeSettingsModal();
+      }
+    });
 
     // Booking type toggle
     function selectBookingType(value) {
