@@ -1,0 +1,1377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cancellation Policy - ExpandHealth</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cline x1='20' y1='20' x2='80' y2='80' stroke='%230F766E' stroke-width='12' stroke-linecap='round'/%3E%3Cline x1='80' y1='20' x2='20' y2='80' stroke='%230F766E' stroke-width='12' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/css/main.css">
+  <script src="/js/feature-flags.js"></script>
+  <script src="/js/nav.js"></script>
+  <style>
+    .cancellation-policy-page {
+      padding: 24px;
+      max-width: 1000px;
+    }
+
+    .page-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .back-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border: none;
+      background: none;
+      cursor: pointer;
+      color: var(--gray-600);
+      border-radius: 4px;
+    }
+
+    .back-btn:hover {
+      background: var(--gray-100);
+    }
+
+    .page-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+
+    .page-description {
+      color: var(--gray-600);
+      font-size: 0.9375rem;
+      margin-bottom: 24px;
+      margin-left: 44px;
+    }
+
+    /* Tabs */
+    .tabs-container {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      padding: 24px;
+    }
+
+    .tabs-header {
+      display: flex;
+      gap: 24px;
+      border-bottom: 1px solid var(--gray-200);
+      margin-bottom: 24px;
+    }
+
+    .tab-btn {
+      padding: 12px 0;
+      background: none;
+      border: none;
+      font-size: 0.9375rem;
+      font-weight: 500;
+      color: var(--gray-500);
+      cursor: pointer;
+      position: relative;
+    }
+
+    .tab-btn.active {
+      color: var(--gray-900);
+    }
+
+    .tab-btn.active::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--teal-600);
+    }
+
+    .tab-btn:hover:not(.active) {
+      color: var(--gray-700);
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* Credit type toggle buttons */
+    .credit-type-toggle {
+      display: inline-flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .credit-type-btn {
+      padding: 10px 16px;
+      border: 1px solid var(--gray-300);
+      background: white;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--gray-700);
+      cursor: pointer;
+      border-radius: 8px;
+      transition: all 0.2s;
+    }
+
+    .credit-type-btn.active {
+      background: var(--purple-50, #f5f3ff);
+      border-color: var(--purple-600, #7C3AED);
+      color: var(--purple-700, #6D28D9);
+    }
+
+    .credit-type-btn:hover:not(.active) {
+      background: var(--gray-50);
+      border-color: var(--gray-400);
+    }
+
+    .credit-description {
+      color: var(--gray-600);
+      font-size: 0.875rem;
+      line-height: 1.5;
+      margin-bottom: 24px;
+    }
+
+    /* Toggle row */
+    .toggle-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 16px 0;
+    }
+
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 24px;
+      flex-shrink: 0;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: var(--gray-300);
+      transition: 0.3s;
+      border-radius: 24px;
+    }
+
+    .toggle-slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: 0.3s;
+      border-radius: 50%;
+    }
+
+    .toggle-switch input:checked + .toggle-slider {
+      background-color: var(--teal-500);
+    }
+
+    .toggle-switch input:checked + .toggle-slider:before {
+      transform: translateX(20px);
+    }
+
+    .toggle-content {
+      flex: 1;
+    }
+
+    .toggle-label {
+      font-size: 0.9375rem;
+      font-weight: 500;
+      color: var(--gray-900);
+      margin-bottom: 4px;
+    }
+
+    .toggle-description {
+      font-size: 0.8125rem;
+      color: var(--gray-500);
+      line-height: 1.4;
+    }
+
+    /* Late cancel period settings */
+    .late-cancel-settings {
+      display: none;
+      margin-top: 16px;
+      padding: 16px;
+      background: var(--gray-50);
+      border-radius: 8px;
+    }
+
+    .late-cancel-settings.show {
+      display: block;
+    }
+
+    .period-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .period-label {
+      font-size: 0.875rem;
+      color: var(--gray-700);
+    }
+
+    .period-input {
+      width: 60px;
+      padding: 8px 12px;
+      border: 1px solid var(--gray-300);
+      border-radius: 6px;
+      font-size: 0.875rem;
+      text-align: center;
+    }
+
+    .period-input:focus {
+      outline: none;
+      border-color: var(--teal-500);
+      box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
+    }
+
+    .period-select {
+      padding: 8px 32px 8px 12px;
+      border: 1px solid var(--gray-300);
+      border-radius: 6px;
+      font-size: 0.875rem;
+      background: white;
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 8px center;
+    }
+
+    /* Auto-charge section */
+    .auto-charge-section {
+      margin-top: 32px;
+      padding-top: 24px;
+      border-top: 1px solid var(--gray-200);
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .section-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+
+    .section-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-add-rule {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      background: var(--purple-50, #f5f3ff);
+      border: 1px solid var(--purple-200, #ddd6fe);
+      color: var(--purple-700, #6D28D9);
+      font-size: 0.875rem;
+      font-weight: 500;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-add-rule:hover {
+      background: var(--purple-100, #ede9fe);
+    }
+
+    .btn-settings {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      background: white;
+      border: 1px solid var(--gray-300);
+      color: var(--gray-700);
+      font-size: 0.875rem;
+      font-weight: 500;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-settings:hover {
+      background: var(--gray-50);
+      border-color: var(--gray-400);
+    }
+
+    .auto-charge-description {
+      color: var(--gray-600);
+      font-size: 0.875rem;
+      line-height: 1.5;
+      margin-bottom: 8px;
+    }
+
+    .create-rule-link {
+      color: var(--purple-600, #7C3AED);
+      font-size: 0.875rem;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .create-rule-link:hover {
+      text-decoration: underline;
+    }
+
+    /* Rules list */
+    .rules-list {
+      margin-top: 16px;
+    }
+
+    .rule-card {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px;
+      background: var(--gray-50);
+      border-radius: 8px;
+      margin-bottom: 8px;
+    }
+
+    .rule-info {
+      flex: 1;
+    }
+
+    .rule-title {
+      font-size: 0.9375rem;
+      font-weight: 500;
+      color: var(--gray-900);
+      margin-bottom: 4px;
+    }
+
+    .rule-details {
+      font-size: 0.8125rem;
+      color: var(--gray-500);
+    }
+
+    .rule-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-icon {
+      padding: 8px;
+      background: none;
+      border: none;
+      color: var(--gray-500);
+      cursor: pointer;
+      border-radius: 4px;
+    }
+
+    .btn-icon:hover {
+      background: var(--gray-200);
+      color: var(--gray-700);
+    }
+
+    /* Apply button */
+    .apply-container {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 32px;
+      padding-top: 24px;
+      border-top: 1px solid var(--gray-200);
+    }
+
+    .btn-apply {
+      padding: 12px 24px;
+      background: var(--purple-600, #7C3AED);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.9375rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-apply:hover {
+      background: var(--purple-700, #6D28D9);
+    }
+
+    .btn-apply:disabled {
+      background: var(--gray-300);
+      cursor: not-allowed;
+    }
+
+    /* Modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-overlay.show {
+      display: flex;
+    }
+
+    .modal {
+      background: white;
+      border-radius: 12px;
+      width: 100%;
+      max-width: 560px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .modal-title {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      padding: 4px;
+      cursor: pointer;
+      color: var(--gray-500);
+    }
+
+    .modal-close:hover {
+      color: var(--gray-700);
+    }
+
+    .modal-body {
+      padding: 24px;
+    }
+
+    .modal-description {
+      font-size: 0.875rem;
+      color: var(--gray-600);
+      line-height: 1.5;
+      margin-bottom: 24px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-label {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--gray-700);
+      margin-bottom: 8px;
+    }
+
+    .info-icon {
+      width: 14px;
+      height: 14px;
+      color: var(--gray-400);
+      cursor: help;
+    }
+
+    .form-select {
+      width: 100%;
+      padding: 10px 36px 10px 12px;
+      border: 1px solid var(--gray-300);
+      border-radius: 8px;
+      font-size: 0.875rem;
+      background: white;
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+    }
+
+    .form-select:focus {
+      outline: none;
+      border-color: var(--teal-500);
+      box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
+    }
+
+    /* Toggle button group */
+    .toggle-btn-group {
+      display: inline-flex;
+      gap: 8px;
+    }
+
+    .toggle-btn {
+      padding: 8px 14px;
+      border: 1px solid var(--gray-300);
+      background: white;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--gray-600);
+      cursor: pointer;
+      border-radius: 6px;
+      transition: all 0.2s;
+    }
+
+    .toggle-btn.active {
+      background: var(--purple-50, #f5f3ff);
+      border-color: var(--purple-600, #7C3AED);
+      color: var(--purple-700, #6D28D9);
+    }
+
+    .toggle-btn:hover:not(.active) {
+      background: var(--gray-50);
+    }
+
+    /* Charge condition row */
+    .charge-condition-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 8px;
+    }
+
+    .condition-text {
+      font-size: 0.875rem;
+      color: var(--gray-600);
+    }
+
+    .condition-input {
+      width: 50px;
+      padding: 8px;
+      border: 1px solid var(--gray-300);
+      border-radius: 6px;
+      font-size: 0.875rem;
+      text-align: center;
+    }
+
+    .condition-input:focus {
+      outline: none;
+      border-color: var(--teal-500);
+    }
+
+    .form-note {
+      font-size: 0.75rem;
+      color: var(--gray-500);
+      margin-top: 8px;
+    }
+
+    /* Penalty config card */
+    .penalty-config-card {
+      background: var(--gray-50);
+      border-radius: 8px;
+      padding: 16px;
+      margin-top: 20px;
+    }
+
+    .penalty-config-title {
+      font-size: 0.9375rem;
+      font-weight: 600;
+      color: var(--gray-900);
+      margin-bottom: 4px;
+    }
+
+    .penalty-config-description {
+      font-size: 0.8125rem;
+      color: var(--gray-500);
+      margin-bottom: 16px;
+    }
+
+    .penalty-amount-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .currency-prefix {
+      font-size: 0.875rem;
+      color: var(--gray-600);
+      font-weight: 500;
+    }
+
+    .amount-input {
+      width: 80px;
+      padding: 8px 12px;
+      border: 1px solid var(--gray-300);
+      border-radius: 6px;
+      font-size: 0.875rem;
+    }
+
+    .amount-input:focus {
+      outline: none;
+      border-color: var(--teal-500);
+    }
+
+    .percentage-input-wrapper {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .percentage-input {
+      width: 80px;
+      padding: 8px 28px 8px 12px;
+      border: 1px solid var(--gray-300);
+      border-radius: 6px;
+      font-size: 0.875rem;
+    }
+
+    .percentage-input:focus {
+      outline: none;
+      border-color: var(--teal-500);
+    }
+
+    .percentage-suffix {
+      position: absolute;
+      right: 12px;
+      color: var(--gray-500);
+      font-size: 0.875rem;
+    }
+
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      padding: 20px 24px;
+      border-top: 1px solid var(--gray-200);
+    }
+
+    .btn-cancel {
+      padding: 10px 20px;
+      background: white;
+      border: 1px solid var(--gray-300);
+      color: var(--gray-700);
+      font-size: 0.875rem;
+      font-weight: 500;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-cancel:hover {
+      background: var(--gray-50);
+    }
+
+    .btn-create-rule {
+      padding: 10px 20px;
+      background: var(--purple-600, #7C3AED);
+      color: white;
+      border: none;
+      font-size: 0.875rem;
+      font-weight: 500;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-create-rule:hover {
+      background: var(--purple-700, #6D28D9);
+    }
+
+    /* Membership select (hidden when not needed) */
+    .membership-select-group {
+      display: none;
+      margin-top: 12px;
+    }
+
+    .membership-select-group.show {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">
+          <svg class="logo-icon" width="28" height="28" viewBox="0 0 24 24" fill="none">
+            <path d="M4 4L11 12L4 20" stroke="#0F766E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M20 4L13 12L20 20" stroke="#0F766E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <div class="logo-text">
+            <span class="logo-expand">EXPAND</span>
+            <span class="logo-health">HEALTH</span>
+          </div>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section-title">AI</div>
+        <a href="/" class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+          <span>Dashboard</span>
+        </a>
+        <a href="/clients" class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+          <span>Clients</span>
+        </a>
+
+        <div class="nav-section-title">AI ADMIN</div>
+        <a href="/forms" class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+          <span>Forms</span>
+        </a>
+        <a href="/protocol-templates" class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+          <span>Protocol Templates</span>
+        </a>
+        <a href="/admin" class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+          <span>Admin Settings</span>
+        </a>
+        <a href="/kb-admin" class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+          <span>AI Knowledge Base</span>
+        </a>
+
+        <div class="nav-section booking-nav">
+          <div class="nav-section-title">BOOKING</div>
+          <a href="/schedule" class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect></svg>
+            <span>Dashboard</span>
+          </a>
+          <a href="/inbox" class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+            <span>Inbox</span>
+          </a>
+          <a href="/pos" class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+            <span>Point of sale</span>
+          </a>
+          <div class="nav-dropdown">
+            <div class="nav-dropdown-trigger">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+              <span>Classes</span>
+              <svg class="nav-dropdown-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </div>
+            <div class="nav-dropdown-menu">
+              <div class="nav-dropdown-header">CLASSES</div>
+              <div class="nav-dropdown-section">SCHEDULING</div>
+              <a href="/classes" class="nav-dropdown-item">Schedule</a>
+              <a href="/class-templates" class="nav-dropdown-item">Class templates</a>
+              <div class="nav-dropdown-section">PRACTITIONERS</div>
+              <a href="/substitution-requests" class="nav-dropdown-item">Substitution requests</a>
+            </div>
+          </div>
+          <a href="/appointments" class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+            <span>Appointments</span>
+          </a>
+          <a href="/community" class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+            <span>Community</span>
+          </a>
+          <a href="/on-demand" class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+            <span>On-Demand</span>
+          </a>
+          <a href="/memberships" class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            <span>Memberships</span>
+          </a>
+          <a href="/discounts" class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
+            <span>Discount codes</span>
+          </a>
+          <a href="/customers" class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+            <span>Customers</span>
+          </a>
+          <a href="/leads" class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
+            <span>Marketing</span>
+          </a>
+          <a href="/analytics" class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+            <span>Analytics</span>
+          </a>
+          <a href="/financials" class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+            <span>Financials</span>
+          </a>
+        </div>
+
+        <div class="nav-section booking-nav">
+          <div class="nav-section-title">STUDIO SET-UP</div>
+          <a href="/studio/practitioners" class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+            <span>Practitioners</span>
+          </a>
+          <a href="/services" class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
+            <span>Services</span>
+          </a>
+          <a href="/studio/locations" class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+            <span>Locations</span>
+          </a>
+          <a href="/settings/attendance-rules" class="nav-item active">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+            <span>Attendance Rules</span>
+          </a>
+        </div>
+      </nav>
+
+      <div class="sidebar-footer">
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <div class="cancellation-policy-page">
+        <div class="page-header">
+          <button class="back-btn" onclick="history.back()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+          </button>
+          <h1 class="page-title">Cancellation Policy</h1>
+        </div>
+        <p class="page-description">Set default cancellation rules for classes and appointments. You can override these for individual items anytime.</p>
+
+        <div class="tabs-container">
+          <!-- Tabs Header -->
+          <div class="tabs-header">
+            <button class="tab-btn active" data-tab="classes">Classes</button>
+            <button class="tab-btn" data-tab="appointments">Appointments</button>
+          </div>
+
+          <!-- Classes Tab -->
+          <div class="tab-content active" id="classesTab">
+            <!-- Credit type toggle -->
+            <div class="credit-type-toggle">
+              <button class="credit-type-btn active" data-type="no_credits">No credits back</button>
+              <button class="credit-type-btn" data-type="credits_packs">Credits back to packs</button>
+              <button class="credit-type-btn" data-type="credits_everything">Credits back for everything</button>
+            </div>
+
+            <p class="credit-description" id="classesDescription">
+              Customers can cancel their attendance but get no automatic credit. They need to contact me/us directly if they want to claim the credit and I/we can then decide to do so in their customer profile.
+            </p>
+
+            <!-- Track late cancellation toggle -->
+            <div class="toggle-row">
+              <label class="toggle-switch">
+                <input type="checkbox" id="trackLateCancelClasses" onchange="toggleLateCancelSettings('classes')">
+                <span class="toggle-slider"></span>
+              </label>
+              <div class="toggle-content">
+                <div class="toggle-label">Track late cancellation</div>
+                <div class="toggle-description">If turned on, the customer is labelled as "late cancel" when cancelling in the given period. You will be able to filter reports based on this.</div>
+              </div>
+            </div>
+
+            <div class="late-cancel-settings" id="lateCancelSettingsClasses">
+              <div class="period-row">
+                <span class="period-label">Late cancel period:</span>
+                <input type="number" class="period-input" value="24" min="1" id="lateCancelPeriodClasses">
+                <select class="period-select" id="lateCancelUnitClasses">
+                  <option value="hours">Hours</option>
+                  <option value="days">Days</option>
+                </select>
+                <span class="period-label">before class start</span>
+              </div>
+            </div>
+
+            <!-- Auto-charge section -->
+            <div class="auto-charge-section">
+              <div class="section-header">
+                <h3 class="section-title">Auto-charge for late cancellations & no-shows</h3>
+                <div class="section-actions">
+                  <button class="btn-add-rule" onclick="openAddRuleModal('classes')">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <line x1="12" y1="5" x2="12" y2="19"></line>
+                      <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    Add new rule
+                  </button>
+                  <button class="btn-settings">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="3"></circle>
+                      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                    </svg>
+                    Settings
+                  </button>
+                </div>
+              </div>
+
+              <p class="auto-charge-description">You can create rules to automatically charge customers once they've late cancelled or no-showed multiple times.</p>
+              <a class="create-rule-link" onclick="openAddRuleModal('classes')">Create your first rule</a>
+
+              <div class="rules-list" id="classesRulesList">
+                <!-- Rules will be rendered here -->
+              </div>
+            </div>
+
+            <!-- Apply button -->
+            <div class="apply-container">
+              <button class="btn-apply" onclick="applyChanges('classes')">Apply changes</button>
+            </div>
+          </div>
+
+          <!-- Appointments Tab -->
+          <div class="tab-content" id="appointmentsTab">
+            <!-- Credit type toggle -->
+            <div class="credit-type-toggle">
+              <button class="credit-type-btn active" data-type="no_credits">No credits back</button>
+              <button class="credit-type-btn" data-type="credits_packs">Credits back to packs</button>
+              <button class="credit-type-btn" data-type="credits_everything">Credits back for everything</button>
+            </div>
+
+            <p class="credit-description" id="appointmentsDescription">
+              Customers can cancel their attendance but get no automatic credit. They need to contact me/us directly if they want to claim the credit and I/we can then decide to do so in their customer profile.
+            </p>
+
+            <!-- Track late cancellation toggle -->
+            <div class="toggle-row">
+              <label class="toggle-switch">
+                <input type="checkbox" id="trackLateCancelAppointments" onchange="toggleLateCancelSettings('appointments')">
+                <span class="toggle-slider"></span>
+              </label>
+              <div class="toggle-content">
+                <div class="toggle-label">Track late cancellation</div>
+                <div class="toggle-description">If turned on, the customer is labelled as "late cancel" when cancelling in the given period. You will be able to filter reports based on this.</div>
+              </div>
+            </div>
+
+            <div class="late-cancel-settings" id="lateCancelSettingsAppointments">
+              <div class="period-row">
+                <span class="period-label">Late cancel period:</span>
+                <input type="number" class="period-input" value="24" min="1" id="lateCancelPeriodAppointments">
+                <select class="period-select" id="lateCancelUnitAppointments">
+                  <option value="hours">Hours</option>
+                  <option value="days">Days</option>
+                </select>
+                <span class="period-label">before appointment start</span>
+              </div>
+            </div>
+
+            <!-- Auto-charge section -->
+            <div class="auto-charge-section">
+              <div class="section-header">
+                <h3 class="section-title">Auto-charge for late cancellations & no-shows</h3>
+                <div class="section-actions">
+                  <button class="btn-add-rule" onclick="openAddRuleModal('appointments')">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <line x1="12" y1="5" x2="12" y2="19"></line>
+                      <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    Add new rule
+                  </button>
+                  <button class="btn-settings">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="3"></circle>
+                      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                    </svg>
+                    Settings
+                  </button>
+                </div>
+              </div>
+
+              <p class="auto-charge-description">You can create rules to automatically charge customers once they've late cancelled or no-showed multiple times.</p>
+              <a class="create-rule-link" onclick="openAddRuleModal('appointments')">Create your first rule</a>
+
+              <div class="rules-list" id="appointmentsRulesList">
+                <!-- Rules will be rendered here -->
+              </div>
+            </div>
+
+            <!-- Apply button -->
+            <div class="apply-container">
+              <button class="btn-apply" onclick="applyChanges('appointments')">Apply changes</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Add New Rule Modal -->
+  <div class="modal-overlay" id="addRuleModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title">Add new attendance penalty rule</h2>
+        <button class="modal-close" onclick="closeAddRuleModal()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <p class="modal-description">
+          You can automatically charge customers a penalty after they late cancel or no-show a specific number of times. Late cancellation penalties get charged when the customer is late cancelled. No-show penalties get charged 24 hours after the end of a class.
+        </p>
+
+        <!-- Penalty type -->
+        <div class="form-group">
+          <label class="form-label">What is the penalty for?</label>
+          <select class="form-select" id="penaltyFor">
+            <option value="late_cancellations">Late cancellations</option>
+            <option value="no_shows">No-shows</option>
+          </select>
+        </div>
+
+        <!-- Apply to bookings -->
+        <div class="form-group">
+          <label class="form-label">Apply penalty to bookings made with:</label>
+          <div class="toggle-btn-group" id="bookingTypeToggle">
+            <button class="toggle-btn active" data-value="with_membership" onclick="selectBookingType('with_membership')">Bookings with membership</button>
+            <button class="toggle-btn" data-value="without_membership" onclick="selectBookingType('without_membership')">Bookings without membership</button>
+          </div>
+        </div>
+
+        <!-- Membership select (shown when with_membership is selected) -->
+        <div class="form-group membership-select-group show" id="membershipSelectGroup">
+          <label class="form-label">
+            Select a membership
+            <svg class="info-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="16" x2="12" y2="12"></line>
+              <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg>
+          </label>
+          <select class="form-select" id="membershipSelect">
+            <option value="">Select membership...</option>
+            <option value="vip">VIP subscription</option>
+            <option value="standard">Standard membership</option>
+            <option value="basic">Basic plan</option>
+          </select>
+        </div>
+
+        <!-- Charge condition -->
+        <div class="form-group">
+          <label class="form-label">
+            Charge the penalty if a customer late cancelled:
+            <svg class="info-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="16" x2="12" y2="12"></line>
+              <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg>
+          </label>
+          <div class="charge-condition-row">
+            <div class="toggle-btn-group" id="chargeFrequencyToggle">
+              <button class="toggle-btn active" data-value="every" onclick="selectChargeFrequency('every')">Every</button>
+              <button class="toggle-btn" data-value="minimum" onclick="selectChargeFrequency('minimum')">Minimum</button>
+              <button class="toggle-btn" data-value="exactly" onclick="selectChargeFrequency('exactly')">Exactly</button>
+            </div>
+            <input type="number" class="condition-input" value="1" min="1" id="chargeCount">
+            <span class="condition-text">times</span>
+          </div>
+          <div class="charge-condition-row" style="margin-top: 12px;">
+            <div class="toggle-btn-group" id="periodTypeToggle">
+              <button class="toggle-btn active" data-value="in_past" onclick="selectPeriodType('in_past')">In the past</button>
+              <button class="toggle-btn" data-value="membership_period" onclick="selectPeriodType('membership_period')">During membership period</button>
+            </div>
+            <svg class="info-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px; color: var(--gray-400);">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="16" x2="12" y2="12"></line>
+              <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg>
+            <input type="number" class="condition-input" value="7" min="1" id="periodValue">
+            <select class="period-select" id="periodUnit" style="padding: 8px 28px 8px 12px;">
+              <option value="days">Days</option>
+              <option value="weeks">Weeks</option>
+              <option value="months">Months</option>
+            </select>
+          </div>
+          <p class="form-note">Note the rule only takes into account late cancellations made since its inception.</p>
+        </div>
+
+        <!-- Penalty Configuration -->
+        <div class="penalty-config-card">
+          <div class="penalty-config-title">Penalty Configuration</div>
+          <p class="penalty-config-description">Choose how you want to calculate the penalty for customers. You can charge a fixed amount, a percentage of the booking price, or both combined.</p>
+
+          <div class="form-group">
+            <label class="form-label">Penalty type</label>
+            <div class="toggle-btn-group" id="penaltyTypeToggle">
+              <button class="toggle-btn active" data-value="fixed" onclick="selectPenaltyType('fixed')">Fixed amount</button>
+              <button class="toggle-btn" data-value="percentage" onclick="selectPenaltyType('percentage')">Percentage of booking price</button>
+              <button class="toggle-btn" data-value="both" onclick="selectPenaltyType('both')">Both fixed amount and percentage</button>
+            </div>
+          </div>
+
+          <div class="form-group" id="fixedAmountGroup">
+            <label class="form-label">
+              Penalty to charge the customer
+              <svg class="info-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="16" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+              </svg>
+            </label>
+            <div class="penalty-amount-row">
+              <span class="currency-prefix">ZAR</span>
+              <input type="number" class="amount-input" value="0" min="0" id="penaltyAmount">
+            </div>
+          </div>
+
+          <div class="form-group" id="percentageGroup" style="display: none;">
+            <label class="form-label">
+              Percentage of booking price
+              <svg class="info-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="16" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+              </svg>
+            </label>
+            <div class="penalty-amount-row">
+              <div class="percentage-input-wrapper">
+                <input type="number" class="percentage-input" value="0" min="0" max="100" id="penaltyPercentage">
+                <span class="percentage-suffix">%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-cancel" onclick="closeAddRuleModal()">Cancel</button>
+        <button class="btn-create-rule" onclick="createRule()">Create rule</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const token = localStorage.getItem('auth_token');
+    if (!token) {
+      window.location.href = '/login';
+    }
+
+    // State
+    let currentRuleType = 'classes';
+    let classesRules = [];
+    let appointmentsRules = [];
+
+    // Tab switching
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        document.getElementById(`${btn.dataset.tab}Tab`).classList.add('active');
+      });
+    });
+
+    // Credit type descriptions
+    const descriptions = {
+      no_credits: 'Customers can cancel their attendance but get no automatic credit. They need to contact me/us directly if they want to claim the credit and I/we can then decide to do so in their customer profile.',
+      credits_packs: 'Customers can cancel their attendance but get a credit only for tickets using a punch card or membership, not single purchases. If the cancellation is done before the cancellation cut-off time for getting a credit, they get their credit back automatically.',
+      credits_everything: 'Customers can cancel their attendance and get a credit if they make it before the cancellation cut-off time, regardless of purchase type.'
+    };
+
+    // Credit type toggle for both tabs
+    document.querySelectorAll('.credit-type-toggle').forEach(container => {
+      container.querySelectorAll('.credit-type-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          container.querySelectorAll('.credit-type-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+
+          const isClasses = container.closest('.tab-content').id === 'classesTab';
+          const descriptionEl = document.getElementById(isClasses ? 'classesDescription' : 'appointmentsDescription');
+          descriptionEl.textContent = descriptions[btn.dataset.type];
+        });
+      });
+    });
+
+    // Toggle late cancel settings
+    function toggleLateCancelSettings(type) {
+      const checkbox = document.getElementById(`trackLateCancel${type.charAt(0).toUpperCase() + type.slice(1)}`);
+      const settings = document.getElementById(`lateCancelSettings${type.charAt(0).toUpperCase() + type.slice(1)}`);
+      settings.classList.toggle('show', checkbox.checked);
+    }
+
+    // Modal functions
+    function openAddRuleModal(type) {
+      currentRuleType = type;
+      document.getElementById('addRuleModal').classList.add('show');
+    }
+
+    function closeAddRuleModal() {
+      document.getElementById('addRuleModal').classList.remove('show');
+    }
+
+    // Booking type toggle
+    function selectBookingType(value) {
+      document.querySelectorAll('#bookingTypeToggle .toggle-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.value === value);
+      });
+      document.getElementById('membershipSelectGroup').classList.toggle('show', value === 'with_membership');
+    }
+
+    // Charge frequency toggle
+    function selectChargeFrequency(value) {
+      document.querySelectorAll('#chargeFrequencyToggle .toggle-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.value === value);
+      });
+    }
+
+    // Period type toggle
+    function selectPeriodType(value) {
+      document.querySelectorAll('#periodTypeToggle .toggle-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.value === value);
+      });
+    }
+
+    // Penalty type toggle
+    function selectPenaltyType(value) {
+      document.querySelectorAll('#penaltyTypeToggle .toggle-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.value === value);
+      });
+
+      const fixedGroup = document.getElementById('fixedAmountGroup');
+      const percentageGroup = document.getElementById('percentageGroup');
+
+      if (value === 'fixed') {
+        fixedGroup.style.display = 'block';
+        percentageGroup.style.display = 'none';
+      } else if (value === 'percentage') {
+        fixedGroup.style.display = 'none';
+        percentageGroup.style.display = 'block';
+      } else {
+        fixedGroup.style.display = 'block';
+        percentageGroup.style.display = 'block';
+      }
+    }
+
+    // Create rule
+    function createRule() {
+      const rule = {
+        id: Date.now(),
+        penaltyFor: document.getElementById('penaltyFor').value,
+        bookingType: document.querySelector('#bookingTypeToggle .toggle-btn.active').dataset.value,
+        membership: document.getElementById('membershipSelect').value,
+        chargeFrequency: document.querySelector('#chargeFrequencyToggle .toggle-btn.active').dataset.value,
+        chargeCount: document.getElementById('chargeCount').value,
+        periodType: document.querySelector('#periodTypeToggle .toggle-btn.active').dataset.value,
+        periodValue: document.getElementById('periodValue').value,
+        periodUnit: document.getElementById('periodUnit').value,
+        penaltyType: document.querySelector('#penaltyTypeToggle .toggle-btn.active').dataset.value,
+        penaltyAmount: document.getElementById('penaltyAmount').value,
+        penaltyPercentage: document.getElementById('penaltyPercentage').value
+      };
+
+      if (currentRuleType === 'classes') {
+        classesRules.push(rule);
+        renderRules('classes');
+      } else {
+        appointmentsRules.push(rule);
+        renderRules('appointments');
+      }
+
+      closeAddRuleModal();
+    }
+
+    // Render rules
+    function renderRules(type) {
+      const rules = type === 'classes' ? classesRules : appointmentsRules;
+      const container = document.getElementById(`${type}RulesList`);
+
+      if (rules.length === 0) {
+        container.innerHTML = '';
+        return;
+      }
+
+      container.innerHTML = rules.map(rule => `
+        <div class="rule-card">
+          <div class="rule-info">
+            <div class="rule-title">${rule.penaltyFor === 'late_cancellations' ? 'Late Cancellation' : 'No-Show'} Penalty</div>
+            <div class="rule-details">
+              ${rule.bookingType === 'with_membership' ? 'Bookings with membership' : 'Bookings without membership'} -
+              ${rule.chargeFrequency} ${rule.chargeCount} times in ${rule.periodValue} ${rule.periodUnit} -
+              ZAR ${rule.penaltyAmount}${rule.penaltyType !== 'fixed' ? ` + ${rule.penaltyPercentage}%` : ''}
+            </div>
+          </div>
+          <div class="rule-actions">
+            <button class="btn-icon" onclick="editRule('${type}', ${rule.id})">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+              </svg>
+            </button>
+            <button class="btn-icon" onclick="deleteRule('${type}', ${rule.id})">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Delete rule
+    function deleteRule(type, id) {
+      if (confirm('Are you sure you want to delete this rule?')) {
+        if (type === 'classes') {
+          classesRules = classesRules.filter(r => r.id !== id);
+        } else {
+          appointmentsRules = appointmentsRules.filter(r => r.id !== id);
+        }
+        renderRules(type);
+      }
+    }
+
+    // Edit rule (placeholder)
+    function editRule(type, id) {
+      alert('Edit functionality coming soon');
+    }
+
+    // Apply changes
+    function applyChanges(type) {
+      // TODO: Save to backend
+      alert(`${type.charAt(0).toUpperCase() + type.slice(1)} cancellation policy saved!`);
+    }
+
+    // Close modal on overlay click
+    document.getElementById('addRuleModal').addEventListener('click', function(e) {
+      if (e.target === this) {
+        closeAddRuleModal();
+      }
+    });
+  </script>
+</body>
+</html>

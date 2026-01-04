@@ -472,6 +472,11 @@ app.get('/studio/class-settings', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'studio-class-settings.html'));
 });
 
+// Settings - Attendance Rules (Cancellation Policy)
+app.get('/settings/attendance-rules', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'attendance-rules.html'));
+});
+
 // Public booking page (no auth required)
 app.get('/book/:tenantSlug', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'booking-public.html'));
