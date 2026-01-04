@@ -614,8 +614,16 @@
       color: var(--purple-700, #6D28D9);
     }
 
-    .toggle-btn:hover:not(.active) {
+    .toggle-btn:hover:not(.active):not(:disabled) {
       background: var(--gray-50);
+    }
+
+    .toggle-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      background: var(--gray-100);
+      color: var(--gray-400);
+      border-color: var(--gray-200);
     }
 
     /* Charge condition row */
@@ -1537,6 +1545,20 @@
         btn.classList.toggle('active', btn.dataset.value === value);
       });
       document.getElementById('membershipSelectGroup').classList.toggle('show', value === 'with_membership');
+
+      // Disable "During membership period" when booking without membership
+      const membershipPeriodBtn = document.querySelector('#periodTypeToggle .toggle-btn[data-value="membership_period"]');
+      const inPastBtn = document.querySelector('#periodTypeToggle .toggle-btn[data-value="in_past"]');
+
+      if (value === 'without_membership') {
+        membershipPeriodBtn.disabled = true;
+        // If membership period was selected, switch to "In the past"
+        if (membershipPeriodBtn.classList.contains('active')) {
+          selectPeriodType('in_past');
+        }
+      } else {
+        membershipPeriodBtn.disabled = false;
+      }
     }
 
     // Charge frequency toggle
@@ -1548,6 +1570,10 @@
 
     // Period type toggle
     function selectPeriodType(value) {
+      const targetBtn = document.querySelector(`#periodTypeToggle .toggle-btn[data-value="${value}"]`);
+      // Don't select if disabled
+      if (targetBtn && targetBtn.disabled) return;
+
       document.querySelectorAll('#periodTypeToggle .toggle-btn').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.value === value);
       });
