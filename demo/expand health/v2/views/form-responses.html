@@ -14,7 +14,7 @@
     <aside class="sidebar">
       <div class="sidebar-header">
         <div class="logo-small">
-          <span class="logo-icon">✦</span>
+          <span class="logo-icon">âœ¦</span>
           <span class="logo-text">ExpandHealth</span>
         </div>
       </div>
@@ -130,7 +130,7 @@
 
       <div class="sidebar-footer">
         <button class="ask-ai-btn" onclick="openQuickNotes()">
-          <span>📝</span>
+          <span>ðŸ“</span>
           <span>Quick Notes</span>
         </button>
       </div>
@@ -141,7 +141,7 @@
       <!-- Form Tabs Header -->
       <header class="form-header">
         <a href="/forms" class="back-link">
-          <span>‹</span>
+          <span>â€¹</span>
           <span>Back to Forms</span>
         </a>
 
@@ -172,7 +172,7 @@
         <div class="responses-header">
           <p class="response-count" id="responseCount">0 lead responses</p>
           <div class="search-box">
-            <span class="search-icon">🔍</span>
+            <span class="search-icon">ðŸ”</span>
             <input type="text" id="searchInput" placeholder="Search responses" oninput="filterResponses()">
           </div>
         </div>
@@ -196,7 +196,7 @@
           <h3>No Responses Yet</h3>
           <p>Share your form to start collecting responses</p>
           <button class="btn-primary" onclick="copyFormLink()">
-            📋 Copy Form Link
+            ðŸ“‹ Copy Form Link
           </button>
         </div>
 
@@ -207,15 +207,15 @@
               <tr>
                 <th class="sortable" onclick="sortBy('name')">
                   Responder Name
-                  <span class="sort-icon">⇅</span>
+                  <span class="sort-icon">â‡…</span>
                 </th>
                 <th class="sortable" onclick="sortBy('email')">
                   Email Address
-                  <span class="sort-icon">⇅</span>
+                  <span class="sort-icon">â‡…</span>
                 </th>
                 <th class="sortable" onclick="sortBy('date')">
                   Received Date
-                  <span class="sort-icon">⇅</span>
+                  <span class="sort-icon">â‡…</span>
                 </th>
                 <th>Actions</th>
               </tr>
@@ -235,7 +235,7 @@
     <div class="modal-content modal-large">
       <div class="modal-header">
         <h2>Response Details</h2>
-        <button class="modal-close" onclick="closeDetailModal()">✕</button>
+        <button class="modal-close" onclick="closeDetailModal()">âœ•</button>
       </div>
 
       <div class="modal-body">
@@ -264,7 +264,7 @@
         <!-- AI Summary Section -->
         <div class="ai-summary-section" id="aiSummarySection">
           <div class="ai-summary-header">
-            <h3>✨ AI Summary</h3>
+            <h3>âœ¨ AI Summary</h3>
             <button class="btn-outline-small" id="generateSummaryBtn" onclick="generateAISummary()">
               Generate Summary
             </button>
@@ -292,10 +292,10 @@
       <div class="modal-footer">
         <button class="btn-secondary" onclick="closeDetailModal()">Close</button>
         <button class="btn-danger" id="rejectBtn" onclick="rejectResponse()">
-          ✕ Reject
+          âœ• Reject
         </button>
         <button class="btn-success" id="approveBtn" onclick="approveResponse()">
-          ✓ Approve
+          âœ“ Approve
         </button>
       </div>
     </div>
@@ -316,7 +316,7 @@
   <div id="quickNotesPanel" class="quick-notes-panel" style="display: none;">
     <div class="quick-notes-header">
       <h3>Quick Notes</h3>
-      <button class="close-panel" onclick="closeQuickNotes()">×</button>
+      <button class="close-panel" onclick="closeQuickNotes()">Ã—</button>
     </div>
     <div class="quick-notes-content">
       <textarea id="quickNotesText" placeholder="Write your notes here..."></textarea>

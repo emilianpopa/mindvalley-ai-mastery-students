@@ -16,7 +16,7 @@
     <aside class="sidebar">
       <div class="sidebar-header">
         <div class="logo-small">
-          <span class="logo-icon">✦</span>
+          <span class="logo-icon">âœ¦</span>
           <span class="logo-text">ExpandHealth</span>
         </div>
       </div>
@@ -132,7 +132,7 @@
 
       <div class="sidebar-footer">
         <button class="ask-ai-btn" onclick="window.chatWidget && window.chatWidget.toggleChat()">
-          <span>✨</span>
+          <span>âœ¨</span>
           <span>Ask AI</span>
         </button>
       </div>
@@ -147,14 +147,14 @@
           <p class="breadcrumb">Active treatment protocols assigned to clients</p>
         </div>
         <div class="header-right">
-          <button class="icon-btn">🔔</button>
+          <button class="icon-btn">ðŸ””</button>
           <div class="user-menu">
             <img src="https://ui-avatars.com/api/?name=Admin+User&background=0F766E&color=fff" alt="User" class="user-avatar">
             <div class="user-info">
               <p class="user-name" id="userName">Loading...</p>
               <p class="user-role" id="userRole">Admin</p>
             </div>
-            <button class="icon-btn" onclick="window.auth.logout()">🚪</button>
+            <button class="icon-btn" onclick="window.auth.logout()">ðŸšª</button>
           </div>
         </div>
       </header>
@@ -164,7 +164,7 @@
         <!-- Stats Cards -->
         <div class="stats-grid">
           <div class="stat-card">
-            <div class="stat-icon">📋</div>
+            <div class="stat-icon">ðŸ“‹</div>
             <div class="stat-info">
               <p class="stat-label">Active Protocols</p>
               <p class="stat-value" id="activeProtocols">0</p>
@@ -172,7 +172,7 @@
           </div>
 
           <div class="stat-card">
-            <div class="stat-icon">✅</div>
+            <div class="stat-icon">âœ…</div>
             <div class="stat-info">
               <p class="stat-label">Completed</p>
               <p class="stat-value" id="completedProtocols">0</p>
@@ -180,7 +180,7 @@
           </div>
 
           <div class="stat-card">
-            <div class="stat-icon">👥</div>
+            <div class="stat-icon">ðŸ‘¥</div>
             <div class="stat-info">
               <p class="stat-label">Clients on Protocol</p>
               <p class="stat-value" id="clientsCount">0</p>
@@ -188,7 +188,7 @@
           </div>
 
           <div class="stat-card">
-            <div class="stat-icon">🔄</div>
+            <div class="stat-icon">ðŸ”„</div>
             <div class="stat-info">
               <p class="stat-label">Starting This Week</p>
               <p class="stat-value" id="startingThisWeek">0</p>
@@ -200,7 +200,7 @@
         <div class="actions-bar">
           <div class="search-filter-group">
             <div class="search-box">
-              <span class="search-icon">🔍</span>
+              <span class="search-icon">ðŸ”</span>
               <input type="text" id="searchInput" placeholder="Search by client name...">
             </div>
 
@@ -218,7 +218,7 @@
           </div>
 
           <button class="btn-primary" onclick="openAssignModal()">
-            <span>➕</span>
+            <span>âž•</span>
             <span>Assign Protocol</span>
           </button>
         </div>
@@ -252,20 +252,20 @@
 
         <!-- Empty State -->
         <div id="emptyState" class="empty-state" style="display: none;">
-          <div class="empty-icon">📋</div>
+          <div class="empty-icon">ðŸ“‹</div>
           <h3>No Protocols Yet</h3>
           <p>Assign protocol templates to clients to get started</p>
           <button class="btn-primary" onclick="openAssignModal()">
-            <span>➕</span>
+            <span>âž•</span>
             <span>Assign First Protocol</span>
           </button>
         </div>
 
         <!-- Pagination -->
         <div id="pagination" class="pagination" style="display: none;">
-          <button id="prevPage" class="pagination-btn" disabled>← Previous</button>
+          <button id="prevPage" class="pagination-btn" disabled>â† Previous</button>
           <span id="pageInfo" class="page-info">Page 1 of 1</span>
-          <button id="nextPage" class="pagination-btn" disabled>Next →</button>
+          <button id="nextPage" class="pagination-btn" disabled>Next â†’</button>
         </div>
       </div>
     </main>
@@ -277,7 +277,7 @@
     <div class="modal-content">
       <div class="modal-header">
         <h2>Assign Protocol to Client</h2>
-        <button class="modal-close" onclick="closeAssignModal()">×</button>
+        <button class="modal-close" onclick="closeAssignModal()">Ã—</button>
       </div>
 
       <div class="modal-body">
@@ -310,7 +310,7 @@
       <div class="modal-footer">
         <button class="btn-secondary" onclick="closeAssignModal()">Cancel</button>
         <button class="btn-primary" onclick="assignProtocol()" id="assignBtn">
-          <span>💾</span>
+          <span>ðŸ’¾</span>
           <span>Assign Protocol</span>
         </button>
       </div>

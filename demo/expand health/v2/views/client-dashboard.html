@@ -19,7 +19,7 @@
     <aside class="sidebar">
       <div class="sidebar-header">
         <div class="logo-small">
-          <span class="logo-icon">✦</span>
+          <span class="logo-icon">âœ¦</span>
           <span class="logo-text">ExpandHealth</span>
         </div>
       </div>
@@ -149,7 +149,7 @@
       <header class="header">
         <div class="header-left">
           <p class="breadcrumb">
-            <a href="/">Home</a> → <a href="/clients">Clients</a> → <span id="breadcrumbName">Loading...</span>
+            <a href="/">Home</a> â†’ <a href="/clients">Clients</a> â†’ <span id="breadcrumbName">Loading...</span>
           </p>
         </div>
         <div class="header-right">
@@ -399,7 +399,7 @@
                     <span class="stat-value" id="chronoAge">--</span>
                   </div>
                   <div class="age-difference" id="ageDifference" style="display: none;">
-                    <span class="diff-arrow">↓</span>
+                    <span class="diff-arrow">â†“</span>
                     <span class="diff-value">-- years younger</span>
                   </div>
                 </div>
@@ -420,28 +420,28 @@
               </div>
               <div class="vitals-grid">
                 <div class="vital-item">
-                  <span class="vital-icon">⚖️</span>
+                  <span class="vital-icon">âš–ï¸</span>
                   <div class="vital-info">
                     <span class="vital-label">Weight</span>
                     <span class="vital-value" id="vitalWeight">-- <small>kg</small></span>
                   </div>
                 </div>
                 <div class="vital-item">
-                  <span class="vital-icon">📏</span>
+                  <span class="vital-icon">ðŸ“</span>
                   <div class="vital-info">
                     <span class="vital-label">Height</span>
                     <span class="vital-value" id="vitalHeight">-- <small>cm</small></span>
                   </div>
                 </div>
                 <div class="vital-item">
-                  <span class="vital-icon">📊</span>
+                  <span class="vital-icon">ðŸ“Š</span>
                   <div class="vital-info">
                     <span class="vital-label">BMI</span>
                     <span class="vital-value" id="vitalBMI">--</span>
                   </div>
                 </div>
                 <div class="vital-item">
-                  <span class="vital-icon">❤️</span>
+                  <span class="vital-icon">â¤ï¸</span>
                   <div class="vital-info">
                     <span class="vital-label">Blood Pressure</span>
                     <span class="vital-value" id="vitalBP">-- <small>mmHg</small></span>
@@ -739,7 +739,7 @@
             <h2>Labs & Tests</h2>
             <div class="header-actions">
               <button class="btn-primary" onclick="openUploadLabModal()">
-                <span>📤</span>
+                <span>ðŸ“¤</span>
                 <span>Upload New File</span>
               </button>
             </div>
@@ -899,7 +899,7 @@
   <div id="rightPanel" class="right-panel" style="display: none;">
     <div class="panel-header">
       <h3>Notes on the Go</h3>
-      <button class="close-panel" onclick="closeRightPanel()">×</button>
+      <button class="close-panel" onclick="closeRightPanel()">Ã—</button>
     </div>
     <div class="panel-content">
       <textarea id="quickNotes" placeholder="Quick notes about this client..."></textarea>
@@ -927,7 +927,7 @@
     <div class="modal-container">
       <div class="modal-header">
         <h2>Send Form to Client</h2>
-        <button class="close-modal" onclick="closeSendFormModal()">×</button>
+        <button class="close-modal" onclick="closeSendFormModal()">Ã—</button>
       </div>
       <div class="modal-body">
         <p class="modal-description">Select a form and choose how to send it to the client. The form will be automatically linked to their profile.</p>
@@ -956,7 +956,7 @@
         <!-- Step 2: Generated Link + Send Options -->
         <div id="sendFormStep2" style="display: none;">
           <div class="generated-link-success">
-            <div class="success-icon">✅</div>
+            <div class="success-icon">âœ…</div>
             <p>Form link created successfully!</p>
           </div>
 
@@ -964,7 +964,7 @@
             <label>Form Link</label>
             <div class="link-display">
               <input type="text" id="generatedFormLink" class="form-input" readonly>
-              <button class="btn-icon" onclick="copyFormLink()" title="Copy Link">📋</button>
+              <button class="btn-icon" onclick="copyFormLink()" title="Copy Link">ðŸ“‹</button>
             </div>
             <p class="link-expiry-info" id="formLinkExpiry"></p>
           </div>
@@ -973,15 +973,15 @@
             <p class="send-options-label">Share this link:</p>
             <div class="send-options-buttons">
               <button class="send-option-btn" onclick="copyFormLink()">
-                <span>📋</span>
+                <span>ðŸ“‹</span>
                 <span>Copy Link</span>
               </button>
               <button class="send-option-btn" onclick="sendFormViaEmail()">
-                <span>📧</span>
+                <span>ðŸ“§</span>
                 <span>Send Email</span>
               </button>
               <button class="send-option-btn" onclick="sendFormViaWhatsApp()">
-                <span>💬</span>
+                <span>ðŸ’¬</span>
                 <span>WhatsApp</span>
               </button>
             </div>
@@ -994,7 +994,7 @@
               <textarea id="emailMessage" class="form-textarea" rows="3" placeholder="Add a personal message to include in the email..."></textarea>
             </div>
             <button class="btn-primary" onclick="confirmSendEmail()" style="width: 100%;">
-              <span>📧</span>
+              <span>ðŸ“§</span>
               <span>Send Email Now</span>
             </button>
           </div>
@@ -1013,7 +1013,7 @@
     <div class="modal-container modal-large">
       <div class="modal-header">
         <h2>New Consultation Note</h2>
-        <button class="close-modal" onclick="closeNewNoteModal()">×</button>
+        <button class="close-modal" onclick="closeNewNoteModal()">Ã—</button>
       </div>
       <div class="modal-body">
         <p class="modal-description">Create a consultation note with speech-to-text input and AI scribe assistance.</p>
@@ -1038,11 +1038,11 @@
             <label for="noteContent" style="margin-bottom: 0;">Note Content</label>
             <div class="note-input-controls">
               <button class="btn-icon" id="voiceInputBtn" onclick="toggleVoiceInput()" title="Voice Input">
-                <span id="voiceIcon">🎤</span>
+                <span id="voiceIcon">ðŸŽ¤</span>
                 <span id="voiceText">Start Voice</span>
               </button>
               <button class="btn-icon" id="aiScribeBtn" onclick="toggleAIScribe()" title="AI Scribe">
-                <span>✨</span>
+                <span>âœ¨</span>
                 <span>AI Scribe</span>
               </button>
             </div>
@@ -1053,7 +1053,7 @@
           </div>
           <textarea id="noteContent" class="form-textarea" rows="8" placeholder="Enter consultation notes here, or use voice input..."></textarea>
           <div class="note-helper-text">
-            💡 Tip: Use voice input for faster note-taking during consultations
+            ðŸ’¡ Tip: Use voice input for faster note-taking during consultations
           </div>
         </div>
 
@@ -1085,7 +1085,7 @@
     <div class="modal-container">
       <div class="modal-header">
         <h2>Upload New File</h2>
-        <button class="close-modal" onclick="closeUploadLabModal()">×</button>
+        <button class="close-modal" onclick="closeUploadLabModal()">Ã—</button>
       </div>
       <div class="modal-body">
         <div class="form-group">
@@ -1118,17 +1118,17 @@
           <div class="file-upload-zone" id="fileUploadZone">
             <input type="file" id="labFileInput" accept=".pdf,.doc,.docx" style="display: none;">
             <div class="upload-placeholder" id="uploadPlaceholder">
-              <span class="upload-icon">📄</span>
+              <span class="upload-icon">ðŸ“„</span>
               <p class="upload-text">Drag and drop a file here or <span class="upload-link">browse</span></p>
               <p class="upload-hint">Supports PDF and Word documents (max 50MB)</p>
             </div>
             <div class="upload-preview" id="uploadPreview" style="display: none;">
-              <span class="file-icon">📄</span>
+              <span class="file-icon">ðŸ“„</span>
               <div class="file-info">
                 <p class="file-name" id="selectedFileName">filename.pdf</p>
                 <p class="file-size" id="selectedFileSize">2.3 MB</p>
               </div>
-              <button class="btn-icon-small" onclick="clearFileSelection()">✕</button>
+              <button class="btn-icon-small" onclick="clearFileSelection()">âœ•</button>
             </div>
           </div>
         </div>
@@ -1194,7 +1194,7 @@
           <!-- Summary Section -->
           <div class="lab-summary-section">
             <div class="lab-section-header">
-              <span class="lab-section-icon">✨</span>
+              <span class="lab-section-icon">âœ¨</span>
               <h3>Summary</h3>
               <span class="ai-badge">AI</span>
             </div>
@@ -1202,7 +1202,7 @@
               <p class="summary-placeholder">Click below to generate an AI summary of this document.</p>
             </div>
             <button class="btn-generate-summary" id="generateLabSummaryBtn" onclick="generateLabSummary()">
-              ✨ Generate Summary
+              âœ¨ Generate Summary
             </button>
           </div>
 

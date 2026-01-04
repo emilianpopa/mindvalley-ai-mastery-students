@@ -3682,7 +3682,7 @@
                         <polyline points="14 2 14 8 20 8"></polyline>
                       </svg>
                       <span id="emailAttachmentName" style="flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></span>
-                      <button type="button" class="remove-file-btn" onclick="removeEmailAttachment()">×</button>
+                      <button type="button" class="remove-file-btn" onclick="removeEmailAttachment()">Ã—</button>
                     </div>
                     <input type="file" id="emailAttachmentInput" style="display: none;" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg" onchange="handleEmailAttachmentSelect(event)">
                   </div>
@@ -3880,7 +3880,7 @@
           <div class="tag-applies-chips" id="tagAppliesChips">
             <span class="tag-chip">
               Classes
-              <button class="tag-chip-remove" onclick="removeTagApplies('classes')">×</button>
+              <button class="tag-chip-remove" onclick="removeTagApplies('classes')">Ã—</button>
             </span>
           </div>
         </div>
@@ -4324,7 +4324,7 @@
               </div>
             </div>
             <div class="class-participants">
-              <span class="participant-count">${cls.current_participants || 0}/${cls.max_participants || '∞'}</span>
+              <span class="participant-count">${cls.current_participants || 0}/${cls.max_participants || 'âˆž'}</span>
             </div>
             <div class="class-actions">
               <button class="class-action-btn" onclick="viewClass(${cls.id})" title="View">
@@ -5231,7 +5231,7 @@
       uploadText.innerHTML = `
         <div class="image-preview-container">
           <img src="${imageData}" alt="${fileName}" class="image-preview">
-          <button type="button" class="image-remove-btn" onclick="removeImage(event, '${type}')" title="Remove image">×</button>
+          <button type="button" class="image-remove-btn" onclick="removeImage(event, '${type}')" title="Remove image">Ã—</button>
         </div>
       `;
     }
