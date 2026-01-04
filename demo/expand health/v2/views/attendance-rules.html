@@ -733,6 +733,56 @@
       font-size: 0.875rem;
     }
 
+    /* Percentage slider */
+    .percentage-slider-container {
+      margin-top: 16px;
+    }
+
+    .percentage-slider {
+      width: 100%;
+      height: 6px;
+      -webkit-appearance: none;
+      appearance: none;
+      background: var(--gray-200);
+      border-radius: 3px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .percentage-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      background: var(--purple-600, #7C3AED);
+      border-radius: 50%;
+      cursor: pointer;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      transition: transform 0.15s ease;
+    }
+
+    .percentage-slider::-webkit-slider-thumb:hover {
+      transform: scale(1.1);
+    }
+
+    .percentage-slider::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      background: var(--purple-600, #7C3AED);
+      border-radius: 50%;
+      cursor: pointer;
+      border: none;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .slider-labels {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 6px;
+      font-size: 0.75rem;
+      color: var(--gray-500);
+    }
+
     .modal-footer {
       display: flex;
       justify-content: flex-end;
@@ -1354,7 +1404,7 @@
 
           <div class="form-group" id="percentageGroup" style="display: none;">
             <label class="form-label">
-              Percentage of booking price
+              Percentage of booking price (%)
               <svg class="info-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="12" cy="12" r="10"></circle>
                 <line x1="12" y1="16" x2="12" y2="12"></line>
@@ -1362,9 +1412,14 @@
               </svg>
             </label>
             <div class="penalty-amount-row">
-              <div class="percentage-input-wrapper">
-                <input type="number" class="percentage-input" value="0" min="0" max="100" id="penaltyPercentage">
-                <span class="percentage-suffix">%</span>
+              <span class="currency-prefix">%</span>
+              <input type="number" class="amount-input" value="0" min="0" max="100" id="penaltyPercentage" oninput="syncPercentageSlider()">
+            </div>
+            <div class="percentage-slider-container">
+              <input type="range" class="percentage-slider" min="0" max="100" value="0" id="penaltyPercentageSlider" oninput="syncPercentageInput()">
+              <div class="slider-labels">
+                <span>0%</span>
+                <span>100%</span>
               </div>
             </div>
           </div>
@@ -1598,6 +1653,21 @@
         fixedGroup.style.display = 'block';
         percentageGroup.style.display = 'block';
       }
+    }
+
+    // Sync percentage input and slider
+    function syncPercentageSlider() {
+      const input = document.getElementById('penaltyPercentage');
+      const slider = document.getElementById('penaltyPercentageSlider');
+      let value = parseInt(input.value) || 0;
+      value = Math.max(0, Math.min(100, value));
+      slider.value = value;
+    }
+
+    function syncPercentageInput() {
+      const input = document.getElementById('penaltyPercentage');
+      const slider = document.getElementById('penaltyPercentageSlider');
+      input.value = slider.value;
     }
 
     // Create rule
