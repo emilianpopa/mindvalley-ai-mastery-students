@@ -783,6 +783,32 @@
       color: var(--gray-500);
     }
 
+    /* AND divider */
+    .and-divider {
+      display: none;
+      align-items: center;
+      gap: 16px;
+      margin: 16px 0;
+    }
+
+    .and-divider.show {
+      display: flex;
+    }
+
+    .and-divider-line {
+      flex: 1;
+      height: 1px;
+      background: var(--gray-200);
+    }
+
+    .and-divider-text {
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--gray-400);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
     .modal-footer {
       display: flex;
       justify-content: flex-end;
@@ -1402,6 +1428,13 @@
             </div>
           </div>
 
+          <!-- AND divider (shown when both is selected) -->
+          <div class="and-divider" id="andDivider">
+            <div class="and-divider-line"></div>
+            <span class="and-divider-text">AND</span>
+            <div class="and-divider-line"></div>
+          </div>
+
           <div class="form-group" id="percentageGroup" style="display: none;">
             <label class="form-label">
               Percentage of booking price (%)
@@ -1642,16 +1675,20 @@
 
       const fixedGroup = document.getElementById('fixedAmountGroup');
       const percentageGroup = document.getElementById('percentageGroup');
+      const andDivider = document.getElementById('andDivider');
 
       if (value === 'fixed') {
         fixedGroup.style.display = 'block';
         percentageGroup.style.display = 'none';
+        andDivider.classList.remove('show');
       } else if (value === 'percentage') {
         fixedGroup.style.display = 'none';
         percentageGroup.style.display = 'block';
+        andDivider.classList.remove('show');
       } else {
         fixedGroup.style.display = 'block';
         percentageGroup.style.display = 'block';
+        andDivider.classList.add('show');
       }
     }
 
