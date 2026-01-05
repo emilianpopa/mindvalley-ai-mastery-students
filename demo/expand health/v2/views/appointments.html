@@ -810,7 +810,7 @@
                 </button>
               </div>
 
-              <!-- Location Dropdown -->
+              <!-- Location Dropdown (Main business location) -->
               <div class="filter-dropdown">
                 <button class="filter-dropdown-btn" onclick="toggleDropdown('locationDropdown')">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect></svg>
@@ -822,7 +822,26 @@
                 </div>
               </div>
 
-              <!-- Staff/Venue Dropdown -->
+              <!-- Venue/Room Dropdown -->
+              <div class="filter-dropdown">
+                <button class="filter-dropdown-btn" onclick="toggleDropdown('venueDropdown')" style="border-color: var(--purple-300);">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                  <span id="selectedVenue">Compression boot location</span>
+                  <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </button>
+                <div class="filter-dropdown-menu" id="venueDropdown">
+                  <div class="filter-dropdown-item" onclick="selectVenue('Compression boot location')">Compression boot location</div>
+                  <div class="filter-dropdown-item" onclick="selectVenue('Consult Room 3')">Consult Room 3</div>
+                  <div class="filter-dropdown-item" onclick="selectVenue('Drip Location')">Drip Location</div>
+                  <div class="filter-dropdown-item" onclick="selectVenue('Event Space')">Event Space</div>
+                  <div class="filter-dropdown-item" onclick="selectVenue('HBOT')">HBOT</div>
+                  <div class="filter-dropdown-item" onclick="selectVenue('Hocatt + Massage')">Hocatt + Massage</div>
+                  <div class="filter-dropdown-item" onclick="selectVenue('Ice bath 1')">Ice bath 1</div>
+                  <div class="filter-dropdown-item" onclick="selectVenue('Ice bath 2')">Ice bath 2</div>
+                </div>
+              </div>
+
+              <!-- Staff Dropdown -->
               <div class="filter-dropdown">
                 <button class="filter-dropdown-btn" onclick="toggleDropdown('staffDropdown')">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
@@ -1180,6 +1199,16 @@
     function selectLocation(name) {
       document.getElementById('selectedLocation').textContent = name;
       document.getElementById('locationDropdown').classList.remove('show');
+    }
+
+    function selectVenue(name) {
+      document.getElementById('selectedVenue').textContent = name;
+      // Update selection state
+      document.querySelectorAll('#venueDropdown .filter-dropdown-item').forEach(item => {
+        item.classList.toggle('selected', item.textContent === name);
+      });
+      document.getElementById('venueDropdown').classList.remove('show');
+      // Filter appointments by venue
     }
 
     function selectStaff(name, id) {
