@@ -276,6 +276,11 @@ app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'admin.html'));
 });
 
+// User account settings
+app.get('/account', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'account.html'));
+});
+
 app.get('/appointments', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'appointments.html'));
 });
