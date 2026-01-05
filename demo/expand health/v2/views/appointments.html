@@ -257,51 +257,6 @@
       color: var(--purple-700);
     }
 
-    /* Venue Search Input */
-    .venue-search-dropdown {
-      min-width: 200px;
-    }
-
-    .venue-search-input {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 12px;
-      background: white;
-      border: 1px solid var(--purple-300);
-      border-radius: 8px;
-      cursor: pointer;
-    }
-
-    .venue-search-input:hover,
-    .venue-search-input:focus-within {
-      border-color: var(--purple-500);
-    }
-
-    .venue-search-input svg {
-      color: var(--gray-400);
-      flex-shrink: 0;
-    }
-
-    .venue-search-input input {
-      border: none;
-      outline: none;
-      background: transparent;
-      font-size: 0.875rem;
-      color: var(--gray-700);
-      width: 100%;
-      min-width: 80px;
-    }
-
-    .venue-search-input input::placeholder {
-      color: var(--gray-400);
-    }
-
-    .venue-search-input .chevron {
-      margin-left: auto;
-      color: var(--gray-400);
-    }
-
     /* Staff/Venues Toggle */
     .staff-venues-toggle {
       display: inline-flex;
@@ -867,16 +822,34 @@
                 </div>
               </div>
 
-              <!-- Venue/Room Searchable Dropdown -->
-              <div class="filter-dropdown venue-search-dropdown">
-                <div class="venue-search-input" onclick="toggleDropdown('venueDropdown')">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-                  <input type="text" id="venueSearchInput" placeholder="Venue" oninput="filterVenues(this.value)" onfocus="showVenueDropdown()">
-                  <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="6 9 12 15 18 9"></polyline></svg>
+              <!-- Staff Dropdown (shown when Staff mode) -->
+              <div class="filter-dropdown" id="staffDropdownContainer">
+                <button class="filter-dropdown-btn" onclick="toggleDropdown('staffDropdown')">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                  <span id="selectedStaff">Avela Jafta</span>
+                  <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </button>
+                <div class="filter-dropdown-menu" id="staffDropdown">
+                  <div class="filter-dropdown-item" onclick="selectStaff('All Staff')">All Staff</div>
+                  <div class="filter-dropdown-item selected" onclick="selectStaff('Avela Jafta')">Avela Jafta</div>
+                  <div class="filter-dropdown-item" onclick="selectStaff('Chantel Newmark')">Chantel Newmark</div>
+                  <div class="filter-dropdown-item" onclick="selectStaff('Dr Melody Fourie')">Dr Melody Fourie</div>
+                  <div class="filter-dropdown-item" onclick="selectStaff('Emilian Popa')">Emilian Popa</div>
+                  <div class="filter-dropdown-item" onclick="selectStaff('Jack Harland')">Jack Harland</div>
+                  <div class="filter-dropdown-item" onclick="selectStaff('Karrin Bamber')">Karrin Bamber</div>
                 </div>
+              </div>
+
+              <!-- Venue/Room Dropdown (shown when Venues mode) -->
+              <div class="filter-dropdown" id="venueDropdownContainer" style="display: none;">
+                <button class="filter-dropdown-btn" onclick="toggleDropdown('venueDropdown')" style="border-color: var(--purple-300);">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                  <span id="selectedVenue">Compression boot location</span>
+                  <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </button>
                 <div class="filter-dropdown-menu" id="venueDropdown">
                   <div class="filter-dropdown-item" onclick="selectVenue('36457')">36457</div>
-                  <div class="filter-dropdown-item" onclick="selectVenue('Compression boot location')">Compression boot location</div>
+                  <div class="filter-dropdown-item selected" onclick="selectVenue('Compression boot location')">Compression boot location</div>
                   <div class="filter-dropdown-item" onclick="selectVenue('Consult Room 1')">Consult Room 1</div>
                   <div class="filter-dropdown-item" onclick="selectVenue('Consult Room 2')">Consult Room 2</div>
                   <div class="filter-dropdown-item" onclick="selectVenue('Consult Room 3')">Consult Room 3</div>
@@ -891,13 +864,15 @@
             </div>
 
             <div class="toolbar-right">
-              <!-- Zoom buttons -->
-              <div class="zoom-buttons">
-                <button class="zoom-btn" onclick="zoomOut()" title="Zoom out">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+              <!-- Staff/Venues Toggle -->
+              <div class="staff-venues-toggle">
+                <button class="staff-venues-btn active" data-mode="staff" onclick="setMode('staff')">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                  Staff
                 </button>
-                <button class="zoom-btn" onclick="zoomIn()" title="Zoom in">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+                <button class="staff-venues-btn" data-mode="venues" onclick="setMode('venues')">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                  Venues
                 </button>
               </div>
             </div>
@@ -909,6 +884,16 @@
               <span style="font-size: 0.75rem; color: var(--gray-500);">GMT+2</span>
             </div>
             <div class="toolbar-right">
+              <!-- Zoom buttons -->
+              <div class="zoom-buttons">
+                <button class="zoom-btn" onclick="zoomOut()" title="Zoom out">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+                </button>
+                <button class="zoom-btn" onclick="zoomIn()" title="Zoom in">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+                </button>
+              </div>
+
               <!-- Options button -->
               <div class="filter-dropdown">
                 <button class="toolbar-btn" onclick="toggleDropdown('optionsMenu')">
@@ -1190,7 +1175,7 @@
     }
 
     function selectVenue(name) {
-      document.getElementById('venueSearchInput').value = name;
+      document.getElementById('selectedVenue').textContent = name;
       // Update selection state
       document.querySelectorAll('#venueDropdown .filter-dropdown-item').forEach(item => {
         item.classList.toggle('selected', item.textContent === name);
@@ -1199,19 +1184,26 @@
       // Filter appointments by venue
     }
 
-    function showVenueDropdown() {
-      document.getElementById('venueDropdown').classList.add('show');
+    function selectStaff(name) {
+      document.getElementById('selectedStaff').textContent = name;
+      // Update selection state
+      document.querySelectorAll('#staffDropdown .filter-dropdown-item').forEach(item => {
+        item.classList.toggle('selected', item.textContent === name);
+      });
+      document.getElementById('staffDropdown').classList.remove('show');
+      // Filter appointments by staff
     }
 
-    function filterVenues(searchTerm) {
-      const items = document.querySelectorAll('#venueDropdown .filter-dropdown-item');
-      const term = searchTerm.toLowerCase();
-      items.forEach(item => {
-        const text = item.textContent.toLowerCase();
-        item.style.display = text.includes(term) ? 'flex' : 'none';
+    // Staff/Venues mode toggle
+    let currentMode = 'staff';
+    function setMode(mode) {
+      currentMode = mode;
+      document.querySelectorAll('.staff-venues-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.mode === mode);
       });
-      // Keep dropdown open while typing
-      document.getElementById('venueDropdown').classList.add('show');
+      // Show/hide appropriate dropdown
+      document.getElementById('staffDropdownContainer').style.display = mode === 'staff' ? 'block' : 'none';
+      document.getElementById('venueDropdownContainer').style.display = mode === 'venues' ? 'block' : 'none';
     }
 
     // Actions
