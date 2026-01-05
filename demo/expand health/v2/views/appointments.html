@@ -834,6 +834,82 @@
       align-items: center;
       gap: 12px;
     }
+
+    /* Clock Status Toast */
+    .clock-status-toast {
+      position: fixed;
+      bottom: 16px;
+      left: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      background: white;
+      border: 1px solid var(--gray-200);
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      z-index: 1000;
+      min-width: 140px;
+    }
+
+    .clock-status-toast.clocked-in {
+      border-left: 4px solid var(--green-500);
+    }
+
+    .clock-status-toast.clocked-out {
+      border-left: 4px solid var(--teal-500);
+    }
+
+    .clock-status-icon {
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .clock-status-icon.clocked-in svg {
+      color: var(--green-500);
+    }
+
+    .clock-status-icon.clocked-out svg {
+      color: var(--teal-500);
+    }
+
+    .clock-status-text {
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--gray-700);
+      flex: 1;
+    }
+
+    .clock-status-close {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 20px;
+      background: transparent;
+      border: none;
+      color: var(--gray-400);
+      cursor: pointer;
+      border-radius: 4px;
+      transition: all 0.15s;
+    }
+
+    .clock-status-close:hover {
+      background: var(--gray-100);
+      color: var(--gray-600);
+    }
+
+    .clock-status-close svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    .clock-status-toast.hidden {
+      display: none;
+    }
   </style>
 </head>
 <body>
@@ -1086,13 +1162,13 @@
                 <div class="user-dropdown-dashboard-email">emilian@expand.health</div>
                 <div class="user-dropdown-dashboard-label">Customer dashboard</div>
               </div>
-              <div class="user-dropdown-item">
+              <div class="user-dropdown-item" onclick="toggleClockStatus()">
                 <div class="user-dropdown-item-left">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <circle cx="12" cy="12" r="10"></circle>
                     <polyline points="12 6 12 12 16 14"></polyline>
                   </svg>
-                  Clock in
+                  <span id="clockMenuItem">Clock in</span>
                 </div>
               </div>
               <div class="user-dropdown-divider"></div>
@@ -1628,6 +1704,68 @@
         });
       }
     });
+
+    // Clock in/out functionality
+    let isClockedIn = localStorage.getItem('clock_status') === 'in';
+
+    function updateClockStatus() {
+      const toast = document.getElementById('clockStatusToast');
+      const icon = toast.querySelector('.clock-status-icon');
+      const text = toast.querySelector('.clock-status-text');
+      const menuItem = document.getElementById('clockMenuItem');
+
+      if (isClockedIn) {
+        toast.classList.remove('clocked-out');
+        toast.classList.add('clocked-in');
+        icon.classList.remove('clocked-out');
+        icon.classList.add('clocked-in');
+        icon.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>`;
+        text.textContent = 'Clocked in!';
+        if (menuItem) menuItem.textContent = 'Clock out';
+      } else {
+        toast.classList.remove('clocked-in');
+        toast.classList.add('clocked-out');
+        icon.classList.remove('clocked-in');
+        icon.classList.add('clocked-out');
+        icon.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>`;
+        text.textContent = 'Clocked out!';
+        if (menuItem) menuItem.textContent = 'Clock in';
+      }
+      toast.classList.remove('hidden');
+    }
+
+    function toggleClockStatus() {
+      isClockedIn = !isClockedIn;
+      localStorage.setItem('clock_status', isClockedIn ? 'in' : 'out');
+      updateClockStatus();
+    }
+
+    function hideClockToast() {
+      document.getElementById('clockStatusToast').classList.add('hidden');
+    }
+
+    // Initialize clock status on load
+    updateClockStatus();
   </script>
+
+  <!-- Clock Status Toast -->
+  <div class="clock-status-toast clocked-out" id="clockStatusToast">
+    <div class="clock-status-icon clocked-out">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="20 6 9 17 4 12"></polyline>
+      </svg>
+    </div>
+    <span class="clock-status-text">Clocked out!</span>
+    <button class="clock-status-close" onclick="hideClockToast()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    </button>
+  </div>
 </body>
 </html>
