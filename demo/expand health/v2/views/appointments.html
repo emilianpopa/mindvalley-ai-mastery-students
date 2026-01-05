@@ -70,6 +70,157 @@
       gap: 8px;
     }
 
+    /* Global Utility Bar */
+    .global-utility-bar {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 16px;
+      padding: 8px 24px;
+      background: white;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .utility-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      background: transparent;
+      border: none;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--gray-600);
+      cursor: pointer;
+      border-radius: 6px;
+      transition: all 0.15s;
+    }
+
+    .utility-btn:hover {
+      background: var(--gray-100);
+      color: var(--gray-900);
+    }
+
+    .utility-btn svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .utility-btn.feedback-btn {
+      color: var(--purple-600);
+    }
+
+    .utility-btn.feedback-btn:hover {
+      background: var(--purple-50);
+    }
+
+    .utility-divider {
+      width: 1px;
+      height: 20px;
+      background: var(--gray-200);
+    }
+
+    .utility-add-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .utility-add-label {
+      font-size: 0.8125rem;
+      color: var(--gray-500);
+    }
+
+    .utility-add-btn {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 6px 12px;
+      background: transparent;
+      border: 1px solid var(--gray-300);
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--gray-700);
+      cursor: pointer;
+      border-radius: 6px;
+      transition: all 0.15s;
+    }
+
+    .utility-add-btn:hover {
+      background: var(--gray-50);
+      border-color: var(--gray-400);
+    }
+
+    .utility-add-btn svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    .utility-notification-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      background: transparent;
+      border: none;
+      color: var(--gray-500);
+      cursor: pointer;
+      border-radius: 6px;
+      transition: all 0.15s;
+    }
+
+    .utility-notification-btn:hover {
+      background: var(--gray-100);
+      color: var(--gray-700);
+    }
+
+    .utility-notification-btn svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .utility-user-menu {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 8px;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      border-radius: 6px;
+      transition: all 0.15s;
+    }
+
+    .utility-user-menu:hover {
+      background: var(--gray-100);
+    }
+
+    .utility-user-avatar {
+      width: 28px;
+      height: 28px;
+      background: var(--purple-100);
+      color: var(--purple-700);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .utility-user-name {
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--gray-700);
+    }
+
+    .utility-user-menu svg {
+      width: 14px;
+      height: 14px;
+      color: var(--gray-400);
+    }
+
     .btn-checkout {
       display: flex;
       align-items: center;
@@ -748,6 +899,69 @@
     <!-- Main Content -->
     <main class="main-content">
       <div class="appointments-page">
+        <!-- Global Utility Bar -->
+        <div class="global-utility-bar">
+          <button class="utility-btn feedback-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+            Feedback
+          </button>
+          <div class="utility-divider"></div>
+          <div class="utility-add-group">
+            <span class="utility-add-label">Add:</span>
+            <button class="utility-add-btn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="8.5" cy="7" r="4"></circle>
+                <line x1="20" y1="8" x2="20" y2="14"></line>
+                <line x1="23" y1="11" x2="17" y2="11"></line>
+              </svg>
+              Customer
+            </button>
+            <button class="utility-add-btn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="8.5" cy="7" r="4"></circle>
+                <polyline points="17 11 19 13 23 9"></polyline>
+              </svg>
+              Lead
+            </button>
+          </div>
+          <div class="utility-divider"></div>
+          <button class="utility-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+              <line x1="8" y1="21" x2="16" y2="21"></line>
+              <line x1="12" y1="17" x2="12" y2="21"></line>
+            </svg>
+            POS
+          </button>
+          <button class="utility-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+            Schedule
+          </button>
+          <div class="utility-divider"></div>
+          <button class="utility-notification-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+            </svg>
+          </button>
+          <button class="utility-user-menu">
+            <div class="utility-user-avatar">EP</div>
+            <span class="utility-user-name">Emilian P.</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </button>
+        </div>
+
         <!-- Header -->
         <div class="appointments-header">
           <!-- Row 1: Business name + Checkout/Actions -->
