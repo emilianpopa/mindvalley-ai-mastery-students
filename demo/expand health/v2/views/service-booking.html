@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Book Service - Expand Health</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cline x1='20' y1='20' x2='80' y2='80' stroke='%230F766E' stroke-width='12' stroke-linecap='round'/%3E%3Cline x1='80' y1='20' x2='20' y2='80' stroke='%230F766E' stroke-width='12' stroke-linecap='round'/%3E%3C/svg%3E">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --purple-50: #f5f3ff;
+      --purple-100: #ede9fe;
+      --purple-200: #ddd6fe;
+      --purple-300: #c4b5fd;
+      --purple-400: #a78bfa;
+      --purple-500: #8b5cf6;
+      --purple-600: #7c3aed;
+      --purple-700: #6d28d9;
+      --gray-50: #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-300: #d1d5db;
+      --gray-400: #9ca3af;
+      --gray-500: #6b7280;
+      --gray-600: #4b5563;
+      --gray-700: #374151;
+      --gray-800: #1f2937;
+      --gray-900: #111827;
+      --teal-500: #14b8a6;
+      --teal-600: #0d9488;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: var(--gray-50);
+      min-height: 100vh;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 24px;
+      background: white;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo-icon {
+      width: 24px;
+      height: 24px;
+    }
+
+    .business-name {
+      font-size: 0.9375rem;
+      font-weight: 500;
+      color: var(--gray-700);
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .language-selector {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: white;
+      border: 1px solid var(--gray-200);
+      border-radius: 6px;
+      font-size: 0.875rem;
+      color: var(--gray-700);
+      cursor: pointer;
+    }
+
+    .language-selector:hover {
+      background: var(--gray-50);
+    }
+
+    .flag-icon {
+      width: 20px;
+      height: 14px;
+      border-radius: 2px;
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.875rem;
+      color: var(--gray-700);
+    }
+
+    .user-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--gray-200);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      color: var(--gray-600);
+    }
+
+    /* Main content */
+    .main-content {
+      max-width: 700px;
+      margin: 40px auto;
+      padding: 0 20px;
+    }
+
+    /* Business card */
+    .business-card {
+      background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 32px;
+    }
+
+    .business-card h1 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--gray-900);
+      margin-bottom: 4px;
+    }
+
+    .business-card p {
+      font-size: 0.875rem;
+      color: var(--gray-600);
+    }
+
+    /* Section title */
+    .section-header {
+      margin-bottom: 24px;
+    }
+
+    .section-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--gray-900);
+      margin-bottom: 4px;
+    }
+
+    .section-subtitle {
+      font-size: 0.875rem;
+      color: var(--gray-500);
+    }
+
+    /* Service card */
+    .service-card {
+      background: white;
+      border: 1px solid var(--gray-200);
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin-bottom: 24px;
+    }
+
+    .service-card-label {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      color: var(--gray-500);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 8px;
+    }
+
+    .service-card-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .service-card-name {
+      font-size: 1rem;
+      font-weight: 500;
+      color: var(--gray-900);
+    }
+
+    .service-card-price {
+      font-size: 1rem;
+      font-weight: 500;
+      color: var(--gray-900);
+    }
+
+    /* Additional spots section */
+    .additional-spots-card {
+      background: white;
+      border: 2px solid var(--purple-300);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    .additional-spots-label {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      color: var(--gray-500);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 16px;
+    }
+
+    .additional-spots-question {
+      font-size: 0.9375rem;
+      color: var(--gray-700);
+      margin-bottom: 12px;
+    }
+
+    /* Toggle switch */
+    .toggle-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .toggle-switch {
+      position: relative;
+      width: 48px;
+      height: 26px;
+      background: var(--gray-300);
+      border-radius: 13px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .toggle-switch.active {
+      background: var(--purple-500);
+    }
+
+    .toggle-switch::after {
+      content: '';
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 20px;
+      height: 20px;
+      background: white;
+      border-radius: 50%;
+      transition: transform 0.2s;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    }
+
+    .toggle-switch.active::after {
+      transform: translateX(22px);
+    }
+
+    .toggle-label {
+      font-size: 0.9375rem;
+      color: var(--gray-700);
+    }
+
+    /* Number selector */
+    .number-selector {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .number-selector-label {
+      font-size: 0.875rem;
+      color: var(--gray-600);
+    }
+
+    .number-select {
+      padding: 8px 32px 8px 12px;
+      border: 1px solid var(--gray-300);
+      border-radius: 6px;
+      font-size: 0.875rem;
+      color: var(--gray-700);
+      background: white;
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 8px center;
+    }
+
+    .number-select:focus {
+      outline: none;
+      border-color: var(--purple-400);
+      box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+    }
+
+    /* Additional spot form */
+    .additional-spot-form {
+      margin-bottom: 20px;
+    }
+
+    .additional-spot-title {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--gray-700);
+      margin-bottom: 12px;
+    }
+
+    .form-row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .form-input {
+      flex: 1;
+      padding: 12px 14px;
+      border: 1px solid var(--gray-300);
+      border-radius: 8px;
+      font-size: 0.875rem;
+      color: var(--gray-700);
+    }
+
+    .form-input::placeholder {
+      color: var(--gray-400);
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: var(--purple-400);
+      box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+    }
+
+    /* Continue button */
+    .btn-continue {
+      display: inline-flex;
+      align-items: center;
+      padding: 12px 24px;
+      background: transparent;
+      border: none;
+      color: var(--purple-600);
+      font-size: 0.9375rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+
+    .btn-continue:hover {
+      color: var(--purple-700);
+    }
+
+    /* Hidden sections */
+    .hidden {
+      display: none;
+    }
+
+    /* Responsive */
+    @media (max-width: 480px) {
+      .form-row {
+        flex-direction: column;
+      }
+
+      .header-right {
+        gap: 8px;
+      }
+
+      .user-info span {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="header-left">
+      <svg class="logo-icon" viewBox="0 0 24 24" fill="none">
+        <path d="M4 4L11 12L4 20" stroke="#0F766E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M20 4L13 12L20 20" stroke="#0F766E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span class="business-name">Expand Health (Pty) ltd</span>
+    </div>
+    <div class="header-right">
+      <button class="language-selector">
+        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 30'%3E%3Crect fill='%23002868' width='60' height='30'/%3E%3Cg fill='%23fff'%3E%3Crect y='3.5' width='60' height='2.3'/%3E%3Crect y='9.2' width='60' height='2.3'/%3E%3Crect y='14.9' width='60' height='2.3'/%3E%3Crect y='20.6' width='60' height='2.3'/%3E%3Crect y='26.3' width='60' height='2.3'/%3E%3C/g%3E%3Crect fill='%23002868' width='24' height='16'/%3E%3C/svg%3E" class="flag-icon" alt="US">
+        English
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="6 9 12 15 18 9"></polyline>
+        </svg>
+      </button>
+      <div class="user-info">
+        <span id="userName">Emilian Popa</span>
+        <div class="user-avatar" id="userAvatar">EP</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <!-- Business Card -->
+    <div class="business-card">
+      <h1>Expand Health</h1>
+      <p>with Expand Health (Pty) ltd</p>
+    </div>
+
+    <!-- Section Header -->
+    <div class="section-header">
+      <h2 class="section-title">Book your appointment</h2>
+      <p class="section-subtitle">Pick a service and select from available times.</p>
+    </div>
+
+    <!-- Service Card -->
+    <div class="service-card">
+      <div class="service-card-label">SERVICE</div>
+      <div class="service-card-content">
+        <span class="service-card-name" id="serviceName">Soul Collage - 180 min</span>
+        <span class="service-card-price" id="servicePrice">ZAR 750.00</span>
+      </div>
+    </div>
+
+    <!-- Additional Spots Section -->
+    <div class="additional-spots-card">
+      <div class="additional-spots-label">ADDITIONAL SPOTS</div>
+      <div class="additional-spots-question">Want to reserve additional spots?</div>
+
+      <div class="toggle-container">
+        <div class="toggle-switch" id="additionalSpotsToggle" onclick="toggleAdditionalSpots()"></div>
+        <span class="toggle-label" id="toggleLabel">No</span>
+      </div>
+
+      <!-- Additional spots form - initially hidden -->
+      <div id="additionalSpotsForm" class="hidden">
+        <div class="number-selector">
+          <span class="number-selector-label">Number of additional spots:</span>
+          <select class="number-select" id="numberOfSpots" onchange="updateAdditionalSpotsForms()">
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+          </select>
+        </div>
+
+        <div id="spotFormsContainer">
+          <!-- Additional spot forms will be generated here -->
+        </div>
+      </div>
+
+      <button class="btn-continue" id="continueBtn" onclick="continueBooking()">
+        Continue with <span id="spotCount">0</span> additional spot<span id="spotPlural">s</span>
+      </button>
+    </div>
+  </main>
+
+  <script>
+    // Get service info from URL params
+    const urlParams = new URLSearchParams(window.location.search);
+    const serviceId = urlParams.get('id') || urlParams.get('service');
+    const serviceName = urlParams.get('name') || 'Soul Collage';
+    const serviceDuration = urlParams.get('duration') || '180 min';
+    const servicePrice = urlParams.get('price') || 'ZAR 750.00';
+
+    // Update display
+    document.getElementById('serviceName').textContent = `${serviceName} - ${serviceDuration}`;
+    document.getElementById('servicePrice').textContent = servicePrice;
+
+    let additionalSpotsEnabled = false;
+
+    function toggleAdditionalSpots() {
+      additionalSpotsEnabled = !additionalSpotsEnabled;
+      const toggle = document.getElementById('additionalSpotsToggle');
+      const label = document.getElementById('toggleLabel');
+      const form = document.getElementById('additionalSpotsForm');
+
+      if (additionalSpotsEnabled) {
+        toggle.classList.add('active');
+        label.textContent = 'Yes';
+        form.classList.remove('hidden');
+        updateAdditionalSpotsForms();
+      } else {
+        toggle.classList.remove('active');
+        label.textContent = 'No';
+        form.classList.add('hidden');
+      }
+
+      updateContinueButton();
+    }
+
+    function updateAdditionalSpotsForms() {
+      const numberOfSpots = parseInt(document.getElementById('numberOfSpots').value);
+      const container = document.getElementById('spotFormsContainer');
+
+      container.innerHTML = '';
+
+      for (let i = 1; i <= numberOfSpots; i++) {
+        const spotForm = document.createElement('div');
+        spotForm.className = 'additional-spot-form';
+        spotForm.innerHTML = `
+          <div class="additional-spot-title">Additional spot ${i} Contact Details</div>
+          <div class="form-row">
+            <input type="text" class="form-input" placeholder="First Name" id="firstName${i}">
+            <input type="text" class="form-input" placeholder="Last Name" id="lastName${i}">
+          </div>
+          <div class="form-row">
+            <input type="email" class="form-input" placeholder="email@example.com" id="email${i}">
+          </div>
+        `;
+        container.appendChild(spotForm);
+      }
+
+      updateContinueButton();
+    }
+
+    function updateContinueButton() {
+      const spotCount = document.getElementById('spotCount');
+      const spotPlural = document.getElementById('spotPlural');
+
+      if (additionalSpotsEnabled) {
+        const count = parseInt(document.getElementById('numberOfSpots').value);
+        spotCount.textContent = count;
+        spotPlural.textContent = count === 1 ? '' : 's';
+      } else {
+        spotCount.textContent = '0';
+        spotPlural.textContent = 's';
+      }
+    }
+
+    function continueBooking() {
+      const additionalSpots = [];
+
+      if (additionalSpotsEnabled) {
+        const numberOfSpots = parseInt(document.getElementById('numberOfSpots').value);
+
+        for (let i = 1; i <= numberOfSpots; i++) {
+          const firstName = document.getElementById(`firstName${i}`).value;
+          const lastName = document.getElementById(`lastName${i}`).value;
+          const email = document.getElementById(`email${i}`).value;
+
+          additionalSpots.push({ firstName, lastName, email });
+        }
+      }
+
+      console.log('Booking service:', {
+        serviceId,
+        serviceName,
+        serviceDuration,
+        servicePrice,
+        additionalSpots
+      });
+
+      // Navigate to time slot selection
+      alert('Next step: Select available time slot');
+      // window.location.href = `/select-time?service=${serviceId}&spots=${additionalSpots.length}`;
+    }
+
+    // Initialize
+    updateContinueButton();
+  </script>
+</body>
+</html>

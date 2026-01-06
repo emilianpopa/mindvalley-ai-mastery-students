@@ -290,6 +290,11 @@ app.get('/single-reservation', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'single-reservation.html'));
 });
 
+// Service Booking (booking flow - after selecting a service)
+app.get('/service-booking', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'service-booking.html'));
+});
+
 // Multi Reservation (booking flow)
 app.get('/multi-reservation', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'multi-reservation.html'));

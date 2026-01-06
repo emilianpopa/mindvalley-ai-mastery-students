@@ -805,17 +805,66 @@
       });
     });
 
+    // Service data (name, duration, price) for each service ID
+    const serviceData = {
+      'soul-collage': { name: 'Soul Collage', duration: '180 min', price: 'ZAR 750.00' },
+      'follow-up': { name: 'Follow up Consultation', duration: '30 min', price: 'ZAR 850.00' },
+      'consultation': { name: 'Consultation', duration: '60 min', price: 'ZAR 1,700.00' },
+      'hbot2-90': { name: 'HBOT2 90 min', duration: '112 min', price: 'ZAR 3,000.00' },
+      'hbot2-30': { name: 'HBOT2 30 min', duration: '38 min', price: 'ZAR 1,125.00' },
+      'hbot2-60': { name: 'HBOT2 60 min', duration: '72 min', price: 'ZAR 2,250.00' },
+      'hbot1-90': { name: 'HBOT1 90 min', duration: '112 min', price: 'ZAR 3,000.00' },
+      'oligoscan': { name: 'Oligoscan', duration: '10 min', price: 'ZAR 1,200.00' },
+      'health-insights': { name: 'Health Insights', duration: '72 min', price: 'ZAR 1,950.00' },
+      'vo2-max': { name: 'VO2 Max', duration: '45 min', price: 'ZAR 1,200.00' },
+      'vo2max-inbody': { name: 'VO2max + In Body Scan', duration: '60 min', price: 'ZAR 1,150.00' },
+      'buls-rife': { name: 'Buls Rife', duration: '30 min', price: 'ZAR 600.00' },
+      'rife': { name: 'Rife', duration: '20 min', price: 'ZAR 350.00' },
+      'tour': { name: 'Tour', duration: '45 min', price: 'ZAR 0.00' },
+      'inbody-scan': { name: 'In Body Scan', duration: '10 min', price: 'ZAR 150.00' },
+      'hot-cold': { name: 'Hot Cold (Cold plunge+Infra Red Sauna)', duration: '35 min', price: 'ZAR 550.00' },
+      'cold-plunge-sea': { name: 'Cold Plunge Sea View', duration: '3 min', price: 'ZAR 150.00' },
+      'cold-plunge-city': { name: 'Cold Plunge City View', duration: '3 min', price: 'ZAR 150.00' },
+      'infrared-sauna': { name: 'Infrared Sauna', duration: '30 min', price: 'ZAR 500.00' },
+      'pemf': { name: 'PEMF', duration: '12 min', price: 'ZAR 300.00' },
+      'hbot1-60': { name: 'HBOT1 60 min', duration: '72 min', price: 'ZAR 2,250.00' },
+      'hbot1-30': { name: 'HBOT1 30 min', duration: '38 min', price: 'ZAR 1,125.00' },
+      'hocatt-pemf': { name: 'Hocatt Ozone + PEMF', duration: '20 min', price: 'ZAR 850.00' },
+      'hocatt-steam': { name: 'Hocatt Ozone Steam Sauna', duration: '30 min', price: 'ZAR 500.00' },
+      'lymphatic': { name: 'Lymphatic Drainage Compression boots', duration: '20 min', price: 'ZAR 150.00' },
+      'somadome': { name: 'Somadome', duration: '20 min', price: 'ZAR 150.00' },
+      'red-light': { name: 'Red Light Therapy', duration: '30 min', price: 'ZAR 500.00' },
+      'lymphatic-60': { name: 'Lymphatic Drainage 60Min', duration: '45 min', price: 'ZAR 950.00' },
+      'back-neck-45': { name: 'Back / Neck / Shoulder Massage 45 Min', duration: '30 min', price: 'ZAR 825.00' },
+      'back-neck-30': { name: 'Back / Neck / Shoulder Massage 30 Min', duration: '30 min', price: 'ZAR 550.00' },
+      'swedish-90': { name: 'Swedish Massage 90 Min', duration: '90 min', price: 'ZAR 1,450.00' },
+      'reflex-foot-60': { name: 'Reflex Foot Massage 60 Min', duration: '60 min', price: 'ZAR 950.00' },
+      'deep-tissue-90': { name: 'Deep Tissue Massage 90 Min', duration: '50 min', price: 'ZAR 1,050.00' },
+      'deep-tissue-60': { name: 'Deep Tissue Massage 60 Min', duration: '60 min', price: 'ZAR 1,150.00' },
+      'sports-60': { name: 'Sports Massage 60 Min', duration: '60 min', price: 'ZAR 1,150.00' },
+      'swedish-60': { name: 'Swedish Massage 60 Min', duration: '60 min', price: 'ZAR 950.00' },
+      'theragun': { name: 'Theragun', duration: '15 min', price: 'ZAR 200.00' }
+    };
+
     // Service selection
     function selectService(serviceId) {
       console.log('Selected service:', serviceId);
-      // Show service details or time slots
+      // Navigate to service booking page
+      bookService(serviceId);
     }
 
     // Book service
     function bookService(serviceId) {
-      console.log('Booking service:', serviceId);
-      // Navigate to time slot selection
-      alert('Service booking flow will open for: ' + serviceId);
+      const service = serviceData[serviceId];
+      if (service) {
+        const params = new URLSearchParams({
+          id: serviceId,
+          name: service.name,
+          duration: service.duration,
+          price: service.price
+        });
+        window.location.href = `/service-booking?${params.toString()}`;
+      }
     }
   </script>
 </body>
