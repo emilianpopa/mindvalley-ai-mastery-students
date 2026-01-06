@@ -693,6 +693,8 @@
     // Load practitioners from API
     async function loadPractitioners() {
       const token = localStorage.getItem('auth_token');
+      let useDemo = false;
+
       try {
         const response = await fetch('/api/practitioners', {
           headers: {
@@ -702,11 +704,19 @@
 
         if (response.ok) {
           allPractitioners = await response.json();
-          renderPractitioners(allPractitioners);
+          if (allPractitioners.length > 0) {
+            renderPractitioners(allPractitioners);
+            return;
+          }
         }
+        useDemo = true;
       } catch (error) {
         console.error('Error loading practitioners:', error);
-        // Show demo data if API fails
+        useDemo = true;
+      }
+
+      // Show demo data if API fails or returns empty
+      if (useDemo) {
         allPractitioners = [
           { id: 1, name: 'Savanah Abramovitz', notification_type: 'email' },
           { id: 2, name: 'Karrin Bamber', notification_type: 'email' },
