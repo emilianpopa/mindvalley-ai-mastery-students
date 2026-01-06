@@ -1163,6 +1163,178 @@
     .btn-save-settings:hover {
       background: var(--teal-700);
     }
+
+    /* Customer actions row (shown after selecting customer) */
+    .customer-actions-row {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .customer-actions-row.show {
+      display: flex;
+    }
+
+    .btn-customer-action {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      background: white;
+      border: 1px solid var(--gray-300);
+      border-radius: 8px;
+      color: var(--gray-500);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-customer-action:hover {
+      background: var(--gray-50);
+      border-color: var(--gray-400);
+      color: var(--gray-700);
+    }
+
+    .btn-customer-action svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .btn-waivers {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 12px;
+      background: var(--purple-50);
+      border: 1px solid var(--purple-200);
+      border-radius: 8px;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--purple-700);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-waivers:hover {
+      background: var(--purple-100);
+    }
+
+    .btn-waivers svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    /* Cart section */
+    .cart-section {
+      display: none;
+      padding: 20px 24px;
+      border-top: 1px solid var(--gray-100);
+    }
+
+    .cart-section.show {
+      display: block;
+    }
+
+    .cart-label {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--gray-900);
+      margin-bottom: 16px;
+    }
+
+    .cart-content {
+      display: flex;
+      gap: 16px;
+    }
+
+    .cart-item-types {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      width: 180px;
+      flex-shrink: 0;
+    }
+
+    .cart-item-type-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      background: white;
+      border: 1px solid var(--gray-200);
+      border-radius: 8px;
+      font-size: 0.8125rem;
+      color: var(--gray-700);
+      cursor: pointer;
+      transition: all 0.15s;
+      text-align: left;
+    }
+
+    .cart-item-type-btn:hover {
+      background: var(--gray-50);
+      border-color: var(--gray-300);
+    }
+
+    .cart-item-type-btn.active {
+      background: var(--purple-50);
+      border-color: var(--purple-300);
+      color: var(--purple-700);
+    }
+
+    .cart-item-type-btn svg {
+      width: 16px;
+      height: 16px;
+      color: var(--gray-400);
+      flex-shrink: 0;
+    }
+
+    .cart-item-type-btn.active svg {
+      color: var(--purple-500);
+    }
+
+    .cart-empty-state {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+      background: var(--gray-50);
+      border: 1px dashed var(--gray-300);
+      border-radius: 8px;
+      font-size: 0.875rem;
+      color: var(--gray-500);
+    }
+
+    /* Selected customer display */
+    .selected-customer-display {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .selected-customer-clear {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 18px;
+      height: 18px;
+      background: var(--gray-200);
+      border: none;
+      border-radius: 50%;
+      color: var(--gray-500);
+      cursor: pointer;
+    }
+
+    .selected-customer-clear:hover {
+      background: var(--gray-300);
+      color: var(--gray-700);
+    }
+
+    .selected-customer-clear svg {
+      width: 12px;
+      height: 12px;
+    }
   </style>
 </head>
 <body>
@@ -2142,9 +2314,128 @@
             </svg>
           </button>
         </div>
+        <!-- Customer actions row (shown after selecting) -->
+        <div class="customer-actions-row" id="customerActionsRow">
+          <button class="btn-customer-action" title="View customer">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+          </button>
+          <button class="btn-waivers">
+            Waivers
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="1"></circle>
+              <circle cx="19" cy="12" r="1"></circle>
+              <circle cx="5" cy="12" r="1"></circle>
+            </svg>
+          </button>
+        </div>
         <div class="checkbox-row">
           <input type="checkbox" id="payingForSomeoneElse">
           <label for="payingForSomeoneElse">Paying for someone else</label>
+        </div>
+      </div>
+
+      <!-- Cart section (shown after selecting customer) -->
+      <div class="cart-section" id="cartSection">
+        <div class="cart-label">Cart</div>
+        <div class="cart-content">
+          <div class="cart-item-types">
+            <button class="cart-item-type-btn" onclick="selectCartItemType(this, 'class')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+              Class
+            </button>
+            <button class="cart-item-type-btn" onclick="selectCartItemType(this, 'membership')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+              Membership
+            </button>
+            <button class="cart-item-type-btn" onclick="selectCartItemType(this, 'appointment')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+              Appointment
+            </button>
+            <button class="cart-item-type-btn" onclick="selectCartItemType(this, 'appointment_addon')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="4" y1="21" x2="4" y2="14"></line>
+                <line x1="4" y1="10" x2="4" y2="3"></line>
+                <line x1="12" y1="21" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12" y2="3"></line>
+                <line x1="20" y1="21" x2="20" y2="16"></line>
+                <line x1="20" y1="12" x2="20" y2="3"></line>
+              </svg>
+              Appointment add-on
+            </button>
+            <button class="cart-item-type-btn" onclick="selectCartItemType(this, 'product')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <path d="M16 10a4 4 0 0 1-8 0"></path>
+              </svg>
+              Product
+            </button>
+            <button class="cart-item-type-btn" onclick="selectCartItemType(this, 'gift_card')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="8" width="18" height="14" rx="2" ry="2"></rect>
+                <path d="M12 8V5a3 3 0 0 0-3-3"></path>
+                <path d="M12 8V5a3 3 0 0 1 3-3"></path>
+                <line x1="12" y1="8" x2="12" y2="22"></line>
+              </svg>
+              Gift card
+            </button>
+            <button class="cart-item-type-btn" onclick="selectCartItemType(this, 'tip')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="16"></line>
+                <line x1="8" y1="12" x2="16" y2="12"></line>
+              </svg>
+              Tip
+            </button>
+            <button class="cart-item-type-btn" onclick="selectCartItemType(this, 'money_credits')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"></path>
+                <line x1="12" y1="6" x2="12" y2="8"></line>
+                <line x1="12" y1="16" x2="12" y2="18"></line>
+              </svg>
+              Money Credits
+            </button>
+            <button class="cart-item-type-btn" onclick="selectCartItemType(this, 'class_credits')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+              Class/Appointments Credits
+            </button>
+            <button class="cart-item-type-btn" onclick="selectCartItemType(this, 'ondemand_video')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+              </svg>
+              On-demand video
+            </button>
+            <button class="cart-item-type-btn" onclick="selectCartItemType(this, 'ondemand_course')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+              </svg>
+              On-demand course
+            </button>
+          </div>
+          <div class="cart-empty-state" id="cartEmptyState">
+            Start by adding an item into the cart
+          </div>
         </div>
       </div>
 
@@ -2294,10 +2585,37 @@
         valueEl.innerHTML = `
           <div class="select-option-avatar" style="width: 24px; height: 24px; font-size: 0.65rem;">${getInitials(customer.name)}</div>
           <span>${customer.name}</span>
+          <button class="selected-customer-clear" onclick="event.stopPropagation(); clearCustomer();">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
         `;
         valueEl.classList.remove('placeholder');
+        // Show customer actions and cart section
+        document.getElementById('customerActionsRow').classList.add('show');
+        document.getElementById('cartSection').classList.add('show');
       }
       closeAllQuickSaleDropdowns();
+    }
+
+    function clearCustomer() {
+      selectedCustomer = null;
+      const valueEl = document.getElementById('customerValue');
+      valueEl.innerHTML = '<span>Select customer...</span>';
+      valueEl.classList.add('placeholder');
+      // Hide customer actions and cart section
+      document.getElementById('customerActionsRow').classList.remove('show');
+      document.getElementById('cartSection').classList.remove('show');
+    }
+
+    function selectCartItemType(btn, type) {
+      // Toggle active state
+      document.querySelectorAll('.cart-item-type-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      // Could show different content in cart area based on type
+      console.log('Selected cart item type:', type);
     }
 
     function saveQuickSaleSettings() {
