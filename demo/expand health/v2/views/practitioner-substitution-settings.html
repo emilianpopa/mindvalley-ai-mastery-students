@@ -2321,8 +2321,38 @@
           </button>
         </div>
         <div class="checkbox-row">
-          <input type="checkbox" id="payingForSomeoneElse">
+          <input type="checkbox" id="payingForSomeoneElse" onchange="togglePayingForSection()">
           <label for="payingForSomeoneElse">Paying for someone else</label>
+        </div>
+        <!-- Who is being paid for section (shown when checkbox checked) -->
+        <div class="paying-for-section" id="payingForSection" style="display: none;">
+          <div class="quick-sale-label" style="margin-top: 16px;">Who is being paid for?</div>
+          <div class="customer-select-row">
+            <div class="searchable-select" id="payingForSelect">
+              <div class="searchable-select-trigger" onclick="togglePayingForDropdown()">
+                <div class="searchable-select-value placeholder" id="payingForValue">
+                  <span>Select customer...</span>
+                </div>
+                <svg class="searchable-select-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </div>
+              <div class="searchable-select-dropdown" id="payingForDropdown">
+                <div class="searchable-select-search">
+                  <input type="text" placeholder="Search customers..." id="payingForSearchInput" oninput="filterPayingForOptions()">
+                </div>
+                <div class="searchable-select-options" id="payingForOptions">
+                  <!-- Populated by JS -->
+                </div>
+              </div>
+            </div>
+            <button class="btn-add-customer" onclick="closeQuickSaleModal(); openCreateCustomerModal();" title="Add new customer">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -2614,6 +2644,87 @@
       // Hide customer actions and cart section
       document.getElementById('customerActionsRow').classList.remove('show');
       document.getElementById('cartSection').classList.remove('show');
+    }
+
+    // Paying for someone else functionality
+    let selectedPayingFor = null;
+
+    function togglePayingForSection() {
+      const checkbox = document.getElementById('payingForSomeoneElse');
+      const section = document.getElementById('payingForSection');
+      if (checkbox.checked) {
+        section.style.display = 'block';
+        renderPayingForOptions();
+      } else {
+        section.style.display = 'none';
+        clearPayingFor();
+      }
+    }
+
+    function togglePayingForDropdown() {
+      const dropdown = document.getElementById('payingForDropdown');
+      const trigger = dropdown.previousElementSibling;
+      const isOpen = dropdown.classList.contains('show');
+
+      closeAllQuickSaleDropdowns();
+
+      if (!isOpen) {
+        dropdown.classList.add('show');
+        trigger.classList.add('open');
+        document.getElementById('payingForSearchInput').focus();
+      }
+    }
+
+    function renderPayingForOptions(filter = '') {
+      const container = document.getElementById('payingForOptions');
+      const filtered = filter
+        ? customers.filter(c =>
+            c.name.toLowerCase().includes(filter.toLowerCase()) ||
+            c.email.toLowerCase().includes(filter.toLowerCase())
+          )
+        : customers;
+
+      container.innerHTML = filtered.map(customer => `
+        <div class="searchable-select-option ${selectedPayingFor?.id === customer.id ? 'selected' : ''}" onclick="selectPayingFor(${customer.id})">
+          <div class="select-option-avatar">${getInitials(customer.name)}</div>
+          <div class="select-option-info">
+            <div class="select-option-name">${customer.name}</div>
+            <div class="select-option-email">${customer.email}</div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function filterPayingForOptions() {
+      const filter = document.getElementById('payingForSearchInput').value;
+      renderPayingForOptions(filter);
+    }
+
+    function selectPayingFor(customerId) {
+      const customer = customers.find(c => c.id === customerId);
+      if (customer) {
+        selectedPayingFor = customer;
+        const valueEl = document.getElementById('payingForValue');
+        valueEl.innerHTML = `
+          <div class="select-option-avatar" style="width: 24px; height: 24px; font-size: 0.65rem;">${getInitials(customer.name)}</div>
+          <span>${customer.name}</span>
+          <button class="selected-customer-clear" onclick="event.stopPropagation(); clearPayingFor();">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        `;
+        valueEl.classList.remove('placeholder');
+      }
+      closeAllQuickSaleDropdowns();
+    }
+
+    function clearPayingFor() {
+      selectedPayingFor = null;
+      const valueEl = document.getElementById('payingForValue');
+      valueEl.innerHTML = '<span>Select customer...</span>';
+      valueEl.classList.add('placeholder');
     }
 
     function selectCartItemType(btn, type) {
