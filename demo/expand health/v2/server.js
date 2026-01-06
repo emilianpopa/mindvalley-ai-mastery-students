@@ -295,6 +295,16 @@ app.get('/service-booking', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'service-booking.html'));
 });
 
+// Booking Add-ons (booking flow - after additional spots)
+app.get('/booking-addons', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'booking-addons.html'));
+});
+
+// Booking Practitioner (booking flow - after add-ons)
+app.get('/booking-practitioner', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'booking-practitioner.html'));
+});
+
 // Multi Reservation (booking flow)
 app.get('/multi-reservation', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'multi-reservation.html'));

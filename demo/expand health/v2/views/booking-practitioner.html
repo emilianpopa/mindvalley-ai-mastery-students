@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Select Practitioner - Expand Health</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cline x1='20' y1='20' x2='80' y2='80' stroke='%230F766E' stroke-width='12' stroke-linecap='round'/%3E%3Cline x1='80' y1='20' x2='20' y2='80' stroke='%230F766E' stroke-width='12' stroke-linecap='round'/%3E%3C/svg%3E">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --purple-50: #f5f3ff;
+      --purple-100: #ede9fe;
+      --purple-200: #ddd6fe;
+      --purple-300: #c4b5fd;
+      --purple-400: #a78bfa;
+      --purple-500: #8b5cf6;
+      --purple-600: #7c3aed;
+      --purple-700: #6d28d9;
+      --gray-50: #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-300: #d1d5db;
+      --gray-400: #9ca3af;
+      --gray-500: #6b7280;
+      --gray-600: #4b5563;
+      --gray-700: #374151;
+      --gray-800: #1f2937;
+      --gray-900: #111827;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(180deg, #f5f3ff 0%, #ede9fe 100%);
+      min-height: 100vh;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 32px;
+      background: white;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo-icon {
+      width: 24px;
+      height: 24px;
+    }
+
+    .business-name {
+      font-size: 0.9375rem;
+      font-weight: 500;
+      color: var(--gray-700);
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .language-selector {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: white;
+      border: 1px solid var(--gray-200);
+      border-radius: 6px;
+      font-size: 0.875rem;
+      color: var(--gray-700);
+      cursor: pointer;
+    }
+
+    .language-selector:hover {
+      background: var(--gray-50);
+    }
+
+    .flag-icon {
+      width: 20px;
+      height: 14px;
+      border-radius: 2px;
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.875rem;
+      color: var(--gray-700);
+    }
+
+    .user-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--gray-100);
+      border: 1px solid var(--gray-200);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .user-avatar svg {
+      width: 18px;
+      height: 18px;
+      color: var(--gray-400);
+    }
+
+    /* Main content */
+    .main-content {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 40px 24px;
+    }
+
+    /* Business card */
+    .business-card {
+      background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%);
+      border-radius: 12px;
+      padding: 28px 32px;
+      margin-bottom: 32px;
+    }
+
+    .business-card h1 {
+      font-size: 1.75rem;
+      font-weight: 600;
+      color: var(--gray-900);
+      margin-bottom: 6px;
+    }
+
+    .business-card p {
+      font-size: 0.9375rem;
+      color: var(--gray-600);
+    }
+
+    /* Section header */
+    .section-header {
+      margin-bottom: 20px;
+    }
+
+    .section-title {
+      font-size: 1.375rem;
+      font-weight: 600;
+      color: var(--gray-900);
+      margin-bottom: 4px;
+    }
+
+    .section-subtitle {
+      font-size: 0.9375rem;
+      color: var(--gray-500);
+    }
+
+    /* Info card (read-only) */
+    .info-card {
+      background: white;
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin-bottom: 16px;
+    }
+
+    .info-label {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      color: var(--gray-500);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 8px;
+    }
+
+    .info-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .info-value {
+      font-size: 1rem;
+      font-weight: 500;
+      color: var(--gray-900);
+    }
+
+    .info-value-small {
+      font-size: 0.9375rem;
+      color: var(--gray-700);
+    }
+
+    /* Selection card */
+    .selection-card {
+      background: white;
+      border: 2px solid var(--purple-200);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 16px;
+    }
+
+    .selection-label {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      color: var(--purple-600);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 16px;
+    }
+
+    /* Custom select dropdown */
+    .custom-select {
+      position: relative;
+      width: 100%;
+      max-width: 320px;
+    }
+
+    .select-trigger {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid var(--gray-300);
+      border-radius: 8px;
+      font-size: 0.9375rem;
+      color: var(--gray-700);
+      background: white;
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+
+    .select-trigger:hover {
+      border-color: var(--purple-300);
+    }
+
+    .select-trigger.open {
+      border-color: var(--purple-400);
+      box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+    }
+
+    .select-trigger svg {
+      width: 16px;
+      height: 16px;
+      color: var(--gray-400);
+      transition: transform 0.15s;
+    }
+
+    .select-trigger.open svg {
+      transform: rotate(180deg);
+    }
+
+    .select-placeholder {
+      color: var(--gray-400);
+    }
+
+    .select-dropdown {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      right: 0;
+      background: white;
+      border: 1px solid var(--gray-200);
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      z-index: 100;
+      display: none;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .select-dropdown.show {
+      display: block;
+    }
+
+    .select-option {
+      padding: 12px 14px;
+      font-size: 0.9375rem;
+      color: var(--gray-700);
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .select-option:hover {
+      background: var(--gray-50);
+    }
+
+    .select-option.selected {
+      background: var(--purple-50);
+      color: var(--purple-700);
+    }
+
+    .select-option.disabled {
+      color: var(--gray-400);
+      cursor: default;
+    }
+
+    .select-option.disabled:hover {
+      background: transparent;
+    }
+
+    /* Continue button */
+    .continue-btn {
+      width: 100%;
+      padding: 14px 24px;
+      background: var(--purple-600);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.9375rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s;
+      margin-top: 24px;
+    }
+
+    .continue-btn:hover {
+      background: var(--purple-700);
+    }
+
+    .continue-btn:disabled {
+      background: var(--purple-300);
+      cursor: not-allowed;
+    }
+
+    /* Responsive */
+    @media (max-width: 640px) {
+      .main-content {
+        padding: 24px 16px;
+      }
+
+      .header {
+        padding: 12px 16px;
+      }
+
+      .user-info span {
+        display: none;
+      }
+
+      .custom-select {
+        max-width: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="header-left">
+      <svg class="logo-icon" viewBox="0 0 24 24" fill="none">
+        <path d="M4 4L11 12L4 20" stroke="#0F766E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M20 4L13 12L20 20" stroke="#0F766E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span class="business-name">Expand Health (Pty) ltd</span>
+    </div>
+    <div class="header-right">
+      <button class="language-selector">
+        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 30'%3E%3Crect fill='%23002868' width='60' height='30'/%3E%3Cg fill='%23fff'%3E%3Crect y='3.5' width='60' height='2.3'/%3E%3Crect y='9.2' width='60' height='2.3'/%3E%3Crect y='14.9' width='60' height='2.3'/%3E%3Crect y='20.6' width='60' height='2.3'/%3E%3Crect y='26.3' width='60' height='2.3'/%3E%3C/g%3E%3Crect fill='%23002868' width='24' height='16'/%3E%3C/svg%3E" class="flag-icon" alt="US">
+        English
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="6 9 12 15 18 9"></polyline>
+        </svg>
+      </button>
+      <div class="user-info">
+        <span>Emilian Popa</span>
+        <div class="user-avatar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <!-- Business Card -->
+    <div class="business-card">
+      <h1>Expand Health</h1>
+      <p>with Expand Health (Pty) ltd</p>
+    </div>
+
+    <!-- Section Header -->
+    <div class="section-header">
+      <h2 class="section-title">Book your appointment</h2>
+      <p class="section-subtitle">Pick a service and select from available times.</p>
+    </div>
+
+    <!-- Service Info -->
+    <div class="info-card">
+      <div class="info-label">SERVICE</div>
+      <div class="info-content">
+        <span class="info-value" id="serviceName">Soul Collage - 180 min</span>
+        <span class="info-value" id="servicePrice">ZAR 750.00</span>
+      </div>
+    </div>
+
+    <!-- Additional Spots Info -->
+    <div class="info-card">
+      <div class="info-label">ADDITIONAL SPOTS</div>
+      <div class="info-value-small" id="additionalSpotsInfo">1 additional spot reserved</div>
+    </div>
+
+    <!-- Add-ons Info -->
+    <div class="info-card">
+      <div class="info-label">ADD-ONS</div>
+      <div class="info-value-small" id="addonsInfo">No add-ons selected</div>
+    </div>
+
+    <!-- Location Info -->
+    <div class="info-card">
+      <div class="info-label">LOCATION</div>
+      <div class="info-value-small">Event Space</div>
+    </div>
+
+    <!-- Practitioner Selection -->
+    <div class="selection-card">
+      <div class="selection-label">PRACTITIONER</div>
+
+      <div class="custom-select" id="practitionerSelect">
+        <div class="select-trigger" onclick="toggleDropdown()">
+          <span class="select-placeholder" id="selectedPractitioner">Select...</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </div>
+        <div class="select-dropdown" id="practitionerDropdown">
+          <div class="select-option disabled">Loading practitioners...</div>
+        </div>
+      </div>
+    </div>
+
+    <button class="continue-btn" id="continueBtn" onclick="continueBooking()" disabled>
+      Continue to select time
+    </button>
+  </main>
+
+  <script>
+    // Get service info from URL params
+    const urlParams = new URLSearchParams(window.location.search);
+    const serviceId = urlParams.get('id') || '';
+    const serviceName = urlParams.get('name') || 'Soul Collage';
+    const serviceDuration = urlParams.get('duration') || '180 min';
+    const servicePrice = urlParams.get('price') || 'ZAR 750.00';
+    const additionalSpots = parseInt(urlParams.get('spots') || '0');
+    const addons = urlParams.get('addons') || '';
+
+    // Update display
+    document.getElementById('serviceName').textContent = `${serviceName} - ${serviceDuration}`;
+    document.getElementById('servicePrice').textContent = servicePrice;
+
+    // Update additional spots info
+    if (additionalSpots === 0) {
+      document.getElementById('additionalSpotsInfo').textContent = 'No additional spots';
+    } else if (additionalSpots === 1) {
+      document.getElementById('additionalSpotsInfo').textContent = '1 additional spot reserved';
+    } else {
+      document.getElementById('additionalSpotsInfo').textContent = `${additionalSpots} additional spots reserved`;
+    }
+
+    // Update add-ons info
+    if (!addons) {
+      document.getElementById('addonsInfo').textContent = 'No add-ons selected';
+    } else {
+      const addonList = addons.split(',');
+      const addonNames = addonList.map(a => {
+        switch(a) {
+          case 'cold-plunge': return 'Cold Plunge';
+          case 'infrared-sauna': return 'Infrared Sauna';
+          case 'pemf': return 'PEMF';
+          case 'lymphatic': return 'Lymphatic Drainage';
+          default: return a;
+        }
+      });
+      document.getElementById('addonsInfo').textContent = addonNames.join(', ');
+    }
+
+    let selectedPractitionerId = null;
+    let practitioners = [];
+
+    // Load practitioners from API
+    async function loadPractitioners() {
+      try {
+        const token = localStorage.getItem('auth_token');
+        const response = await fetch('/api/staff', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (response.ok) {
+          practitioners = await response.json();
+          renderPractitioners();
+        } else {
+          // Show "No options" if API fails
+          document.getElementById('practitionerDropdown').innerHTML =
+            '<div class="select-option disabled">No options</div>';
+        }
+      } catch (error) {
+        console.error('Failed to load practitioners:', error);
+        document.getElementById('practitionerDropdown').innerHTML =
+          '<div class="select-option disabled">No options</div>';
+      }
+    }
+
+    function renderPractitioners() {
+      const dropdown = document.getElementById('practitionerDropdown');
+
+      if (practitioners.length === 0) {
+        dropdown.innerHTML = '<div class="select-option disabled">No options</div>';
+        return;
+      }
+
+      dropdown.innerHTML = practitioners.map(p => `
+        <div class="select-option" data-id="${p.id}" onclick="selectPractitioner(${p.id}, '${p.first_name} ${p.last_name}')">
+          ${p.first_name} ${p.last_name}
+        </div>
+      `).join('');
+    }
+
+    function toggleDropdown() {
+      const trigger = document.querySelector('.select-trigger');
+      const dropdown = document.getElementById('practitionerDropdown');
+
+      trigger.classList.toggle('open');
+      dropdown.classList.toggle('show');
+    }
+
+    function selectPractitioner(id, name) {
+      selectedPractitionerId = id;
+
+      // Update display
+      const placeholder = document.getElementById('selectedPractitioner');
+      placeholder.textContent = name;
+      placeholder.classList.remove('select-placeholder');
+
+      // Update selected state
+      document.querySelectorAll('.select-option').forEach(opt => {
+        opt.classList.remove('selected');
+        if (opt.dataset.id == id) {
+          opt.classList.add('selected');
+        }
+      });
+
+      // Close dropdown
+      document.querySelector('.select-trigger').classList.remove('open');
+      document.getElementById('practitionerDropdown').classList.remove('show');
+
+      // Enable continue button
+      document.getElementById('continueBtn').disabled = false;
+    }
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.custom-select')) {
+        document.querySelector('.select-trigger').classList.remove('open');
+        document.getElementById('practitionerDropdown').classList.remove('show');
+      }
+    });
+
+    function continueBooking() {
+      if (!selectedPractitionerId) {
+        alert('Please select a practitioner');
+        return;
+      }
+
+      // Build URL params for next page
+      const params = new URLSearchParams({
+        id: serviceId,
+        name: serviceName,
+        duration: serviceDuration,
+        price: servicePrice,
+        spots: additionalSpots,
+        addons: addons,
+        practitioner: selectedPractitionerId
+      });
+
+      // Navigate to time selection (placeholder for now)
+      alert('Next step: Select available time slot');
+      // window.location.href = `/booking-time?${params.toString()}`;
+    }
+
+    // Initialize
+    loadPractitioners();
+  </script>
+</body>
+</html>

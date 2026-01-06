@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Add-ons - Expand Health</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cline x1='20' y1='20' x2='80' y2='80' stroke='%230F766E' stroke-width='12' stroke-linecap='round'/%3E%3Cline x1='80' y1='20' x2='20' y2='80' stroke='%230F766E' stroke-width='12' stroke-linecap='round'/%3E%3C/svg%3E">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --purple-50: #f5f3ff;
+      --purple-100: #ede9fe;
+      --purple-200: #ddd6fe;
+      --purple-300: #c4b5fd;
+      --purple-400: #a78bfa;
+      --purple-500: #8b5cf6;
+      --purple-600: #7c3aed;
+      --purple-700: #6d28d9;
+      --gray-50: #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-300: #d1d5db;
+      --gray-400: #9ca3af;
+      --gray-500: #6b7280;
+      --gray-600: #4b5563;
+      --gray-700: #374151;
+      --gray-800: #1f2937;
+      --gray-900: #111827;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(180deg, #f5f3ff 0%, #ede9fe 100%);
+      min-height: 100vh;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 32px;
+      background: white;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo-icon {
+      width: 24px;
+      height: 24px;
+    }
+
+    .business-name {
+      font-size: 0.9375rem;
+      font-weight: 500;
+      color: var(--gray-700);
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .language-selector {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: white;
+      border: 1px solid var(--gray-200);
+      border-radius: 6px;
+      font-size: 0.875rem;
+      color: var(--gray-700);
+      cursor: pointer;
+    }
+
+    .language-selector:hover {
+      background: var(--gray-50);
+    }
+
+    .flag-icon {
+      width: 20px;
+      height: 14px;
+      border-radius: 2px;
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.875rem;
+      color: var(--gray-700);
+    }
+
+    .user-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--gray-100);
+      border: 1px solid var(--gray-200);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .user-avatar svg {
+      width: 18px;
+      height: 18px;
+      color: var(--gray-400);
+    }
+
+    /* Main content */
+    .main-content {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 40px 24px;
+    }
+
+    /* Business card */
+    .business-card {
+      background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%);
+      border-radius: 12px;
+      padding: 28px 32px;
+      margin-bottom: 32px;
+    }
+
+    .business-card h1 {
+      font-size: 1.75rem;
+      font-weight: 600;
+      color: var(--gray-900);
+      margin-bottom: 6px;
+    }
+
+    .business-card p {
+      font-size: 0.9375rem;
+      color: var(--gray-600);
+    }
+
+    /* Section header */
+    .section-header {
+      margin-bottom: 20px;
+    }
+
+    .section-title {
+      font-size: 1.375rem;
+      font-weight: 600;
+      color: var(--gray-900);
+      margin-bottom: 4px;
+    }
+
+    .section-subtitle {
+      font-size: 0.9375rem;
+      color: var(--gray-500);
+    }
+
+    /* Info card (read-only) */
+    .info-card {
+      background: white;
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin-bottom: 16px;
+    }
+
+    .info-label {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      color: var(--gray-500);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 8px;
+    }
+
+    .info-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .info-value {
+      font-size: 1rem;
+      font-weight: 500;
+      color: var(--gray-900);
+    }
+
+    .info-value-small {
+      font-size: 0.9375rem;
+      color: var(--gray-700);
+    }
+
+    /* Add-ons card */
+    .addons-card {
+      background: white;
+      border: 2px solid var(--purple-200);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 16px;
+    }
+
+    .addons-label {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      color: var(--purple-600);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 8px;
+    }
+
+    .addons-subtitle {
+      font-size: 0.9375rem;
+      color: var(--gray-600);
+      margin-bottom: 20px;
+    }
+
+    /* Add-on item */
+    .addon-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--gray-100);
+    }
+
+    .addon-item:last-child {
+      border-bottom: none;
+    }
+
+    .addon-name {
+      font-size: 0.9375rem;
+      font-weight: 500;
+      color: var(--gray-900);
+    }
+
+    .addon-details {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .addon-duration,
+    .addon-price {
+      font-size: 0.8125rem;
+      color: var(--gray-600);
+      padding: 4px 12px;
+      background: white;
+      border: 1px solid var(--gray-200);
+      border-radius: 16px;
+      white-space: nowrap;
+    }
+
+    .addon-checkbox {
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--gray-300);
+      border-radius: 4px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+    }
+
+    .addon-checkbox.checked {
+      background: var(--purple-600);
+      border-color: var(--purple-600);
+    }
+
+    .addon-checkbox svg {
+      width: 14px;
+      height: 14px;
+      color: white;
+      display: none;
+    }
+
+    .addon-checkbox.checked svg {
+      display: block;
+    }
+
+    /* Continue link */
+    .continue-link {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 6px;
+      padding: 16px 0;
+      font-size: 0.9375rem;
+      color: var(--purple-600);
+      text-decoration: none;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    .continue-link:hover {
+      color: var(--purple-700);
+    }
+
+    .continue-link svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    /* Responsive */
+    @media (max-width: 640px) {
+      .main-content {
+        padding: 24px 16px;
+      }
+
+      .header {
+        padding: 12px 16px;
+      }
+
+      .user-info span {
+        display: none;
+      }
+
+      .addon-details {
+        flex-wrap: wrap;
+        justify-content: flex-end;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="header-left">
+      <svg class="logo-icon" viewBox="0 0 24 24" fill="none">
+        <path d="M4 4L11 12L4 20" stroke="#0F766E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M20 4L13 12L20 20" stroke="#0F766E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span class="business-name">Expand Health (Pty) ltd</span>
+    </div>
+    <div class="header-right">
+      <button class="language-selector">
+        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 30'%3E%3Crect fill='%23002868' width='60' height='30'/%3E%3Cg fill='%23fff'%3E%3Crect y='3.5' width='60' height='2.3'/%3E%3Crect y='9.2' width='60' height='2.3'/%3E%3Crect y='14.9' width='60' height='2.3'/%3E%3Crect y='20.6' width='60' height='2.3'/%3E%3Crect y='26.3' width='60' height='2.3'/%3E%3C/g%3E%3Crect fill='%23002868' width='24' height='16'/%3E%3C/svg%3E" class="flag-icon" alt="US">
+        English
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="6 9 12 15 18 9"></polyline>
+        </svg>
+      </button>
+      <div class="user-info">
+        <span>Emilian Popa</span>
+        <div class="user-avatar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <!-- Business Card -->
+    <div class="business-card">
+      <h1>Expand Health</h1>
+      <p>with Expand Health (Pty) ltd</p>
+    </div>
+
+    <!-- Section Header -->
+    <div class="section-header">
+      <h2 class="section-title">Book your appointment</h2>
+      <p class="section-subtitle">Pick a service and select from available times.</p>
+    </div>
+
+    <!-- Service Info -->
+    <div class="info-card">
+      <div class="info-label">SERVICE</div>
+      <div class="info-content">
+        <span class="info-value" id="serviceName">Soul Collage - 180 min</span>
+        <span class="info-value" id="servicePrice">ZAR 750.00</span>
+      </div>
+    </div>
+
+    <!-- Additional Spots Info -->
+    <div class="info-card">
+      <div class="info-label">ADDITIONAL SPOTS</div>
+      <div class="info-value-small" id="additionalSpotsInfo">1 additional spot reserved</div>
+    </div>
+
+    <!-- Add-ons Card -->
+    <div class="addons-card">
+      <div class="addons-label">ADD-ONS</div>
+      <div class="addons-subtitle">Choose from available add-ons below:</div>
+
+      <div class="addon-item">
+        <span class="addon-name">Cold Plunge</span>
+        <div class="addon-details">
+          <span class="addon-duration">+3 min</span>
+          <span class="addon-price">ZAR 150.00</span>
+          <div class="addon-checkbox" onclick="toggleAddon(this, 'cold-plunge')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="addon-item">
+        <span class="addon-name">Infrared Sauna</span>
+        <div class="addon-details">
+          <span class="addon-duration">+30 min</span>
+          <span class="addon-price">ZAR 500.00</span>
+          <div class="addon-checkbox" onclick="toggleAddon(this, 'infrared-sauna')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="addon-item">
+        <span class="addon-name">PEMF</span>
+        <div class="addon-details">
+          <span class="addon-duration">+12 min</span>
+          <span class="addon-price">ZAR 300.00</span>
+          <div class="addon-checkbox" onclick="toggleAddon(this, 'pemf')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="addon-item">
+        <span class="addon-name">Lymphatic Drainage Compression boots</span>
+        <div class="addon-details">
+          <span class="addon-duration">+20 min</span>
+          <span class="addon-price">ZAR 150.00</span>
+          <div class="addon-checkbox" onclick="toggleAddon(this, 'lymphatic')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <a class="continue-link" onclick="continueBooking()">
+        Continue without add-ons
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="9 18 15 12 9 6"></polyline>
+        </svg>
+      </a>
+    </div>
+  </main>
+
+  <script>
+    // Get service info from URL params
+    const urlParams = new URLSearchParams(window.location.search);
+    const serviceId = urlParams.get('id') || '';
+    const serviceName = urlParams.get('name') || 'Soul Collage';
+    const serviceDuration = urlParams.get('duration') || '180 min';
+    const servicePrice = urlParams.get('price') || 'ZAR 750.00';
+    const additionalSpots = parseInt(urlParams.get('spots') || '0');
+
+    // Update display
+    document.getElementById('serviceName').textContent = `${serviceName} - ${serviceDuration}`;
+    document.getElementById('servicePrice').textContent = servicePrice;
+
+    // Update additional spots info
+    if (additionalSpots === 0) {
+      document.getElementById('additionalSpotsInfo').textContent = 'No additional spots';
+    } else if (additionalSpots === 1) {
+      document.getElementById('additionalSpotsInfo').textContent = '1 additional spot reserved';
+    } else {
+      document.getElementById('additionalSpotsInfo').textContent = `${additionalSpots} additional spots reserved`;
+    }
+
+    // Track selected add-ons
+    const selectedAddons = new Set();
+
+    function toggleAddon(checkbox, addonId) {
+      checkbox.classList.toggle('checked');
+
+      if (checkbox.classList.contains('checked')) {
+        selectedAddons.add(addonId);
+      } else {
+        selectedAddons.delete(addonId);
+      }
+
+      updateContinueLink();
+    }
+
+    function updateContinueLink() {
+      const link = document.querySelector('.continue-link');
+      if (selectedAddons.size > 0) {
+        link.innerHTML = `
+          Continue with ${selectedAddons.size} add-on${selectedAddons.size > 1 ? 's' : ''}
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        `;
+      } else {
+        link.innerHTML = `
+          Continue without add-ons
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        `;
+      }
+    }
+
+    function continueBooking() {
+      // Build URL params for next page
+      const params = new URLSearchParams({
+        id: serviceId,
+        name: serviceName,
+        duration: serviceDuration,
+        price: servicePrice,
+        spots: additionalSpots,
+        addons: Array.from(selectedAddons).join(',')
+      });
+
+      // Navigate to practitioner selection
+      window.location.href = `/booking-practitioner?${params.toString()}`;
+    }
+  </script>
+</body>
+</html>

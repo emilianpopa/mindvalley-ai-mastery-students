@@ -582,12 +582,22 @@
         }
       }
 
-      console.log('Booking service:', serviceId);
-      console.log('Additional spots:', additionalSpots);
+      // Build URL params for next page
+      const params = new URLSearchParams({
+        id: serviceId,
+        name: serviceName,
+        duration: serviceDuration,
+        price: servicePrice,
+        spots: additionalSpots.length
+      });
 
-      // Navigate to time selection
-      alert('Next step: Select available time slot');
-      // window.location.href = `/select-time?service=${serviceId}&spots=${additionalSpots.length}`;
+      // Store additional spots data in sessionStorage for later use
+      if (additionalSpots.length > 0) {
+        sessionStorage.setItem('additionalSpots', JSON.stringify(additionalSpots));
+      }
+
+      // Navigate to add-ons selection
+      window.location.href = `/booking-addons?${params.toString()}`;
     }
 
     // Initialize
