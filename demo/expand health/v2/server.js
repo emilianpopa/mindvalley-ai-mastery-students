@@ -332,6 +332,10 @@ app.get('/substitution-report', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'substitution-report.html'));
 });
 
+app.get('/settings/practitioner-substitutions', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'practitioner-substitution-settings.html'));
+});
+
 // Discount codes
 app.get('/discounts', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'discounts.html'));
