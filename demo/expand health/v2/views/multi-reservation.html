@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Book Multiple Services - Expand Health</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cline x1='20' y1='20' x2='80' y2='80' stroke='%230F766E' stroke-width='12' stroke-linecap='round'/%3E%3Cline x1='80' y1='20' x2='20' y2='80' stroke='%230F766E' stroke-width='12' stroke-linecap='round'/%3E%3C/svg%3E">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --purple-50: #f5f3ff;
+      --purple-100: #ede9fe;
+      --purple-200: #ddd6fe;
+      --purple-300: #c4b5fd;
+      --purple-400: #a78bfa;
+      --purple-500: #8b5cf6;
+      --purple-600: #7c3aed;
+      --purple-700: #6d28d9;
+      --gray-50: #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-300: #d1d5db;
+      --gray-400: #9ca3af;
+      --gray-500: #6b7280;
+      --gray-600: #4b5563;
+      --gray-700: #374151;
+      --gray-800: #1f2937;
+      --gray-900: #111827;
+      --teal-500: #14b8a6;
+      --teal-600: #0d9488;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 50%, #f5f3ff 100%);
+      min-height: 100vh;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 24px;
+      background: white;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo-icon {
+      width: 24px;
+      height: 24px;
+    }
+
+    .business-name {
+      font-size: 0.9375rem;
+      font-weight: 500;
+      color: var(--gray-700);
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .language-selector {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      background: transparent;
+      border: none;
+      font-size: 0.875rem;
+      color: var(--gray-600);
+      cursor: pointer;
+      border-radius: 6px;
+    }
+
+    .language-selector:hover {
+      background: var(--gray-100);
+    }
+
+    .flag-icon {
+      width: 20px;
+      height: 14px;
+      border-radius: 2px;
+    }
+
+    /* Main content */
+    .main-content {
+      max-width: 720px;
+      margin: 40px auto;
+      padding: 0 20px;
+    }
+
+    /* Business card */
+    .business-card {
+      background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 32px;
+    }
+
+    .business-card h1 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--gray-900);
+      margin-bottom: 4px;
+    }
+
+    .business-card p {
+      font-size: 0.875rem;
+      color: var(--gray-600);
+    }
+
+    /* Section */
+    .section {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .section-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--gray-900);
+      margin-bottom: 8px;
+    }
+
+    .section-subtitle {
+      font-size: 0.875rem;
+      color: var(--gray-500);
+      margin-bottom: 20px;
+    }
+
+    /* Location info */
+    .location-info {
+      background: var(--gray-50);
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 24px;
+    }
+
+    .location-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--gray-500);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 6px;
+    }
+
+    .location-name {
+      font-size: 0.9375rem;
+      font-weight: 600;
+      color: var(--gray-900);
+      margin-bottom: 2px;
+    }
+
+    .location-address {
+      font-size: 0.875rem;
+      color: var(--gray-600);
+    }
+
+    /* Services section */
+    .services-section {
+      border: 2px solid var(--purple-300);
+      border-radius: 12px;
+      padding: 20px;
+    }
+
+    .services-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--purple-600);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 6px;
+    }
+
+    .services-description {
+      font-size: 0.875rem;
+      color: var(--gray-600);
+      margin-bottom: 16px;
+    }
+
+    /* Service select dropdown */
+    .service-select-container {
+      position: relative;
+      margin-bottom: 16px;
+    }
+
+    .service-select {
+      width: 200px;
+      padding: 10px 12px;
+      padding-right: 32px;
+      border: 1px solid var(--purple-300);
+      border-radius: 8px;
+      font-size: 0.875rem;
+      color: var(--gray-500);
+      background: white;
+      cursor: pointer;
+      appearance: none;
+    }
+
+    .service-select:focus {
+      outline: none;
+      border-color: var(--purple-500);
+      box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+    }
+
+    .select-arrow {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 16px;
+      height: 16px;
+      color: var(--gray-400);
+      pointer-events: none;
+    }
+
+    /* Service dropdown list */
+    .service-dropdown {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      margin-top: 4px;
+      width: 400px;
+      max-height: 300px;
+      overflow-y: auto;
+      background: white;
+      border: 1px solid var(--gray-200);
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      z-index: 100;
+      display: none;
+    }
+
+    .service-dropdown.show {
+      display: block;
+    }
+
+    .service-dropdown-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      cursor: pointer;
+      border-bottom: 1px solid var(--gray-100);
+      transition: background 0.15s;
+    }
+
+    .service-dropdown-item:hover {
+      background: var(--gray-50);
+    }
+
+    .service-dropdown-item:last-child {
+      border-bottom: none;
+    }
+
+    .service-dropdown-name {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--gray-900);
+    }
+
+    .service-dropdown-details {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .service-dropdown-duration {
+      font-size: 0.8125rem;
+      color: var(--gray-500);
+    }
+
+    .service-dropdown-price {
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--gray-700);
+    }
+
+    /* Selected services list */
+    .selected-services {
+      margin-top: 16px;
+    }
+
+    .selected-service-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px;
+      background: var(--purple-50);
+      border: 1px solid var(--purple-200);
+      border-radius: 8px;
+      margin-bottom: 8px;
+    }
+
+    .selected-service-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .selected-service-number {
+      width: 24px;
+      height: 24px;
+      background: var(--purple-600);
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .selected-service-name {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--gray-900);
+    }
+
+    .selected-service-details {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .selected-service-duration,
+    .selected-service-price {
+      font-size: 0.8125rem;
+      color: var(--gray-600);
+    }
+
+    .btn-remove-service {
+      padding: 4px;
+      background: transparent;
+      border: none;
+      color: var(--gray-400);
+      cursor: pointer;
+      border-radius: 4px;
+    }
+
+    .btn-remove-service:hover {
+      background: var(--gray-100);
+      color: var(--gray-600);
+    }
+
+    .btn-remove-service svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    /* Scroll indicators */
+    .scroll-indicator {
+      display: flex;
+      justify-content: center;
+      padding: 8px;
+      color: var(--gray-400);
+    }
+
+    .scroll-indicator svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    /* Back link */
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--gray-600);
+      text-decoration: none;
+      font-size: 0.875rem;
+      margin-bottom: 20px;
+    }
+
+    .back-link:hover {
+      color: var(--gray-900);
+    }
+
+    .back-link svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    /* Continue button */
+    .btn-continue {
+      width: 100%;
+      padding: 12px;
+      background: var(--purple-600);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.9375rem;
+      font-weight: 500;
+      cursor: pointer;
+      margin-top: 20px;
+      transition: background 0.2s;
+    }
+
+    .btn-continue:hover {
+      background: var(--purple-700);
+    }
+
+    .btn-continue:disabled {
+      background: var(--gray-300);
+      cursor: not-allowed;
+    }
+
+    /* Summary */
+    .summary {
+      display: flex;
+      justify-content: space-between;
+      padding: 16px 0;
+      border-top: 1px solid var(--gray-200);
+      margin-top: 16px;
+    }
+
+    .summary-label {
+      font-size: 0.875rem;
+      color: var(--gray-600);
+    }
+
+    .summary-value {
+      font-size: 0.9375rem;
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+
+    /* Scrollbar styling */
+    .service-dropdown::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .service-dropdown::-webkit-scrollbar-track {
+      background: var(--gray-100);
+      border-radius: 3px;
+    }
+
+    .service-dropdown::-webkit-scrollbar-thumb {
+      background: var(--gray-300);
+      border-radius: 3px;
+    }
+
+    .service-dropdown::-webkit-scrollbar-thumb:hover {
+      background: var(--gray-400);
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="header-left">
+      <svg class="logo-icon" viewBox="0 0 24 24" fill="none">
+        <path d="M4 4L11 12L4 20" stroke="#0F766E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M20 4L13 12L20 20" stroke="#0F766E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span class="business-name">Expand Health (Pty) ltd</span>
+    </div>
+    <div class="header-right">
+      <button class="language-selector">
+        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 30'%3E%3Crect fill='%23002868' width='60' height='30'/%3E%3Cg fill='%23fff'%3E%3Crect y='3.5' width='60' height='2.3'/%3E%3Crect y='9.2' width='60' height='2.3'/%3E%3Crect y='14.9' width='60' height='2.3'/%3E%3Crect y='20.6' width='60' height='2.3'/%3E%3Crect y='26.3' width='60' height='2.3'/%3E%3C/g%3E%3Crect fill='%23002868' width='24' height='16'/%3E%3C/svg%3E" class="flag-icon" alt="US">
+        English
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <a href="/appointments" class="back-link">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M19 12H5"></path>
+        <path d="M12 19l-7-7 7-7"></path>
+      </svg>
+      Back to appointments
+    </a>
+
+    <!-- Business Card -->
+    <div class="business-card">
+      <h1>Expand Health</h1>
+      <p>with Expand Health (Pty) ltd</p>
+    </div>
+
+    <!-- Booking Section -->
+    <div class="section">
+      <h2 class="section-title">Book your appointment</h2>
+      <p class="section-subtitle">Choose multiple services, performed back-to-back, add add-ons and select from available times.</p>
+
+      <!-- Location -->
+      <div class="location-info">
+        <div class="location-label">LOCATION</div>
+        <div class="location-name">Expand Health</div>
+        <div class="location-address">30 Hudson Street, Cape Town</div>
+      </div>
+
+      <!-- Services Selection -->
+      <div class="services-section">
+        <div class="services-label">SERVICES</div>
+        <p class="services-description">Choose services you want for your appointment. These will happen one after other, in the order you specify.</p>
+
+        <!-- Service Dropdown -->
+        <div class="service-select-container">
+          <select class="service-select" id="serviceSelect" onclick="toggleServiceDropdown(event)">
+            <option value="">Add service...</option>
+          </select>
+          <svg class="select-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+
+          <div class="service-dropdown" id="serviceDropdown">
+            <div class="scroll-indicator">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="18 15 12 9 6 15"></polyline>
+              </svg>
+            </div>
+            <div class="service-dropdown-item" onclick="addService('hbot2-90', 'HBOT2 90 min', '112m', 'ZAR 3,000.00+')">
+              <span class="service-dropdown-name">HBOT2 90 min</span>
+              <div class="service-dropdown-details">
+                <span class="service-dropdown-duration">112m</span>
+                <span class="service-dropdown-price">ZAR 3,000.00+</span>
+              </div>
+            </div>
+            <div class="service-dropdown-item" onclick="addService('hbot2-30', 'HBOT2 30 min', '38m', 'ZAR 1,125.00+')">
+              <span class="service-dropdown-name">HBOT2 30 min</span>
+              <div class="service-dropdown-details">
+                <span class="service-dropdown-duration">38m</span>
+                <span class="service-dropdown-price">ZAR 1,125.00+</span>
+              </div>
+            </div>
+            <div class="service-dropdown-item" onclick="addService('hbot2-60', 'HBOT2 60 min', '72m', 'ZAR 2,250.00+')">
+              <span class="service-dropdown-name">HBOT2 60 min</span>
+              <div class="service-dropdown-details">
+                <span class="service-dropdown-duration">72m</span>
+                <span class="service-dropdown-price">ZAR 2,250.00+</span>
+              </div>
+            </div>
+            <div class="service-dropdown-item" onclick="addService('lymphatic', 'Lymphatic Drainage 60Min', '45m', 'ZAR 950.00+')">
+              <span class="service-dropdown-name">Lymphatic Drainage 60Min</span>
+              <div class="service-dropdown-details">
+                <span class="service-dropdown-duration">45m</span>
+                <span class="service-dropdown-price">ZAR 950.00+</span>
+              </div>
+            </div>
+            <div class="service-dropdown-item" onclick="addService('hbot1-90', 'HBOT1 90 min', '112m', 'ZAR 3,000.00+')">
+              <span class="service-dropdown-name">HBOT1 90 min</span>
+              <div class="service-dropdown-details">
+                <span class="service-dropdown-duration">112m</span>
+                <span class="service-dropdown-price">ZAR 3,000.00+</span>
+              </div>
+            </div>
+            <div class="service-dropdown-item" onclick="addService('oligoscan', 'Oligoscan', '10m', 'ZAR 1,200.00+')">
+              <span class="service-dropdown-name">Oligoscan</span>
+              <div class="service-dropdown-details">
+                <span class="service-dropdown-duration">10m</span>
+                <span class="service-dropdown-price">ZAR 1,200.00+</span>
+              </div>
+            </div>
+            <div class="service-dropdown-item" onclick="addService('health-insights', 'Health Insights', '72m', 'ZAR 1,350.00+')">
+              <span class="service-dropdown-name">Health Insights</span>
+              <div class="service-dropdown-details">
+                <span class="service-dropdown-duration">72m</span>
+                <span class="service-dropdown-price">ZAR 1,350.00+</span>
+              </div>
+            </div>
+            <div class="service-dropdown-item" onclick="addService('vo2-max', 'VO2 Max', '45m', 'ZAR 1,200.00+')">
+              <span class="service-dropdown-name">VO2 Max</span>
+              <div class="service-dropdown-details">
+                <span class="service-dropdown-duration">45m</span>
+                <span class="service-dropdown-price">ZAR 1,200.00+</span>
+              </div>
+            </div>
+            <div class="service-dropdown-item" onclick="addService('infrared-sauna', 'Infrared Sauna', '30m', 'ZAR 550.00+')">
+              <span class="service-dropdown-name">Infrared Sauna</span>
+              <div class="service-dropdown-details">
+                <span class="service-dropdown-duration">30m</span>
+                <span class="service-dropdown-price">ZAR 550.00+</span>
+              </div>
+            </div>
+            <div class="service-dropdown-item" onclick="addService('cold-plunge', 'Cold Plunge Sea View', '5m', 'ZAR 150.00+')">
+              <span class="service-dropdown-name">Cold Plunge Sea View</span>
+              <div class="service-dropdown-details">
+                <span class="service-dropdown-duration">5m</span>
+                <span class="service-dropdown-price">ZAR 150.00+</span>
+              </div>
+            </div>
+            <div class="scroll-indicator">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- Selected Services -->
+        <div class="selected-services" id="selectedServices">
+          <!-- Selected services will be added here dynamically -->
+        </div>
+
+        <!-- Summary -->
+        <div class="summary" id="summary" style="display: none;">
+          <span class="summary-label">Total duration</span>
+          <span class="summary-value" id="totalDuration">0m</span>
+        </div>
+        <div class="summary" id="summaryPrice" style="display: none; border-top: none; padding-top: 0;">
+          <span class="summary-label">Estimated total</span>
+          <span class="summary-value" id="totalPrice">ZAR 0.00</span>
+        </div>
+
+        <!-- Continue Button -->
+        <button class="btn-continue" id="continueBtn" disabled onclick="continueBooking()">
+          Select time
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // State
+    let selectedServices = [];
+
+    // Toggle service dropdown
+    function toggleServiceDropdown(event) {
+      event.preventDefault();
+      const dropdown = document.getElementById('serviceDropdown');
+      dropdown.classList.toggle('show');
+    }
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.service-select-container')) {
+        document.getElementById('serviceDropdown').classList.remove('show');
+      }
+    });
+
+    // Add service to list
+    function addService(id, name, duration, price) {
+      // Check if already added
+      if (selectedServices.find(s => s.id === id)) {
+        return;
+      }
+
+      selectedServices.push({ id, name, duration, price });
+      renderSelectedServices();
+      document.getElementById('serviceDropdown').classList.remove('show');
+    }
+
+    // Remove service from list
+    function removeService(id) {
+      selectedServices = selectedServices.filter(s => s.id !== id);
+      renderSelectedServices();
+    }
+
+    // Render selected services
+    function renderSelectedServices() {
+      const container = document.getElementById('selectedServices');
+      const summary = document.getElementById('summary');
+      const summaryPrice = document.getElementById('summaryPrice');
+      const continueBtn = document.getElementById('continueBtn');
+
+      if (selectedServices.length === 0) {
+        container.innerHTML = '';
+        summary.style.display = 'none';
+        summaryPrice.style.display = 'none';
+        continueBtn.disabled = true;
+        return;
+      }
+
+      let html = '';
+      let totalMinutes = 0;
+      let totalPriceValue = 0;
+
+      selectedServices.forEach((service, index) => {
+        // Parse duration
+        const durationMatch = service.duration.match(/(\d+)/);
+        if (durationMatch) {
+          totalMinutes += parseInt(durationMatch[1]);
+        }
+
+        // Parse price
+        const priceMatch = service.price.match(/[\d,]+\.?\d*/);
+        if (priceMatch) {
+          totalPriceValue += parseFloat(priceMatch[0].replace(',', ''));
+        }
+
+        html += `
+          <div class="selected-service-item">
+            <div class="selected-service-info">
+              <div class="selected-service-number">${index + 1}</div>
+              <span class="selected-service-name">${service.name}</span>
+            </div>
+            <div class="selected-service-details">
+              <span class="selected-service-duration">${service.duration}</span>
+              <span class="selected-service-price">${service.price}</span>
+              <button class="btn-remove-service" onclick="removeService('${service.id}')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            </div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+
+      // Update summary
+      document.getElementById('totalDuration').textContent = `${totalMinutes}m`;
+      document.getElementById('totalPrice').textContent = `ZAR ${totalPriceValue.toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}+`;
+
+      summary.style.display = 'flex';
+      summaryPrice.style.display = 'flex';
+      continueBtn.disabled = false;
+    }
+
+    // Continue to time selection
+    function continueBooking() {
+      if (selectedServices.length === 0) return;
+
+      console.log('Continuing with services:', selectedServices);
+      alert('Time selection will open with ' + selectedServices.length + ' service(s) selected');
+    }
+  </script>
+</body>
+</html>

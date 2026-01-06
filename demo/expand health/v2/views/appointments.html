@@ -74,7 +74,7 @@
     .global-utility-bar {
       display: flex;
       align-items: center;
-      justify-content: flex-end;
+      justify-content: space-between;
       gap: 16px;
       padding: 8px 24px;
       background: white;
@@ -82,6 +82,88 @@
       position: sticky;
       top: 0;
       z-index: 50;
+    }
+
+    .utility-bar-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .utility-bar-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* Business selector */
+    .business-selector {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      background: transparent;
+      border: none;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--gray-700);
+      cursor: pointer;
+      border-radius: 6px;
+      transition: all 0.15s;
+    }
+
+    .business-selector:hover {
+      background: var(--gray-100);
+    }
+
+    .business-selector svg {
+      width: 14px;
+      height: 14px;
+      color: var(--gray-400);
+    }
+
+    /* Search box */
+    .utility-search {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      background: var(--gray-100);
+      border: 1px solid var(--gray-200);
+      border-radius: 6px;
+      min-width: 200px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .utility-search:hover {
+      border-color: var(--gray-300);
+    }
+
+    .utility-search svg {
+      width: 16px;
+      height: 16px;
+      color: var(--gray-400);
+    }
+
+    .utility-search-text {
+      font-size: 0.8125rem;
+      color: var(--gray-500);
+      flex: 1;
+    }
+
+    .utility-search-shortcut {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 20px;
+      background: white;
+      border: 1px solid var(--gray-300);
+      border-radius: 4px;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      color: var(--gray-500);
     }
 
     .utility-btn {
@@ -115,6 +197,15 @@
 
     .utility-btn.feedback-btn:hover {
       background: var(--purple-50);
+    }
+
+    .utility-btn.active {
+      background: var(--purple-600);
+      color: white;
+    }
+
+    .utility-btn.active:hover {
+      background: var(--purple-700);
     }
 
     .utility-divider {
@@ -750,8 +841,14 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      gap: 4px;
       font-size: 0.75rem;
       color: var(--gray-400);
+    }
+
+    .calendar-header-corner svg {
+      width: 14px;
+      height: 14px;
     }
 
     .calendar-header-day {
@@ -767,6 +864,22 @@
 
     .calendar-header-day:last-child {
       border-right: none;
+    }
+
+    .day-full-date {
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--gray-700);
+    }
+
+    .day-full-date.today {
+      color: var(--purple-600);
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
+    .day-full-date.weekend {
+      color: var(--gray-400);
     }
 
     .day-name {
@@ -1114,67 +1227,88 @@
       <div class="appointments-page">
         <!-- Global Utility Bar -->
         <div class="global-utility-bar">
-          <button class="utility-btn feedback-btn">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-            </svg>
-            Feedback
-          </button>
-          <div class="utility-divider"></div>
-          <div class="utility-add-group">
-            <span class="utility-add-label">Add:</span>
-            <button class="utility-add-btn">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                <circle cx="8.5" cy="7" r="4"></circle>
-                <line x1="20" y1="8" x2="20" y2="14"></line>
-                <line x1="23" y1="11" x2="17" y2="11"></line>
-              </svg>
-              Customer
-            </button>
-            <button class="utility-add-btn">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                <circle cx="8.5" cy="7" r="4"></circle>
-                <polyline points="17 11 19 13 23 9"></polyline>
-              </svg>
-              Lead
-            </button>
-          </div>
-          <div class="utility-divider"></div>
-          <button class="utility-btn">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
-              <line x1="8" y1="21" x2="16" y2="21"></line>
-              <line x1="12" y1="17" x2="12" y2="21"></line>
-            </svg>
-            POS
-          </button>
-          <button class="utility-btn">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-              <line x1="16" y1="2" x2="16" y2="6"></line>
-              <line x1="8" y1="2" x2="8" y2="6"></line>
-              <line x1="3" y1="10" x2="21" y2="10"></line>
-            </svg>
-            Schedule
-          </button>
-          <div class="utility-divider"></div>
-          <button class="utility-notification-btn">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-              <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-            </svg>
-          </button>
-          <div class="utility-user-dropdown">
-            <button class="utility-user-menu" onclick="toggleUserMenu()">
-              <div class="utility-user-avatar">EP</div>
-              <span class="utility-user-name">Emilian P.</span>
+          <div class="utility-bar-left">
+            <!-- Business Selector -->
+            <button class="business-selector">
+              Expand Health (...
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polyline points="6 9 12 15 18 9"></polyline>
               </svg>
             </button>
-            <div class="user-dropdown-menu" id="userDropdownMenu">
+
+            <!-- Search Box -->
+            <div class="utility-search" onclick="openSearch()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              <span class="utility-search-text">Search...</span>
+              <span class="utility-search-shortcut">S</span>
+            </div>
+          </div>
+
+          <div class="utility-bar-right">
+            <button class="utility-btn feedback-btn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+              </svg>
+              Feedback
+            </button>
+            <div class="utility-divider"></div>
+            <div class="utility-add-group">
+              <span class="utility-add-label">Add:</span>
+              <button class="utility-add-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="8.5" cy="7" r="4"></circle>
+                  <line x1="20" y1="8" x2="20" y2="14"></line>
+                  <line x1="23" y1="11" x2="17" y2="11"></line>
+                </svg>
+                Customer
+              </button>
+              <button class="utility-add-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="8.5" cy="7" r="4"></circle>
+                  <polyline points="17 11 19 13 23 9"></polyline>
+                </svg>
+                Lead
+              </button>
+            </div>
+            <div class="utility-divider"></div>
+            <a href="/pos" class="utility-btn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                <line x1="8" y1="21" x2="16" y2="21"></line>
+                <line x1="12" y1="17" x2="12" y2="21"></line>
+              </svg>
+              POS
+            </a>
+            <a href="/appointments" class="utility-btn active">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+              Schedule
+            </a>
+            <div class="utility-divider"></div>
+            <button class="utility-notification-btn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+              </svg>
+            </button>
+            <div class="utility-user-dropdown">
+              <button class="utility-user-menu" onclick="toggleUserMenu()">
+                <div class="utility-user-avatar">EP</div>
+                <span class="utility-user-name">Emilian P.</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </button>
+              <div class="user-dropdown-menu" id="userDropdownMenu">
               <a href="/account" class="user-dropdown-item">
                 <div class="user-dropdown-item-left">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1242,6 +1376,7 @@
                 </div>
               </div>
             </div>
+            </div>
           </div>
         </div>
 
@@ -1267,7 +1402,7 @@
                   </svg>
                 </button>
                 <div class="checkout-dropdown-menu" id="checkoutMenu">
-                  <a href="https://momence.com/Expand-Health-(Pty)-ltd/appointment-reservation/42153?boardId=17324" target="_blank" class="checkout-dropdown-item">
+                  <a href="/single-reservation" class="checkout-dropdown-item">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
                       <line x1="16" y1="2" x2="16" y2="6"></line>
@@ -1276,7 +1411,7 @@
                     </svg>
                     Single reservation flow
                   </a>
-                  <a href="https://momence.com/Expand-Health-(Pty)-ltd/appointment-multi-service-reservation/42153?boardId=17324&venueId=31186" target="_blank" class="checkout-dropdown-item">
+                  <a href="/multi-reservation" class="checkout-dropdown-item">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
                       <line x1="16" y1="2" x2="16" y2="6"></line>
@@ -1380,17 +1515,17 @@
               <div class="filter-dropdown" id="staffDropdownContainer">
                 <button class="filter-dropdown-btn" onclick="toggleDropdown('staffDropdown')">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                  <span id="selectedStaff">Avela Jafta</span>
+                  <span id="selectedStaff">Karrin Bamber</span>
                   <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
                 </button>
                 <div class="filter-dropdown-menu" id="staffDropdown">
                   <div class="filter-dropdown-item" onclick="selectStaff('All Staff')">All Staff</div>
-                  <div class="filter-dropdown-item selected" onclick="selectStaff('Avela Jafta')">Avela Jafta</div>
+                  <div class="filter-dropdown-item" onclick="selectStaff('Avela Jafta')">Avela Jafta</div>
                   <div class="filter-dropdown-item" onclick="selectStaff('Chantel Newmark')">Chantel Newmark</div>
                   <div class="filter-dropdown-item" onclick="selectStaff('Dr Melody Fourie')">Dr Melody Fourie</div>
                   <div class="filter-dropdown-item" onclick="selectStaff('Emilian Popa')">Emilian Popa</div>
                   <div class="filter-dropdown-item" onclick="selectStaff('Jack Harland')">Jack Harland</div>
-                  <div class="filter-dropdown-item" onclick="selectStaff('Karrin Bamber')">Karrin Bamber</div>
+                  <div class="filter-dropdown-item selected" onclick="selectStaff('Karrin Bamber')">Karrin Bamber</div>
                 </div>
               </div>
 
@@ -1487,34 +1622,33 @@
         <div class="calendar-container">
           <div class="calendar-grid" id="calendarGrid">
             <!-- Header row -->
-            <div class="calendar-header-corner">GMT+2</div>
-            <div class="calendar-header-day">
-              <div class="day-name">Sun</div>
-              <div class="day-date" id="day0">4</div>
+            <div class="calendar-header-corner">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+              <span>GMT+2</span>
             </div>
-            <div class="calendar-header-day">
-              <div class="day-name">Mon</div>
-              <div class="day-date" id="day1">5</div>
+            <div class="calendar-header-day" id="dayHeader0">
+              <span class="day-full-date">Sun, Jan 4</span>
             </div>
-            <div class="calendar-header-day">
-              <div class="day-name">Tue</div>
-              <div class="day-date" id="day2">6</div>
+            <div class="calendar-header-day" id="dayHeader1">
+              <span class="day-full-date">Mon, Jan 5</span>
             </div>
-            <div class="calendar-header-day">
-              <div class="day-name">Wed</div>
-              <div class="day-date" id="day3">7</div>
+            <div class="calendar-header-day" id="dayHeader2">
+              <span class="day-full-date today">Tue, Jan 6</span>
             </div>
-            <div class="calendar-header-day">
-              <div class="day-name">Thu</div>
-              <div class="day-date" id="day4">8</div>
+            <div class="calendar-header-day" id="dayHeader3">
+              <span class="day-full-date">Wed, Jan 7</span>
             </div>
-            <div class="calendar-header-day">
-              <div class="day-name">Fri</div>
-              <div class="day-date" id="day5">9</div>
+            <div class="calendar-header-day" id="dayHeader4">
+              <span class="day-full-date">Thu, Jan 8</span>
             </div>
-            <div class="calendar-header-day">
-              <div class="day-name">Sat</div>
-              <div class="day-date weekend" id="day6">10</div>
+            <div class="calendar-header-day" id="dayHeader5">
+              <span class="day-full-date">Fri, Jan 9</span>
+            </div>
+            <div class="calendar-header-day" id="dayHeader6">
+              <span class="day-full-date weekend">Sat, Jan 10</span>
             </div>
 
             <!-- Time slots will be generated by JavaScript -->
@@ -1565,24 +1699,37 @@
       const year = currentDate.getFullYear();
       document.getElementById('weekDisplay').textContent = `Week ${weekNum}, ${year}`;
 
-      // Update day headers
+      // Update day headers with format "Sun, Jan 4"
       const startOfWeek = getStartOfWeek(currentDate);
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
+      const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
       for (let i = 0; i < 7; i++) {
         const date = new Date(startOfWeek);
         date.setDate(date.getDate() + i);
-        const dayEl = document.getElementById(`day${i}`);
-        dayEl.textContent = date.getDate();
-        dayEl.className = 'day-date';
 
+        const dayHeader = document.getElementById(`dayHeader${i}`);
+        if (!dayHeader) continue;
+
+        const dayName = dayNames[date.getDay()];
+        const monthName = monthNames[date.getMonth()];
+        const dayNum = date.getDate();
+
+        const dateStr = `${dayName}, ${monthName} ${dayNum}`;
+
+        // Build class string
+        let classes = 'day-full-date';
         if (date.getTime() === today.getTime()) {
-          dayEl.classList.add('today');
+          classes += ' today';
         }
         if (i === 0 || i === 6) {
-          dayEl.classList.add('weekend');
+          classes += ' weekend';
         }
+
+        dayHeader.innerHTML = `<span class="${classes}">${dateStr}</span>`;
       }
     }
 
@@ -1783,6 +1930,21 @@
     function openAppointmentSettings() {
       window.location.href = '/settings/appointments';
     }
+
+    // Search functionality
+    function openSearch() {
+      // TODO: Open search modal or focus search input
+      console.log('Open search...');
+    }
+
+    // Keyboard shortcut for search
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 's' && !e.ctrlKey && !e.metaKey && !e.altKey &&
+          !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
+        e.preventDefault();
+        openSearch();
+      }
+    });
 
     // Close dropdowns when clicking outside
     document.addEventListener('click', (e) => {

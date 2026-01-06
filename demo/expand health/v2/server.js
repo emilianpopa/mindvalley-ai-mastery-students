@@ -285,6 +285,16 @@ app.get('/appointments', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'appointments.html'));
 });
 
+// Single Reservation (booking flow)
+app.get('/single-reservation', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'single-reservation.html'));
+});
+
+// Multi Reservation (booking flow)
+app.get('/multi-reservation', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'multi-reservation.html'));
+});
+
 // Booking Dashboard (Momence-style)
 app.get('/schedule', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'booking-dashboard.html'));
