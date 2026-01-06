@@ -910,6 +910,259 @@
       outline: none;
       border-color: var(--teal-500);
     }
+
+    /* Quick Sale Modal Styles */
+    .quick-sale-section {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--gray-100);
+    }
+
+    .quick-sale-section:last-child {
+      border-bottom: none;
+    }
+
+    .quick-sale-label {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--gray-900);
+      margin-bottom: 12px;
+    }
+
+    .searchable-select {
+      position: relative;
+    }
+
+    .searchable-select-trigger {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--gray-300);
+      border-radius: 8px;
+      background: white;
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+
+    .searchable-select-trigger:hover {
+      border-color: var(--gray-400);
+    }
+
+    .searchable-select-trigger:focus,
+    .searchable-select-trigger.open {
+      outline: none;
+      border-color: var(--purple-500);
+    }
+
+    .searchable-select-value {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.875rem;
+      color: var(--gray-700);
+    }
+
+    .searchable-select-value.placeholder {
+      color: var(--gray-400);
+    }
+
+    .searchable-select-clear {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 18px;
+      height: 18px;
+      background: var(--gray-200);
+      border: none;
+      border-radius: 50%;
+      color: var(--gray-500);
+      cursor: pointer;
+      margin-right: 4px;
+    }
+
+    .searchable-select-clear:hover {
+      background: var(--gray-300);
+      color: var(--gray-700);
+    }
+
+    .searchable-select-clear svg {
+      width: 12px;
+      height: 12px;
+    }
+
+    .searchable-select-arrow {
+      width: 16px;
+      height: 16px;
+      color: var(--gray-400);
+    }
+
+    .searchable-select-dropdown {
+      display: none;
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      right: 0;
+      background: white;
+      border: 1px solid var(--gray-200);
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      z-index: 100;
+      max-height: 280px;
+      overflow-y: auto;
+    }
+
+    .searchable-select-dropdown.show {
+      display: block;
+    }
+
+    .searchable-select-search {
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--gray-100);
+    }
+
+    .searchable-select-search input {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid var(--gray-200);
+      border-radius: 6px;
+      font-size: 0.875rem;
+      color: var(--gray-700);
+    }
+
+    .searchable-select-search input:focus {
+      outline: none;
+      border-color: var(--purple-500);
+    }
+
+    .searchable-select-option {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .searchable-select-option:hover {
+      background: var(--purple-50);
+    }
+
+    .searchable-select-option.selected {
+      background: var(--purple-100);
+    }
+
+    .select-option-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--gray-200);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--gray-600);
+    }
+
+    .select-option-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .select-option-name {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--gray-900);
+    }
+
+    .select-option-email {
+      font-size: 0.75rem;
+      color: var(--gray-500);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .customer-select-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    .customer-select-row .searchable-select {
+      flex: 1;
+    }
+
+    .btn-add-customer {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 42px;
+      height: 42px;
+      background: white;
+      border: 1px solid var(--gray-300);
+      border-radius: 8px;
+      color: var(--gray-500);
+      cursor: pointer;
+      transition: all 0.15s;
+      flex-shrink: 0;
+    }
+
+    .btn-add-customer:hover {
+      background: var(--gray-50);
+      border-color: var(--gray-400);
+      color: var(--gray-700);
+    }
+
+    .btn-add-customer svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .checkbox-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .checkbox-row input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      border-radius: 4px;
+      cursor: pointer;
+      accent-color: var(--purple-600);
+    }
+
+    .checkbox-row label {
+      font-size: 0.875rem;
+      color: var(--gray-700);
+      cursor: pointer;
+    }
+
+    .modal-footer-center {
+      display: flex;
+      justify-content: center;
+      padding: 16px 24px;
+      border-top: 1px solid var(--gray-200);
+    }
+
+    .btn-save-settings {
+      padding: 10px 24px;
+      background: var(--teal-600);
+      border: none;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: white;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .btn-save-settings:hover {
+      background: var(--teal-700);
+    }
   </style>
 </head>
 <body>
@@ -1113,7 +1366,7 @@
             </button>
           </div>
           <div class="utility-divider"></div>
-          <button class="utility-btn">
+          <button class="utility-btn" onclick="openQuickSaleModal()">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
               <line x1="8" y1="21" x2="16" y2="21"></line>
@@ -1631,6 +1884,9 @@
       if (e.key === 'Escape') {
         closeCreateCustomerModal();
         closeCreateLeadModal();
+        if (typeof closeQuickSaleModal === 'function') {
+          closeQuickSaleModal();
+        }
       }
     });
 
@@ -1823,5 +2079,253 @@
       </div>
     </div>
   </div>
+
+  <!-- Quick Sale Modal -->
+  <div class="modal-overlay" id="quickSaleModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title">Quick sale</h2>
+        <button class="modal-close" onclick="closeQuickSaleModal()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Who is selling section -->
+      <div class="quick-sale-section">
+        <div class="quick-sale-label">Who is selling</div>
+        <div class="searchable-select" id="sellerSelect">
+          <div class="searchable-select-trigger" onclick="toggleSellerDropdown()">
+            <div class="searchable-select-value" id="sellerValue">
+              <span>emilian@expand.health (logged in)</span>
+            </div>
+            <svg class="searchable-select-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </div>
+          <div class="searchable-select-dropdown" id="sellerDropdown">
+            <div class="searchable-select-options" id="sellerOptions">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Customer section -->
+      <div class="quick-sale-section">
+        <div class="quick-sale-label">Customer</div>
+        <div class="customer-select-row">
+          <div class="searchable-select" id="customerSelect">
+            <div class="searchable-select-trigger" onclick="toggleCustomerDropdown()">
+              <div class="searchable-select-value placeholder" id="customerValue">
+                <span>Select customer...</span>
+              </div>
+              <svg class="searchable-select-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </div>
+            <div class="searchable-select-dropdown" id="customerDropdown">
+              <div class="searchable-select-search">
+                <input type="text" placeholder="Search customers..." id="customerSearchInput" oninput="filterCustomerOptions()">
+              </div>
+              <div class="searchable-select-options" id="customerOptions">
+                <!-- Populated by JS -->
+              </div>
+            </div>
+          </div>
+          <button class="btn-add-customer" onclick="closeQuickSaleModal(); openCreateCustomerModal();" title="Add new customer">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+          </button>
+        </div>
+        <div class="checkbox-row">
+          <input type="checkbox" id="payingForSomeoneElse">
+          <label for="payingForSomeoneElse">Paying for someone else</label>
+        </div>
+      </div>
+
+      <div class="modal-footer-center">
+        <button class="btn-save-settings" onclick="saveQuickSaleSettings()">Save settings</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Practitioners/Sellers data
+    const sellers = [
+      { id: 1, name: 'Alexandra Albu', email: 'albualexandra.212@gmail.com' },
+      { id: 2, name: 'Anesu Mbizvo', email: 'dranesu.mbizvo@expandhealth.co.' },
+      { id: 3, name: 'Avela Jafta', email: 'avela.jafta@expandhealth.co.za' },
+      { id: 4, name: 'Carmen Heunis', email: 'carmen.heunis@expandhealth.co.' },
+      { id: 5, name: 'Chantel Newmark', email: 'chantel.newmark@expand.heal' },
+      { id: 6, name: 'Dr Fred van der Riet', email: 'fredvanderriet0@gmail.com' },
+      { id: 7, name: 'Dr Melody Fourie', email: 'melody@nourishedwellbeing.co' }
+    ];
+
+    // Customers data
+    const customers = [
+      { id: 1, name: 'Adam Fine', email: 'adfine@gmail.com' },
+      { id: 2, name: 'Silvia Kusic', email: 'silvia.kusic@icloud.com' },
+      { id: 3, name: 'Ugur Ozlem Dalgic', email: 'uo@untamed.travel' },
+      { id: 4, name: 'Stephanie Ziff', email: 'stephanieziff@gmail.com' },
+      { id: 5, name: 'Anna Ziff', email: 'annaziff@gmail.com' },
+      { id: 6, name: 'Michael Chen', email: 'michael.chen@email.com' },
+      { id: 7, name: 'Sarah Johnson', email: 'sarah.j@company.org' }
+    ];
+
+    let selectedSeller = { name: 'emilian@expand.health', email: '', isLoggedIn: true };
+    let selectedCustomer = null;
+
+    // Quick Sale Modal functions
+    function openQuickSaleModal() {
+      document.getElementById('quickSaleModal').classList.add('show');
+      renderSellerOptions();
+      renderCustomerOptions();
+    }
+
+    function closeQuickSaleModal() {
+      document.getElementById('quickSaleModal').classList.remove('show');
+      closeAllQuickSaleDropdowns();
+    }
+
+    function toggleSellerDropdown() {
+      const dropdown = document.getElementById('sellerDropdown');
+      const trigger = dropdown.previousElementSibling;
+      const isOpen = dropdown.classList.contains('show');
+
+      closeAllQuickSaleDropdowns();
+
+      if (!isOpen) {
+        dropdown.classList.add('show');
+        trigger.classList.add('open');
+      }
+    }
+
+    function toggleCustomerDropdown() {
+      const dropdown = document.getElementById('customerDropdown');
+      const trigger = dropdown.previousElementSibling;
+      const isOpen = dropdown.classList.contains('show');
+
+      closeAllQuickSaleDropdowns();
+
+      if (!isOpen) {
+        dropdown.classList.add('show');
+        trigger.classList.add('open');
+        document.getElementById('customerSearchInput').focus();
+      }
+    }
+
+    function closeAllQuickSaleDropdowns() {
+      document.querySelectorAll('.searchable-select-dropdown').forEach(d => d.classList.remove('show'));
+      document.querySelectorAll('.searchable-select-trigger').forEach(t => t.classList.remove('open'));
+    }
+
+    function renderSellerOptions() {
+      const container = document.getElementById('sellerOptions');
+      container.innerHTML = sellers.map(seller => `
+        <div class="searchable-select-option" onclick="selectSeller(${seller.id})">
+          <div class="select-option-info">
+            <div class="select-option-name">${seller.name} <span style="color: var(--gray-500)">${seller.email}</span></div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderCustomerOptions(filter = '') {
+      const container = document.getElementById('customerOptions');
+      const filtered = filter
+        ? customers.filter(c =>
+            c.name.toLowerCase().includes(filter.toLowerCase()) ||
+            c.email.toLowerCase().includes(filter.toLowerCase())
+          )
+        : customers;
+
+      container.innerHTML = filtered.map(customer => `
+        <div class="searchable-select-option ${selectedCustomer?.id === customer.id ? 'selected' : ''}" onclick="selectCustomer(${customer.id})">
+          <div class="select-option-avatar">${getInitials(customer.name)}</div>
+          <div class="select-option-info">
+            <div class="select-option-name">${customer.name}</div>
+            <div class="select-option-email">${customer.email}</div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function filterCustomerOptions() {
+      const filter = document.getElementById('customerSearchInput').value;
+      renderCustomerOptions(filter);
+    }
+
+    function selectSeller(sellerId) {
+      const seller = sellers.find(s => s.id === sellerId);
+      if (seller) {
+        selectedSeller = seller;
+        const valueEl = document.getElementById('sellerValue');
+        valueEl.innerHTML = `
+          <button class="searchable-select-clear" onclick="event.stopPropagation(); clearSeller();">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+          <span>${seller.name} ${seller.email}</span>
+        `;
+        valueEl.classList.remove('placeholder');
+      }
+      closeAllQuickSaleDropdowns();
+    }
+
+    function clearSeller() {
+      selectedSeller = { name: 'emilian@expand.health', email: '', isLoggedIn: true };
+      const valueEl = document.getElementById('sellerValue');
+      valueEl.innerHTML = '<span>emilian@expand.health (logged in)</span>';
+      valueEl.classList.remove('placeholder');
+    }
+
+    function selectCustomer(customerId) {
+      const customer = customers.find(c => c.id === customerId);
+      if (customer) {
+        selectedCustomer = customer;
+        const valueEl = document.getElementById('customerValue');
+        valueEl.innerHTML = `
+          <div class="select-option-avatar" style="width: 24px; height: 24px; font-size: 0.65rem;">${getInitials(customer.name)}</div>
+          <span>${customer.name}</span>
+        `;
+        valueEl.classList.remove('placeholder');
+      }
+      closeAllQuickSaleDropdowns();
+    }
+
+    function saveQuickSaleSettings() {
+      const payingForSomeoneElse = document.getElementById('payingForSomeoneElse').checked;
+
+      console.log('Quick Sale Settings:', {
+        seller: selectedSeller,
+        customer: selectedCustomer,
+        payingForSomeoneElse
+      });
+
+      alert('Quick sale settings saved!');
+      closeQuickSaleModal();
+    }
+
+    // Close quick sale modal when clicking outside
+    document.getElementById('quickSaleModal').addEventListener('click', function(e) {
+      if (e.target === this) {
+        closeQuickSaleModal();
+      }
+    });
+
+    // Close quick sale dropdowns when clicking outside them
+    document.getElementById('quickSaleModal').addEventListener('click', function(e) {
+      if (!e.target.closest('.searchable-select')) {
+        closeAllQuickSaleDropdowns();
+      }
+    });
+  </script>
 </body>
 </html>
