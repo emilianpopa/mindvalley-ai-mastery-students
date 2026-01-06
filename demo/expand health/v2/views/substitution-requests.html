@@ -21,9 +21,85 @@
     }
 
     .page-title {
-      font-size: 1.75rem;
+      font-size: 1.5rem;
       font-weight: 600;
       color: var(--gray-900);
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn-see-report {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      background: white;
+      border: 1px solid var(--gray-300);
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--gray-700);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-see-report:hover {
+      background: var(--gray-50);
+      border-color: var(--gray-400);
+    }
+
+    .btn-more {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      background: white;
+      border: 1px solid var(--gray-300);
+      border-radius: 8px;
+      color: var(--gray-500);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-more:hover {
+      background: var(--gray-50);
+      border-color: var(--gray-400);
+    }
+
+    .btn-more svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    /* Info box */
+    .info-box {
+      background: var(--purple-50);
+      border-left: 4px solid var(--purple-400);
+      padding: 16px 20px;
+      border-radius: 0 8px 8px 0;
+      margin-bottom: 32px;
+    }
+
+    .info-box p {
+      font-size: 0.875rem;
+      color: var(--gray-700);
+      line-height: 1.6;
+      margin: 0;
+    }
+
+    .info-box a {
+      color: var(--purple-600);
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .info-box a:hover {
+      text-decoration: underline;
     }
 
     /* Tabs */
@@ -473,6 +549,22 @@
       <div class="requests-page">
         <div class="page-header">
           <h1 class="page-title">Substitution requests</h1>
+          <div class="header-actions">
+            <button class="btn-see-report" onclick="window.location.href='/substitution-report'">
+              See requests report
+            </button>
+            <button class="btn-more">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="1"></circle>
+                <circle cx="12" cy="5" r="1"></circle>
+                <circle cx="12" cy="19" r="1"></circle>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="info-box">
+          <p>This is where classes that have pending practitioner substitutes that require your approval will show up. You haven't turned on requiring approvals, so if a substitute is requested using the Request Substitute button, no approval is required. You can turn on requiring approval for substitution request responses in your <a href="/settings/practitioner-substitutions">practitioner substitutions settings</a>.</p>
         </div>
 
         <!-- Tabs -->

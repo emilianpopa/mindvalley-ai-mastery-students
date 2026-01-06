@@ -328,6 +328,10 @@ app.get('/substitution-requests', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'substitution-requests.html'));
 });
 
+app.get('/substitution-report', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'substitution-report.html'));
+});
+
 // Discount codes
 app.get('/discounts', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'discounts.html'));
