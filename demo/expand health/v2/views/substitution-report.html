@@ -495,7 +495,7 @@
           </div>
           <div class="filter-row">
             <button class="btn-apply-filters">Apply filters</button>
-            <button class="btn-download">
+            <button class="btn-download" onclick="downloadCSV()">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                 <polyline points="7 10 12 15 17 10"></polyline>
@@ -555,6 +555,53 @@
     document.querySelector('.btn-favorite').addEventListener('click', function() {
       this.classList.toggle('active');
     });
+
+    // CSV Download function
+    function downloadCSV() {
+      const table = document.querySelector('.report-table');
+      const headers = ['Class name', 'Class date', 'Orig. practitioner', 'Class location', 'Substitute found'];
+      const rows = table.querySelectorAll('tbody tr');
+
+      // Build CSV content
+      let csvContent = headers.join(',') + '\n';
+
+      // Check if there's actual data (not just empty state)
+      const emptyState = table.querySelector('.empty-state');
+      if (!emptyState) {
+        rows.forEach(row => {
+          const cells = row.querySelectorAll('td');
+          const rowData = [];
+          cells.forEach(cell => {
+            // Escape quotes and wrap in quotes if contains comma
+            let cellText = cell.textContent.trim();
+            if (cellText.includes(',') || cellText.includes('"')) {
+              cellText = '"' + cellText.replace(/"/g, '""') + '"';
+            }
+            rowData.push(cellText);
+          });
+          if (rowData.length === headers.length) {
+            csvContent += rowData.join(',') + '\n';
+          }
+        });
+      }
+
+      // Get current date for filename
+      const today = new Date();
+      const dateStr = today.toISOString().split('T')[0];
+      const filename = `practitioner-substitutions-${dateStr}.csv`;
+
+      // Create and trigger download
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', filename);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }
   </script>
 </body>
 </html>
