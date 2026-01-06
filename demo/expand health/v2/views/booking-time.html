@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Select Time - Expand Health</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cline x1='20' y1='20' x2='80' y2='80' stroke='%230F766E' stroke-width='12' stroke-linecap='round'/%3E%3Cline x1='80' y1='20' x2='20' y2='80' stroke='%230F766E' stroke-width='12' stroke-linecap='round'/%3E%3C/svg%3E">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --purple-50: #f5f3ff;
+      --purple-100: #ede9fe;
+      --purple-200: #ddd6fe;
+      --purple-300: #c4b5fd;
+      --purple-400: #a78bfa;
+      --purple-500: #8b5cf6;
+      --purple-600: #7c3aed;
+      --purple-700: #6d28d9;
+      --gray-50: #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-300: #d1d5db;
+      --gray-400: #9ca3af;
+      --gray-500: #6b7280;
+      --gray-600: #4b5563;
+      --gray-700: #374151;
+      --gray-800: #1f2937;
+      --gray-900: #111827;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(180deg, #f5f3ff 0%, #ede9fe 100%);
+      min-height: 100vh;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 32px;
+      background: white;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo-icon {
+      width: 24px;
+      height: 24px;
+    }
+
+    .business-name {
+      font-size: 0.9375rem;
+      font-weight: 500;
+      color: var(--gray-700);
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .language-selector {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: white;
+      border: 1px solid var(--gray-200);
+      border-radius: 6px;
+      font-size: 0.875rem;
+      color: var(--gray-700);
+      cursor: pointer;
+    }
+
+    .language-selector:hover {
+      background: var(--gray-50);
+    }
+
+    .flag-icon {
+      width: 20px;
+      height: 14px;
+      border-radius: 2px;
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.875rem;
+      color: var(--gray-700);
+    }
+
+    .user-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--gray-100);
+      border: 1px solid var(--gray-200);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .user-avatar svg {
+      width: 18px;
+      height: 18px;
+      color: var(--gray-400);
+    }
+
+    /* Main content */
+    .main-content {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 40px 24px;
+    }
+
+    /* Business card */
+    .business-card {
+      background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%);
+      border-radius: 12px;
+      padding: 28px 32px;
+      margin-bottom: 32px;
+    }
+
+    .business-card h1 {
+      font-size: 1.75rem;
+      font-weight: 600;
+      color: var(--gray-900);
+      margin-bottom: 6px;
+    }
+
+    .business-card p {
+      font-size: 0.9375rem;
+      color: var(--gray-600);
+    }
+
+    /* Section header */
+    .section-header {
+      margin-bottom: 20px;
+    }
+
+    .section-title {
+      font-size: 1.375rem;
+      font-weight: 600;
+      color: var(--gray-900);
+      margin-bottom: 4px;
+    }
+
+    .section-subtitle {
+      font-size: 0.9375rem;
+      color: var(--gray-500);
+    }
+
+    /* Info card (read-only) */
+    .info-card {
+      background: white;
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin-bottom: 16px;
+    }
+
+    .info-label {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      color: var(--gray-500);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 8px;
+    }
+
+    .info-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .info-value {
+      font-size: 1rem;
+      font-weight: 500;
+      color: var(--gray-900);
+    }
+
+    .info-value-small {
+      font-size: 0.9375rem;
+      color: var(--gray-700);
+    }
+
+    /* Calendar card */
+    .calendar-card {
+      background: white;
+      border: 2px solid var(--purple-200);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 16px;
+    }
+
+    .calendar-label {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      color: var(--purple-600);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 16px;
+    }
+
+    /* Calendar header */
+    .calendar-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .calendar-nav {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .calendar-nav-btn {
+      width: 32px;
+      height: 32px;
+      border: 1px solid var(--gray-200);
+      border-radius: 6px;
+      background: white;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--gray-600);
+      transition: all 0.15s;
+    }
+
+    .calendar-nav-btn:hover {
+      background: var(--gray-50);
+      border-color: var(--gray-300);
+    }
+
+    .calendar-month {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+
+    /* Calendar grid */
+    .calendar-weekdays {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+      margin-bottom: 8px;
+    }
+
+    .calendar-weekday {
+      text-align: center;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--gray-500);
+      padding: 8px 0;
+    }
+
+    .calendar-days {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+    }
+
+    .calendar-day {
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.875rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.15s;
+      color: var(--gray-900);
+    }
+
+    .calendar-day:hover:not(.disabled):not(.selected) {
+      background: var(--purple-50);
+    }
+
+    .calendar-day.disabled {
+      color: var(--gray-300);
+      cursor: not-allowed;
+    }
+
+    .calendar-day.selected {
+      background: var(--purple-600);
+      color: white;
+      font-weight: 600;
+    }
+
+    .calendar-day.today {
+      border: 2px solid var(--purple-400);
+    }
+
+    .calendar-day.other-month {
+      color: var(--gray-400);
+    }
+
+    /* Time slots */
+    .time-slots-container {
+      margin-top: 24px;
+      padding-top: 24px;
+      border-top: 1px solid var(--gray-100);
+    }
+
+    .time-slots-label {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      color: var(--purple-600);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 4px;
+    }
+
+    .time-slots-date {
+      font-size: 0.9375rem;
+      color: var(--gray-600);
+      margin-bottom: 16px;
+    }
+
+    .time-slots-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      gap: 10px;
+    }
+
+    .time-slot {
+      padding: 12px 16px;
+      border: 1px solid var(--gray-200);
+      border-radius: 8px;
+      background: white;
+      text-align: center;
+      font-size: 0.9375rem;
+      color: var(--gray-700);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .time-slot:hover:not(.selected) {
+      border-color: var(--purple-300);
+      background: var(--purple-50);
+    }
+
+    .time-slot.selected {
+      background: var(--purple-600);
+      color: white;
+      border-color: var(--purple-600);
+      font-weight: 500;
+    }
+
+    .time-slot.unavailable {
+      background: var(--gray-50);
+      color: var(--gray-400);
+      cursor: not-allowed;
+      text-decoration: line-through;
+    }
+
+    .no-slots-message {
+      text-align: center;
+      padding: 24px;
+      color: var(--gray-500);
+      font-size: 0.9375rem;
+    }
+
+    /* Continue button */
+    .continue-btn {
+      width: 100%;
+      padding: 16px;
+      background: var(--purple-600);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+      margin-top: 24px;
+    }
+
+    .continue-btn:hover:not(:disabled) {
+      background: var(--purple-700);
+    }
+
+    .continue-btn:disabled {
+      background: var(--gray-300);
+      cursor: not-allowed;
+    }
+
+    /* Responsive */
+    @media (max-width: 640px) {
+      .main-content {
+        padding: 24px 16px;
+      }
+
+      .header {
+        padding: 12px 16px;
+      }
+
+      .user-info span {
+        display: none;
+      }
+
+      .time-slots-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="header-left">
+      <svg class="logo-icon" viewBox="0 0 24 24" fill="none">
+        <path d="M4 4L11 12L4 20" stroke="#0F766E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M20 4L13 12L20 20" stroke="#0F766E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span class="business-name">Expand Health (Pty) ltd</span>
+    </div>
+    <div class="header-right">
+      <button class="language-selector">
+        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 30'%3E%3Crect fill='%23002868' width='60' height='30'/%3E%3Cg fill='%23fff'%3E%3Crect y='3.5' width='60' height='2.3'/%3E%3Crect y='9.2' width='60' height='2.3'/%3E%3Crect y='14.9' width='60' height='2.3'/%3E%3Crect y='20.6' width='60' height='2.3'/%3E%3Crect y='26.3' width='60' height='2.3'/%3E%3C/g%3E%3Crect fill='%23002868' width='24' height='16'/%3E%3C/svg%3E" class="flag-icon" alt="US">
+        English
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="6 9 12 15 18 9"></polyline>
+        </svg>
+      </button>
+      <div class="user-info">
+        <span>Emilian Popa</span>
+        <div class="user-avatar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <!-- Business Card -->
+    <div class="business-card">
+      <h1>Expand Health</h1>
+      <p>with Expand Health (Pty) ltd</p>
+    </div>
+
+    <!-- Section Header -->
+    <div class="section-header">
+      <h2 class="section-title">Book your appointment</h2>
+      <p class="section-subtitle">Select an available date and time.</p>
+    </div>
+
+    <!-- Service Info -->
+    <div class="info-card">
+      <div class="info-label">SERVICE</div>
+      <div class="info-content">
+        <span class="info-value" id="serviceName">Soul Collage - 180 min</span>
+        <span class="info-value" id="servicePrice">ZAR 750.00</span>
+      </div>
+    </div>
+
+    <!-- Additional Spots Info -->
+    <div class="info-card" id="spotsCard">
+      <div class="info-label">ADDITIONAL SPOTS</div>
+      <div class="info-value-small" id="additionalSpotsInfo">1 additional spot reserved</div>
+    </div>
+
+    <!-- Add-ons Info -->
+    <div class="info-card" id="addonsCard" style="display: none;">
+      <div class="info-label">ADD-ONS</div>
+      <div class="info-value-small" id="addonsInfo"></div>
+    </div>
+
+    <!-- Practitioner Info -->
+    <div class="info-card">
+      <div class="info-label">PRACTITIONER</div>
+      <div class="info-value-small" id="practitionerInfo">Any available</div>
+    </div>
+
+    <!-- Calendar Card -->
+    <div class="calendar-card">
+      <div class="calendar-label">SELECT DATE & TIME</div>
+
+      <!-- Calendar Header -->
+      <div class="calendar-header">
+        <div class="calendar-nav">
+          <button class="calendar-nav-btn" onclick="changeMonth(-1)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+          </button>
+          <span class="calendar-month" id="calendarMonth">January 2026</span>
+          <button class="calendar-nav-btn" onclick="changeMonth(1)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Calendar Weekdays -->
+      <div class="calendar-weekdays">
+        <div class="calendar-weekday">Sun</div>
+        <div class="calendar-weekday">Mon</div>
+        <div class="calendar-weekday">Tue</div>
+        <div class="calendar-weekday">Wed</div>
+        <div class="calendar-weekday">Thu</div>
+        <div class="calendar-weekday">Fri</div>
+        <div class="calendar-weekday">Sat</div>
+      </div>
+
+      <!-- Calendar Days -->
+      <div class="calendar-days" id="calendarDays">
+        <!-- Days will be generated by JavaScript -->
+      </div>
+
+      <!-- Time Slots -->
+      <div class="time-slots-container" id="timeSlotsContainer" style="display: none;">
+        <div class="time-slots-label">AVAILABLE TIMES</div>
+        <div class="time-slots-date" id="selectedDateLabel">Tuesday, January 7</div>
+        <div class="time-slots-grid" id="timeSlotsGrid">
+          <!-- Time slots will be generated by JavaScript -->
+        </div>
+      </div>
+
+      <!-- Continue Button -->
+      <button class="continue-btn" id="continueBtn" disabled onclick="continueBooking()">
+        Select a date and time
+      </button>
+    </div>
+  </main>
+
+  <script>
+    // Get booking info from URL params
+    const urlParams = new URLSearchParams(window.location.search);
+    const serviceId = urlParams.get('id') || '';
+    const serviceName = urlParams.get('name') || 'Soul Collage';
+    const serviceDuration = urlParams.get('duration') || '180 min';
+    const servicePrice = urlParams.get('price') || 'ZAR 750.00';
+    const additionalSpots = parseInt(urlParams.get('spots') || '0');
+    const addons = urlParams.get('addons') || '';
+    const practitionerId = urlParams.get('practitioner') || '';
+
+    // Update service display
+    document.getElementById('serviceName').textContent = `${serviceName} - ${serviceDuration}`;
+    document.getElementById('servicePrice').textContent = servicePrice;
+
+    // Update additional spots info
+    if (additionalSpots === 0) {
+      document.getElementById('spotsCard').style.display = 'none';
+    } else if (additionalSpots === 1) {
+      document.getElementById('additionalSpotsInfo').textContent = '1 additional spot reserved';
+    } else {
+      document.getElementById('additionalSpotsInfo').textContent = `${additionalSpots} additional spots reserved`;
+    }
+
+    // Update add-ons info
+    if (addons) {
+      const addonsList = addons.split(',').map(a => {
+        const names = {
+          'cold-plunge': 'Cold Plunge',
+          'infrared-sauna': 'Infrared Sauna',
+          'pemf': 'PEMF',
+          'lymphatic': 'Lymphatic Drainage'
+        };
+        return names[a] || a;
+      });
+      document.getElementById('addonsCard').style.display = 'block';
+      document.getElementById('addonsInfo').textContent = addonsList.join(', ');
+    }
+
+    // Update practitioner info
+    if (practitionerId) {
+      // Fetch practitioner name
+      fetch('/api/staff')
+        .then(res => res.json())
+        .then(staff => {
+          const practitioner = staff.find(s => s.id == practitionerId);
+          if (practitioner) {
+            document.getElementById('practitionerInfo').textContent = practitioner.name;
+          }
+        })
+        .catch(() => {});
+    }
+
+    // Calendar state
+    let currentDate = new Date();
+    let selectedDate = null;
+    let selectedTime = null;
+
+    // Generate available time slots (mock data)
+    function getAvailableSlots(date) {
+      // In a real app, this would fetch from API
+      const dayOfWeek = date.getDay();
+
+      // No slots on Sundays
+      if (dayOfWeek === 0) return [];
+
+      // Mock available times based on day
+      const baseSlots = ['09:00', '10:00', '11:00', '12:00', '14:00', '15:00', '16:00', '17:00'];
+
+      // Randomly remove some slots to simulate bookings
+      const seed = date.getDate() + date.getMonth() * 31;
+      return baseSlots.filter((_, i) => (seed + i) % 3 !== 0);
+    }
+
+    // Render calendar
+    function renderCalendar() {
+      const year = currentDate.getFullYear();
+      const month = currentDate.getMonth();
+
+      // Update month label
+      const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                         'July', 'August', 'September', 'October', 'November', 'December'];
+      document.getElementById('calendarMonth').textContent = `${monthNames[month]} ${year}`;
+
+      // Get first day of month and total days
+      const firstDay = new Date(year, month, 1).getDay();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const daysInPrevMonth = new Date(year, month, 0).getDate();
+
+      // Get today for comparison
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      // Generate calendar days
+      const calendarDays = document.getElementById('calendarDays');
+      calendarDays.innerHTML = '';
+
+      // Previous month days
+      for (let i = firstDay - 1; i >= 0; i--) {
+        const day = daysInPrevMonth - i;
+        const dayEl = document.createElement('div');
+        dayEl.className = 'calendar-day other-month disabled';
+        dayEl.textContent = day;
+        calendarDays.appendChild(dayEl);
+      }
+
+      // Current month days
+      for (let day = 1; day <= daysInMonth; day++) {
+        const date = new Date(year, month, day);
+        const dayEl = document.createElement('div');
+        dayEl.className = 'calendar-day';
+        dayEl.textContent = day;
+
+        // Check if past
+        if (date < today) {
+          dayEl.classList.add('disabled');
+        } else {
+          // Check if today
+          if (date.getTime() === today.getTime()) {
+            dayEl.classList.add('today');
+          }
+
+          // Check if selected
+          if (selectedDate && date.getTime() === selectedDate.getTime()) {
+            dayEl.classList.add('selected');
+          }
+
+          // Add click handler
+          dayEl.onclick = () => selectDate(date);
+        }
+
+        calendarDays.appendChild(dayEl);
+      }
+
+      // Next month days (fill to complete grid)
+      const totalCells = firstDay + daysInMonth;
+      const remainingCells = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
+      for (let day = 1; day <= remainingCells; day++) {
+        const dayEl = document.createElement('div');
+        dayEl.className = 'calendar-day other-month disabled';
+        dayEl.textContent = day;
+        calendarDays.appendChild(dayEl);
+      }
+    }
+
+    // Change month
+    function changeMonth(delta) {
+      currentDate.setMonth(currentDate.getMonth() + delta);
+      renderCalendar();
+    }
+
+    // Select date
+    function selectDate(date) {
+      selectedDate = date;
+      selectedTime = null;
+
+      // Re-render calendar to show selection
+      renderCalendar();
+
+      // Show time slots
+      const timeSlotsContainer = document.getElementById('timeSlotsContainer');
+      timeSlotsContainer.style.display = 'block';
+
+      // Update date label
+      const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                         'July', 'August', 'September', 'October', 'November', 'December'];
+      document.getElementById('selectedDateLabel').textContent =
+        `${dayNames[date.getDay()]}, ${monthNames[date.getMonth()]} ${date.getDate()}`;
+
+      // Render time slots
+      renderTimeSlots(date);
+
+      // Update button
+      updateContinueButton();
+    }
+
+    // Render time slots
+    function renderTimeSlots(date) {
+      const grid = document.getElementById('timeSlotsGrid');
+      const slots = getAvailableSlots(date);
+
+      if (slots.length === 0) {
+        grid.innerHTML = '<div class="no-slots-message">No available times on this day</div>';
+        return;
+      }
+
+      grid.innerHTML = slots.map(time => `
+        <div class="time-slot" onclick="selectTime('${time}', this)">
+          ${time}
+        </div>
+      `).join('');
+    }
+
+    // Select time
+    function selectTime(time, element) {
+      // Remove previous selection
+      document.querySelectorAll('.time-slot.selected').forEach(el => {
+        el.classList.remove('selected');
+      });
+
+      // Select this time
+      element.classList.add('selected');
+      selectedTime = time;
+
+      // Update button
+      updateContinueButton();
+    }
+
+    // Update continue button
+    function updateContinueButton() {
+      const btn = document.getElementById('continueBtn');
+
+      if (selectedDate && selectedTime) {
+        btn.disabled = false;
+        btn.textContent = `Continue with ${selectedTime}`;
+      } else if (selectedDate) {
+        btn.disabled = true;
+        btn.textContent = 'Select a time';
+      } else {
+        btn.disabled = true;
+        btn.textContent = 'Select a date and time';
+      }
+    }
+
+    // Continue booking
+    function continueBooking() {
+      if (!selectedDate || !selectedTime) return;
+
+      // Format date for URL
+      const dateStr = selectedDate.toISOString().split('T')[0];
+
+      // Build URL params for confirmation page
+      const params = new URLSearchParams({
+        id: serviceId,
+        name: serviceName,
+        duration: serviceDuration,
+        price: servicePrice,
+        spots: additionalSpots,
+        addons: addons,
+        practitioner: practitionerId,
+        date: dateStr,
+        time: selectedTime
+      });
+
+      // Navigate to confirmation (placeholder for now)
+      alert(`Booking confirmed!\n\nDate: ${selectedDate.toDateString()}\nTime: ${selectedTime}\n\nNext step: Payment/confirmation page`);
+      // window.location.href = `/booking-confirm?${params.toString()}`;
+    }
+
+    // Initialize
+    renderCalendar();
+  </script>
+</body>
+</html>

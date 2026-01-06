@@ -305,6 +305,11 @@ app.get('/booking-practitioner', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'booking-practitioner.html'));
 });
 
+// Booking Time (booking flow - after practitioner selection)
+app.get('/booking-time', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'booking-time.html'));
+});
+
 // Multi Reservation (booking flow)
 app.get('/multi-reservation', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'multi-reservation.html'));
