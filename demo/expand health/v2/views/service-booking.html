@@ -376,6 +376,15 @@
       background: var(--purple-700);
     }
 
+    .continue-btn:disabled {
+      background: var(--purple-300);
+      cursor: not-allowed;
+    }
+
+    .continue-btn:disabled:hover {
+      background: var(--purple-300);
+    }
+
     /* Responsive */
     @media (max-width: 640px) {
       .main-content {
@@ -536,17 +545,18 @@
         spotForm.innerHTML = `
           <div class="spot-form-title">Additional spot ${i} Contact Details</div>
           <div class="form-row">
-            <input type="text" class="form-input" placeholder="First Name" id="firstName${i}">
-            <input type="text" class="form-input" placeholder="Last Name" id="lastName${i}">
+            <input type="text" class="form-input" placeholder="First Name" id="firstName${i}" oninput="updateContinueButtonState()">
+            <input type="text" class="form-input" placeholder="Last Name" id="lastName${i}" oninput="updateContinueButtonState()">
           </div>
           <div class="form-row">
-            <input type="email" class="form-input email-input" placeholder="email@example.com" id="email${i}">
+            <input type="email" class="form-input email-input" placeholder="email@example.com" id="email${i}" oninput="updateContinueButtonState()">
           </div>
         `;
         container.appendChild(spotForm);
       }
 
       updateContinueButton();
+      updateContinueButtonState();
     }
 
     function updateContinueButton() {
@@ -563,16 +573,60 @@
       }
     }
 
+    function validateContactDetails() {
+      if (!additionalSpotsEnabled) {
+        return true;
+      }
+
+      const numberOfSpots = parseInt(document.getElementById('numberOfSpots').value);
+      for (let i = 1; i <= numberOfSpots; i++) {
+        const firstName = document.getElementById(`firstName${i}`)?.value?.trim() || '';
+        const lastName = document.getElementById(`lastName${i}`)?.value?.trim() || '';
+        const email = document.getElementById(`email${i}`)?.value?.trim() || '';
+
+        if (!firstName || !lastName || !email) {
+          return false;
+        }
+
+        // Basic email validation
+        if (!email.includes('@') || !email.includes('.')) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    function updateContinueButtonState() {
+      const continueBtn = document.getElementById('continueBtn');
+      if (additionalSpotsEnabled) {
+        const isValid = validateContactDetails();
+        continueBtn.disabled = !isValid;
+        if (isValid) {
+          continueBtn.classList.add('active');
+        } else {
+          continueBtn.classList.remove('active');
+        }
+      } else {
+        continueBtn.disabled = false;
+      }
+    }
+
     function continueBooking() {
+      // Validate contact details if additional spots enabled
+      if (additionalSpotsEnabled && !validateContactDetails()) {
+        alert('Please fill in all contact details (First Name, Last Name, and Email) for each additional spot.');
+        return;
+      }
+
       // Collect additional spots data if enabled
       const additionalSpots = [];
 
       if (additionalSpotsEnabled) {
         const numberOfSpots = parseInt(document.getElementById('numberOfSpots').value);
         for (let i = 1; i <= numberOfSpots; i++) {
-          const firstName = document.getElementById(`firstName${i}`)?.value || '';
-          const lastName = document.getElementById(`lastName${i}`)?.value || '';
-          const email = document.getElementById(`email${i}`)?.value || '';
+          const firstName = document.getElementById(`firstName${i}`)?.value?.trim() || '';
+          const lastName = document.getElementById(`lastName${i}`)?.value?.trim() || '';
+          const email = document.getElementById(`email${i}`)?.value?.trim() || '';
 
           additionalSpots.push({
             firstName,
