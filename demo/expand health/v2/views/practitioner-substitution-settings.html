@@ -2446,25 +2446,39 @@
       { id: 7, name: 'Dr Melody Fourie', email: 'melody@nourishedwellbeing.co' }
     ];
 
-    // Customers data
-    const customers = [
-      { id: 1, name: 'Adam Fine', email: 'adfine@gmail.com' },
-      { id: 2, name: 'Silvia Kusic', email: 'silvia.kusic@icloud.com' },
-      { id: 3, name: 'Ugur Ozlem Dalgic', email: 'uo@untamed.travel' },
-      { id: 4, name: 'Stephanie Ziff', email: 'stephanieziff@gmail.com' },
-      { id: 5, name: 'Anna Ziff', email: 'annaziff@gmail.com' },
-      { id: 6, name: 'Michael Chen', email: 'michael.chen@email.com' },
-      { id: 7, name: 'Sarah Johnson', email: 'sarah.j@company.org' }
-    ];
+    // Customers data - loaded from API
+    let customers = [];
 
     let selectedSeller = { name: 'emilian@expand.health', email: '', isLoggedIn: true };
     let selectedCustomer = null;
+
+    // Load customers from API
+    async function loadCustomers() {
+      try {
+        const response = await fetch('/api/clients?limit=100', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          // API returns { clients: [...], pagination: {...} }
+          const clientList = data.clients || data;
+          customers = clientList.map(c => ({
+            id: c.id,
+            name: `${c.first_name || ''} ${c.last_name || ''}`.trim() || c.email,
+            email: c.email || ''
+          }));
+          renderCustomerOptions();
+        }
+      } catch (error) {
+        console.error('Error loading customers:', error);
+      }
+    }
 
     // Quick Sale Modal functions
     function openQuickSaleModal() {
       document.getElementById('quickSaleModal').classList.add('show');
       renderSellerOptions();
-      renderCustomerOptions();
+      loadCustomers();
     }
 
     function closeQuickSaleModal() {
