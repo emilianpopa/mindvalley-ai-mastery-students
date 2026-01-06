@@ -2455,8 +2455,9 @@
     // Load customers from API
     async function loadCustomers() {
       try {
+        const authToken = localStorage.getItem('auth_token');
         const response = await fetch('/api/clients?limit=100', {
-          headers: { 'Authorization': `Bearer ${token}` }
+          headers: authToken ? { 'Authorization': `Bearer ${authToken}` } : {}
         });
         if (response.ok) {
           const data = await response.json();
@@ -2468,6 +2469,8 @@
             email: c.email || ''
           }));
           renderCustomerOptions();
+        } else {
+          console.warn('Failed to load customers:', response.status);
         }
       } catch (error) {
         console.error('Error loading customers:', error);
