@@ -33,6 +33,7 @@
       --gray-900: #111827;
       --teal-500: #14b8a6;
       --teal-600: #0d9488;
+      --orange-500: #f97316;
     }
 
     body {
@@ -202,10 +203,11 @@
     /* Service item */
     .service-item {
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       justify-content: space-between;
-      padding: 12px 0;
+      padding: 14px 0;
       border-bottom: 1px solid var(--gray-100);
+      gap: 12px;
     }
 
     .service-item:last-child {
@@ -214,6 +216,7 @@
 
     .service-info {
       flex: 1;
+      min-width: 0;
     }
 
     .service-name {
@@ -223,6 +226,7 @@
       text-decoration: underline;
       cursor: pointer;
       margin-bottom: 2px;
+      line-height: 1.3;
     }
 
     .service-name:hover {
@@ -232,28 +236,33 @@
     .service-description {
       font-size: 0.8125rem;
       color: var(--gray-500);
+      line-height: 1.4;
+      margin-top: 4px;
     }
 
     .service-details {
       display: flex;
       align-items: center;
       gap: 8px;
+      flex-shrink: 0;
     }
 
     .service-duration {
-      font-size: 0.8125rem;
-      color: var(--gray-500);
-      padding: 4px 8px;
+      font-size: 0.75rem;
+      color: var(--gray-600);
+      padding: 4px 10px;
       background: var(--gray-100);
-      border-radius: 4px;
+      border-radius: 12px;
+      white-space: nowrap;
     }
 
     .service-price {
-      font-size: 0.8125rem;
+      font-size: 0.75rem;
       color: var(--gray-700);
-      padding: 4px 8px;
+      padding: 4px 10px;
       background: var(--gray-100);
-      border-radius: 4px;
+      border-radius: 12px;
+      white-space: nowrap;
     }
 
     .btn-book {
@@ -261,11 +270,12 @@
       background: var(--purple-600);
       color: white;
       border: none;
-      border-radius: 6px;
+      border-radius: 20px;
       font-size: 0.8125rem;
       font-weight: 500;
       cursor: pointer;
       transition: background 0.2s;
+      white-space: nowrap;
     }
 
     .btn-book:hover {
@@ -279,7 +289,7 @@
       color: var(--gray-500);
       text-transform: uppercase;
       letter-spacing: 0.05em;
-      margin-bottom: 8px;
+      margin-bottom: 12px;
     }
 
     /* Back link */
@@ -304,27 +314,19 @@
 
     /* Service list container */
     .services-container {
-      max-height: 600px;
-      overflow-y: auto;
+      max-height: none;
     }
 
-    /* Scrollbar styling */
-    .services-container::-webkit-scrollbar {
-      width: 6px;
-    }
+    /* Responsive */
+    @media (max-width: 480px) {
+      .service-item {
+        flex-direction: column;
+        align-items: flex-start;
+      }
 
-    .services-container::-webkit-scrollbar-track {
-      background: var(--gray-100);
-      border-radius: 3px;
-    }
-
-    .services-container::-webkit-scrollbar-thumb {
-      background: var(--gray-300);
-      border-radius: 3px;
-    }
-
-    .services-container::-webkit-scrollbar-thumb:hover {
-      background: var(--gray-400);
+      .service-details {
+        margin-top: 10px;
+      }
     }
   </style>
 </head>
@@ -378,6 +380,8 @@
         <option value="events">Events/Workshops</option>
         <option value="consultations">Health Coach Consultations</option>
         <option value="modalities">Modalities</option>
+        <option value="massage">Massage</option>
+        <option value="other">Other</option>
       </select>
 
       <div class="services-container" id="servicesContainer">
@@ -417,7 +421,7 @@
             </div>
             <div class="service-details">
               <span class="service-duration">60 min</span>
-              <span class="service-price">ZAR 1,750.00</span>
+              <span class="service-price">ZAR 1,700.00</span>
               <button class="btn-book" onclick="bookService('consultation')">Book</button>
             </div>
           </div>
@@ -482,7 +486,7 @@
             </div>
             <div class="service-details">
               <span class="service-duration">72 min</span>
-              <span class="service-price">ZAR 1,350.00</span>
+              <span class="service-price">ZAR 1,950.00</span>
               <button class="btn-book" onclick="bookService('health-insights')">Book</button>
             </div>
           </div>
@@ -562,7 +566,7 @@
               <div class="service-name" onclick="selectService('cold-plunge-sea')">Cold Plunge Sea View</div>
             </div>
             <div class="service-details">
-              <span class="service-duration">5 min</span>
+              <span class="service-duration">3 min</span>
               <span class="service-price">ZAR 150.00</span>
               <button class="btn-book" onclick="bookService('cold-plunge-sea')">Book</button>
             </div>
@@ -572,7 +576,7 @@
               <div class="service-name" onclick="selectService('cold-plunge-city')">Cold Plunge City View</div>
             </div>
             <div class="service-details">
-              <span class="service-duration">5 min</span>
+              <span class="service-duration">3 min</span>
               <span class="service-price">ZAR 150.00</span>
               <button class="btn-book" onclick="bookService('cold-plunge-city')">Book</button>
             </div>
@@ -583,7 +587,7 @@
             </div>
             <div class="service-details">
               <span class="service-duration">30 min</span>
-              <span class="service-price">ZAR 550.00</span>
+              <span class="service-price">ZAR 500.00</span>
               <button class="btn-book" onclick="bookService('infrared-sauna')">Book</button>
             </div>
           </div>
@@ -625,6 +629,160 @@
               <span class="service-duration">20 min</span>
               <span class="service-price">ZAR 850.00</span>
               <button class="btn-book" onclick="bookService('hocatt-pemf')">Book</button>
+            </div>
+          </div>
+          <div class="service-item">
+            <div class="service-info">
+              <div class="service-name" onclick="selectService('hocatt-steam')">Hocatt Ozone Steam Sauna</div>
+            </div>
+            <div class="service-details">
+              <span class="service-duration">30 min</span>
+              <span class="service-price">ZAR 500.00</span>
+              <button class="btn-book" onclick="bookService('hocatt-steam')">Book</button>
+            </div>
+          </div>
+          <div class="service-item">
+            <div class="service-info">
+              <div class="service-name" onclick="selectService('lymphatic')">Lymphatic Drainage Compression boots</div>
+            </div>
+            <div class="service-details">
+              <span class="service-duration">20 min</span>
+              <span class="service-price">ZAR 150.00</span>
+              <button class="btn-book" onclick="bookService('lymphatic')">Book</button>
+            </div>
+          </div>
+          <div class="service-item">
+            <div class="service-info">
+              <div class="service-name" onclick="selectService('somadome')">Somadome</div>
+            </div>
+            <div class="service-details">
+              <span class="service-duration">20 min</span>
+              <span class="service-price">ZAR 150.00</span>
+              <button class="btn-book" onclick="bookService('somadome')">Book</button>
+            </div>
+          </div>
+          <div class="service-item">
+            <div class="service-info">
+              <div class="service-name" onclick="selectService('red-light')">Red Light Therapy</div>
+            </div>
+            <div class="service-details">
+              <span class="service-duration">30 min</span>
+              <span class="service-price">ZAR 500.00</span>
+              <button class="btn-book" onclick="bookService('red-light')">Book</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Massage -->
+        <div class="service-category" data-category="massage">
+          <div class="category-title">Massage</div>
+          <div class="service-item">
+            <div class="service-info">
+              <div class="service-name" onclick="selectService('lymphatic-60')">Lymphatic Drainage 60Min</div>
+            </div>
+            <div class="service-details">
+              <span class="service-duration">45 min</span>
+              <span class="service-price">ZAR 950.00</span>
+              <button class="btn-book" onclick="bookService('lymphatic-60')">Book</button>
+            </div>
+          </div>
+          <div class="service-item">
+            <div class="service-info">
+              <div class="service-name" onclick="selectService('back-neck-45')">Back / Neck / Shoulder Massage 45 Min</div>
+            </div>
+            <div class="service-details">
+              <span class="service-duration">30 min</span>
+              <span class="service-price">ZAR 825.00</span>
+              <button class="btn-book" onclick="bookService('back-neck-45')">Book</button>
+            </div>
+          </div>
+          <div class="service-item">
+            <div class="service-info">
+              <div class="service-name" onclick="selectService('back-neck-30')">Back / Neck / Shoulder Massage 30 Min</div>
+            </div>
+            <div class="service-details">
+              <span class="service-duration">30 min</span>
+              <span class="service-price">ZAR 550.00</span>
+              <button class="btn-book" onclick="bookService('back-neck-30')">Book</button>
+            </div>
+          </div>
+          <div class="service-item">
+            <div class="service-info">
+              <div class="service-name" onclick="selectService('swedish-90')">Swedish Massage 90 Min</div>
+              <div class="service-description">A gentle, full-body massage that uses long, gliding strokes, kneading, and circular movements, ideal for relaxation, improving circulation, and easing mild muscle tension. Swedish massage is often recommended for first-time massage clients due to its lighter, soothing approach.</div>
+            </div>
+            <div class="service-details">
+              <span class="service-duration">90 min</span>
+              <span class="service-price">ZAR 1,450.00</span>
+              <button class="btn-book" onclick="bookService('swedish-90')">Book</button>
+            </div>
+          </div>
+          <div class="service-item">
+            <div class="service-info">
+              <div class="service-name" onclick="selectService('reflex-foot-60')">Reflex Foot Massage 60 Min</div>
+            </div>
+            <div class="service-details">
+              <span class="service-duration">60 min</span>
+              <span class="service-price">ZAR 950.00</span>
+              <button class="btn-book" onclick="bookService('reflex-foot-60')">Book</button>
+            </div>
+          </div>
+          <div class="service-item">
+            <div class="service-info">
+              <div class="service-name" onclick="selectService('deep-tissue-90')">Deep Tissue Massage 90 Min</div>
+            </div>
+            <div class="service-details">
+              <span class="service-duration">50 min</span>
+              <span class="service-price">ZAR 1,050.00</span>
+              <button class="btn-book" onclick="bookService('deep-tissue-90')">Book</button>
+            </div>
+          </div>
+          <div class="service-item">
+            <div class="service-info">
+              <div class="service-name" onclick="selectService('deep-tissue-60')">Deep Tissue Massage 60 Min</div>
+              <div class="service-description">Focusing on the deeper layers of muscle and connective tissue, deep tissue massage applies firmer pressure to release chronic muscle tension, break down adhesions, and relieve stiffness in tight muscles, or past injuries. It can be intense but effectively targets and reduces stiffness.</div>
+            </div>
+            <div class="service-details">
+              <span class="service-duration">60 min</span>
+              <span class="service-price">ZAR 1,150.00</span>
+              <button class="btn-book" onclick="bookService('deep-tissue-60')">Book</button>
+            </div>
+          </div>
+          <div class="service-item">
+            <div class="service-info">
+              <div class="service-name" onclick="selectService('sports-60')">Sports Massage 60 Min</div>
+              <div class="service-description">Tailored for athletes and active individuals. Sports massage incorporates stretching, joint mobilization, and targeted techniques to enhance flexibility, reduce soreness, prevent injury, and improve athletic performance. These can be done before, during, or after physical activity to prepare muscles or aid recovery.</div>
+            </div>
+            <div class="service-details">
+              <span class="service-duration">60 min</span>
+              <span class="service-price">ZAR 1,150.00</span>
+              <button class="btn-book" onclick="bookService('sports-60')">Book</button>
+            </div>
+          </div>
+          <div class="service-item">
+            <div class="service-info">
+              <div class="service-name" onclick="selectService('swedish-60')">Swedish Massage 60 Min</div>
+              <div class="service-description">A gentle, full-body massage that uses long, gliding strokes, kneading, and circular movements, ideal for relaxation, improving circulation, and easing mild muscle tension. Swedish massage is often recommended for first-time massage clients due to its lighter, soothing approach.</div>
+            </div>
+            <div class="service-details">
+              <span class="service-duration">60 min</span>
+              <span class="service-price">ZAR 950.00</span>
+              <button class="btn-book" onclick="bookService('swedish-60')">Book</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Other -->
+        <div class="service-category" data-category="other">
+          <div class="category-title">Other</div>
+          <div class="service-item">
+            <div class="service-info">
+              <div class="service-name" onclick="selectService('theragun')">Theragun</div>
+            </div>
+            <div class="service-details">
+              <span class="service-duration">15 min</span>
+              <span class="service-price">ZAR 200.00</span>
+              <button class="btn-book" onclick="bookService('theragun')">Book</button>
             </div>
           </div>
         </div>
