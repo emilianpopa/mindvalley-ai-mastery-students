@@ -99,16 +99,260 @@
       align-items: center;
       gap: 8px;
       padding: 10px 16px;
-      border: 1px solid var(--gray-300);
+      border: 1px solid var(--teal-500);
       border-radius: 8px;
       background: white;
       font-size: 0.875rem;
-      color: var(--gray-700);
+      color: var(--teal-600);
       cursor: pointer;
     }
 
     .filter-btn:hover {
+      background: var(--teal-50);
+    }
+
+    .filter-btn svg {
+      color: var(--teal-500);
+    }
+
+    /* Filter Slide Panel */
+    .filter-panel-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.3);
+      z-index: 999;
+    }
+
+    .filter-panel-overlay.show {
+      display: block;
+    }
+
+    .filter-panel {
+      position: fixed;
+      top: 0;
+      right: -400px;
+      width: 400px;
+      height: 100vh;
+      background: white;
+      box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15);
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      transition: right 0.3s ease;
+    }
+
+    .filter-panel.show {
+      right: 0;
+    }
+
+    .filter-panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .filter-panel-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+
+    .filter-panel-title svg {
+      width: 18px;
+      height: 18px;
+      color: var(--gray-500);
+    }
+
+    .filter-panel-close {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      background: transparent;
+      border: none;
+      color: var(--gray-500);
+      cursor: pointer;
+      border-radius: 6px;
+    }
+
+    .filter-panel-close:hover {
+      background: var(--gray-100);
+      color: var(--gray-700);
+    }
+
+    .filter-panel-close svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    .filter-panel-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+    }
+
+    .filter-group {
+      margin-bottom: 20px;
+    }
+
+    .filter-label {
+      display: block;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--gray-700);
+      margin-bottom: 8px;
+    }
+
+    .filter-select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--gray-300);
+      border-radius: 8px;
+      font-size: 0.875rem;
+      color: var(--gray-700);
+      background: white;
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 36px;
+    }
+
+    .filter-select:focus {
+      outline: none;
+      border-color: var(--teal-500);
+      box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
+    }
+
+    .filter-date-input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--gray-300);
+      border-radius: 8px;
+      font-size: 0.875rem;
+      color: var(--gray-700);
+      background: white;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .filter-date-input svg {
+      width: 16px;
+      height: 16px;
+      color: var(--gray-400);
+    }
+
+    .filter-date-input:focus-within {
+      outline: none;
+      border-color: var(--teal-500);
+      box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
+    }
+
+    .filter-date-input input {
+      border: none;
+      outline: none;
+      flex: 1;
+      font-size: 0.875rem;
+      color: var(--gray-700);
+    }
+
+    .filter-text-input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--gray-300);
+      border-radius: 8px;
+      font-size: 0.875rem;
+      color: var(--gray-700);
+      background: white;
+    }
+
+    .filter-text-input:focus {
+      outline: none;
+      border-color: var(--teal-500);
+      box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
+    }
+
+    .filter-checkbox-group {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .filter-checkbox-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+    }
+
+    .filter-checkbox-item input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--teal-600);
+      cursor: pointer;
+    }
+
+    .filter-checkbox-item span {
+      font-size: 0.875rem;
+      color: var(--gray-700);
+    }
+
+    .filter-section-title {
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--gray-700);
+      margin-bottom: 12px;
+    }
+
+    .filter-panel-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      border-top: 1px solid var(--gray-200);
+      background: white;
+    }
+
+    .btn-clear-filters {
+      padding: 10px 20px;
+      background: white;
+      border: 1px solid var(--gray-300);
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--gray-700);
+      cursor: pointer;
+    }
+
+    .btn-clear-filters:hover {
       background: var(--gray-50);
+    }
+
+    .btn-apply-filter {
+      padding: 10px 20px;
+      background: var(--teal-600);
+      border: none;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: white;
+      cursor: pointer;
+    }
+
+    .btn-apply-filter:hover {
+      background: var(--teal-700);
     }
 
     /* Table styles */
@@ -703,6 +947,174 @@
     </main>
   </div>
 
+  <!-- Filter Panel Overlay -->
+  <div class="filter-panel-overlay" id="filterOverlay" onclick="closeFilterPanel()"></div>
+
+  <!-- Filter Slide Panel -->
+  <div class="filter-panel" id="filterPanel">
+    <div class="filter-panel-header">
+      <div class="filter-panel-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="4" y1="21" x2="4" y2="14"/>
+          <line x1="4" y1="10" x2="4" y2="3"/>
+          <line x1="12" y1="21" x2="12" y2="12"/>
+          <line x1="12" y1="8" x2="12" y2="3"/>
+          <line x1="20" y1="21" x2="20" y2="16"/>
+          <line x1="20" y1="12" x2="20" y2="3"/>
+          <line x1="1" y1="14" x2="7" y2="14"/>
+          <line x1="9" y1="8" x2="15" y2="8"/>
+          <line x1="17" y1="16" x2="23" y2="16"/>
+        </svg>
+        Filter
+      </div>
+      <button class="filter-panel-close" onclick="closeFilterPanel()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <div class="filter-panel-body">
+      <!-- Service -->
+      <div class="filter-group">
+        <label class="filter-label">Service</label>
+        <select class="filter-select" id="filterService">
+          <option value="">Select a service</option>
+          <option value="cold-plunge">Cold Plunge City View</option>
+          <option value="cold-plunge-sea">Cold Plunge Sea View</option>
+          <option value="hbot1-60">HBOT1 60 min</option>
+          <option value="hbot1-90">HBOT1 90 min</option>
+          <option value="hbot2-30">HBOT2 30 min</option>
+          <option value="hbot2-60">HBOT2 60 min</option>
+          <option value="hbot2-90">HBOT2 90 min</option>
+          <option value="infrared-sauna">Infrared Sauna</option>
+          <option value="pemf">PEMF</option>
+          <option value="red-light">Red Light Therapy</option>
+          <option value="somadome">Somadome</option>
+        </select>
+      </div>
+
+      <!-- Board -->
+      <div class="filter-group">
+        <label class="filter-label">Board</label>
+        <select class="filter-select" id="filterBoard">
+          <option value="">Select a board</option>
+          <option value="expand-health">Expand Health</option>
+        </select>
+      </div>
+
+      <!-- Staff -->
+      <div class="filter-group">
+        <label class="filter-label">Staff</label>
+        <select class="filter-select" id="filterStaff">
+          <option value="">Select staff</option>
+          <option value="avela">Avela Jafta</option>
+          <option value="chantel">Chantel Newmark</option>
+          <option value="melody">Dr Melody Fourie</option>
+          <option value="emilian">Emilian Popa</option>
+          <option value="jack">Jack Harland</option>
+          <option value="karrin">Karrin Bamber</option>
+        </select>
+      </div>
+
+      <!-- Location -->
+      <div class="filter-group">
+        <label class="filter-label">Location</label>
+        <select class="filter-select" id="filterLocation">
+          <option value="">28 DeWolfe Street</option>
+          <option value="event-space">Event Space</option>
+          <option value="consult-1">Consult Room 1</option>
+          <option value="consult-2">Consult Room 2</option>
+          <option value="ice-bath-1">Ice bath 1</option>
+          <option value="ice-bath-2">Ice bath 2</option>
+          <option value="hbot">HBOT</option>
+          <option value="infrared">Infrared Sauna</option>
+          <option value="pemf-room">PEMF</option>
+          <option value="red-light">Red Light Therapy Room</option>
+        </select>
+      </div>
+
+      <!-- Scheduled at from -->
+      <div class="filter-group">
+        <label class="filter-label">Scheduled at from</label>
+        <div class="filter-date-input">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="16" y1="2" x2="16" y2="6"></line>
+            <line x1="8" y1="2" x2="8" y2="6"></line>
+            <line x1="3" y1="10" x2="21" y2="10"></line>
+          </svg>
+          <input type="datetime-local" id="filterDateFrom">
+        </div>
+      </div>
+
+      <!-- Scheduled at to -->
+      <div class="filter-group">
+        <label class="filter-label">Scheduled at to</label>
+        <div class="filter-date-input">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="16" y1="2" x2="16" y2="6"></line>
+            <line x1="8" y1="2" x2="8" y2="6"></line>
+            <line x1="3" y1="10" x2="21" y2="10"></line>
+          </svg>
+          <input type="datetime-local" id="filterDateTo">
+        </div>
+      </div>
+
+      <!-- Payment status -->
+      <div class="filter-group">
+        <label class="filter-label">Payment status</label>
+        <select class="filter-select" id="filterPaymentStatus">
+          <option value="">Select...</option>
+          <option value="paid">Paid</option>
+          <option value="not-paid">Not paid</option>
+          <option value="partial">Partially paid</option>
+        </select>
+      </div>
+
+      <!-- Type & Status -->
+      <div class="filter-group">
+        <label class="filter-label">Type & Status</label>
+        <div class="filter-checkbox-group">
+          <label class="filter-checkbox-item">
+            <input type="checkbox" id="filterShowCancelled">
+            <span>Show cancelled</span>
+          </label>
+          <label class="filter-checkbox-item">
+            <input type="checkbox" id="filterShowBlocking">
+            <span>Show blocking times</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Reservation ID -->
+      <div class="filter-group">
+        <label class="filter-label">Reservation ID</label>
+        <input type="text" class="filter-text-input" id="filterReservationId" placeholder="">
+      </div>
+
+      <!-- Healthcare invoice ID -->
+      <div class="filter-group">
+        <label class="filter-label">
+          Healthcare invoice ID
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline-block; margin-left: 4px; color: var(--gray-400); vertical-align: middle;">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="16" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+          </svg>
+        </label>
+        <input type="text" class="filter-text-input" id="filterHealthcareInvoiceId" placeholder="">
+      </div>
+    </div>
+
+    <div class="filter-panel-footer">
+      <button class="btn-clear-filters" onclick="clearFilters()">Clear filters</button>
+      <button class="btn-apply-filter" onclick="applyFilters()">Apply filter</button>
+    </div>
+  </div>
+
   <!-- Support Modal -->
   <div class="support-modal-overlay" id="supportModal">
     <div class="support-modal">
@@ -948,6 +1360,18 @@
         renderReservations();
       });
 
+      // Filter button
+      document.getElementById('filterBtn').addEventListener('click', () => {
+        openFilterPanel();
+      });
+
+      // Close filter panel on Escape key
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          closeFilterPanel();
+        }
+      });
+
       // Submenu toggle
       document.querySelectorAll('.nav-item.has-submenu').forEach(item => {
         item.addEventListener('click', (e) => {
@@ -991,6 +1415,58 @@
       if (submenu && submenu.classList.contains('studio-submenu')) {
         submenu.classList.toggle('show');
       }
+    }
+
+    // Filter panel functions
+    function openFilterPanel() {
+      document.getElementById('filterOverlay').classList.add('show');
+      document.getElementById('filterPanel').classList.add('show');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeFilterPanel() {
+      document.getElementById('filterOverlay').classList.remove('show');
+      document.getElementById('filterPanel').classList.remove('show');
+      document.body.style.overflow = '';
+    }
+
+    function clearFilters() {
+      document.getElementById('filterService').value = '';
+      document.getElementById('filterBoard').value = '';
+      document.getElementById('filterStaff').value = '';
+      document.getElementById('filterLocation').value = '';
+      document.getElementById('filterDateFrom').value = '';
+      document.getElementById('filterDateTo').value = '';
+      document.getElementById('filterPaymentStatus').value = '';
+      document.getElementById('filterShowCancelled').checked = false;
+      document.getElementById('filterShowBlocking').checked = false;
+      document.getElementById('filterReservationId').value = '';
+      document.getElementById('filterHealthcareInvoiceId').value = '';
+    }
+
+    function applyFilters() {
+      // Get filter values
+      const filters = {
+        service: document.getElementById('filterService').value,
+        board: document.getElementById('filterBoard').value,
+        staff: document.getElementById('filterStaff').value,
+        location: document.getElementById('filterLocation').value,
+        dateFrom: document.getElementById('filterDateFrom').value,
+        dateTo: document.getElementById('filterDateTo').value,
+        paymentStatus: document.getElementById('filterPaymentStatus').value,
+        showCancelled: document.getElementById('filterShowCancelled').checked,
+        showBlocking: document.getElementById('filterShowBlocking').checked,
+        reservationId: document.getElementById('filterReservationId').value,
+        healthcareInvoiceId: document.getElementById('filterHealthcareInvoiceId').value
+      };
+
+      console.log('Applying filters:', filters);
+
+      // Close the panel
+      closeFilterPanel();
+
+      // Re-render with filters applied
+      renderReservations();
     }
 
     // Support modal functions
