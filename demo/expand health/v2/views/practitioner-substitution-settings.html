@@ -225,6 +225,124 @@
     .notification-section-desc a:hover {
       text-decoration: underline;
     }
+
+    /* Practitioner List */
+    .practitioner-search {
+      position: relative;
+      margin-bottom: 20px;
+    }
+
+    .practitioner-search input {
+      width: 100%;
+      padding: 10px 12px 10px 40px;
+      border: 1px solid var(--gray-300);
+      border-radius: 8px;
+      font-size: 0.875rem;
+      color: var(--gray-700);
+    }
+
+    .practitioner-search input::placeholder {
+      color: var(--gray-400);
+    }
+
+    .practitioner-search input:focus {
+      outline: none;
+      border-color: var(--teal-500);
+    }
+
+    .practitioner-search-icon {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 18px;
+      height: 18px;
+      color: var(--gray-400);
+    }
+
+    .practitioner-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .practitioner-table th {
+      text-align: left;
+      padding: 12px 16px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--gray-500);
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .practitioner-table td {
+      padding: 12px 16px;
+      font-size: 0.875rem;
+      color: var(--gray-700);
+      border-bottom: 1px solid var(--gray-100);
+    }
+
+    .practitioner-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .practitioner-table tr:hover td {
+      background: var(--gray-50);
+    }
+
+    .practitioner-checkbox {
+      width: 16px;
+      height: 16px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .practitioner-name {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .practitioner-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--gray-200);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--gray-600);
+    }
+
+    .practitioner-row-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+    }
+
+    .btn-row-more {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      background: transparent;
+      border: none;
+      border-radius: 4px;
+      color: var(--gray-400);
+      cursor: pointer;
+    }
+
+    .btn-row-more:hover {
+      background: var(--gray-100);
+      color: var(--gray-600);
+    }
+
+    .btn-row-more svg {
+      width: 16px;
+      height: 16px;
+    }
   </style>
 </head>
 <body>
@@ -486,6 +604,28 @@
               Choose how each practitioner gets notified when a new substitution request is created.
               Practitioners can also <a href="#">manage their own notification settings</a> in their dashboard.
             </p>
+
+            <div class="practitioner-search">
+              <svg class="practitioner-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <path d="M21 21l-4.35-4.35"></path>
+              </svg>
+              <input type="text" placeholder="Search practitioners..." id="practitionerSearch" oninput="filterPractitioners()">
+            </div>
+
+            <table class="practitioner-table">
+              <thead>
+                <tr>
+                  <th style="width: 40px;"><input type="checkbox" class="practitioner-checkbox" onclick="toggleAllPractitioners(this)"></th>
+                  <th>Name</th>
+                  <th>Notified via</th>
+                  <th style="width: 40px;"></th>
+                </tr>
+              </thead>
+              <tbody id="practitionerTableBody">
+                <!-- Populated by JavaScript -->
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
@@ -494,10 +634,13 @@
 
   <script src="/js/auth.js"></script>
   <script>
+    let allPractitioners = [];
+
     // Initialize page
     document.addEventListener('DOMContentLoaded', () => {
       loadUserInfo();
       initializeToggles();
+      loadPractitioners();
     });
 
     function loadUserInfo() {
@@ -545,6 +688,98 @@
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       window.location.href = '/login';
+    }
+
+    // Load practitioners from API
+    async function loadPractitioners() {
+      const token = localStorage.getItem('auth_token');
+      try {
+        const response = await fetch('/api/practitioners', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (response.ok) {
+          allPractitioners = await response.json();
+          renderPractitioners(allPractitioners);
+        }
+      } catch (error) {
+        console.error('Error loading practitioners:', error);
+        // Show demo data if API fails
+        allPractitioners = [
+          { id: 1, name: 'Savanah Abramovitz', notification_type: 'email' },
+          { id: 2, name: 'Karrin Bamber', notification_type: 'email' },
+          { id: 3, name: 'Melody Fourie', notification_type: 'email' },
+          { id: 4, name: 'Maryke Gallagher', notification_type: 'email' },
+          { id: 5, name: 'Jack Harland', notification_type: 'email' },
+          { id: 6, name: 'ZCarmen Heunis', notification_type: 'email' },
+          { id: 7, name: 'Sebastian Hitchcock', notification_type: 'email' },
+          { id: 8, name: 'Shehaam Jacobs', notification_type: 'email' },
+          { id: 9, name: 'Avela Jafta', notification_type: 'email' },
+          { id: 10, name: 'XKristal Kellock', notification_type: 'email' },
+          { id: 11, name: 'Maryke Korsten', notification_type: 'email' },
+          { id: 12, name: 'YAnesu Mbizvo', notification_type: 'email' },
+          { id: 13, name: 'WSasha-Lee Rocher', notification_type: 'none' },
+          { id: 14, name: 'Jean Theron', notification_type: 'email' },
+          { id: 15, name: 'Dr Fred van der Riet', notification_type: 'email' }
+        ];
+        renderPractitioners(allPractitioners);
+      }
+    }
+
+    function renderPractitioners(practitioners) {
+      const tbody = document.getElementById('practitionerTableBody');
+      tbody.innerHTML = practitioners.map(p => `
+        <tr data-id="${p.id}">
+          <td><input type="checkbox" class="practitioner-checkbox"></td>
+          <td>
+            <div class="practitioner-name">
+              <div class="practitioner-avatar">${getInitials(p.name)}</div>
+              <span>${p.name}</span>
+            </div>
+          </td>
+          <td>${formatNotificationType(p.notification_type || 'email')}</td>
+          <td>
+            <div class="practitioner-row-actions">
+              <button class="btn-row-more">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="1"></circle>
+                  <circle cx="12" cy="5" r="1"></circle>
+                  <circle cx="12" cy="19" r="1"></circle>
+                </svg>
+              </button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function getInitials(name) {
+      return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+    }
+
+    function formatNotificationType(type) {
+      switch(type) {
+        case 'email': return 'E-mail';
+        case 'sms': return 'SMS';
+        case 'push': return 'Push';
+        case 'none': return 'None';
+        default: return 'E-mail';
+      }
+    }
+
+    function filterPractitioners() {
+      const search = document.getElementById('practitionerSearch').value.toLowerCase();
+      const filtered = allPractitioners.filter(p =>
+        p.name.toLowerCase().includes(search)
+      );
+      renderPractitioners(filtered);
+    }
+
+    function toggleAllPractitioners(checkbox) {
+      const checkboxes = document.querySelectorAll('#practitionerTableBody .practitioner-checkbox');
+      checkboxes.forEach(cb => cb.checked = checkbox.checked);
     }
   </script>
 </body>
