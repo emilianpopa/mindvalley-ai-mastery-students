@@ -472,8 +472,6 @@
             <div class="filter-group">
               <select class="filter-select" id="location">
                 <option value="">Select a location</option>
-                <option value="cape_town">Cape Town</option>
-                <option value="johannesburg">Johannesburg</option>
               </select>
             </div>
           </div>
@@ -550,6 +548,34 @@
     if (!token) {
       window.location.href = '/login';
     }
+
+    // Load locations on page load
+    async function loadLocations() {
+      try {
+        const response = await fetch('/api/locations?active_only=true', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (response.ok) {
+          const locations = await response.json();
+          const select = document.getElementById('location');
+
+          locations.forEach(loc => {
+            const option = document.createElement('option');
+            option.value = loc.id;
+            option.textContent = loc.name;
+            select.appendChild(option);
+          });
+        }
+      } catch (error) {
+        console.error('Error loading locations:', error);
+      }
+    }
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', loadLocations);
 
     // Favorite toggle
     document.querySelector('.btn-favorite').addEventListener('click', function() {
