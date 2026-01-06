@@ -515,6 +515,70 @@
       color: var(--gray-600);
     }
 
+    /* Actions dropdown menu */
+    .actions-dropdown {
+      position: relative;
+    }
+
+    .actions-dropdown-menu {
+      display: none;
+      position: absolute;
+      top: 100%;
+      right: 0;
+      min-width: 200px;
+      background: white;
+      border: 1px solid var(--gray-200);
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      z-index: 1000;
+      padding: 6px 0;
+      margin-top: 4px;
+    }
+
+    .actions-dropdown-menu.show {
+      display: block;
+    }
+
+    .actions-dropdown-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 16px;
+      font-size: 0.875rem;
+      color: var(--gray-700);
+      cursor: pointer;
+      transition: background 0.15s;
+      text-decoration: none;
+      border: none;
+      background: none;
+      width: 100%;
+      text-align: left;
+    }
+
+    .actions-dropdown-item:hover {
+      background: var(--gray-50);
+    }
+
+    .actions-dropdown-item svg {
+      width: 16px;
+      height: 16px;
+      color: var(--gray-500);
+    }
+
+    .actions-dropdown-item.danger {
+      color: #DC2626;
+    }
+
+    .actions-dropdown-item.danger svg {
+      color: #DC2626;
+    }
+
+    .actions-dropdown-divider {
+      height: 1px;
+      background: var(--gray-200);
+      margin: 6px 0;
+    }
+
     /* Attendee count */
     .attendee-count {
       text-align: center;
@@ -1286,7 +1350,7 @@
             <td>
               <div class="appointment-name">
                 <div class="appointment-color ${colorClass}"></div>
-                <span>${r.service_name || 'Appointment'}</span>
+                <span>${r.title || r.service_name || 'Appointment'}</span>
               </div>
             </td>
             <td class="time-cell">
@@ -1312,13 +1376,71 @@
             </td>
             <td class="attendee-count">1</td>
             <td class="actions-cell">
-              <button class="actions-btn" onclick="showActions(${r.id})">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <circle cx="12" cy="12" r="1"/>
-                  <circle cx="12" cy="5" r="1"/>
-                  <circle cx="12" cy="19" r="1"/>
-                </svg>
-              </button>
+              <div class="actions-dropdown">
+                <button class="actions-btn" onclick="toggleActionsMenu(event, ${r.id})">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="1"/>
+                    <circle cx="12" cy="5" r="1"/>
+                    <circle cx="12" cy="19" r="1"/>
+                  </svg>
+                </button>
+                <div class="actions-dropdown-menu" id="actionsMenu-${r.id}">
+                  <button class="actions-dropdown-item" onclick="showReservation(${r.id})">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                      <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                    Show reservation
+                  </button>
+                  <button class="actions-dropdown-item" onclick="editReservation(${r.id})">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                    Edit reservation
+                  </button>
+                  <button class="actions-dropdown-item danger" onclick="cancelReservation(${r.id})">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <line x1="15" y1="9" x2="9" y2="15"></line>
+                      <line x1="9" y1="9" x2="15" y2="15"></line>
+                    </svg>
+                    Cancel reservation
+                  </button>
+                  <div class="actions-dropdown-divider"></div>
+                  <button class="actions-dropdown-item" onclick="payReservation(${r.id})">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+                      <line x1="1" y1="10" x2="23" y2="10"></line>
+                    </svg>
+                    Pay
+                  </button>
+                  <button class="actions-dropdown-item" onclick="openInSchedule(${r.id})">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                      <line x1="16" y1="2" x2="16" y2="6"></line>
+                      <line x1="8" y1="2" x2="8" y2="6"></line>
+                      <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg>
+                    Open in schedule
+                  </button>
+                  <div class="actions-dropdown-divider"></div>
+                  <button class="actions-dropdown-item" onclick="showServiceSettings(${r.id})">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="3"></circle>
+                      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                    </svg>
+                    Show service settings
+                  </button>
+                  <button class="actions-dropdown-item" onclick="showLocationDetail(${r.id})">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                      <circle cx="12" cy="10" r="3"></circle>
+                    </svg>
+                    Show location detail
+                  </button>
+                </div>
+              </div>
             </td>
           </tr>
         `;
@@ -1385,9 +1507,87 @@
       });
     }
 
-    function showActions(id) {
-      // TODO: Implement actions dropdown
-      console.log('Show actions for:', id);
+    // Actions dropdown functions
+    function toggleActionsMenu(event, id) {
+      event.stopPropagation();
+
+      // Close all other menus first
+      document.querySelectorAll('.actions-dropdown-menu.show').forEach(menu => {
+        menu.classList.remove('show');
+      });
+
+      const menu = document.getElementById(`actionsMenu-${id}`);
+      menu.classList.toggle('show');
+    }
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.actions-dropdown')) {
+        document.querySelectorAll('.actions-dropdown-menu.show').forEach(menu => {
+          menu.classList.remove('show');
+        });
+      }
+    });
+
+    function showReservation(id) {
+      closeAllDropdowns();
+      alert(`Showing reservation #${id}`);
+      // TODO: Navigate to reservation detail page or open modal
+    }
+
+    function editReservation(id) {
+      closeAllDropdowns();
+      alert(`Edit reservation #${id}`);
+      // TODO: Navigate to edit page or open edit modal
+    }
+
+    async function cancelReservation(id) {
+      closeAllDropdowns();
+      if (confirm('Are you sure you want to cancel this reservation?')) {
+        try {
+          await apiRequest(`/api/appointments/${id}/cancel`, {
+            method: 'POST',
+            body: JSON.stringify({ reason: 'Cancelled by staff' })
+          });
+          alert('Reservation cancelled');
+          loadReservations();
+        } catch (error) {
+          alert('Failed to cancel reservation: ' + error.message);
+        }
+      }
+    }
+
+    function payReservation(id) {
+      closeAllDropdowns();
+      alert(`Open payment for reservation #${id}`);
+      // TODO: Navigate to POS or open payment modal
+    }
+
+    function openInSchedule(id) {
+      closeAllDropdowns();
+      // Find the reservation to get its date
+      const reservation = reservations.find(r => r.id === id);
+      if (reservation) {
+        const date = new Date(reservation.start_time);
+        const dateStr = date.toISOString().split('T')[0];
+        window.location.href = `/appointments?date=${dateStr}`;
+      }
+    }
+
+    function showServiceSettings(id) {
+      closeAllDropdowns();
+      window.location.href = '/services';
+    }
+
+    function showLocationDetail(id) {
+      closeAllDropdowns();
+      window.location.href = '/studio/locations';
+    }
+
+    function closeAllDropdowns() {
+      document.querySelectorAll('.actions-dropdown-menu.show').forEach(menu => {
+        menu.classList.remove('show');
+      });
     }
 
     function logout() {
