@@ -2276,6 +2276,8 @@
     let currentView = 'week';
     let slotHeight = 60;
     let appointments = [];
+    let selectedAppointment = null;
+    let isCheckedIn = false;
 
     // Initialize
     document.addEventListener('DOMContentLoaded', async () => {
@@ -2720,15 +2722,10 @@
     // =====================
     // Appointment Detail Panel
     // =====================
-    let selectedAppointment = null;
-    let isCheckedIn = false;
 
     function openAppointmentPanel(apt) {
-      alert('Opening panel for appointment: ' + (apt.title || apt.id));
-      try {
-        console.log('openAppointmentPanel called with:', apt);
-        selectedAppointment = apt;
-        isCheckedIn = apt.extendedProps?.status === 'in_progress';
+      selectedAppointment = apt;
+      isCheckedIn = apt.extendedProps?.status === 'in_progress';
 
         // Update panel content
         document.getElementById('panelTitle').textContent = apt.title || 'Appointment reservation';
@@ -2785,14 +2782,8 @@
       document.getElementById('panelServiceName').textContent = apt.title || 'Service';
 
       // Show panel
-      console.log('Showing panel...');
       document.getElementById('appointmentPanelOverlay').classList.add('show');
       document.getElementById('appointmentPanel').classList.add('show');
-      console.log('Panel should be visible now');
-      } catch (error) {
-        console.error('Error in openAppointmentPanel:', error);
-        alert('Error opening panel: ' + error.message);
-      }
     }
 
     function closeAppointmentPanel() {
