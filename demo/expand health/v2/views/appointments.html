@@ -3214,8 +3214,8 @@
       const checkinTime = document.getElementById('panelCheckinTime');
       toggle.classList.toggle('active', isCheckedIn);
 
-      if (isCheckedIn && apt.extendedProps?.checked_in_at) {
-        const checkinDate = new Date(apt.extendedProps.checked_in_at);
+      if (isCheckedIn && apt.extendedProps?.checkedInAt) {
+        const checkinDate = new Date(apt.extendedProps.checkedInAt);
         const dateStr = checkinDate.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
         const timeStr = checkinDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
         checkinTime.textContent = `${dateStr}, ${timeStr}`;
@@ -3234,6 +3234,11 @@
 
       // Service name
       document.getElementById('panelServiceName').textContent = apt.title || 'Service';
+
+      // Price
+      const price = apt.extendedProps?.price || 0;
+      const priceEl = document.getElementById('panelPrice');
+      priceEl.innerHTML = `ZAR ${price.toFixed(2)} <span class="panel-price-credits">or 0 credits</span>`;
 
       // Show panel
       document.getElementById('appointmentPanelOverlay').classList.add('show');

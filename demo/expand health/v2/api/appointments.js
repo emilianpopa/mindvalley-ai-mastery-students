@@ -129,11 +129,14 @@ router.get('/calendar', async (req, res, next) => {
         a.client_id,
         a.staff_id,
         a.service_type_id,
+        a.price as appointment_price,
+        a.checked_in_at,
         c.first_name || ' ' || c.last_name as client_name,
         s.first_name || ' ' || s.last_name as staff_name,
         s.color as staff_color,
         st.name as service_name,
-        st.color as service_color
+        st.color as service_color,
+        st.price as service_price
       FROM appointments a
       LEFT JOIN clients c ON a.client_id = c.id
       LEFT JOIN staff s ON a.staff_id = s.id
@@ -170,7 +173,9 @@ router.get('/calendar', async (req, res, next) => {
         staffName: apt.staff_name,
         serviceId: apt.service_type_id,
         serviceName: apt.service_name,
-        locationType: apt.location_type
+        locationType: apt.location_type,
+        price: apt.appointment_price || apt.service_price || 0,
+        checkedInAt: apt.checked_in_at
       }
     }));
 
