@@ -2544,6 +2544,7 @@
     let appointments = [];
     let selectedAppointment = null;
     let isCheckedIn = false;
+    let clients = [];
 
     // Initialize
     document.addEventListener('DOMContentLoaded', async () => {
@@ -3077,7 +3078,6 @@
     // =====================
     // Add Customer Modal
     // =====================
-    let clients = [];
 
     async function loadClients() {
       try {
