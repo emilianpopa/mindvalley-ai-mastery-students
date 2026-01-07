@@ -692,9 +692,17 @@
     // Load practitioners into dropdown
     async function loadPractitioners() {
       try {
-        const response = await fetch('/api/staff?active_only=true&accepts_bookings=true');
-        const staff = await response.json();
+        const token = localStorage.getItem('auth_token');
+        const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
 
+        const response = await fetch('/api/staff?active_only=true&accepts_bookings=true', { headers });
+
+        if (!response.ok) {
+          console.error('Failed to fetch practitioners:', response.status);
+          return;
+        }
+
+        const staff = await response.json();
         const select = document.getElementById('practitionerSelect');
 
         staff.forEach(practitioner => {
