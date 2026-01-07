@@ -3017,7 +3017,16 @@
 
       // Practitioner
       const staffName = apt.extendedProps?.staffName || 'Not assigned';
-      document.getElementById('panelStaffName').textContent = staffName;
+      const staffId = apt.extendedProps?.staffId;
+      const staffLink = document.getElementById('panelStaffName');
+      staffLink.textContent = staffName;
+      if (staffId) {
+        staffLink.href = `/practitioner-detail?id=${staffId}`;
+        staffLink.onclick = null;
+      } else {
+        staffLink.href = '#';
+        staffLink.onclick = (e) => e.preventDefault();
+      }
 
       // Location
       const locationType = apt.extendedProps?.locationType || 'in_person';
