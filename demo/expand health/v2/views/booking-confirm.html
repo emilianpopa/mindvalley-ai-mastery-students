@@ -766,20 +766,28 @@
         const durationMinutes = parseInt(serviceDuration) || 60;
         const endDateTime = new Date(startDateTime.getTime() + durationMinutes * 60000);
 
-        // Call the public booking API (tenant slug is 'expandhealth' without hyphen)
-        const response = await fetch('/api/book/expandhealth', {
+        // Get auth token from localStorage
+        const token = localStorage.getItem('token');
+        if (!token) {
+          alert('Please log in to complete your booking.');
+          window.location.href = '/login';
+          return;
+        }
+
+        // Call the authenticated appointments API
+        const response = await fetch('/api/appointments', {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
           },
           body: JSON.stringify({
-            service_id: serviceId || 1, // Default to service 1 if no ID
+            service_type_id: serviceId || 1,
             staff_id: practitionerId || null,
+            title: serviceName,
             start_time: startDateTime.toISOString(),
             end_time: endDateTime.toISOString(),
-            client_first_name: 'Emilian',
-            client_last_name: 'Popa',
-            client_email: 'emilian@expandhealth.io',
+            status: 'scheduled',
             client_notes: addons ? `Add-ons: ${addons}` : ''
           })
         });
