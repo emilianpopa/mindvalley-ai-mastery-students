@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Confirm Booking - Expand Health</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cline x1='20' y1='20' x2='80' y2='80' stroke='%230F766E' stroke-width='12' stroke-linecap='round'/%3E%3Cline x1='80' y1='20' x2='20' y2='80' stroke='%230F766E' stroke-width='12' stroke-linecap='round'/%3E%3C/svg%3E">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --purple-50: #f5f3ff;
+      --purple-100: #ede9fe;
+      --purple-200: #ddd6fe;
+      --purple-300: #c4b5fd;
+      --purple-400: #a78bfa;
+      --purple-500: #8b5cf6;
+      --purple-600: #7c3aed;
+      --purple-700: #6d28d9;
+      --green-50: #f0fdf4;
+      --green-100: #dcfce7;
+      --green-500: #22c55e;
+      --green-600: #16a34a;
+      --gray-50: #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-300: #d1d5db;
+      --gray-400: #9ca3af;
+      --gray-500: #6b7280;
+      --gray-600: #4b5563;
+      --gray-700: #374151;
+      --gray-800: #1f2937;
+      --gray-900: #111827;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(180deg, #f5f3ff 0%, #ede9fe 100%);
+      min-height: 100vh;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 32px;
+      background: white;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo-icon {
+      width: 24px;
+      height: 24px;
+    }
+
+    .business-name {
+      font-size: 0.9375rem;
+      font-weight: 500;
+      color: var(--gray-700);
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .language-selector {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: white;
+      border: 1px solid var(--gray-200);
+      border-radius: 6px;
+      font-size: 0.875rem;
+      color: var(--gray-700);
+      cursor: pointer;
+    }
+
+    .language-selector:hover {
+      background: var(--gray-50);
+    }
+
+    .flag-icon {
+      width: 20px;
+      height: 14px;
+      border-radius: 2px;
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.875rem;
+      color: var(--gray-700);
+    }
+
+    .user-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--gray-100);
+      border: 1px solid var(--gray-200);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .user-avatar svg {
+      width: 18px;
+      height: 18px;
+      color: var(--gray-400);
+    }
+
+    /* Main content */
+    .main-content {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 40px 24px;
+    }
+
+    /* Business card */
+    .business-card {
+      background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%);
+      border-radius: 12px;
+      padding: 28px 32px;
+      margin-bottom: 32px;
+    }
+
+    .business-card h1 {
+      font-size: 1.75rem;
+      font-weight: 600;
+      color: var(--gray-900);
+      margin-bottom: 6px;
+    }
+
+    .business-card p {
+      font-size: 0.9375rem;
+      color: var(--gray-600);
+    }
+
+    /* Section header */
+    .section-header {
+      margin-bottom: 20px;
+    }
+
+    .section-title {
+      font-size: 1.375rem;
+      font-weight: 600;
+      color: var(--gray-900);
+      margin-bottom: 4px;
+    }
+
+    .section-subtitle {
+      font-size: 0.9375rem;
+      color: var(--gray-500);
+    }
+
+    /* Summary card */
+    .summary-card {
+      background: white;
+      border: 2px solid var(--purple-200);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 16px;
+    }
+
+    .summary-label {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      color: var(--purple-600);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 16px;
+    }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--gray-100);
+    }
+
+    .summary-row:last-child {
+      border-bottom: none;
+    }
+
+    .summary-row-label {
+      font-size: 0.8125rem;
+      color: var(--gray-500);
+      font-weight: 500;
+    }
+
+    .summary-row-value {
+      font-size: 0.9375rem;
+      color: var(--gray-900);
+      font-weight: 500;
+      text-align: right;
+    }
+
+    .summary-row-value.highlight {
+      color: var(--purple-600);
+    }
+
+    /* Date time highlight */
+    .datetime-card {
+      background: var(--purple-50);
+      border: 2px solid var(--purple-300);
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .datetime-icon {
+      width: 48px;
+      height: 48px;
+      background: var(--purple-600);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+    }
+
+    .datetime-icon svg {
+      width: 24px;
+      height: 24px;
+    }
+
+    .datetime-details {
+      flex: 1;
+    }
+
+    .datetime-date {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--gray-900);
+      margin-bottom: 2px;
+    }
+
+    .datetime-time {
+      font-size: 0.9375rem;
+      color: var(--gray-600);
+    }
+
+    /* Price breakdown */
+    .price-card {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 16px;
+    }
+
+    .price-label {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      color: var(--gray-500);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 16px;
+    }
+
+    .price-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+    }
+
+    .price-row-label {
+      font-size: 0.9375rem;
+      color: var(--gray-700);
+    }
+
+    .price-row-value {
+      font-size: 0.9375rem;
+      color: var(--gray-900);
+      font-weight: 500;
+    }
+
+    .price-row.total {
+      margin-top: 12px;
+      padding-top: 16px;
+      border-top: 2px solid var(--gray-200);
+    }
+
+    .price-row.total .price-row-label {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+
+    .price-row.total .price-row-value {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--purple-600);
+    }
+
+    /* Buttons */
+    .button-group {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    .btn-confirm {
+      width: 100%;
+      padding: 16px;
+      background: var(--purple-600);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn-confirm:hover {
+      background: var(--purple-700);
+    }
+
+    .btn-confirm svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    .btn-back {
+      width: 100%;
+      padding: 14px;
+      background: white;
+      color: var(--gray-700);
+      border: 1px solid var(--gray-300);
+      border-radius: 8px;
+      font-size: 0.9375rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-back:hover {
+      background: var(--gray-50);
+      border-color: var(--gray-400);
+    }
+
+    /* Success state */
+    .success-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s;
+    }
+
+    .success-overlay.show {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .success-modal {
+      background: white;
+      border-radius: 16px;
+      padding: 40px;
+      text-align: center;
+      max-width: 400px;
+      margin: 20px;
+      transform: scale(0.9);
+      transition: transform 0.3s;
+    }
+
+    .success-overlay.show .success-modal {
+      transform: scale(1);
+    }
+
+    .success-icon {
+      width: 80px;
+      height: 80px;
+      background: var(--green-100);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 24px;
+    }
+
+    .success-icon svg {
+      width: 40px;
+      height: 40px;
+      color: var(--green-600);
+    }
+
+    .success-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--gray-900);
+      margin-bottom: 8px;
+    }
+
+    .success-message {
+      font-size: 0.9375rem;
+      color: var(--gray-600);
+      margin-bottom: 24px;
+      line-height: 1.5;
+    }
+
+    .success-btn {
+      padding: 14px 32px;
+      background: var(--purple-600);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .success-btn:hover {
+      background: var(--purple-700);
+    }
+
+    /* Policy text */
+    .policy-text {
+      font-size: 0.8125rem;
+      color: var(--gray-500);
+      text-align: center;
+      margin-top: 16px;
+      line-height: 1.5;
+    }
+
+    .policy-text a {
+      color: var(--purple-600);
+      text-decoration: none;
+    }
+
+    .policy-text a:hover {
+      text-decoration: underline;
+    }
+
+    /* Responsive */
+    @media (max-width: 640px) {
+      .main-content {
+        padding: 24px 16px;
+      }
+
+      .header {
+        padding: 12px 16px;
+      }
+
+      .user-info span {
+        display: none;
+      }
+
+      .datetime-card {
+        flex-direction: column;
+        text-align: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="header-left">
+      <svg class="logo-icon" viewBox="0 0 24 24" fill="none">
+        <path d="M4 4L11 12L4 20" stroke="#0F766E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M20 4L13 12L20 20" stroke="#0F766E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span class="business-name">Expand Health (Pty) ltd</span>
+    </div>
+    <div class="header-right">
+      <button class="language-selector">
+        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 30'%3E%3Crect fill='%23002868' width='60' height='30'/%3E%3Cg fill='%23fff'%3E%3Crect y='3.5' width='60' height='2.3'/%3E%3Crect y='9.2' width='60' height='2.3'/%3E%3Crect y='14.9' width='60' height='2.3'/%3E%3Crect y='20.6' width='60' height='2.3'/%3E%3Crect y='26.3' width='60' height='2.3'/%3E%3C/g%3E%3Crect fill='%23002868' width='24' height='16'/%3E%3C/svg%3E" class="flag-icon" alt="US">
+        English
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="6 9 12 15 18 9"></polyline>
+        </svg>
+      </button>
+      <div class="user-info">
+        <span>Emilian Popa</span>
+        <div class="user-avatar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <!-- Business Card -->
+    <div class="business-card">
+      <h1>Expand Health</h1>
+      <p>with Expand Health (Pty) ltd</p>
+    </div>
+
+    <!-- Section Header -->
+    <div class="section-header">
+      <h2 class="section-title">Confirm your booking</h2>
+      <p class="section-subtitle">Review your appointment details before confirming.</p>
+    </div>
+
+    <!-- Date/Time Highlight -->
+    <div class="datetime-card">
+      <div class="datetime-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+          <line x1="16" y1="2" x2="16" y2="6"></line>
+          <line x1="8" y1="2" x2="8" y2="6"></line>
+          <line x1="3" y1="10" x2="21" y2="10"></line>
+        </svg>
+      </div>
+      <div class="datetime-details">
+        <div class="datetime-date" id="bookingDate">Wednesday, January 7, 2026</div>
+        <div class="datetime-time" id="bookingTime">at 10:00</div>
+      </div>
+    </div>
+
+    <!-- Booking Summary -->
+    <div class="summary-card">
+      <div class="summary-label">BOOKING DETAILS</div>
+
+      <div class="summary-row">
+        <span class="summary-row-label">Service</span>
+        <span class="summary-row-value" id="serviceName">Soul Collage</span>
+      </div>
+
+      <div class="summary-row">
+        <span class="summary-row-label">Duration</span>
+        <span class="summary-row-value" id="serviceDuration">180 min</span>
+      </div>
+
+      <div class="summary-row" id="practitionerRow">
+        <span class="summary-row-label">Practitioner</span>
+        <span class="summary-row-value" id="practitionerName">Any available</span>
+      </div>
+
+      <div class="summary-row" id="spotsRow" style="display: none;">
+        <span class="summary-row-label">Additional spots</span>
+        <span class="summary-row-value" id="additionalSpots">1</span>
+      </div>
+
+      <div class="summary-row" id="addonsRow" style="display: none;">
+        <span class="summary-row-label">Add-ons</span>
+        <span class="summary-row-value" id="addonsNames">Cold Plunge, PEMF</span>
+      </div>
+
+      <div class="summary-row">
+        <span class="summary-row-label">Location</span>
+        <span class="summary-row-value">Cape Town, South Africa</span>
+      </div>
+    </div>
+
+    <!-- Price Breakdown -->
+    <div class="price-card">
+      <div class="price-label">PRICE BREAKDOWN</div>
+
+      <div class="price-row" id="servicePriceRow">
+        <span class="price-row-label">Soul Collage (180 min)</span>
+        <span class="price-row-value" id="servicePrice">ZAR 750.00</span>
+      </div>
+
+      <div id="addonsPriceRows">
+        <!-- Add-on prices will be inserted here -->
+      </div>
+
+      <div class="price-row total">
+        <span class="price-row-label">Total</span>
+        <span class="price-row-value" id="totalPrice">ZAR 750.00</span>
+      </div>
+    </div>
+
+    <!-- Buttons -->
+    <div class="button-group">
+      <button class="btn-confirm" onclick="confirmBooking()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+        Confirm Booking
+      </button>
+      <button class="btn-back" onclick="goBack()">Back to time selection</button>
+    </div>
+
+    <p class="policy-text">
+      By confirming, you agree to our <a href="#">Cancellation Policy</a> and <a href="#">Terms of Service</a>.
+    </p>
+  </main>
+
+  <!-- Success Modal -->
+  <div class="success-overlay" id="successOverlay">
+    <div class="success-modal">
+      <div class="success-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+      </div>
+      <h2 class="success-title">Booking Confirmed!</h2>
+      <p class="success-message">
+        Your appointment has been successfully booked. You will receive a confirmation email shortly.
+      </p>
+      <button class="success-btn" onclick="goToSchedule()">View My Bookings</button>
+    </div>
+  </div>
+
+  <script>
+    // Get booking info from URL params
+    const urlParams = new URLSearchParams(window.location.search);
+    const serviceId = urlParams.get('id') || '';
+    const serviceName = urlParams.get('name') || 'Soul Collage';
+    const serviceDuration = urlParams.get('duration') || '180 min';
+    const servicePrice = urlParams.get('price') || 'ZAR 750.00';
+    const additionalSpots = parseInt(urlParams.get('spots') || '0');
+    const addons = urlParams.get('addons') || '';
+    const practitionerId = urlParams.get('practitioner') || '';
+    const bookingDate = urlParams.get('date') || '';
+    const bookingTime = urlParams.get('time') || '';
+
+    // Add-on prices (mock data)
+    const addonPrices = {
+      'cold-plunge': { name: 'Cold Plunge', price: 150 },
+      'infrared-sauna': { name: 'Infrared Sauna', price: 500 },
+      'pemf': { name: 'PEMF', price: 300 },
+      'lymphatic': { name: 'Lymphatic Drainage', price: 150 }
+    };
+
+    // Format and display date
+    if (bookingDate) {
+      const date = new Date(bookingDate);
+      const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                         'July', 'August', 'September', 'October', 'November', 'December'];
+      const formattedDate = `${dayNames[date.getDay()]}, ${monthNames[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
+      document.getElementById('bookingDate').textContent = formattedDate;
+    }
+
+    // Display time
+    if (bookingTime) {
+      document.getElementById('bookingTime').textContent = `at ${bookingTime}`;
+    }
+
+    // Update service info
+    document.getElementById('serviceName').textContent = serviceName;
+    document.getElementById('serviceDuration').textContent = serviceDuration;
+    document.getElementById('servicePriceRow').querySelector('.price-row-label').textContent = `${serviceName} (${serviceDuration})`;
+    document.getElementById('servicePrice').textContent = servicePrice;
+
+    // Update practitioner
+    if (practitionerId) {
+      fetch('/api/staff')
+        .then(res => res.json())
+        .then(staff => {
+          const practitioner = staff.find(s => s.id == practitionerId);
+          if (practitioner) {
+            document.getElementById('practitionerName').textContent = practitioner.name;
+          }
+        })
+        .catch(() => {});
+    }
+
+    // Update additional spots
+    if (additionalSpots > 0) {
+      document.getElementById('spotsRow').style.display = 'flex';
+      document.getElementById('additionalSpots').textContent = additionalSpots;
+    }
+
+    // Calculate total price
+    let totalPrice = parseFloat(servicePrice.replace(/[^0-9.]/g, '')) || 0;
+    const addonsPriceContainer = document.getElementById('addonsPriceRows');
+
+    // Update add-ons
+    if (addons) {
+      const addonIds = addons.split(',').filter(a => a);
+      if (addonIds.length > 0) {
+        document.getElementById('addonsRow').style.display = 'flex';
+
+        const addonNames = [];
+        addonIds.forEach(addonId => {
+          const addon = addonPrices[addonId];
+          if (addon) {
+            addonNames.push(addon.name);
+            totalPrice += addon.price;
+
+            // Add price row
+            const priceRow = document.createElement('div');
+            priceRow.className = 'price-row';
+            priceRow.innerHTML = `
+              <span class="price-row-label">${addon.name}</span>
+              <span class="price-row-value">ZAR ${addon.price.toFixed(2)}</span>
+            `;
+            addonsPriceContainer.appendChild(priceRow);
+          }
+        });
+
+        document.getElementById('addonsNames').textContent = addonNames.join(', ');
+      }
+    }
+
+    // Update total price
+    document.getElementById('totalPrice').textContent = `ZAR ${totalPrice.toFixed(2)}`;
+
+    // Go back to time selection
+    function goBack() {
+      window.history.back();
+    }
+
+    // Confirm booking
+    function confirmBooking() {
+      // Show success modal
+      document.getElementById('successOverlay').classList.add('show');
+
+      // In a real app, this would submit the booking to the API
+      // For demo, just show success
+    }
+
+    // Go to schedule/bookings page
+    function goToSchedule() {
+      window.location.href = '/schedule';
+    }
+  </script>
+</body>
+</html>

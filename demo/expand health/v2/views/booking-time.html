@@ -791,9 +791,8 @@
         time: selectedTime
       });
 
-      // Navigate to confirmation (placeholder for now)
-      alert(`Booking confirmed!\n\nDate: ${selectedDate.toDateString()}\nTime: ${selectedTime}\n\nNext step: Payment/confirmation page`);
-      // window.location.href = `/booking-confirm?${params.toString()}`;
+      // Navigate to confirmation page
+      window.location.href = `/booking-confirm?${params.toString()}`;
     }
 
     // Initialize

@@ -310,6 +310,11 @@ app.get('/booking-time', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'booking-time.html'));
 });
 
+// Booking Confirm (booking flow - final step)
+app.get('/booking-confirm', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'booking-confirm.html'));
+});
+
 // Multi Reservation (booking flow)
 app.get('/multi-reservation', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'multi-reservation.html'));
