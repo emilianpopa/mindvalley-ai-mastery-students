@@ -1955,6 +1955,149 @@
       border-color: var(--gray-300);
       cursor: not-allowed;
     }
+
+    /* Create Customer Modal */
+    .create-customer-modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 2100;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.2s ease;
+    }
+
+    .create-customer-modal-overlay.show {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .create-customer-modal {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.95);
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+      z-index: 2101;
+      width: 360px;
+      max-width: 90vw;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.2s ease;
+    }
+
+    .create-customer-modal.show {
+      opacity: 1;
+      visibility: visible;
+      transform: translate(-50%, -50%) scale(1);
+    }
+
+    .create-customer-modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 20px 16px 20px;
+    }
+
+    .create-customer-modal-header h3 {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+
+    .create-customer-modal-body {
+      padding: 0 20px 20px 20px;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group:last-child {
+      margin-bottom: 0;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--gray-600);
+      margin-bottom: 6px;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--gray-300);
+      border-radius: 8px;
+      font-size: 0.875rem;
+      color: var(--gray-800);
+      background: white;
+      box-sizing: border-box;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: var(--purple-500);
+      box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.1);
+    }
+
+    .phone-input-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .country-code-select {
+      width: 100px;
+      padding: 10px 8px;
+      border: 1px solid var(--gray-300);
+      border-radius: 8px;
+      font-size: 0.875rem;
+      color: var(--gray-800);
+      background: white;
+      cursor: pointer;
+    }
+
+    .country-code-select:focus {
+      outline: none;
+      border-color: var(--purple-500);
+      box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.1);
+    }
+
+    .phone-input {
+      flex: 1;
+    }
+
+    .create-customer-modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      padding: 16px 20px;
+      border-top: 1px solid var(--gray-200);
+    }
+
+    .modal-btn-create {
+      background: var(--purple-600);
+      border: 1px solid var(--purple-600);
+      color: white;
+    }
+
+    .modal-btn-create:hover {
+      background: var(--purple-700);
+      border-color: var(--purple-700);
+    }
+
+    .modal-btn-create:disabled {
+      background: var(--gray-300);
+      border-color: var(--gray-300);
+      cursor: not-allowed;
+    }
   </style>
 </head>
 <body>
@@ -3193,6 +3336,85 @@
       }
     }
 
+    // =====================
+    // Create Customer Modal
+    // =====================
+    function openCreateCustomerModal() {
+      // Clear form
+      document.getElementById('newCustomerFirstName').value = '';
+      document.getElementById('newCustomerLastName').value = '';
+      document.getElementById('newCustomerEmail').value = '';
+      document.getElementById('newCustomerPhone').value = '';
+      document.getElementById('newCustomerCountryCode').value = '+27';
+
+      // Show modal
+      document.getElementById('createCustomerModalOverlay').classList.add('show');
+      document.getElementById('createCustomerModal').classList.add('show');
+
+      // Focus first field
+      setTimeout(() => {
+        document.getElementById('newCustomerFirstName').focus();
+      }, 100);
+    }
+
+    function closeCreateCustomerModal() {
+      document.getElementById('createCustomerModalOverlay').classList.remove('show');
+      document.getElementById('createCustomerModal').classList.remove('show');
+    }
+
+    async function createNewCustomer() {
+      const firstName = document.getElementById('newCustomerFirstName').value.trim();
+      const lastName = document.getElementById('newCustomerLastName').value.trim();
+      const email = document.getElementById('newCustomerEmail').value.trim();
+      const countryCode = document.getElementById('newCustomerCountryCode').value;
+      const phone = document.getElementById('newCustomerPhone').value.trim();
+
+      if (!firstName) {
+        alert('First name is required');
+        document.getElementById('newCustomerFirstName').focus();
+        return;
+      }
+
+      if (!lastName) {
+        alert('Last name is required');
+        document.getElementById('newCustomerLastName').focus();
+        return;
+      }
+
+      const fullPhone = phone ? `${countryCode}${phone}` : '';
+
+      try {
+        const response = await apiRequest('/api/clients', {
+          method: 'POST',
+          body: JSON.stringify({
+            first_name: firstName,
+            last_name: lastName,
+            email: email || null,
+            phone: fullPhone || null
+          })
+        });
+
+        if (response) {
+          // Add new client to dropdown and select it
+          const select = document.getElementById('customerSelect');
+          const option = document.createElement('option');
+          option.value = response.id;
+          option.textContent = `${response.first_name} ${response.last_name}${response.email ? ` (${response.email})` : ''}`;
+          select.appendChild(option);
+          select.value = response.id;
+
+          // Add to clients array
+          clients.push(response);
+
+          // Close create modal
+          closeCreateCustomerModal();
+        }
+      } catch (error) {
+        console.error('Failed to create customer:', error);
+        alert('Failed to create customer');
+      }
+    }
+
     async function toggleCheckin() {
       if (!selectedAppointment) return;
 
@@ -3578,7 +3800,7 @@
         <select id="customerSelect" class="modal-select">
           <option value="">Select customer...</option>
         </select>
-        <button class="modal-add-new-btn" onclick="window.open('/clients', '_blank')" title="Add new client">
+        <button class="modal-add-new-btn" onclick="openCreateCustomerModal()" title="Create new customer">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="12" y1="5" x2="12" y2="19"></line>
             <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -3595,6 +3817,53 @@
           <button class="modal-btn modal-btn-add" onclick="assignCustomer()">Add</button>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- Create Customer Modal -->
+  <div class="create-customer-modal-overlay" id="createCustomerModalOverlay" onclick="closeCreateCustomerModal()"></div>
+  <div class="create-customer-modal" id="createCustomerModal">
+    <div class="create-customer-modal-header">
+      <h3>Create a new customer</h3>
+      <button class="modal-close-btn" onclick="closeCreateCustomerModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+    <div class="create-customer-modal-body">
+      <div class="form-group">
+        <label class="form-label">First name</label>
+        <input type="text" id="newCustomerFirstName" class="form-input" placeholder="">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Last name</label>
+        <input type="text" id="newCustomerLastName" class="form-input" placeholder="">
+      </div>
+      <div class="form-group">
+        <label class="form-label">E-mail</label>
+        <input type="email" id="newCustomerEmail" class="form-input" placeholder="">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Phone number</label>
+        <div class="phone-input-row">
+          <select id="newCustomerCountryCode" class="country-code-select">
+            <option value="+1">🇺🇸 +1</option>
+            <option value="+27" selected>🇿🇦 +27</option>
+            <option value="+44">🇬🇧 +44</option>
+            <option value="+49">🇩🇪 +49</option>
+            <option value="+33">🇫🇷 +33</option>
+            <option value="+61">🇦🇺 +61</option>
+            <option value="+91">🇮🇳 +91</option>
+          </select>
+          <input type="tel" id="newCustomerPhone" class="form-input phone-input" placeholder="">
+        </div>
+      </div>
+    </div>
+    <div class="create-customer-modal-footer">
+      <button class="modal-btn modal-btn-cancel" onclick="closeCreateCustomerModal()">Cancel</button>
+      <button class="modal-btn modal-btn-create" onclick="createNewCustomer()">Create</button>
     </div>
   </div>
 
