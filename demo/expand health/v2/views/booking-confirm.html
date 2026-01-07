@@ -448,6 +448,16 @@
       background: var(--purple-700);
     }
 
+    /* Spinner animation */
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .animate-spin {
+      animation: spin 1s linear infinite;
+    }
+
     /* Policy text */
     .policy-text {
       font-size: 0.8125rem;
@@ -735,12 +745,72 @@
     }
 
     // Confirm booking
-    function confirmBooking() {
-      // Show success modal
-      document.getElementById('successOverlay').classList.add('show');
+    async function confirmBooking() {
+      const confirmBtn = document.querySelector('.btn-confirm');
+      confirmBtn.disabled = true;
+      confirmBtn.innerHTML = `
+        <svg class="animate-spin" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10" stroke-opacity="0.25"></circle>
+          <path d="M12 2a10 10 0 0 1 10 10" stroke-opacity="0.75"></path>
+        </svg>
+        Processing...
+      `;
 
-      // In a real app, this would submit the booking to the API
-      // For demo, just show success
+      try {
+        // Calculate start and end times
+        const [hours, minutes] = bookingTime.split(':');
+        const startDateTime = new Date(bookingDate);
+        startDateTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+
+        // Parse duration (e.g., "180 min" -> 180)
+        const durationMinutes = parseInt(serviceDuration) || 60;
+        const endDateTime = new Date(startDateTime.getTime() + durationMinutes * 60000);
+
+        // Call the public booking API
+        const response = await fetch('/api/book/expand-health', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            service_id: serviceId || 1, // Default to service 1 if no ID
+            staff_id: practitionerId || null,
+            start_time: startDateTime.toISOString(),
+            end_time: endDateTime.toISOString(),
+            client_first_name: 'Emilian',
+            client_last_name: 'Popa',
+            client_email: 'emilian@expandhealth.io',
+            client_notes: addons ? `Add-ons: ${addons}` : ''
+          })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          // Show success modal
+          document.getElementById('successOverlay').classList.add('show');
+        } else {
+          // Show error
+          alert(data.error || 'Failed to create booking. Please try again.');
+          confirmBtn.disabled = false;
+          confirmBtn.innerHTML = `
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            Confirm Booking
+          `;
+        }
+      } catch (error) {
+        console.error('Booking error:', error);
+        alert('Failed to create booking. Please try again.');
+        confirmBtn.disabled = false;
+        confirmBtn.innerHTML = `
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+          Confirm Booking
+        `;
+      }
     }
 
     // Go to schedule/bookings page
