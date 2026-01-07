@@ -2349,15 +2349,16 @@
           top: ${(startMinutes / 60) * slotHeight}px;
           left: 2px;
           right: 2px;
-          height: ${durationHours * slotHeight - 4}px;
+          height: ${Math.max(durationHours * slotHeight - 4, 24)}px;
           background: var(--purple-100);
           border-left: 3px solid var(--purple-600);
           border-radius: 4px;
           padding: 4px 8px;
           font-size: 0.75rem;
-          overflow: hidden;
+          overflow: visible;
           cursor: pointer;
-          z-index: 10;
+          z-index: 100;
+          box-sizing: border-box;
         `;
 
         // Format time
@@ -2369,10 +2370,12 @@
           ${apt.clientName ? `<div style="color: var(--gray-600); font-size: 0.6875rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${apt.clientName}</div>` : ''}
         `;
 
-        block.onclick = (e) => {
+        block.addEventListener('click', (e) => {
           e.stopPropagation();
+          e.preventDefault();
+          console.log('Appointment clicked:', apt);
           openAppointmentPanel(apt);
-        };
+        });
 
         // Position relative to the slot
         targetSlot.style.position = 'relative';
