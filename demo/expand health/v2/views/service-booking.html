@@ -353,7 +353,7 @@
     .continue-btn {
       width: 100%;
       padding: 14px 24px;
-      background: var(--purple-400);
+      background: var(--purple-600);
       color: white;
       border: none;
       border-radius: 8px;
@@ -365,14 +365,6 @@
     }
 
     .continue-btn:hover {
-      background: var(--purple-500);
-    }
-
-    .continue-btn.active {
-      background: var(--purple-600);
-    }
-
-    .continue-btn.active:hover {
       background: var(--purple-700);
     }
 
@@ -523,14 +515,13 @@
         toggle.classList.add('active');
         label.textContent = 'Yes';
         form.classList.add('show');
-        continueBtn.classList.add('active');
         updateAdditionalSpotsForms();
       } else {
         toggle.classList.remove('active');
         label.textContent = 'No';
         form.classList.remove('show');
-        continueBtn.classList.remove('active');
         updateContinueButton();
+        updateContinueButtonState();
       }
     }
 
@@ -601,11 +592,6 @@
       if (additionalSpotsEnabled) {
         const isValid = validateContactDetails();
         continueBtn.disabled = !isValid;
-        if (isValid) {
-          continueBtn.classList.add('active');
-        } else {
-          continueBtn.classList.remove('active');
-        }
       } else {
         continueBtn.disabled = false;
       }
@@ -656,6 +642,7 @@
 
     // Initialize
     updateContinueButton();
+    updateContinueButtonState();
   </script>
 </body>
 </html>
