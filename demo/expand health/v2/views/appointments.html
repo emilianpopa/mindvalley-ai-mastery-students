@@ -1790,9 +1790,9 @@
     .add-customer-modal-header {
       display: flex;
       align-items: center;
-      justify-content: space-between;
       padding: 16px 20px;
       border-bottom: 1px solid var(--gray-200);
+      gap: 12px;
     }
 
     .add-customer-modal-header h3 {
@@ -1802,10 +1802,14 @@
       color: var(--gray-900);
     }
 
+    .modal-header-spacer {
+      flex: 1;
+    }
+
     .modal-limit-badge {
       background: var(--red-100);
       color: var(--red-600);
-      padding: 4px 8px;
+      padding: 4px 10px;
       border-radius: 4px;
       font-size: 0.75rem;
       font-weight: 500;
@@ -1910,15 +1914,18 @@
       gap: 12px;
       padding: 16px 20px;
       border-top: 1px solid var(--gray-200);
+      background: var(--gray-50);
+      border-radius: 0 0 12px 12px;
     }
 
     .modal-btn {
-      padding: 10px 20px;
+      padding: 10px 24px;
       border-radius: 8px;
       font-size: 0.875rem;
       font-weight: 500;
       cursor: pointer;
       transition: all 0.15s;
+      min-width: 80px;
     }
 
     .modal-btn-cancel {
@@ -1928,21 +1935,24 @@
     }
 
     .modal-btn-cancel:hover {
-      background: var(--gray-50);
+      background: var(--gray-100);
+      border-color: var(--gray-400);
     }
 
     .modal-btn-add {
       background: var(--blue-600);
-      border: none;
+      border: 1px solid var(--blue-600);
       color: white;
     }
 
     .modal-btn-add:hover {
       background: var(--blue-700);
+      border-color: var(--blue-700);
     }
 
     .modal-btn-add:disabled {
       background: var(--gray-300);
+      border-color: var(--gray-300);
       cursor: not-allowed;
     }
   </style>
@@ -3553,7 +3563,8 @@
   <div class="add-customer-modal" id="addCustomerModal">
     <div class="add-customer-modal-header">
       <h3>Add customer</h3>
-      <span class="modal-limit-badge" id="modalLimitBadge" style="display: none;">Over limit</span>
+      <span class="modal-limit-badge" id="modalLimitBadge">Over limit</span>
+      <div class="modal-header-spacer"></div>
       <button class="modal-close-btn" onclick="closeAddCustomerModal()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <line x1="18" y1="6" x2="6" y2="18"></line>
