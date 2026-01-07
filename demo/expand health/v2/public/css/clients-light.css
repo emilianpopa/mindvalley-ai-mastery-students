@@ -250,6 +250,97 @@ body {
   margin-left: 8px;
 }
 
+/* Nav Dropdown Styles */
+.nav-dropdown {
+  margin: 0 12px;
+}
+
+.nav-dropdown-trigger {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 8px;
+  color: #4B5563;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.nav-dropdown-trigger:hover {
+  background: #F3F4F6;
+  color: #1F2937;
+}
+
+.nav-dropdown-trigger > svg:first-child {
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  min-height: 20px;
+  flex-shrink: 0;
+  stroke: currentColor;
+  stroke-width: 1.5;
+}
+
+.nav-dropdown-trigger > span {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.nav-dropdown-arrow {
+  width: 16px;
+  height: 16px;
+  stroke: #9CA3AF;
+  transition: transform 0.2s;
+}
+
+.nav-dropdown.open .nav-dropdown-arrow {
+  transform: rotate(90deg);
+}
+
+.nav-dropdown-menu {
+  display: none;
+  padding: 8px 0 8px 20px;
+}
+
+.nav-dropdown.open .nav-dropdown-menu {
+  display: block;
+}
+
+.nav-dropdown-header {
+  font-size: 11px;
+  font-weight: 600;
+  color: #9CA3AF;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 8px 12px 4px 12px;
+}
+
+.nav-dropdown-section {
+  font-size: 10px;
+  font-weight: 600;
+  color: #9CA3AF;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 12px 12px 4px 12px;
+  margin-top: 4px;
+}
+
+.nav-dropdown-item {
+  display: block;
+  padding: 8px 12px;
+  font-size: 13px;
+  color: #4B5563;
+  text-decoration: none;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.nav-dropdown-item:hover {
+  background: #F3F4F6;
+  color: #1F2937;
+}
+
 .sidebar-footer {
   padding: 20px;
   border-top: 1px solid #F3F4F6;

@@ -1,32 +1,37 @@
 /**
  * Navigation JavaScript
- * Handles nav dropdown positioning for all pages
+ * Handles nav dropdown toggle for all pages
  */
 
-// Initialize nav dropdown positioning
+// Initialize nav dropdown click toggle
 function initNavDropdowns() {
   const dropdowns = document.querySelectorAll('.nav-dropdown');
 
   dropdowns.forEach(dropdown => {
     const trigger = dropdown.querySelector('.nav-dropdown-trigger');
-    const menu = dropdown.querySelector('.nav-dropdown-menu');
 
-    if (trigger && menu) {
-      // Position menu on hover
-      const positionMenu = () => {
-        const triggerRect = trigger.getBoundingClientRect();
-        menu.style.top = triggerRect.top + 'px';
-      };
+    if (trigger) {
+      trigger.addEventListener('click', (e) => {
+        e.stopPropagation();
 
-      // Use mouseover for immediate response before CSS :hover kicks in
-      trigger.addEventListener('mouseover', positionMenu);
+        // Close other dropdowns
+        dropdowns.forEach(other => {
+          if (other !== dropdown) {
+            other.classList.remove('open');
+          }
+        });
 
-      // Also position when menu itself is hovered (for bridge area)
-      menu.addEventListener('mouseover', positionMenu);
-
-      // Initial position call
-      positionMenu();
+        // Toggle this dropdown
+        dropdown.classList.toggle('open');
+      });
     }
+  });
+
+  // Close dropdowns when clicking outside
+  document.addEventListener('click', () => {
+    dropdowns.forEach(dropdown => {
+      dropdown.classList.remove('open');
+    });
   });
 }
 
