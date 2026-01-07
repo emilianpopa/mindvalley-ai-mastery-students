@@ -774,6 +774,26 @@
           return;
         }
 
+        // Build appointment data
+        // Only include service_type_id if it's a valid integer
+        const appointmentData = {
+          title: serviceName,
+          start_time: startDateTime.toISOString(),
+          end_time: endDateTime.toISOString(),
+          status: 'scheduled',
+          client_notes: addons ? `Add-ons: ${addons}` : ''
+        };
+
+        // Only add service_type_id if it's a valid integer
+        if (serviceId && !isNaN(parseInt(serviceId))) {
+          appointmentData.service_type_id = parseInt(serviceId);
+        }
+
+        // Only add staff_id if it's a valid integer
+        if (practitionerId && !isNaN(parseInt(practitionerId))) {
+          appointmentData.staff_id = parseInt(practitionerId);
+        }
+
         // Call the authenticated appointments API
         const response = await fetch('/api/appointments', {
           method: 'POST',
@@ -781,15 +801,7 @@
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
           },
-          body: JSON.stringify({
-            service_type_id: serviceId || 1,
-            staff_id: practitionerId || null,
-            title: serviceName,
-            start_time: startDateTime.toISOString(),
-            end_time: endDateTime.toISOString(),
-            status: 'scheduled',
-            client_notes: addons ? `Add-ons: ${addons}` : ''
-          })
+          body: JSON.stringify(appointmentData)
         });
 
         const data = await response.json();
