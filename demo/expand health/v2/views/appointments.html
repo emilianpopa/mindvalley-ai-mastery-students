@@ -1679,6 +1679,206 @@
     .panel-btn-paid:hover {
       background: var(--green-50);
     }
+
+    /* Add Customer Modal */
+    .add-customer-modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 2000;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.2s ease;
+    }
+
+    .add-customer-modal-overlay.show {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .add-customer-modal {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.95);
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+      z-index: 2001;
+      width: 400px;
+      max-width: 90vw;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.2s ease;
+    }
+
+    .add-customer-modal.show {
+      opacity: 1;
+      visibility: visible;
+      transform: translate(-50%, -50%) scale(1);
+    }
+
+    .add-customer-modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .add-customer-modal-header h3 {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+
+    .modal-limit-badge {
+      background: var(--red-100);
+      color: var(--red-600);
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+
+    .modal-close-btn {
+      background: none;
+      border: none;
+      padding: 4px;
+      cursor: pointer;
+      color: var(--gray-500);
+      border-radius: 4px;
+    }
+
+    .modal-close-btn:hover {
+      background: var(--gray-100);
+      color: var(--gray-700);
+    }
+
+    .modal-close-btn svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    .add-customer-modal-body {
+      padding: 20px;
+    }
+
+    .modal-label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--gray-700);
+      margin-bottom: 8px;
+    }
+
+    .modal-select-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .modal-select {
+      flex: 1;
+      padding: 10px 12px;
+      border: 1px solid var(--gray-300);
+      border-radius: 8px;
+      font-size: 0.875rem;
+      color: var(--gray-700);
+      background: white;
+      cursor: pointer;
+    }
+
+    .modal-select:focus {
+      outline: none;
+      border-color: var(--purple-500);
+      box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.1);
+    }
+
+    .modal-add-new-btn {
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--gray-100);
+      border: 1px solid var(--gray-300);
+      border-radius: 8px;
+      cursor: pointer;
+      color: var(--gray-600);
+      transition: all 0.15s;
+    }
+
+    .modal-add-new-btn:hover {
+      background: var(--gray-200);
+      color: var(--gray-800);
+    }
+
+    .modal-add-new-btn svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .modal-checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.875rem;
+      color: var(--gray-700);
+      cursor: pointer;
+    }
+
+    .modal-checkbox-label input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--purple-600);
+    }
+
+    .add-customer-modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      padding: 16px 20px;
+      border-top: 1px solid var(--gray-200);
+    }
+
+    .modal-btn {
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .modal-btn-cancel {
+      background: white;
+      border: 1px solid var(--gray-300);
+      color: var(--gray-700);
+    }
+
+    .modal-btn-cancel:hover {
+      background: var(--gray-50);
+    }
+
+    .modal-btn-add {
+      background: var(--blue-600);
+      border: none;
+      color: white;
+    }
+
+    .modal-btn-add:hover {
+      background: var(--blue-700);
+    }
+
+    .modal-btn-add:disabled {
+      background: var(--gray-300);
+      cursor: not-allowed;
+    }
   </style>
 </head>
 <body>
@@ -2799,6 +2999,89 @@
       // TODO: Switch content based on tab
     }
 
+    // =====================
+    // Add Customer Modal
+    // =====================
+    let clients = [];
+
+    async function loadClients() {
+      try {
+        const data = await apiRequest('/api/clients?limit=500');
+        if (data && data.clients) {
+          clients = data.clients;
+        }
+      } catch (error) {
+        console.error('Failed to load clients:', error);
+      }
+    }
+
+    async function openAddCustomerModal() {
+      if (!selectedAppointment) return;
+
+      // Load clients if not loaded yet
+      if (clients.length === 0) {
+        await loadClients();
+      }
+
+      // Populate the dropdown
+      const select = document.getElementById('customerSelect');
+      select.innerHTML = '<option value="">Select customer...</option>';
+      clients.forEach(client => {
+        const option = document.createElement('option');
+        option.value = client.id;
+        option.textContent = `${client.first_name} ${client.last_name}`;
+        if (client.email) {
+          option.textContent += ` (${client.email})`;
+        }
+        select.appendChild(option);
+      });
+
+      // Show modal
+      document.getElementById('addCustomerModalOverlay').classList.add('show');
+      document.getElementById('addCustomerModal').classList.add('show');
+    }
+
+    function closeAddCustomerModal() {
+      document.getElementById('addCustomerModalOverlay').classList.remove('show');
+      document.getElementById('addCustomerModal').classList.remove('show');
+    }
+
+    async function assignCustomer() {
+      if (!selectedAppointment) return;
+
+      const select = document.getElementById('customerSelect');
+      const clientId = select.value;
+
+      if (!clientId) {
+        alert('Please select a customer');
+        return;
+      }
+
+      try {
+        const response = await apiRequest(`/api/appointments/${selectedAppointment.id}`, {
+          method: 'PUT',
+          body: JSON.stringify({ client_id: parseInt(clientId) })
+        });
+
+        if (response) {
+          // Find the client name
+          const client = clients.find(c => c.id === parseInt(clientId));
+          const clientName = client ? `${client.first_name} ${client.last_name}` : 'Client assigned';
+
+          // Update the panel
+          document.getElementById('panelClientName').textContent = clientName;
+          document.getElementById('panelSignupCard').style.display = 'flex';
+
+          // Close modal and refresh appointments
+          closeAddCustomerModal();
+          await loadAppointments();
+        }
+      } catch (error) {
+        console.error('Failed to assign customer:', error);
+        alert('Failed to assign customer');
+      }
+    }
+
     async function toggleCheckin() {
       if (!selectedAppointment) return;
 
@@ -2927,7 +3210,7 @@
           </button>
         </div>
       </div>
-      <button class="panel-add-customer">
+      <button class="panel-add-customer" onclick="openAddCustomerModal()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <line x1="12" y1="5" x2="12" y2="19"></line>
           <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -3073,6 +3356,43 @@
         </svg>
         Paid
       </button>
+    </div>
+  </div>
+
+  <!-- Add Customer Modal -->
+  <div class="add-customer-modal-overlay" id="addCustomerModalOverlay" onclick="closeAddCustomerModal()"></div>
+  <div class="add-customer-modal" id="addCustomerModal">
+    <div class="add-customer-modal-header">
+      <h3>Add customer</h3>
+      <span class="modal-limit-badge" id="modalLimitBadge" style="display: none;">Over limit</span>
+      <button class="modal-close-btn" onclick="closeAddCustomerModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+    <div class="add-customer-modal-body">
+      <label class="modal-label">Customer</label>
+      <div class="modal-select-row">
+        <select id="customerSelect" class="modal-select">
+          <option value="">Select customer...</option>
+        </select>
+        <button class="modal-add-new-btn" onclick="window.open('/clients', '_blank')" title="Add new client">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+        </button>
+      </div>
+      <label class="modal-checkbox-label">
+        <input type="checkbox" id="sendConfirmation" checked>
+        <span>Send confirmation</span>
+      </label>
+    </div>
+    <div class="add-customer-modal-footer">
+      <button class="modal-btn modal-btn-cancel" onclick="closeAddCustomerModal()">Cancel</button>
+      <button class="modal-btn modal-btn-add" onclick="assignCustomer()">Add</button>
     </div>
   </div>
 
