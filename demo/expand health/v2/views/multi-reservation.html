@@ -400,6 +400,49 @@
       height: 16px;
     }
 
+    /* Practitioner section */
+    .practitioner-section {
+      border: 2px solid var(--purple-300);
+      border-radius: 12px;
+      padding: 20px;
+      margin-top: 20px;
+    }
+
+    .practitioner-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--purple-600);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 12px;
+    }
+
+    .practitioner-select {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid var(--gray-200);
+      border-radius: 8px;
+      font-size: 0.9375rem;
+      color: var(--gray-700);
+      background: white;
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 40px;
+    }
+
+    .practitioner-select:focus {
+      outline: none;
+      border-color: var(--purple-400);
+      box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.1);
+    }
+
+    .practitioner-select:hover {
+      border-color: var(--gray-300);
+    }
+
     /* Continue button */
     .btn-continue {
       width: 100%;
@@ -623,6 +666,16 @@
           <span class="summary-value" id="totalPrice">ZAR 0.00</span>
         </div>
 
+        <!-- Practitioner Selection -->
+        <div class="practitioner-section">
+          <div class="practitioner-label">PRACTITIONER</div>
+          <select class="practitioner-select" id="practitionerSelect">
+            <option value="">Select...</option>
+            <option value="any">Any available</option>
+            <!-- Practitioners will be loaded from API -->
+          </select>
+        </div>
+
         <!-- Continue Button -->
         <button class="btn-continue" id="continueBtn" disabled onclick="continueBooking()">
           Select time
@@ -634,6 +687,29 @@
   <script>
     // State
     let selectedServices = [];
+    let selectedPractitionerId = '';
+
+    // Load practitioners into dropdown
+    async function loadPractitioners() {
+      try {
+        const response = await fetch('/api/staff?active_only=true&accepts_bookings=true');
+        const staff = await response.json();
+
+        const select = document.getElementById('practitionerSelect');
+
+        staff.forEach(practitioner => {
+          const option = document.createElement('option');
+          option.value = practitioner.id;
+          option.textContent = `${practitioner.first_name} ${practitioner.last_name}`;
+          select.appendChild(option);
+        });
+      } catch (error) {
+        console.error('Failed to load practitioners:', error);
+      }
+    }
+
+    // Initialize practitioners on page load
+    loadPractitioners();
 
     // Toggle service dropdown
     function toggleServiceDropdown(event) {
@@ -734,6 +810,10 @@
     function continueBooking() {
       if (selectedServices.length === 0) return;
 
+      // Get selected practitioner
+      const practitionerSelect = document.getElementById('practitionerSelect');
+      selectedPractitionerId = practitionerSelect.value === 'any' ? '' : practitionerSelect.value;
+
       // Calculate total duration and price
       const totalDuration = selectedServices.reduce((sum, s) => sum + parseInt(s.duration) || 0, 0);
       const totalPrice = selectedServices.reduce((sum, s) => {
@@ -747,7 +827,8 @@
         id: firstService.id,
         name: selectedServices.map(s => s.name).join(' + '),
         duration: totalDuration + ' min',
-        price: 'ZAR ' + totalPrice.toFixed(2)
+        price: 'ZAR ' + totalPrice.toFixed(2),
+        practitioner: selectedPractitionerId
       });
 
       // Store all selected services in sessionStorage for later use
