@@ -3204,15 +3204,9 @@
       if (clientName) {
         signupCard.style.display = 'flex';
         document.getElementById('panelClientName').textContent = clientName;
-        document.getElementById('panelClientContact').innerHTML = '';
-        document.getElementById('panelClientPrice').textContent = 'ZAR 150.00';
-        document.getElementById('panelClientPaid').style.display = 'inline';
       } else {
         signupCard.style.display = 'flex';
         document.getElementById('panelClientName').textContent = 'No client assigned';
-        document.getElementById('panelClientContact').innerHTML = '';
-        document.getElementById('panelClientPrice').textContent = '';
-        document.getElementById('panelClientPaid').style.display = 'none';
       }
 
       // Update check-in toggle and timestamp
@@ -3624,11 +3618,6 @@
         </div>
         <div class="panel-signup-info">
           <div class="panel-signup-name" id="panelClientName">No client assigned</div>
-          <div class="panel-signup-contact" id="panelClientContact"></div>
-          <div class="panel-signup-badges" id="panelClientBadges">
-            <span class="panel-mini-badge price" id="panelClientPrice"></span>
-            <span class="panel-mini-badge paid" id="panelClientPaid" style="display: none;">Paid</span>
-          </div>
         </div>
         <div class="panel-signup-actions">
           <div class="panel-checkin-row">
@@ -3800,29 +3789,6 @@
       </button>
     </div>
 
-    <!-- Footer -->
-    <div class="panel-footer">
-      <button class="panel-btn panel-btn-cancel" onclick="cancelAppointment()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <line x1="18" y1="6" x2="6" y2="18"></line>
-          <line x1="6" y1="6" x2="18" y2="18"></line>
-        </svg>
-        Cancel
-      </button>
-      <button class="panel-btn panel-btn-edit">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-        </svg>
-        Edit
-      </button>
-      <button class="panel-btn panel-btn-paid" onclick="markAsPaid()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polyline points="20 6 9 17 4 12"></polyline>
-        </svg>
-        Paid
-      </button>
-    </div>
   </div>
 
   <!-- Add Customer Modal -->
