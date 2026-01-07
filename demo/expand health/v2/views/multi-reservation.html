@@ -734,8 +734,27 @@
     function continueBooking() {
       if (selectedServices.length === 0) return;
 
-      console.log('Continuing with services:', selectedServices);
-      alert('Time selection will open with ' + selectedServices.length + ' service(s) selected');
+      // Calculate total duration and price
+      const totalDuration = selectedServices.reduce((sum, s) => sum + parseInt(s.duration) || 0, 0);
+      const totalPrice = selectedServices.reduce((sum, s) => {
+        const priceNum = parseFloat(s.price.replace(/[^0-9.]/g, '')) || 0;
+        return sum + priceNum;
+      }, 0);
+
+      // Build URL params - use first service as primary, store all in session
+      const firstService = selectedServices[0];
+      const params = new URLSearchParams({
+        id: firstService.id,
+        name: selectedServices.map(s => s.name).join(' + '),
+        duration: totalDuration + ' min',
+        price: 'ZAR ' + totalPrice.toFixed(2)
+      });
+
+      // Store all selected services in sessionStorage for later use
+      sessionStorage.setItem('multiReservationServices', JSON.stringify(selectedServices));
+
+      // Navigate to time selection
+      window.location.href = `/booking-time?${params.toString()}`;
     }
   </script>
 </body>
