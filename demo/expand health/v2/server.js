@@ -387,7 +387,7 @@ app.get('/reservations', (req, res) => {
 
 // Services (Appointment services management)
 app.get('/services', (req, res) => {
-  res.sendFile(path.join(__dirname, 'views', 'services.html'));
+  res.sendFile(path.join(__dirname, 'views', 'appointment-services.html'));
 });
 
 // Appointment types settings
