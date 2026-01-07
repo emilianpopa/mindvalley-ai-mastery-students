@@ -2724,12 +2724,14 @@
     let isCheckedIn = false;
 
     function openAppointmentPanel(apt) {
-      selectedAppointment = apt;
-      isCheckedIn = apt.extendedProps?.status === 'in_progress';
+      try {
+        console.log('openAppointmentPanel called with:', apt);
+        selectedAppointment = apt;
+        isCheckedIn = apt.extendedProps?.status === 'in_progress';
 
-      // Update panel content
-      document.getElementById('panelTitle').textContent = apt.title || 'Appointment reservation';
-      document.getElementById('panelId').textContent = `ID: ${apt.id}`;
+        // Update panel content
+        document.getElementById('panelTitle').textContent = apt.title || 'Appointment reservation';
+        document.getElementById('panelId').textContent = `ID: ${apt.id}`;
 
       // Status badge
       const statusBadge = document.getElementById('panelStatusBadge');
@@ -2782,8 +2784,14 @@
       document.getElementById('panelServiceName').textContent = apt.title || 'Service';
 
       // Show panel
+      console.log('Showing panel...');
       document.getElementById('appointmentPanelOverlay').classList.add('show');
       document.getElementById('appointmentPanel').classList.add('show');
+      console.log('Panel should be visible now');
+      } catch (error) {
+        console.error('Error in openAppointmentPanel:', error);
+        alert('Error opening panel: ' + error.message);
+      }
     }
 
     function closeAppointmentPanel() {
