@@ -2424,38 +2424,45 @@
       border-color: var(--gray-400);
     }
 
-    .duration-price-row {
+    .duration-buffers-row {
       display: flex;
-      gap: 16px;
-      margin-bottom: 16px;
+      align-items: flex-start;
+      gap: 12px;
     }
 
-    .duration-group,
-    .price-group {
-      flex: 1;
-    }
-
-    .duration-group label,
-    .price-group label {
-      display: block;
-      font-size: 0.875rem;
-      color: var(--gray-600);
-      margin-bottom: 8px;
-    }
-
-    .duration-input-row {
+    .buffer-field {
       display: flex;
+      flex-direction: column;
       align-items: center;
-      gap: 8px;
+      gap: 4px;
     }
 
-    .duration-input-row input {
-      width: 80px;
-      padding: 10px 12px;
+    .buffer-field input {
+      width: 70px;
+      padding: 10px 8px;
       border: 1px solid var(--gray-300);
       border-radius: 8px;
       font-size: 0.875rem;
       text-align: center;
+    }
+
+    .buffer-field input:focus {
+      outline: none;
+      border-color: var(--purple-500);
+      box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.1);
+    }
+
+    .buffer-label {
+      font-size: 0.6875rem;
+      color: var(--gray-500);
+      text-align: center;
+    }
+
+    .buffer-unit {
+      font-size: 0.875rem;
+      color: var(--gray-600);
+      align-self: center;
+      padding-top: 6px;
     }
 
     .price-input-row {
@@ -4102,6 +4109,8 @@
       document.getElementById('newAptVenue').value = '';
       document.getElementById('newAptCustomer').value = '';
       document.getElementById('newAptDuration').value = 60;
+      document.getElementById('newAptBufferStart').value = 10;
+      document.getElementById('newAptBufferEnd').value = 10;
       document.getElementById('newAptPrice').value = 0;
       document.getElementById('newAptNote').value = '';
       document.getElementById('sendConfirmation').checked = true;
@@ -4138,6 +4147,8 @@
             option.textContent = service.name;
             option.dataset.duration = service.duration_minutes || 60;
             option.dataset.price = service.price || 0;
+            option.dataset.bufferBefore = service.buffer_before_minutes || 10;
+            option.dataset.bufferAfter = service.buffer_after_minutes || 10;
             select.appendChild(option);
           });
         }
@@ -4239,8 +4250,12 @@
       if (selectedOption && selectedOption.value) {
         const duration = selectedOption.dataset.duration || 60;
         const price = selectedOption.dataset.price || 0;
+        const bufferBefore = selectedOption.dataset.bufferBefore || 10;
+        const bufferAfter = selectedOption.dataset.bufferAfter || 10;
         document.getElementById('newAptDuration').value = duration;
         document.getElementById('newAptPrice').value = parseFloat(price).toFixed(2);
+        document.getElementById('newAptBufferStart').value = bufferBefore;
+        document.getElementById('newAptBufferEnd').value = bufferAfter;
       }
     }
 
@@ -4820,17 +4835,32 @@
       <!-- Add Customer Button -->
       <button class="add-more-customer-btn" onclick="addAnotherCustomer()">+ Add customer</button>
 
-      <!-- Duration & Price -->
-      <div class="duration-price-row">
-        <div class="duration-group">
-          <label>Duration</label>
-          <div class="duration-input-row">
-            <input type="number" id="newAptDuration" value="60" min="5" step="5">
-            <span>minutes</span>
+      <!-- Duration & Buffers/Overlaps -->
+      <div class="apt-form-row">
+        <label class="apt-form-label">Duration &<br>Buffers/Overlaps</label>
+        <div class="apt-form-control">
+          <div class="duration-buffers-row">
+            <div class="buffer-field">
+              <input type="number" id="newAptBufferStart" value="10" min="0" step="5">
+              <span class="buffer-label">Buffer at start</span>
+            </div>
+            <div class="buffer-field">
+              <input type="number" id="newAptDuration" value="60" min="5" step="5">
+              <span class="buffer-label">Duration</span>
+            </div>
+            <div class="buffer-field">
+              <input type="number" id="newAptBufferEnd" value="10" min="0" step="5">
+              <span class="buffer-label">Buffer at end</span>
+            </div>
+            <span class="buffer-unit">minutes</span>
           </div>
         </div>
-        <div class="price-group">
-          <label>Total price</label>
+      </div>
+
+      <!-- Total price -->
+      <div class="apt-form-row">
+        <label class="apt-form-label">Total price</label>
+        <div class="apt-form-control">
           <div class="price-input-row">
             <span class="price-currency">ZAR</span>
             <input type="number" id="newAptPrice" value="0" min="0" step="0.01">
