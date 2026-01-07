@@ -944,6 +944,7 @@
       border-right: 1px solid var(--gray-100);
       height: 60px;
       position: relative;
+      cursor: pointer;
     }
 
     .time-slot:hover {
@@ -3394,10 +3395,12 @@
     }
 
     function handleSlotClick(day, hour) {
+      console.log('Slot clicked:', { day, hour });
       const startOfWeek = getStartOfWeek(currentDate);
       const date = new Date(startOfWeek);
       date.setDate(date.getDate() + day);
       date.setHours(hour, 0, 0, 0);
+      console.log('Opening modal for date:', date);
       openNewAptModal(date);
     }
 
@@ -4061,26 +4064,30 @@
     let aptType = 'appointment';
 
     async function openNewAptModal(date) {
-      // Set the start date/time
-      const dateStr = date.toISOString().slice(0, 16);
-      document.getElementById('newAptStartsAt').value = dateStr;
+      try {
+        // Show modal immediately
+        document.getElementById('newAptModalOverlay').classList.add('show');
+        document.getElementById('newAptModal').classList.add('show');
 
-      // Set default end date for recurring (1 week later)
-      const endDate = new Date(date);
-      endDate.setDate(endDate.getDate() + 7);
-      document.getElementById('endsOnDate').value = endDate.toISOString().slice(0, 10);
+        // Set the start date/time
+        const dateStr = date.toISOString().slice(0, 16);
+        document.getElementById('newAptStartsAt').value = dateStr;
 
-      // Load dropdowns
-      await Promise.all([
-        loadNewAptServices(),
-        loadNewAptStaff(),
-        loadNewAptVenues(),
-        loadNewAptCustomers()
-      ]);
+        // Set default end date for recurring (1 week later)
+        const endDate = new Date(date);
+        endDate.setDate(endDate.getDate() + 7);
+        document.getElementById('endsOnDate').value = endDate.toISOString().slice(0, 10);
 
-      // Show modal
-      document.getElementById('newAptModalOverlay').classList.add('show');
-      document.getElementById('newAptModal').classList.add('show');
+        // Load dropdowns in parallel (don't block modal display)
+        Promise.all([
+          loadNewAptServices(),
+          loadNewAptStaff(),
+          loadNewAptVenues(),
+          loadNewAptCustomers()
+        ]).catch(err => console.error('Error loading dropdown data:', err));
+      } catch (error) {
+        console.error('Error opening new appointment modal:', error);
+      }
     }
 
     function closeNewAptModal() {
