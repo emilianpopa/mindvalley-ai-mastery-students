@@ -1689,7 +1689,11 @@
 
         const data = await apiRequest(`/api/appointments/calendar?start=${startDate}&end=${endDate}`);
 
-        if (data && data.events) {
+        // API returns array directly, not wrapped in { events: [...] }
+        if (data && Array.isArray(data)) {
+          appointments = data;
+          renderAppointments();
+        } else if (data && data.events) {
           appointments = data.events;
           renderAppointments();
         }
