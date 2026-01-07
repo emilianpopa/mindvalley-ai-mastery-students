@@ -2483,7 +2483,11 @@
           slot.style.height = `${slotHeight}px`;
           slot.dataset.hour = hour;
           slot.dataset.day = day;
-          slot.onclick = () => handleSlotClick(day, hour);
+          slot.onclick = (e) => {
+            // Don't trigger if clicking on an appointment block
+            if (e.target.closest('.appointment-block')) return;
+            handleSlotClick(day, hour);
+          };
           grid.appendChild(slot);
         }
       }
