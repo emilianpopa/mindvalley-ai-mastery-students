@@ -766,8 +766,8 @@
         const durationMinutes = parseInt(serviceDuration) || 60;
         const endDateTime = new Date(startDateTime.getTime() + durationMinutes * 60000);
 
-        // Get auth token from localStorage
-        const token = localStorage.getItem('token');
+        // Get auth token from localStorage (key is 'auth_token' per auth.js)
+        const token = localStorage.getItem('auth_token');
         if (!token) {
           alert('Please log in to complete your booking.');
           window.location.href = '/login';
