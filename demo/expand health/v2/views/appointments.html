@@ -2788,10 +2788,13 @@
         // Format time
         const timeStr = start.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
 
+        // Get client name from extendedProps
+        const clientName = apt.extendedProps?.clientName;
+
         block.innerHTML = `
           <div style="font-weight: 600; color: var(--purple-800); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${apt.title || 'Appointment'}</div>
           <div style="color: var(--purple-600); font-size: 0.6875rem;">${timeStr}</div>
-          ${apt.clientName ? `<div style="color: var(--gray-600); font-size: 0.6875rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${apt.clientName}</div>` : ''}
+          ${clientName ? `<div style="color: var(--gray-600); font-size: 0.6875rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${clientName}</div>` : ''}
         `;
 
         block.addEventListener('click', (e) => {
