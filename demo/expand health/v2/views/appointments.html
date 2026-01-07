@@ -2724,6 +2724,7 @@
     let isCheckedIn = false;
 
     function openAppointmentPanel(apt) {
+      alert('Opening panel for appointment: ' + (apt.title || apt.id));
       try {
         console.log('openAppointmentPanel called with:', apt);
         selectedAppointment = apt;
