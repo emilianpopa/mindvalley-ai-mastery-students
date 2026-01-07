@@ -1,0 +1,8 @@
+[phases.setup]
+nixPkgs = ["nodejs_18", "npm"]
+
+[phases.install]
+cmds = ["cd 'demo/expand health/v2' && npm install"]
+
+[start]
+cmd = "cd 'demo/expand health/v2' && node server.js"
