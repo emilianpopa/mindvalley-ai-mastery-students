@@ -21,7 +21,7 @@ router.use(authenticateToken);
  */
 router.get('/', async (req, res, next) => {
   try {
-    const tenantId = req.user.tenant_id;
+    const tenantId = req.user.tenantId;
     const {
       start_date,
       end_date,
@@ -111,7 +111,7 @@ router.get('/', async (req, res, next) => {
  */
 router.get('/calendar', async (req, res, next) => {
   try {
-    const tenantId = req.user.tenant_id;
+    const tenantId = req.user.tenantId;
     const { start, end, staff_id } = req.query;
 
     if (!start || !end) {
@@ -186,7 +186,7 @@ router.get('/calendar', async (req, res, next) => {
  */
 router.get('/:id', async (req, res, next) => {
   try {
-    const tenantId = req.user.tenant_id;
+    const tenantId = req.user.tenantId;
     const { id } = req.params;
 
     const result = await db.query(`
@@ -227,7 +227,7 @@ router.get('/:id', async (req, res, next) => {
  */
 router.post('/', async (req, res, next) => {
   try {
-    const tenantId = req.user.tenant_id;
+    const tenantId = req.user.tenantId;
     const userId = req.user.id;
 
     const {
@@ -302,7 +302,7 @@ router.post('/', async (req, res, next) => {
  */
 router.put('/:id', async (req, res, next) => {
   try {
-    const tenantId = req.user.tenant_id;
+    const tenantId = req.user.tenantId;
     const { id } = req.params;
 
     const {
@@ -396,7 +396,7 @@ router.put('/:id', async (req, res, next) => {
  */
 router.post('/:id/cancel', async (req, res, next) => {
   try {
-    const tenantId = req.user.tenant_id;
+    const tenantId = req.user.tenantId;
     const { id } = req.params;
     const { reason } = req.body;
 
@@ -427,7 +427,7 @@ router.post('/:id/cancel', async (req, res, next) => {
  */
 router.post('/:id/check-in', async (req, res, next) => {
   try {
-    const tenantId = req.user.tenant_id;
+    const tenantId = req.user.tenantId;
     const { id } = req.params;
 
     const result = await db.query(`
@@ -455,7 +455,7 @@ router.post('/:id/check-in', async (req, res, next) => {
  */
 router.post('/:id/complete', async (req, res, next) => {
   try {
-    const tenantId = req.user.tenant_id;
+    const tenantId = req.user.tenantId;
     const { id } = req.params;
 
     const result = await db.query(`
@@ -482,7 +482,7 @@ router.post('/:id/complete', async (req, res, next) => {
  */
 router.post('/:id/no-show', async (req, res, next) => {
   try {
-    const tenantId = req.user.tenant_id;
+    const tenantId = req.user.tenantId;
     const { id } = req.params;
 
     const result = await db.query(`
@@ -510,7 +510,7 @@ router.post('/:id/no-show', async (req, res, next) => {
  */
 router.delete('/:id', requireRole('admin'), async (req, res, next) => {
   try {
-    const tenantId = req.user.tenant_id;
+    const tenantId = req.user.tenantId;
     const { id } = req.params;
 
     const result = await db.query(
@@ -538,7 +538,7 @@ router.delete('/:id', requireRole('admin'), async (req, res, next) => {
  */
 router.get('/availability/slots', async (req, res, next) => {
   try {
-    const tenantId = req.user.tenant_id;
+    const tenantId = req.user.tenantId;
     const { date, staff_id, service_type_id, duration_minutes = 60 } = req.query;
 
     if (!date) {
