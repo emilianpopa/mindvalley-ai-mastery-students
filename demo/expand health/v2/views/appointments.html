@@ -1332,6 +1332,23 @@
       transform: translateX(18px);
     }
 
+    .panel-checkin-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .panel-checkin-time {
+      font-size: 0.75rem;
+      color: var(--gray-500);
+      white-space: nowrap;
+      display: none;
+    }
+
+    .panel-checkin-time.show {
+      display: inline;
+    }
+
     .panel-more-btn {
       width: 24px;
       height: 24px;
@@ -3198,9 +3215,28 @@
         document.getElementById('panelClientPaid').style.display = 'none';
       }
 
-      // Update check-in toggle
+      // Update check-in toggle and timestamp
       const toggle = document.getElementById('panelCheckinToggle');
+      const checkinTime = document.getElementById('panelCheckinTime');
       toggle.classList.toggle('active', isCheckedIn);
+
+      if (isCheckedIn && apt.extendedProps?.checked_in_at) {
+        const checkinDate = new Date(apt.extendedProps.checked_in_at);
+        const dateStr = checkinDate.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
+        const timeStr = checkinDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+        checkinTime.textContent = `${dateStr}, ${timeStr}`;
+        checkinTime.classList.add('show');
+      } else if (isCheckedIn) {
+        // Fallback if no timestamp but status says checked in
+        const now = new Date();
+        const dateStr = now.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
+        const timeStr = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+        checkinTime.textContent = `${dateStr}, ${timeStr}`;
+        checkinTime.classList.add('show');
+      } else {
+        checkinTime.textContent = '';
+        checkinTime.classList.remove('show');
+      }
 
       // Service name
       document.getElementById('panelServiceName').textContent = apt.title || 'Service';
@@ -3414,11 +3450,22 @@
       if (!selectedAppointment) return;
 
       const toggle = document.getElementById('panelCheckinToggle');
+      const checkinTime = document.getElementById('panelCheckinTime');
       isCheckedIn = !isCheckedIn;
       toggle.classList.toggle('active', isCheckedIn);
 
       if (isCheckedIn) {
+        // Show check-in timestamp
+        const now = new Date();
+        const dateStr = now.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
+        const timeStr = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+        checkinTime.textContent = `${dateStr}, ${timeStr}`;
+        checkinTime.classList.add('show');
         await checkInAppointment();
+      } else {
+        // Hide check-in timestamp
+        checkinTime.textContent = '';
+        checkinTime.classList.remove('show');
       }
     }
 
@@ -3584,7 +3631,10 @@
           </div>
         </div>
         <div class="panel-signup-actions">
-          <div class="panel-toggle" id="panelCheckinToggle" onclick="toggleCheckin()"></div>
+          <div class="panel-checkin-row">
+            <div class="panel-toggle" id="panelCheckinToggle" onclick="toggleCheckin()"></div>
+            <span class="panel-checkin-time" id="panelCheckinTime"></span>
+          </div>
           <div class="panel-more-wrapper">
             <button class="panel-more-btn" onclick="toggleSignupMenu(event)">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
