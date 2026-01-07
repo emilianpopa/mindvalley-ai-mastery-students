@@ -3232,8 +3232,16 @@
         checkinTime.classList.remove('show');
       }
 
-      // Service name
-      document.getElementById('panelServiceName').textContent = apt.title || 'Service';
+      // Service name (clickable link to service detail)
+      const serviceNameEl = document.getElementById('panelServiceName');
+      serviceNameEl.textContent = apt.title || 'Service';
+      const serviceId = apt.extendedProps?.serviceId;
+      if (serviceId) {
+        serviceNameEl.href = `/service-detail?id=${serviceId}`;
+      } else {
+        serviceNameEl.href = '#';
+        serviceNameEl.onclick = (e) => e.preventDefault();
+      }
 
       // Price
       const price = apt.extendedProps?.price || 0;
@@ -3776,7 +3784,7 @@
             </svg>
           </div>
           <div class="panel-info-content">
-            <div class="panel-service-name" id="panelServiceName">Service</div>
+            <a href="#" class="panel-service-name" id="panelServiceName">Service</a>
             <div class="panel-service-board">on <span id="panelBoardName">Expand Health</span></div>
           </div>
         </div>

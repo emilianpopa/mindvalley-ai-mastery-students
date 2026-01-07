@@ -1,0 +1,1168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Service - ExpandHealth</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cline x1='20' y1='20' x2='80' y2='80' stroke='%230F766E' stroke-width='12' stroke-linecap='round'/%3E%3Cline x1='80' y1='20' x2='20' y2='80' stroke='%230F766E' stroke-width='12' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/css/main.css">
+  <script src="/js/feature-flags.js"></script>
+  <script src="/js/nav.js"></script>
+  <style>
+    .main-content {
+      flex: 1;
+      margin-left: 260px;
+      overflow-y: auto;
+      background: #f8f9fa;
+    }
+
+    .service-page {
+      padding: 24px 32px;
+      max-width: 1200px;
+    }
+
+    /* Back Button */
+    .back-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--gray-600);
+      text-decoration: none;
+      font-size: 0.875rem;
+    }
+
+    .back-link:hover {
+      color: var(--gray-900);
+    }
+
+    .back-link svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    /* Header */
+    .service-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .service-header h1 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 12px;
+    }
+
+    .actions-wrapper {
+      position: relative;
+    }
+
+    .actions-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      background: white;
+      border: 1px solid var(--gray-300);
+      border-radius: 8px;
+      font-size: 0.875rem;
+      color: var(--gray-700);
+      cursor: pointer;
+    }
+
+    .actions-btn:hover {
+      background: var(--gray-50);
+    }
+
+    .actions-btn svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .actions-menu {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 100%;
+      margin-top: 4px;
+      background: white;
+      border: 1px solid var(--gray-200);
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      min-width: 180px;
+      z-index: 100;
+    }
+
+    .actions-menu.show {
+      display: block;
+    }
+
+    .action-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      padding: 12px 16px;
+      border: none;
+      background: none;
+      font-size: 0.875rem;
+      color: var(--gray-700);
+      cursor: pointer;
+      text-align: left;
+    }
+
+    .action-item:hover {
+      background: var(--gray-50);
+    }
+
+    .action-item svg {
+      width: 18px;
+      height: 18px;
+      color: var(--gray-500);
+    }
+
+    .action-item.danger {
+      color: #dc2626;
+    }
+
+    .action-item.danger svg {
+      color: #dc2626;
+    }
+
+    /* Tab Navigation */
+    .tab-nav {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .tab-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 16px;
+      background: none;
+      border: none;
+      font-size: 0.875rem;
+      color: var(--gray-600);
+      cursor: pointer;
+      position: relative;
+    }
+
+    .tab-btn:hover {
+      color: var(--gray-900);
+    }
+
+    .tab-btn.active {
+      color: var(--gray-900);
+      font-weight: 500;
+    }
+
+    .tab-btn.active::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--teal-600);
+    }
+
+    .tab-count {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 20px;
+      height: 20px;
+      padding: 0 6px;
+      background: var(--gray-200);
+      border-radius: 10px;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+
+    .tab-btn.active .tab-count {
+      background: var(--teal-100);
+      color: var(--teal-700);
+    }
+
+    /* Edit Staff Link */
+    .edit-staff-link {
+      color: var(--teal-600);
+      text-decoration: none;
+      font-size: 0.875rem;
+      margin-left: auto;
+    }
+
+    .edit-staff-link:hover {
+      text-decoration: underline;
+    }
+
+    /* Staff Table */
+    .staff-table-section {
+      background: white;
+      border-radius: 12px;
+      border: 1px solid var(--gray-200);
+      margin-bottom: 24px;
+    }
+
+    .staff-table-header {
+      display: flex;
+      align-items: center;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .staff-table-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      color: var(--gray-500);
+      letter-spacing: 0.05em;
+    }
+
+    .staff-table {
+      width: 100%;
+    }
+
+    .staff-table th {
+      text-align: left;
+      padding: 12px 20px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--gray-500);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .staff-table td {
+      padding: 16px 20px;
+      font-size: 0.875rem;
+      color: var(--gray-700);
+      border-bottom: 1px solid var(--gray-100);
+    }
+
+    .staff-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .staff-name {
+      color: var(--teal-600);
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .staff-name:hover {
+      text-decoration: underline;
+    }
+
+    .staff-actions {
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .staff-action-btn {
+      padding: 6px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--gray-400);
+    }
+
+    .staff-action-btn:hover {
+      color: var(--gray-600);
+    }
+
+    /* Add-ons Section */
+    .addons-section {
+      background: white;
+      border-radius: 12px;
+      border: 1px solid var(--gray-200);
+      margin-bottom: 24px;
+    }
+
+    .addons-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .addons-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #dc2626;
+    }
+
+    .addons-link {
+      color: var(--teal-600);
+      text-decoration: none;
+      font-size: 0.875rem;
+    }
+
+    .addons-link:hover {
+      text-decoration: underline;
+    }
+
+    .addons-description {
+      padding: 12px 20px;
+      font-size: 0.875rem;
+      color: var(--gray-600);
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .addons-table {
+      width: 100%;
+    }
+
+    .addons-table th {
+      text-align: left;
+      padding: 12px 20px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--gray-500);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .addons-table td {
+      padding: 12px 20px;
+      font-size: 0.875rem;
+      color: var(--gray-700);
+      border-bottom: 1px solid var(--gray-100);
+    }
+
+    .addons-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .addon-name {
+      color: var(--teal-600);
+      text-decoration: none;
+    }
+
+    .addon-name:hover {
+      text-decoration: underline;
+    }
+
+    .addon-checkbox {
+      width: 18px;
+      height: 18px;
+    }
+
+    .addon-drag {
+      color: var(--gray-400);
+      cursor: grab;
+    }
+
+    /* Info Card */
+    .info-card {
+      background: white;
+      border-radius: 12px;
+      border: 1px solid var(--gray-200);
+      margin-bottom: 24px;
+    }
+
+    .info-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .info-card-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #dc2626;
+    }
+
+    .info-card-content {
+      padding: 20px;
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 24px;
+    }
+
+    .info-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .info-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      background: var(--gray-100);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .info-icon svg {
+      width: 18px;
+      height: 18px;
+      color: var(--gray-600);
+    }
+
+    .info-icon.primary {
+      background: var(--teal-50);
+    }
+
+    .info-icon.primary svg {
+      color: var(--teal-600);
+    }
+
+    .info-details {
+      flex: 1;
+    }
+
+    .info-label {
+      font-size: 0.75rem;
+      color: var(--gray-500);
+      margin-bottom: 2px;
+    }
+
+    .info-value {
+      font-size: 0.875rem;
+      color: var(--gray-900);
+      font-weight: 500;
+    }
+
+    .expand-btn {
+      background: none;
+      border: none;
+      color: var(--gray-400);
+      cursor: pointer;
+      padding: 4px;
+    }
+
+    .expand-btn:hover {
+      color: var(--gray-600);
+    }
+
+    /* Timing Section */
+    .timing-section {
+      background: white;
+      border-radius: 12px;
+      border: 1px solid var(--gray-200);
+      margin-bottom: 24px;
+    }
+
+    .timing-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .timing-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #dc2626;
+    }
+
+    .timing-content {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      padding: 20px;
+    }
+
+    .timing-details {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .timing-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .timing-label {
+      font-size: 0.75rem;
+      color: var(--gray-500);
+    }
+
+    .timing-value {
+      font-size: 0.875rem;
+      color: var(--teal-600);
+    }
+
+    .timing-preview {
+      background: var(--gray-50);
+      border-radius: 8px;
+      padding: 16px;
+    }
+
+    .timing-preview-title {
+      font-size: 0.75rem;
+      color: var(--gray-500);
+      margin-bottom: 12px;
+    }
+
+    .reservation-block {
+      background: var(--teal-500);
+      border-radius: 8px;
+      padding: 12px;
+      color: white;
+      font-size: 0.75rem;
+    }
+
+    .reservation-block-title {
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .reservation-block-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 2px;
+    }
+
+    .reservation-block-item svg {
+      width: 12px;
+      height: 12px;
+    }
+
+    /* Misc Section */
+    .misc-section {
+      background: white;
+      border-radius: 12px;
+      border: 1px solid var(--gray-200);
+      margin-bottom: 24px;
+    }
+
+    .misc-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .misc-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+
+    .misc-content {
+      padding: 20px;
+    }
+
+    .color-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .color-swatch {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      border: 1px solid var(--gray-200);
+    }
+
+    .color-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .color-label {
+      font-size: 0.75rem;
+      color: var(--gray-500);
+    }
+
+    .color-name {
+      font-size: 0.875rem;
+      color: var(--gray-700);
+    }
+  </style>
+</head>
+<body>
+  <%- include('partials/sidebar') %>
+
+  <div class="main-content">
+    <div class="service-page">
+      <!-- Back Link -->
+      <div class="back-row">
+        <a href="/appointments" class="back-link">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+          </svg>
+        </a>
+      </div>
+
+      <!-- Header -->
+      <div class="service-header">
+        <h1 id="serviceName">Loading...</h1>
+        <div class="header-actions">
+          <div class="actions-wrapper">
+            <button class="actions-btn" onclick="toggleActionsMenu()">
+              Actions
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </button>
+            <div class="actions-menu" id="actionsMenu">
+              <button class="action-item" onclick="editService()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
+                </svg>
+                Edit Service
+              </button>
+              <button class="action-item" onclick="duplicateService()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                </svg>
+                Duplicate
+              </button>
+              <button class="action-item danger" onclick="deleteService()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="3 6 5 6 21 6"/>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                </svg>
+                Delete Service
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab Navigation -->
+      <div class="tab-nav">
+        <button class="tab-btn active" data-tab="staff">
+          Staff <span class="tab-count" id="staffCount">0</span>
+        </button>
+        <button class="tab-btn" data-tab="locations">
+          Locations <span class="tab-count" id="locationsCount">1</span>
+        </button>
+        <button class="tab-btn" data-tab="boards">
+          Boards <span class="tab-count" id="boardsCount">1</span>
+        </button>
+        <a href="#" class="edit-staff-link" onclick="editStaff()">Edit staff</a>
+      </div>
+
+      <!-- Specific practitioners assigned -->
+      <div class="staff-table-section">
+        <div class="staff-table-header">
+          <div class="staff-table-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+            Specific practitioners are assigned
+          </div>
+        </div>
+        <table class="staff-table">
+          <thead>
+            <tr>
+              <th></th>
+              <th>Name</th>
+              <th>E-mail</th>
+              <th>Pay rate</th>
+              <th>Price</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="staffTableBody">
+            <!-- Staff rows will be populated here -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Available add-ons -->
+      <div class="addons-section">
+        <div class="addons-header">
+          <div class="addons-title">Available add-ons</div>
+          <a href="#" class="addons-link">Add add-ons</a>
+        </div>
+        <div class="addons-description">
+          These add-ons are available for customers to add onto their reservation when booking this service. Drag & drop to re-order the add-ons.
+        </div>
+        <table class="addons-table">
+          <thead>
+            <tr>
+              <th style="width:40px;"></th>
+              <th style="width:40px;"></th>
+              <th>Name</th>
+              <th>Price</th>
+              <th>Duration</th>
+              <th style="width:40px;"></th>
+            </tr>
+          </thead>
+          <tbody id="addonsTableBody">
+            <!-- Add-ons will be populated here -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pricing & Customers -->
+      <div class="info-card">
+        <div class="info-card-header">
+          <div class="info-card-title">Pricing & Customers</div>
+          <button class="expand-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+        </div>
+        <div class="info-card-content">
+          <div class="info-grid">
+            <div class="info-item">
+              <div class="info-icon primary">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="2" y="4" width="20" height="16" rx="2"/>
+                  <line x1="2" y1="10" x2="22" y2="10"/>
+                </svg>
+              </div>
+              <div class="info-details">
+                <div class="info-label">Price</div>
+                <div class="info-value" id="servicePrice">ZAR 0.00</div>
+              </div>
+            </div>
+            <div class="info-item">
+              <div class="info-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/>
+                  <path d="M12 6v6l4 2"/>
+                </svg>
+              </div>
+              <div class="info-details">
+                <div class="info-label">Price in appointment credits</div>
+                <div class="info-value">1</div>
+              </div>
+            </div>
+            <div class="info-item">
+              <div class="info-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                  <circle cx="9" cy="7" r="4"/>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
+              </div>
+              <div class="info-details">
+                <div class="info-label">Max. customers</div>
+                <div class="info-value" id="maxCustomers">1</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Price rules -->
+      <div class="info-card">
+        <div class="info-card-header">
+          <div class="info-card-title" style="color: var(--gray-900);">Price rules</div>
+          <button class="expand-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+        </div>
+        <div class="info-card-content">
+          <div class="info-item">
+            <div class="info-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+                <polyline points="14 2 14 8 20 8"/>
+              </svg>
+            </div>
+            <div class="info-details">
+              <div class="info-value">1</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Checkout -->
+      <div class="info-card">
+        <div class="info-card-header">
+          <div class="info-card-title">Checkout</div>
+        </div>
+        <div class="info-card-content">
+          <div class="info-grid">
+            <div class="info-item">
+              <div class="info-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                  <circle cx="12" cy="7" r="4"/>
+                </svg>
+              </div>
+              <div class="info-details">
+                <div class="info-label">Staff & Location</div>
+                <div class="info-value">Follow board</div>
+              </div>
+            </div>
+            <div class="info-item">
+              <div class="info-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/>
+                  <polyline points="12 6 12 12 16 14"/>
+                </svg>
+              </div>
+              <div class="info-details">
+                <div class="info-label">Cut-off time</div>
+                <div class="info-value">Follow board</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Booking conditions -->
+      <div class="info-card">
+        <div class="info-card-header">
+          <div class="info-card-title">Booking conditions</div>
+          <button class="expand-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+        </div>
+        <div class="info-card-content">
+          <div class="info-grid">
+            <div class="info-item">
+              <div class="info-icon primary">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="12" y1="8" x2="12" y2="12"/>
+                  <line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+              </div>
+              <div class="info-details">
+                <div class="info-label">Max. concurrent reservations per board</div>
+                <div class="info-value">Unlimited</div>
+              </div>
+            </div>
+            <div class="info-item">
+              <div class="info-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                  <line x1="16" y1="2" x2="16" y2="6"/>
+                  <line x1="8" y1="2" x2="8" y2="6"/>
+                  <line x1="3" y1="10" x2="21" y2="10"/>
+                </svg>
+              </div>
+              <div class="info-details">
+                <div class="info-label">Applicable memberships</div>
+                <div class="info-value" id="applicableMemberships">10</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Timing -->
+      <div class="timing-section">
+        <div class="timing-header">
+          <div class="timing-title">Timing</div>
+        </div>
+        <div class="timing-content">
+          <div class="timing-details">
+            <div class="timing-item">
+              <div class="timing-label">Buffer/overlap at start</div>
+              <div class="timing-value" id="bufferStart">Add buffer time 10m</div>
+            </div>
+            <div class="timing-item">
+              <div class="timing-label">Duration</div>
+              <div class="timing-value" id="duration">30m</div>
+            </div>
+            <div class="timing-item">
+              <div class="timing-label">Buffer/overlap at end</div>
+              <div class="timing-value" id="bufferEnd">Add buffer time 10m</div>
+            </div>
+          </div>
+          <div class="timing-preview">
+            <div class="timing-preview-title">Reservation preview</div>
+            <div class="reservation-block" id="reservationPreview">
+              <div class="reservation-block-title" id="previewTitle">Service</div>
+              <div class="reservation-block-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                  <circle cx="9" cy="7" r="4"/>
+                </svg>
+                <span id="previewCustomer">0 Customer</span>
+              </div>
+              <div class="reservation-block-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                  <circle cx="12" cy="10" r="3"/>
+                </svg>
+                <span>Location</span>
+              </div>
+              <div class="reservation-block-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                  <circle cx="12" cy="7" r="4"/>
+                </svg>
+                <span>Staff</span>
+              </div>
+              <div class="reservation-block-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/>
+                  <polyline points="12 6 12 12 16 14"/>
+                </svg>
+                <span id="previewTime">9:00 AM-9:30 AM</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Misc -->
+      <div class="misc-section">
+        <div class="misc-header">
+          <div class="misc-title">Misc.</div>
+        </div>
+        <div class="misc-content">
+          <div class="color-item">
+            <div class="color-swatch" id="colorSwatch" style="background: #0d9488;"></div>
+            <div class="color-info">
+              <div class="color-label">Color</div>
+              <div class="color-name" id="colorName">Teal</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    let serviceId = null;
+    let serviceData = null;
+
+    // Get service ID from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    serviceId = urlParams.get('id');
+
+    if (!serviceId) {
+      window.location.href = '/appointments';
+    }
+
+    // Load service data
+    async function loadService() {
+      try {
+        const token = localStorage.getItem('auth_token');
+        const response = await fetch(`/api/services/${serviceId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error('Service not found');
+        }
+
+        serviceData = await response.json();
+        renderService();
+      } catch (error) {
+        console.error('Error loading service:', error);
+        alert('Service not found');
+        window.location.href = '/appointments';
+      }
+    }
+
+    function renderService() {
+      // Header
+      document.getElementById('serviceName').textContent = serviceData.name;
+      document.title = `${serviceData.name} - ExpandHealth`;
+
+      // Staff count
+      const staffCount = serviceData.staff?.length || 0;
+      document.getElementById('staffCount').textContent = staffCount;
+
+      // Staff table
+      const staffBody = document.getElementById('staffTableBody');
+      staffBody.innerHTML = '';
+
+      if (serviceData.staff && serviceData.staff.length > 0) {
+        serviceData.staff.forEach(staff => {
+          const price = staff.custom_price || serviceData.price || 0;
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td><input type="checkbox" checked disabled style="width:18px;height:18px;"></td>
+            <td><a href="/practitioner-detail?id=${staff.id}" class="staff-name">${staff.first_name} ${staff.last_name}</a></td>
+            <td>${staff.email || '-'}</td>
+            <td>-</td>
+            <td>ZAR ${parseFloat(price).toFixed(2)}</td>
+            <td class="staff-actions">
+              <button class="staff-action-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;">
+                  <circle cx="12" cy="12" r="1"/>
+                  <circle cx="19" cy="12" r="1"/>
+                  <circle cx="5" cy="12" r="1"/>
+                </svg>
+              </button>
+            </td>
+          `;
+          staffBody.appendChild(row);
+        });
+      }
+
+      // Pricing
+      const price = serviceData.price || 0;
+      document.getElementById('servicePrice').textContent = `ZAR ${parseFloat(price).toFixed(2)}`;
+      document.getElementById('maxCustomers').textContent = serviceData.max_attendees || 1;
+
+      // Timing
+      const duration = serviceData.duration_minutes || 30;
+      const bufferBefore = serviceData.buffer_before_minutes || 0;
+      const bufferAfter = serviceData.buffer_after_minutes || 0;
+
+      document.getElementById('duration').textContent = `${duration}m`;
+      document.getElementById('bufferStart').textContent = bufferBefore > 0 ? `Add buffer time ${bufferBefore}m` : 'No buffer';
+      document.getElementById('bufferEnd').textContent = bufferAfter > 0 ? `Add buffer time ${bufferAfter}m` : 'No buffer';
+
+      // Preview
+      document.getElementById('previewTitle').textContent = serviceData.name;
+      const startTime = '9:00 AM';
+      const endHour = 9 + Math.floor(duration / 60);
+      const endMin = duration % 60;
+      const endTime = `${endHour}:${endMin.toString().padStart(2, '0')} AM`;
+      document.getElementById('previewTime').textContent = `${startTime}-${endTime}`;
+
+      // Color
+      const color = serviceData.color || '#0d9488';
+      document.getElementById('colorSwatch').style.background = color;
+      document.getElementById('colorName').textContent = getColorName(color);
+      document.getElementById('reservationPreview').style.background = color;
+
+      // Load add-ons (placeholder)
+      loadAddons();
+    }
+
+    function getColorName(hex) {
+      const colors = {
+        '#0d9488': 'Teal',
+        '#3B82F6': 'Blue',
+        '#6366f1': 'Indigo',
+        '#8B5CF6': 'Purple',
+        '#EC4899': 'Pink',
+        '#EF4444': 'Red',
+        '#F97316': 'Orange',
+        '#EAB308': 'Yellow',
+        '#22C55E': 'Green',
+        '#06B6D4': 'Cyan'
+      };
+      return colors[hex] || hex;
+    }
+
+    async function loadAddons() {
+      // Placeholder add-ons - in real app would come from API
+      const addons = [
+        { name: 'Inbody', price: 150, duration: 10 },
+        { name: 'Somedome', price: 150, duration: 20 },
+        { name: 'Compression Boots', price: 150, duration: 30 },
+        { name: 'Cold Plunge + Infrared Sauna', price: 550, duration: 45 },
+        { name: 'Infrared Sauna', price: 500, duration: 45 },
+        { name: 'Cold Plunge', price: 150, duration: 3 },
+        { name: 'Red Light Therapy', price: 500, duration: 20 },
+        { name: 'PEMF', price: 300, duration: 12 },
+        { name: '30 min Massage', price: 400, duration: 30 }
+      ];
+
+      const tbody = document.getElementById('addonsTableBody');
+      tbody.innerHTML = '';
+
+      addons.forEach(addon => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td><input type="checkbox" class="addon-checkbox"></td>
+          <td class="addon-drag">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;">
+              <line x1="8" y1="6" x2="21" y2="6"/>
+              <line x1="8" y1="12" x2="21" y2="12"/>
+              <line x1="8" y1="18" x2="21" y2="18"/>
+              <line x1="3" y1="6" x2="3.01" y2="6"/>
+              <line x1="3" y1="12" x2="3.01" y2="12"/>
+              <line x1="3" y1="18" x2="3.01" y2="18"/>
+            </svg>
+          </td>
+          <td><a href="#" class="addon-name">${addon.name}</a></td>
+          <td>ZAR ${addon.price.toFixed(2)}</td>
+          <td>${addon.duration}min</td>
+          <td>
+            <button class="staff-action-btn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;">
+                <circle cx="12" cy="12" r="1"/>
+                <circle cx="19" cy="12" r="1"/>
+                <circle cx="5" cy="12" r="1"/>
+              </svg>
+            </button>
+          </td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    function toggleActionsMenu() {
+      document.getElementById('actionsMenu').classList.toggle('show');
+    }
+
+    function editService() {
+      alert('Edit service functionality coming soon');
+    }
+
+    function duplicateService() {
+      alert('Duplicate service functionality coming soon');
+    }
+
+    function deleteService() {
+      if (confirm('Are you sure you want to delete this service?')) {
+        alert('Delete service functionality coming soon');
+      }
+    }
+
+    function editStaff() {
+      alert('Edit staff functionality coming soon');
+    }
+
+    // Close menus when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.actions-wrapper')) {
+        document.getElementById('actionsMenu').classList.remove('show');
+      }
+    });
+
+    // Tab navigation
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+      });
+    });
+
+    // Load on page ready
+    loadService();
+  </script>
+</body>
+</html>

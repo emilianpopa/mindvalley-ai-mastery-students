@@ -468,6 +468,10 @@ app.get('/practitioner-detail', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'practitioner-detail.html'));
 });
 
+app.get('/service-detail', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'service-detail.html'));
+});
+
 app.get('/studio/pay-rates', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'studio-pay-rates.html'));
 });
