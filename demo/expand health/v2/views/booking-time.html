@@ -775,8 +775,11 @@
     function continueBooking() {
       if (!selectedDate || !selectedTime) return;
 
-      // Format date for URL
-      const dateStr = selectedDate.toISOString().split('T')[0];
+      // Format date for URL (use local date to avoid timezone issues)
+      const year = selectedDate.getFullYear();
+      const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
+      const day = String(selectedDate.getDate()).padStart(2, '0');
+      const dateStr = `${year}-${month}-${day}`;
 
       // Build URL params for confirmation page
       const params = new URLSearchParams({

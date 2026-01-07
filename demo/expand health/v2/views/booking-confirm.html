@@ -766,8 +766,8 @@
         const durationMinutes = parseInt(serviceDuration) || 60;
         const endDateTime = new Date(startDateTime.getTime() + durationMinutes * 60000);
 
-        // Call the public booking API
-        const response = await fetch('/api/book/expand-health', {
+        // Call the public booking API (tenant slug is 'expandhealth' without hyphen)
+        const response = await fetch('/api/book/expandhealth', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
