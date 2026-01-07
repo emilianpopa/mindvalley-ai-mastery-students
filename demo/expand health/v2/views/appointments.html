@@ -1668,12 +1668,106 @@
     let currentDate = new Date();
     let currentView = 'week';
     let slotHeight = 60;
+    let appointments = [];
 
     // Initialize
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
       updateWeekDisplay();
       generateTimeSlots();
+      await loadAppointments();
     });
+
+    // Load appointments from API
+    async function loadAppointments() {
+      try {
+        const startOfWeek = getStartOfWeek(currentDate);
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(endOfWeek.getDate() + 7);
+
+        const startDate = startOfWeek.toISOString().split('T')[0];
+        const endDate = endOfWeek.toISOString().split('T')[0];
+
+        const data = await apiRequest(`/api/appointments/calendar?start=${startDate}&end=${endDate}`);
+
+        if (data && data.events) {
+          appointments = data.events;
+          renderAppointments();
+        }
+      } catch (error) {
+        console.error('Failed to load appointments:', error);
+      }
+    }
+
+    // Render appointments on the calendar grid
+    function renderAppointments() {
+      // Clear existing appointment blocks
+      document.querySelectorAll('.appointment-block').forEach(el => el.remove());
+
+      const startOfWeek = getStartOfWeek(currentDate);
+      const grid = document.getElementById('calendarGrid');
+
+      appointments.forEach(apt => {
+        const start = new Date(apt.start);
+        const end = new Date(apt.end);
+
+        // Calculate which day column (0-6)
+        const dayDiff = Math.floor((start - startOfWeek) / (1000 * 60 * 60 * 24));
+        if (dayDiff < 0 || dayDiff > 6) return; // Skip if outside current week
+
+        // Calculate position within the day
+        const startHour = start.getHours();
+        const startMinutes = start.getMinutes();
+        const endHour = end.getHours();
+        const endMinutes = end.getMinutes();
+
+        // Calculate duration in hours
+        const durationHours = (end - start) / (1000 * 60 * 60);
+
+        // Find the time slot for this hour and day
+        const timeSlots = grid.querySelectorAll('.time-slot');
+        const slotIndex = startHour * 7 + dayDiff;
+        const targetSlot = timeSlots[slotIndex];
+
+        if (!targetSlot) return;
+
+        // Create appointment block
+        const block = document.createElement('div');
+        block.className = 'appointment-block';
+        block.style.cssText = `
+          position: absolute;
+          top: ${(startMinutes / 60) * slotHeight}px;
+          left: 2px;
+          right: 2px;
+          height: ${durationHours * slotHeight - 4}px;
+          background: var(--purple-100);
+          border-left: 3px solid var(--purple-600);
+          border-radius: 4px;
+          padding: 4px 8px;
+          font-size: 0.75rem;
+          overflow: hidden;
+          cursor: pointer;
+          z-index: 10;
+        `;
+
+        // Format time
+        const timeStr = start.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+
+        block.innerHTML = `
+          <div style="font-weight: 600; color: var(--purple-800); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${apt.title || 'Appointment'}</div>
+          <div style="color: var(--purple-600); font-size: 0.6875rem;">${timeStr}</div>
+          ${apt.clientName ? `<div style="color: var(--gray-600); font-size: 0.6875rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${apt.clientName}</div>` : ''}
+        `;
+
+        block.onclick = () => {
+          console.log('Clicked appointment:', apt);
+          // TODO: Open appointment detail modal
+        };
+
+        // Position relative to the slot
+        targetSlot.style.position = 'relative';
+        targetSlot.appendChild(block);
+      });
+    }
 
     // API helper
     async function apiRequest(url, options = {}) {
@@ -1798,14 +1892,16 @@
     }
 
     // Navigation
-    function prevWeek() {
+    async function prevWeek() {
       currentDate.setDate(currentDate.getDate() - 7);
       updateWeekDisplay();
+      await loadAppointments();
     }
 
-    function nextWeek() {
+    async function nextWeek() {
       currentDate.setDate(currentDate.getDate() + 7);
       updateWeekDisplay();
+      await loadAppointments();
     }
 
     function setView(view) {
@@ -1822,6 +1918,7 @@
       document.querySelectorAll('.time-slot').forEach(slot => {
         slot.style.height = `${slotHeight}px`;
       });
+      renderAppointments(); // Re-render with new slot height
     }
 
     function zoomOut() {
@@ -1829,6 +1926,7 @@
       document.querySelectorAll('.time-slot').forEach(slot => {
         slot.style.height = `${slotHeight}px`;
       });
+      renderAppointments(); // Re-render with new slot height
     }
 
     // Dropdowns
