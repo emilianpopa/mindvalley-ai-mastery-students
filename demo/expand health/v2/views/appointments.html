@@ -1096,7 +1096,7 @@
       position: fixed;
       top: 0;
       right: 0;
-      width: 420px;
+      width: 480px;
       height: 100vh;
       background: white;
       box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15);
@@ -1115,7 +1115,7 @@
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
-      padding: 20px 24px;
+      padding: 16px 20px;
       border-bottom: 1px solid var(--gray-200);
     }
 
@@ -1124,10 +1124,10 @@
     }
 
     .panel-title {
-      font-size: 1.25rem;
+      font-size: 1.125rem;
       font-weight: 600;
       color: var(--gray-900);
-      margin-bottom: 4px;
+      margin-bottom: 2px;
     }
 
     .panel-id {
@@ -1153,7 +1153,7 @@
       color: var(--blue-700);
     }
 
-    .panel-status-badge.confirmed {
+    .panel-status-badge.paid {
       background: var(--green-100);
       color: var(--green-700);
     }
@@ -1172,11 +1172,11 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 32px;
-      height: 32px;
+      width: 28px;
+      height: 28px;
       border: none;
       background: transparent;
-      color: var(--gray-500);
+      color: var(--gray-400);
       cursor: pointer;
       border-radius: 6px;
       transition: all 0.15s;
@@ -1184,25 +1184,212 @@
 
     .panel-close-btn:hover {
       background: var(--gray-100);
-      color: var(--gray-700);
+      color: var(--gray-600);
     }
 
     .panel-close-btn svg {
-      width: 20px;
-      height: 20px;
+      width: 18px;
+      height: 18px;
     }
 
+    /* Signups Section */
+    .panel-signups {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .panel-signups-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .panel-signups-badge {
+      padding: 4px 10px;
+      background: var(--blue-100);
+      color: var(--blue-700);
+      font-size: 0.75rem;
+      font-weight: 500;
+      border-radius: 4px;
+    }
+
+    .panel-checkin-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8125rem;
+      color: var(--gray-600);
+    }
+
+    .panel-signup-card {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 12px;
+      background: var(--gray-50);
+      border-radius: 8px;
+    }
+
+    .panel-signup-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--gray-200);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .panel-signup-avatar svg {
+      width: 18px;
+      height: 18px;
+      color: var(--gray-500);
+    }
+
+    .panel-signup-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .panel-signup-name {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--teal-600);
+      margin-bottom: 2px;
+    }
+
+    .panel-signup-contact {
+      font-size: 0.75rem;
+      color: var(--gray-600);
+      line-height: 1.4;
+    }
+
+    .panel-signup-badges {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .panel-mini-badge {
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.6875rem;
+      font-weight: 500;
+    }
+
+    .panel-mini-badge.price {
+      background: var(--gray-100);
+      color: var(--gray-700);
+    }
+
+    .panel-mini-badge.paid {
+      background: var(--green-100);
+      color: var(--green-700);
+    }
+
+    .panel-mini-badge.free {
+      background: var(--gray-100);
+      color: var(--gray-600);
+    }
+
+    .panel-signup-actions {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 8px;
+    }
+
+    .panel-toggle {
+      width: 40px;
+      height: 22px;
+      background: var(--gray-200);
+      border-radius: 11px;
+      position: relative;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .panel-toggle.active {
+      background: var(--green-500);
+    }
+
+    .panel-toggle::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 18px;
+      height: 18px;
+      background: white;
+      border-radius: 50%;
+      transition: transform 0.2s;
+    }
+
+    .panel-toggle.active::after {
+      transform: translateX(18px);
+    }
+
+    .panel-more-btn {
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      border: none;
+      color: var(--gray-400);
+      cursor: pointer;
+      border-radius: 4px;
+    }
+
+    .panel-more-btn:hover {
+      background: var(--gray-100);
+      color: var(--gray-600);
+    }
+
+    /* Add Customer Button */
+    .panel-add-customer {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 10px;
+      margin-top: 12px;
+      background: white;
+      border: 1px dashed var(--gray-300);
+      border-radius: 8px;
+      font-size: 0.875rem;
+      color: var(--gray-600);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .panel-add-customer:hover {
+      border-color: var(--gray-400);
+      color: var(--gray-700);
+    }
+
+    .panel-add-customer svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    /* Panel Tabs */
     .panel-tabs {
       display: flex;
-      gap: 24px;
-      padding: 0 24px;
+      gap: 20px;
+      padding: 0 20px;
       border-bottom: 1px solid var(--gray-200);
     }
 
     .panel-tab {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
       padding: 12px 0;
       border: none;
       background: transparent;
@@ -1228,22 +1415,21 @@
       height: 16px;
     }
 
+    /* Panel Content */
     .panel-content {
       flex: 1;
       overflow-y: auto;
-      padding: 24px;
+      padding: 20px;
     }
 
     .panel-section {
-      margin-bottom: 24px;
+      margin-bottom: 20px;
     }
 
     .panel-section-title {
       font-size: 0.75rem;
       font-weight: 600;
       color: var(--gray-500);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
       margin-bottom: 12px;
     }
 
@@ -1251,14 +1437,18 @@
       display: flex;
       align-items: flex-start;
       gap: 12px;
-      margin-bottom: 16px;
+      margin-bottom: 12px;
+    }
+
+    .panel-info-row:last-child {
+      margin-bottom: 0;
     }
 
     .panel-info-icon {
-      width: 36px;
-      height: 36px;
-      border-radius: 8px;
-      background: var(--gray-100);
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      background: var(--purple-100);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -1266,17 +1456,33 @@
     }
 
     .panel-info-icon svg {
-      width: 18px;
-      height: 18px;
+      width: 16px;
+      height: 16px;
+      color: var(--purple-600);
+    }
+
+    .panel-info-icon.gray {
+      background: var(--gray-100);
+    }
+
+    .panel-info-icon.gray svg {
       color: var(--gray-600);
     }
 
-    .panel-info-icon.purple {
-      background: var(--purple-100);
+    .panel-info-icon.teal {
+      background: var(--teal-100);
     }
 
-    .panel-info-icon.purple svg {
-      color: var(--purple-600);
+    .panel-info-icon.teal svg {
+      color: var(--teal-600);
+    }
+
+    .panel-info-icon.green {
+      background: var(--green-100);
+    }
+
+    .panel-info-icon.green svg {
+      color: var(--green-600);
     }
 
     .panel-info-content {
@@ -1295,48 +1501,132 @@
       margin-top: 2px;
     }
 
-    .panel-client-card {
+    .panel-info-link {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--purple-600);
+      text-decoration: none;
+    }
+
+    .panel-info-link:hover {
+      text-decoration: underline;
+    }
+
+    /* Practitioner Row - Side by Side */
+    .panel-practitioner-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 24px;
+    }
+
+    .panel-practitioner-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* Pricing Section */
+    .panel-pricing-row {
       display: flex;
       align-items: center;
       gap: 12px;
-      padding: 12px;
-      background: var(--gray-50);
-      border-radius: 8px;
-      margin-bottom: 12px;
     }
 
-    .panel-client-avatar {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      background: var(--gray-300);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1rem;
-      font-weight: 600;
-      color: white;
-    }
-
-    .panel-client-info {
-      flex: 1;
-    }
-
-    .panel-client-name {
+    .panel-price-label {
       font-size: 0.875rem;
-      font-weight: 600;
-      color: var(--purple-600);
-    }
-
-    .panel-client-email {
-      font-size: 0.75rem;
       color: var(--gray-600);
     }
 
+    .panel-price-value {
+      font-size: 0.9375rem;
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+
+    .panel-price-credits {
+      font-size: 0.75rem;
+      color: var(--gray-500);
+      font-weight: 400;
+    }
+
+    .panel-price-type {
+      display: inline-block;
+      margin-top: 8px;
+      padding: 4px 10px;
+      background: var(--blue-100);
+      color: var(--blue-700);
+      font-size: 0.75rem;
+      font-weight: 500;
+      border-radius: 4px;
+    }
+
+    /* Service Section */
+    .panel-service-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .panel-service-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      background: var(--green-500);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .panel-service-icon svg {
+      width: 16px;
+      height: 16px;
+      color: white;
+    }
+
+    .panel-service-name {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--purple-600);
+    }
+
+    .panel-service-board {
+      font-size: 0.75rem;
+      color: var(--gray-500);
+    }
+
+    /* Add to Calendar */
+    .panel-add-calendar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 12px;
+      background: var(--gray-50);
+      border: 1px solid var(--gray-200);
+      border-radius: 8px;
+      font-size: 0.875rem;
+      color: var(--gray-600);
+      cursor: pointer;
+      transition: all 0.15s;
+      margin-top: 16px;
+    }
+
+    .panel-add-calendar:hover {
+      background: var(--gray-100);
+      color: var(--gray-700);
+    }
+
+    .panel-add-calendar svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    /* Panel Footer */
     .panel-footer {
       display: flex;
       gap: 12px;
-      padding: 16px 24px;
+      padding: 16px 20px;
       border-top: 1px solid var(--gray-200);
       background: white;
     }
@@ -1361,18 +1651,18 @@
     }
 
     .panel-btn-cancel {
-      background: white;
-      border: 1px solid var(--red-300);
-      color: var(--red-600);
+      background: var(--red-500);
+      border: none;
+      color: white;
     }
 
     .panel-btn-cancel:hover {
-      background: var(--red-50);
+      background: var(--red-600);
     }
 
     .panel-btn-edit {
       background: var(--purple-600);
-      border: 1px solid var(--purple-600);
+      border: none;
       color: white;
     }
 
@@ -1380,13 +1670,13 @@
       background: var(--purple-700);
     }
 
-    .panel-btn-checkin {
+    .panel-btn-paid {
       background: white;
       border: 1px solid var(--green-500);
       color: var(--green-600);
     }
 
-    .panel-btn-checkin:hover {
+    .panel-btn-paid:hover {
       background: var(--green-50);
     }
   </style>
@@ -2424,19 +2714,22 @@
     // Appointment Detail Panel
     // =====================
     let selectedAppointment = null;
+    let isCheckedIn = false;
 
     function openAppointmentPanel(apt) {
       selectedAppointment = apt;
+      isCheckedIn = apt.extendedProps?.status === 'in_progress';
 
       // Update panel content
-      document.getElementById('panelTitle').textContent = apt.title || 'Appointment';
+      document.getElementById('panelTitle').textContent = apt.title || 'Appointment reservation';
       document.getElementById('panelId').textContent = `ID: ${apt.id}`;
 
       // Status badge
       const statusBadge = document.getElementById('panelStatusBadge');
       const status = apt.extendedProps?.status || 'scheduled';
-      statusBadge.textContent = status.charAt(0).toUpperCase() + status.slice(1);
-      statusBadge.className = `panel-status-badge ${status}`;
+      const displayStatus = status === 'in_progress' ? 'Paid' : status.charAt(0).toUpperCase() + status.slice(1);
+      statusBadge.textContent = displayStatus;
+      statusBadge.className = `panel-status-badge ${status === 'in_progress' ? 'paid' : status}`;
 
       // Date/time
       const start = new Date(apt.start);
@@ -2455,18 +2748,31 @@
 
       // Location
       const locationType = apt.extendedProps?.locationType || 'in_person';
-      document.getElementById('panelLocation').textContent = locationType === 'in_person' ? 'In Person' : 'Virtual';
+      document.getElementById('panelLocation').textContent = locationType === 'in_person' ? 'Event Space' : 'Virtual';
 
-      // Client
+      // Client / Signups section
       const clientName = apt.extendedProps?.clientName;
-      const clientSection = document.getElementById('panelClientSection');
+      const signupCard = document.getElementById('panelSignupCard');
       if (clientName) {
-        clientSection.style.display = 'block';
+        signupCard.style.display = 'flex';
         document.getElementById('panelClientName').textContent = clientName;
-        document.getElementById('panelClientInitials').textContent = clientName.split(' ').map(n => n[0]).join('').substring(0, 2);
+        document.getElementById('panelClientContact').innerHTML = '';
+        document.getElementById('panelClientPrice').textContent = 'ZAR 150.00';
+        document.getElementById('panelClientPaid').style.display = 'inline';
       } else {
-        clientSection.style.display = 'none';
+        signupCard.style.display = 'flex';
+        document.getElementById('panelClientName').textContent = 'No client assigned';
+        document.getElementById('panelClientContact').innerHTML = '';
+        document.getElementById('panelClientPrice').textContent = '';
+        document.getElementById('panelClientPaid').style.display = 'none';
       }
+
+      // Update check-in toggle
+      const toggle = document.getElementById('panelCheckinToggle');
+      toggle.classList.toggle('active', isCheckedIn);
+
+      // Service name
+      document.getElementById('panelServiceName').textContent = apt.title || 'Service';
 
       // Show panel
       document.getElementById('appointmentPanelOverlay').classList.add('show');
@@ -2477,6 +2783,25 @@
       document.getElementById('appointmentPanelOverlay').classList.remove('show');
       document.getElementById('appointmentPanel').classList.remove('show');
       selectedAppointment = null;
+    }
+
+    function showPanelTab(tab) {
+      document.querySelectorAll('.panel-tab').forEach((t, i) => {
+        t.classList.toggle('active', (tab === 'details' && i === 0) || (tab === 'timing' && i === 1));
+      });
+      // TODO: Switch content based on tab
+    }
+
+    async function toggleCheckin() {
+      if (!selectedAppointment) return;
+
+      const toggle = document.getElementById('panelCheckinToggle');
+      isCheckedIn = !isCheckedIn;
+      toggle.classList.toggle('active', isCheckedIn);
+
+      if (isCheckedIn) {
+        await checkInAppointment();
+      }
     }
 
     async function cancelAppointment() {
@@ -2508,12 +2833,32 @@
         });
 
         if (response) {
-          closeAppointmentPanel();
-          await loadAppointments();
+          // Update status badge
+          const statusBadge = document.getElementById('panelStatusBadge');
+          statusBadge.textContent = 'Paid';
+          statusBadge.className = 'panel-status-badge paid';
         }
       } catch (error) {
         console.error('Failed to check in:', error);
         alert('Failed to check in');
+      }
+    }
+
+    async function markAsPaid() {
+      if (!selectedAppointment) return;
+
+      try {
+        const response = await apiRequest(`/api/appointments/${selectedAppointment.id}/complete`, {
+          method: 'POST'
+        });
+
+        if (response) {
+          closeAppointmentPanel();
+          await loadAppointments();
+        }
+      } catch (error) {
+        console.error('Failed to mark as paid:', error);
+        alert('Failed to mark as paid');
       }
     }
   </script>
@@ -2521,13 +2866,14 @@
   <!-- Appointment Detail Panel -->
   <div class="appointment-panel-overlay" id="appointmentPanelOverlay" onclick="closeAppointmentPanel()"></div>
   <div class="appointment-panel" id="appointmentPanel">
+    <!-- Header -->
     <div class="panel-header">
       <div class="panel-header-left">
-        <div class="panel-title" id="panelTitle">Appointment</div>
+        <div class="panel-title" id="panelTitle">Appointment reservation</div>
         <div class="panel-id" id="panelId">ID: 0</div>
       </div>
       <div class="panel-header-right">
-        <span class="panel-status-badge scheduled" id="panelStatusBadge">Scheduled</span>
+        <span class="panel-status-badge paid" id="panelStatusBadge">Paid</span>
         <button class="panel-close-btn" onclick="closeAppointmentPanel()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -2537,8 +2883,55 @@
       </div>
     </div>
 
+    <!-- Signups Section -->
+    <div class="panel-signups" id="panelSignupsSection">
+      <div class="panel-signups-header">
+        <span class="panel-signups-badge">Signups</span>
+        <span class="panel-checkin-label">
+          Check-in
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </span>
+      </div>
+      <div class="panel-signup-card" id="panelSignupCard">
+        <div class="panel-signup-avatar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+        </div>
+        <div class="panel-signup-info">
+          <div class="panel-signup-name" id="panelClientName">No client assigned</div>
+          <div class="panel-signup-contact" id="panelClientContact"></div>
+          <div class="panel-signup-badges" id="panelClientBadges">
+            <span class="panel-mini-badge price" id="panelClientPrice"></span>
+            <span class="panel-mini-badge paid" id="panelClientPaid" style="display: none;">Paid</span>
+          </div>
+        </div>
+        <div class="panel-signup-actions">
+          <div class="panel-toggle" id="panelCheckinToggle" onclick="toggleCheckin()"></div>
+          <button class="panel-more-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="1"></circle>
+              <circle cx="12" cy="5" r="1"></circle>
+              <circle cx="12" cy="19" r="1"></circle>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <button class="panel-add-customer">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+        Add customer
+      </button>
+    </div>
+
+    <!-- Tabs -->
     <div class="panel-tabs">
-      <button class="panel-tab active">
+      <button class="panel-tab active" onclick="showPanelTab('details')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <line x1="8" y1="6" x2="21" y2="6"></line>
           <line x1="8" y1="12" x2="21" y2="12"></line>
@@ -2549,7 +2942,7 @@
         </svg>
         Details
       </button>
-      <button class="panel-tab">
+      <button class="panel-tab" onclick="showPanelTab('timing')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="10"></circle>
           <polyline points="12 6 12 12 16 14"></polyline>
@@ -2558,24 +2951,13 @@
       </button>
     </div>
 
+    <!-- Content -->
     <div class="panel-content">
-      <!-- Client Section -->
-      <div class="panel-section" id="panelClientSection">
-        <div class="panel-section-title">Client</div>
-        <div class="panel-client-card">
-          <div class="panel-client-avatar" id="panelClientInitials">--</div>
-          <div class="panel-client-info">
-            <div class="panel-client-name" id="panelClientName">No client</div>
-            <div class="panel-client-email" id="panelClientEmail"></div>
-          </div>
-        </div>
-      </div>
-
       <!-- Scheduled Section -->
       <div class="panel-section">
         <div class="panel-section-title">Scheduled</div>
         <div class="panel-info-row">
-          <div class="panel-info-icon purple">
+          <div class="panel-info-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
               <line x1="16" y1="2" x2="16" y2="6"></line>
@@ -2593,31 +2975,76 @@
       <!-- Practitioner & Venue Section -->
       <div class="panel-section">
         <div class="panel-section-title">Practitioner & Venue</div>
-        <div class="panel-info-row">
-          <div class="panel-info-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-              <circle cx="12" cy="7" r="4"></circle>
-            </svg>
+        <div class="panel-practitioner-row">
+          <div class="panel-practitioner-item">
+            <div class="panel-info-icon gray">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+            </div>
+            <a href="#" class="panel-info-link" id="panelStaffName">Not assigned</a>
           </div>
-          <div class="panel-info-content">
-            <div class="panel-info-label" id="panelStaffName">Not assigned</div>
-          </div>
-        </div>
-        <div class="panel-info-row">
-          <div class="panel-info-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-              <circle cx="12" cy="10" r="3"></circle>
-            </svg>
-          </div>
-          <div class="panel-info-content">
-            <div class="panel-info-label" id="panelLocation">In Person</div>
+          <div class="panel-practitioner-item">
+            <div class="panel-info-icon gray">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                <circle cx="12" cy="10" r="3"></circle>
+              </svg>
+            </div>
+            <span class="panel-info-label" id="panelLocation">In Person</span>
           </div>
         </div>
       </div>
+
+      <!-- Pricing Section -->
+      <div class="panel-section">
+        <div class="panel-section-title">Pricing</div>
+        <div class="panel-pricing-row">
+          <div class="panel-info-icon green">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+              <line x1="1" y1="10" x2="23" y2="10"></line>
+            </svg>
+          </div>
+          <div class="panel-info-content">
+            <div class="panel-price-label">Total price</div>
+            <div class="panel-price-value" id="panelPrice">ZAR 0.00 <span class="panel-price-credits">or 0 credits</span></div>
+            <span class="panel-price-type">Flat price</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Service & Board Section -->
+      <div class="panel-section">
+        <div class="panel-section-title">Service & Board</div>
+        <div class="panel-service-row">
+          <div class="panel-service-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+              <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+          </div>
+          <div class="panel-info-content">
+            <div class="panel-service-name" id="panelServiceName">Service</div>
+            <div class="panel-service-board">on <span id="panelBoardName">Expand Health</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Add to Calendar -->
+      <button class="panel-add-calendar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+          <line x1="16" y1="2" x2="16" y2="6"></line>
+          <line x1="8" y1="2" x2="8" y2="6"></line>
+          <line x1="3" y1="10" x2="21" y2="10"></line>
+        </svg>
+        Add to calendar
+      </button>
     </div>
 
+    <!-- Footer -->
     <div class="panel-footer">
       <button class="panel-btn panel-btn-cancel" onclick="cancelAppointment()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -2633,11 +3060,11 @@
         </svg>
         Edit
       </button>
-      <button class="panel-btn panel-btn-checkin" onclick="checkInAppointment()">
+      <button class="panel-btn panel-btn-paid" onclick="markAsPaid()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <polyline points="20 6 9 17 4 12"></polyline>
         </svg>
-        Check-in
+        Paid
       </button>
     </div>
   </div>
