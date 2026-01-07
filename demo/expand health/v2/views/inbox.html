@@ -7,6 +7,8 @@
   <link rel="stylesheet" href="/css/main.css">
   <link rel="stylesheet" href="/css/inbox.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="/js/nav.js"></script>
+  <script src="/js/utility-bar.js"></script>
   <style>
     /* Marketing submenu styles */
     .marketing-submenu {
@@ -266,6 +268,7 @@
 
     <!-- Main Content -->
     <main class="main-content inbox-layout">
+      <div id="utilityBarContainer"></div>
       <!-- Contacts Panel -->
       <div class="contacts-panel">
         <div class="contacts-header">
@@ -649,6 +652,11 @@
         submitBtn.textContent = originalText;
         submitBtn.disabled = false;
       }
+    }
+
+    // Initialize utility bar
+    if (typeof initUtilityBar === 'function') {
+      initUtilityBar('inbox');
     }
   </script>
 </body>

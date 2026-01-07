@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="/css/chat-widget.css">
   <script src="/js/feature-flags.js"></script>
   <script src="/js/nav.js"></script>
+  <script src="/js/utility-bar.js"></script>
   <style>
     /* Hide the floating chat toggle button - use sidebar Ask AI instead */
     .chat-toggle { display: none !important; }
@@ -195,6 +196,7 @@
 
     <!-- Main Content -->
     <main class="main-content">
+      <div id="utilityBarContainer"></div>
       <!-- Header -->
       <header class="header">
         <div class="breadcrumb">
@@ -464,6 +466,11 @@
 
     // Load user info on page load
     document.addEventListener('DOMContentLoaded', loadUserInfo);
+
+    // Initialize utility bar
+    if (typeof initUtilityBar === 'function') {
+      initUtilityBar('forms');
+    }
   </script>
 </body>
 </html>

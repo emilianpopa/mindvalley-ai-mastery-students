@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="/css/clients-light.css?v=3">
   <script src="/js/feature-flags.js"></script>
   <script src="/js/nav.js"></script>
+  <script src="/js/utility-bar.js"></script>
 </head>
 <body>
   <!-- Mobile Overlay -->
@@ -184,6 +185,9 @@
 
     <!-- Main Content -->
     <main class="main-content">
+      <!-- Global Utility Bar -->
+      <div id="utilityBarContainer"></div>
+
       <!-- Header -->
       <header class="header">
         <div class="header-left-mobile">
@@ -624,6 +628,11 @@
         submitBtn.textContent = originalText;
         submitBtn.disabled = false;
       }
+    }
+
+    // Initialize utility bar
+    if (typeof initUtilityBar === 'function') {
+      initUtilityBar('clients');
     }
   </script>
 </body>

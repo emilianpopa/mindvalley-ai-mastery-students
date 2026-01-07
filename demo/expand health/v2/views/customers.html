@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="/css/main.css">
   <script src="/js/feature-flags.js"></script>
   <script src="/js/nav.js"></script>
+  <script src="/js/utility-bar.js"></script>
   <style>
     .crm-page {
       padding: 24px;
@@ -634,6 +635,7 @@
 
     <!-- Main Content -->
     <main class="main-content">
+      <div id="utilityBarContainer"></div>
       <div class="crm-page">
         <div class="page-header">
           <h1 class="page-title">Your CRM</h1>
@@ -1018,6 +1020,11 @@
         closeSupportModal();
       }
     });
+
+    // Initialize utility bar
+    if (typeof initUtilityBar === 'function') {
+      initUtilityBar('customers');
+    }
   </script>
 
   <!-- Support Modal -->

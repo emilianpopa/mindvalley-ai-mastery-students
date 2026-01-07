@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="/css/chat-widget.css">
   <script src="/js/feature-flags.js"></script>
   <script src="/js/nav.js"></script>
+  <script src="/js/utility-bar.js"></script>
 </head>
 <body>
   <div class="app-container">
@@ -150,6 +151,7 @@
 
     <!-- Main Content -->
     <main class="main-content">
+      <div id="utilityBarContainer"></div>
       <!-- Header -->
       <header class="header">
         <div class="header-left">
@@ -274,5 +276,11 @@
   <script src="/js/dashboard.js"></script>
   <script src="/js/labs.js"></script>
   <script src="/js/chat-widget.js"></script>
+  <script>
+    // Initialize utility bar
+    if (typeof initUtilityBar === 'function') {
+      initUtilityBar('labs');
+    }
+  </script>
 </body>
 </html>
