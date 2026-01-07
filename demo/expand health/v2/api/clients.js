@@ -33,10 +33,10 @@ router.get('/', async (req, res, next) => {
     let paramCount = 0;
 
     // TENANT FILTERING: Non-platform admins only see their tenant's clients
-    if (!req.user.isPlatformAdmin && req.tenant?.id) {
+    if (!req.user.isPlatformAdmin && req.user.tenantId) {
       paramCount++;
       whereConditions.push(`tenant_id = $${paramCount}`);
-      queryParams.push(req.tenant.id);
+      queryParams.push(req.user.tenantId);
     }
 
     if (search) {

@@ -3081,9 +3081,12 @@
 
     async function loadClients() {
       try {
+        console.log('Loading clients...');
         const data = await apiRequest('/api/clients?limit=500');
+        console.log('Clients response:', data);
         if (data && data.clients) {
           clients = data.clients;
+          console.log('Loaded', clients.length, 'clients');
         }
       } catch (error) {
         console.error('Failed to load clients:', error);
@@ -3091,25 +3094,31 @@
     }
 
     async function openAddCustomerModal() {
-      if (!selectedAppointment) return;
-
-      // Load clients if not loaded yet
-      if (clients.length === 0) {
-        await loadClients();
+      if (!selectedAppointment) {
+        console.log('No selected appointment');
+        return;
       }
+
+      // Always reload clients to get fresh data
+      await loadClients();
 
       // Populate the dropdown
       const select = document.getElementById('customerSelect');
       select.innerHTML = '<option value="">Select customer...</option>';
-      clients.forEach(client => {
-        const option = document.createElement('option');
-        option.value = client.id;
-        option.textContent = `${client.first_name} ${client.last_name}`;
-        if (client.email) {
-          option.textContent += ` (${client.email})`;
-        }
-        select.appendChild(option);
-      });
+
+      if (clients.length === 0) {
+        select.innerHTML = '<option value="">No customers found</option>';
+      } else {
+        clients.forEach(client => {
+          const option = document.createElement('option');
+          option.value = client.id;
+          option.textContent = `${client.first_name} ${client.last_name}`;
+          if (client.email) {
+            option.textContent += ` (${client.email})`;
+          }
+          select.appendChild(option);
+        });
+      }
 
       // Show modal
       document.getElementById('addCustomerModalOverlay').classList.add('show');
