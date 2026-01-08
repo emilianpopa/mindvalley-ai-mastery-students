@@ -2277,6 +2277,7 @@
       border-radius: 50%;
       transition: transform 0.2s;
       box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+      pointer-events: none;
     }
 
     .apt-toggle.active::after {
@@ -4754,14 +4755,14 @@
           <div class="apt-form-control">
             <div class="ends-options">
               <div class="ends-option">
-                <button class="ends-radio-btn active" id="endsOnBtn" onclick="setEndsMode('on')">
+                <button type="button" class="ends-radio-btn active" id="endsOnBtn" onclick="setEndsMode('on')">
                   <div class="radio-dot"></div>
                 </button>
                 <span class="ends-label">On</span>
                 <input type="date" class="apt-form-input ends-date-input" id="endsOnDate">
               </div>
               <div class="ends-option">
-                <button class="ends-radio-btn" id="endsAfterBtn" onclick="setEndsMode('after')">
+                <button type="button" class="ends-radio-btn" id="endsAfterBtn" onclick="setEndsMode('after')">
                   <div class="radio-dot"></div>
                 </button>
                 <span class="ends-label">After</span>
