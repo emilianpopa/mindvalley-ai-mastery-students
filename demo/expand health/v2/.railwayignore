@@ -1,3 +1,11 @@
 node_modules
 .env
 *.log
+add-*.js
+check-*.js
+seed-*.js
+fix-*.js
+create-*.js
+run-*.js
+assign-*.js
+update-full-nav.js

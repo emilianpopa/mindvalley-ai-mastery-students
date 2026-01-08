@@ -934,6 +934,7 @@
     }
 
     let services = [];
+    let categories = [];
     let currentServiceId = null;
     let selectedColor = '#6366f1';
 
@@ -964,9 +965,30 @@
     // Initialize
     document.addEventListener('DOMContentLoaded', async () => {
       await loadUserInfo();
+      await loadCategories();
       await loadServices();
       setupEventListeners();
     });
+
+    async function loadCategories() {
+      try {
+        categories = await apiRequest('/api/services/categories/list');
+        populateCategoryDropdown();
+      } catch (error) {
+        console.error('Failed to load categories:', error);
+      }
+    }
+
+    function populateCategoryDropdown() {
+      const select = document.getElementById('serviceCategory');
+      select.innerHTML = '<option value="">Select category...</option>';
+      categories.forEach(cat => {
+        const option = document.createElement('option');
+        option.value = cat.id;
+        option.textContent = cat.name;
+        select.appendChild(option);
+      });
+    }
 
     async function loadUserInfo() {
       try {
@@ -995,7 +1017,7 @@
 
       let filtered = services.filter(s => {
         if (searchTerm) {
-          const searchFields = [s.name, s.category].filter(Boolean).join(' ').toLowerCase();
+          const searchFields = [s.name, s.category_name].filter(Boolean).join(' ').toLowerCase();
           if (!searchFields.includes(searchTerm)) return false;
         }
         return true;
@@ -1037,7 +1059,7 @@
             </td>
             <td class="price-cell">ZAR ${formatPrice(s.price)}</td>
             <td class="duration-cell">${durationStr}</td>
-            <td>${s.category ? `<span class="category-badge">${s.category}</span>` : ''}</td>
+            <td>${s.category_name ? `<span class="category-badge">${s.category_name}</span>` : ''}</td>
             <td class="actions-cell">
               <button class="actions-btn" onclick="editService(${s.id})">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1126,7 +1148,7 @@
       document.getElementById('serviceName').value = service.name || '';
       document.getElementById('servicePrice').value = service.price || '';
       document.getElementById('serviceDuration').value = service.duration_minutes || '';
-      document.getElementById('serviceCategory').value = service.category || '';
+      document.getElementById('serviceCategory').value = service.category_id || '';
       document.getElementById('serviceDescription').value = service.description || '';
       document.getElementById('deleteBtn').style.display = 'inline-block';
 
@@ -1146,11 +1168,12 @@
         return;
       }
 
+      const categoryValue = document.getElementById('serviceCategory').value;
       const data = {
         name: document.getElementById('serviceName').value,
         price: parseFloat(document.getElementById('servicePrice').value),
         duration_minutes: parseInt(document.getElementById('serviceDuration').value),
-        category: document.getElementById('serviceCategory').value || null,
+        category_id: categoryValue ? parseInt(categoryValue) : null,
         description: document.getElementById('serviceDescription').value || null,
         color: selectedColor
       };
