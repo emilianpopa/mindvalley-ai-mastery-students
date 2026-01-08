@@ -2290,89 +2290,88 @@
 
     .recurring-options {
       display: none;
-      padding: 16px;
-      margin: -8px 0 16px 116px;
-      background: var(--gray-50);
-      border-radius: 8px;
     }
 
     .recurring-options.show {
       display: block;
     }
 
-    .recurring-row {
+    .repeat-every-row {
       display: flex;
       align-items: center;
       gap: 12px;
-      margin-bottom: 12px;
     }
 
-    .recurring-row:last-child {
-      margin-bottom: 0;
-    }
-
-    .recurring-label {
-      width: 80px;
-      font-size: 0.8125rem;
-      color: var(--gray-600);
-    }
-
-    .recurring-input {
-      width: 80px;
-      padding: 8px 10px;
-      border: 1px solid var(--gray-300);
-      border-radius: 6px;
-      font-size: 0.875rem;
+    .repeat-input {
+      width: 80px !important;
       text-align: center;
     }
 
-    .recurring-unit {
+    .repeat-unit {
       font-size: 0.875rem;
       color: var(--gray-600);
     }
 
-    .ends-toggle {
+    .ends-options {
       display: flex;
-      align-items: center;
-      gap: 8px;
+      flex-direction: column;
+      gap: 12px;
     }
 
-    .ends-toggle-btn {
+    .ends-option {
       display: flex;
       align-items: center;
-      gap: 6px;
-      padding: 6px 12px;
-      border: 1px solid var(--gray-300);
-      border-radius: 6px;
+      gap: 10px;
+    }
+
+    .ends-radio-btn {
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--gray-300);
+      border-radius: 50%;
       background: white;
-      font-size: 0.8125rem;
-      color: var(--gray-600);
       cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      flex-shrink: 0;
     }
 
-    .ends-toggle-btn.active {
+    .ends-radio-btn.active {
       border-color: var(--purple-500);
-      background: var(--purple-50);
-      color: var(--purple-700);
     }
 
-    .ends-toggle-btn .toggle-dot {
-      width: 16px;
-      height: 16px;
-      border: 2px solid currentColor;
+    .ends-radio-btn .radio-dot {
+      width: 10px;
+      height: 10px;
       border-radius: 50%;
-      position: relative;
+      background: transparent;
     }
 
-    .ends-toggle-btn.active .toggle-dot::after {
-      content: '';
-      position: absolute;
-      top: 3px;
-      left: 3px;
-      width: 6px;
-      height: 6px;
+    .ends-radio-btn.active .radio-dot {
       background: var(--purple-500);
-      border-radius: 50%;
+    }
+
+    .ends-label {
+      font-size: 0.875rem;
+      color: var(--gray-700);
+      min-width: 40px;
+    }
+
+    .ends-date-input {
+      width: 150px !important;
+    }
+
+    .ends-count-input {
+      width: 70px !important;
+      text-align: center;
+    }
+
+    .ends-unit {
+      font-size: 0.75rem;
+      color: var(--gray-500);
+      text-transform: uppercase;
     }
 
     .customer-row {
@@ -4738,30 +4737,38 @@
 
       <!-- Recurring Options (hidden by default) -->
       <div class="recurring-options" id="recurringOptions">
-        <div class="recurring-row">
-          <label class="recurring-label">Repeat every</label>
-          <input type="number" class="recurring-input" id="repeatEvery" value="7" min="1">
-          <span class="recurring-unit">days</span>
-        </div>
-        <div class="recurring-row">
-          <label class="recurring-label">Ends</label>
-          <div class="ends-toggle">
-            <button class="ends-toggle-btn active" id="endsOnBtn" onclick="setEndsMode('on')">
-              <div class="toggle-dot"></div>
-              On
-            </button>
-            <input type="date" class="recurring-input" id="endsOnDate" style="width:140px;">
+        <!-- Repeat every -->
+        <div class="apt-form-row">
+          <label class="apt-form-label">Repeat every</label>
+          <div class="apt-form-control">
+            <div class="repeat-every-row">
+              <input type="number" class="apt-form-input repeat-input" id="repeatEvery" value="7" min="1">
+              <span class="repeat-unit">days</span>
+            </div>
           </div>
         </div>
-        <div class="recurring-row">
-          <label class="recurring-label"></label>
-          <div class="ends-toggle">
-            <button class="ends-toggle-btn" id="endsAfterBtn" onclick="setEndsMode('after')">
-              <div class="toggle-dot"></div>
-              After
-            </button>
-            <input type="number" class="recurring-input" id="endsAfterCount" value="4" min="1">
-            <span class="recurring-unit">OCCURRENCES</span>
+
+        <!-- Ends -->
+        <div class="apt-form-row" style="align-items: flex-start;">
+          <label class="apt-form-label" style="padding-top: 10px;">Ends</label>
+          <div class="apt-form-control">
+            <div class="ends-options">
+              <div class="ends-option">
+                <button class="ends-radio-btn active" id="endsOnBtn" onclick="setEndsMode('on')">
+                  <div class="radio-dot"></div>
+                </button>
+                <span class="ends-label">On</span>
+                <input type="date" class="apt-form-input ends-date-input" id="endsOnDate">
+              </div>
+              <div class="ends-option">
+                <button class="ends-radio-btn" id="endsAfterBtn" onclick="setEndsMode('after')">
+                  <div class="radio-dot"></div>
+                </button>
+                <span class="ends-label">After</span>
+                <input type="number" class="apt-form-input ends-count-input" id="endsAfterCount" value="4" min="1">
+                <span class="ends-unit">OCCURRENCES</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
