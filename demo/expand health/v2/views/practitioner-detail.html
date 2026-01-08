@@ -835,6 +835,63 @@
       height: 14px;
     }
 
+    /* Bulk Selection Action Bar */
+    .selection-bar {
+      display: none;
+      align-items: center;
+      gap: 16px;
+      padding: 10px 16px;
+      background: var(--gray-50);
+      border: 1px solid var(--gray-200);
+      border-radius: 8px;
+      margin-bottom: 12px;
+    }
+
+    .selection-bar.show {
+      display: flex;
+    }
+
+    .selection-bar-checkbox {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--purple-600);
+    }
+
+    .selection-bar-count {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--gray-700);
+    }
+
+    .selection-bar-divider {
+      width: 1px;
+      height: 20px;
+      background: var(--gray-300);
+    }
+
+    .selection-bar-action {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      background: none;
+      border: none;
+      font-size: 0.875rem;
+      color: var(--gray-700);
+      cursor: pointer;
+      border-radius: 4px;
+    }
+
+    .selection-bar-action:hover {
+      background: var(--gray-100);
+      color: var(--gray-900);
+    }
+
+    .selection-bar-action svg {
+      width: 16px;
+      height: 16px;
+    }
+
     /* Empty State */
     .empty-state {
       text-align: center;
@@ -1095,6 +1152,19 @@
                     <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                   </svg>
                   <input type="text" class="search-input" placeholder="Search templates..." id="templateSearch">
+                </div>
+
+                <!-- Bulk Selection Action Bar -->
+                <div class="selection-bar" id="selectionBar">
+                  <input type="checkbox" class="selection-bar-checkbox" id="selectAllCheckbox" onclick="toggleSelectAll()">
+                  <span class="selection-bar-count" id="selectionCount">0 selected</span>
+                  <div class="selection-bar-divider"></div>
+                  <button class="selection-bar-action" onclick="editBulkPayRate()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
+                    </svg>
+                    Edit pay rate
+                  </button>
                 </div>
 
                 <table class="template-table">
@@ -1439,7 +1509,7 @@
 
         tbody.innerHTML = templates.map((template, index) => `
           <tr>
-            <td><input type="checkbox" class="template-checkbox"></td>
+            <td><input type="checkbox" class="template-checkbox" data-template-id="${template.id}" data-template-name="${template.name}" onchange="updateSelectionBar()"></td>
             <td>
               <div class="template-name">
                 <div class="template-color" style="background: ${template.color || '#10B981'};"></div>
@@ -1508,8 +1578,77 @@
         return;
       }
       // For now, just show confirmation - actual API integration would go here
-      alert(`Pay rate updated for template ID ${editingTemplateId}: ${payRate}`);
+      if (selectedTemplateIds.length > 0) {
+        alert(`Pay rate updated for ${selectedTemplateIds.length} templates: ${payRate}`);
+        // Clear selection after bulk update
+        clearSelection();
+      } else {
+        alert(`Pay rate updated for template ID ${editingTemplateId}: ${payRate}`);
+      }
       closePayRateModal();
+    }
+
+    // Bulk selection management
+    let selectedTemplateIds = [];
+
+    function updateSelectionBar() {
+      const checkboxes = document.querySelectorAll('.template-checkbox:checked');
+      const count = checkboxes.length;
+      const selectionBar = document.getElementById('selectionBar');
+      const countSpan = document.getElementById('selectionCount');
+      const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+
+      // Update selected IDs array
+      selectedTemplateIds = Array.from(checkboxes).map(cb => ({
+        id: parseInt(cb.dataset.templateId),
+        name: cb.dataset.templateName
+      }));
+
+      if (count > 0) {
+        selectionBar.classList.add('show');
+        countSpan.textContent = `${count} selected`;
+
+        // Update select all checkbox state
+        const totalCheckboxes = document.querySelectorAll('.template-checkbox').length;
+        selectAllCheckbox.checked = count === totalCheckboxes;
+        selectAllCheckbox.indeterminate = count > 0 && count < totalCheckboxes;
+      } else {
+        selectionBar.classList.remove('show');
+        selectAllCheckbox.checked = false;
+        selectAllCheckbox.indeterminate = false;
+      }
+    }
+
+    function toggleSelectAll() {
+      const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+      const checkboxes = document.querySelectorAll('.template-checkbox');
+
+      checkboxes.forEach(cb => {
+        cb.checked = selectAllCheckbox.checked;
+      });
+
+      updateSelectionBar();
+    }
+
+    function clearSelection() {
+      const checkboxes = document.querySelectorAll('.template-checkbox');
+      checkboxes.forEach(cb => cb.checked = false);
+      selectedTemplateIds = [];
+      updateSelectionBar();
+    }
+
+    function editBulkPayRate() {
+      if (selectedTemplateIds.length === 0) return;
+
+      // Open the modal with bulk context
+      document.getElementById('payRateModal').classList.add('show');
+      if (selectedTemplateIds.length === 1) {
+        document.querySelector('.modal-title').textContent = `Edit pay rate - ${selectedTemplateIds[0].name}`;
+      } else {
+        document.querySelector('.modal-title').textContent = `Edit pay rate (${selectedTemplateIds.length} templates)`;
+      }
+      // Reset the select
+      document.getElementById('payRateSelect').value = '';
     }
 
     // Filter panel functions
