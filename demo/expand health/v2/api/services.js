@@ -24,6 +24,8 @@ router.get('/', async (req, res, next) => {
     const tenantId = req.user.tenantId;
     const { active_only } = req.query;
 
+    console.log('[Services] GET / - tenantId:', tenantId, 'user:', JSON.stringify(req.user));
+
     let query = `
       SELECT
         st.*,
@@ -40,6 +42,8 @@ router.get('/', async (req, res, next) => {
     query += ` GROUP BY st.id ORDER BY st.name ASC`;
 
     const result = await db.query(query, [tenantId]);
+
+    console.log('[Services] Found', result.rows.length, 'services for tenant', tenantId);
 
     res.json(result.rows);
   } catch (error) {
