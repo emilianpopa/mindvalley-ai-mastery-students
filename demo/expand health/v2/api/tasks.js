@@ -21,7 +21,7 @@ router.use(authenticateToken);
  */
 router.get('/', async (req, res, next) => {
   try {
-    const tenantId = req.user.tenant_id;
+    const tenantId = req.user.tenantId;
     const { status, assigned_to, client_id, limit = 50, offset = 0 } = req.query;
 
     let query = `
@@ -141,7 +141,7 @@ router.get('/', async (req, res, next) => {
  */
 router.get('/:id', async (req, res, next) => {
   try {
-    const tenantId = req.user.tenant_id;
+    const tenantId = req.user.tenantId;
     const { id } = req.params;
 
     const result = await db.query(`
@@ -186,7 +186,7 @@ router.get('/:id', async (req, res, next) => {
  */
 router.post('/', async (req, res, next) => {
   try {
-    const tenantId = req.user.tenant_id;
+    const tenantId = req.user.tenantId;
     const userId = req.user.id;
 
     const {
@@ -240,7 +240,7 @@ router.post('/', async (req, res, next) => {
  */
 router.put('/:id', async (req, res, next) => {
   try {
-    const tenantId = req.user.tenant_id;
+    const tenantId = req.user.tenantId;
     const { id } = req.params;
 
     const {
@@ -296,7 +296,7 @@ router.put('/:id', async (req, res, next) => {
  */
 router.patch('/:id/complete', async (req, res, next) => {
   try {
-    const tenantId = req.user.tenant_id;
+    const tenantId = req.user.tenantId;
     const userId = req.user.id;
     const { id } = req.params;
 
@@ -326,7 +326,7 @@ router.patch('/:id/complete', async (req, res, next) => {
  */
 router.patch('/:id/reopen', async (req, res, next) => {
   try {
-    const tenantId = req.user.tenant_id;
+    const tenantId = req.user.tenantId;
     const { id } = req.params;
 
     const result = await db.query(`
@@ -355,7 +355,7 @@ router.patch('/:id/reopen', async (req, res, next) => {
  */
 router.delete('/:id', async (req, res, next) => {
   try {
-    const tenantId = req.user.tenant_id;
+    const tenantId = req.user.tenantId;
     const { id } = req.params;
 
     const result = await db.query(

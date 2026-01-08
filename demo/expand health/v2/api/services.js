@@ -21,7 +21,7 @@ router.use(authenticateToken);
  */
 router.get('/', async (req, res, next) => {
   try {
-    const tenantId = req.user.tenant_id;
+    const tenantId = req.user.tenantId;
     const { active_only } = req.query;
 
     let query = `
@@ -53,7 +53,7 @@ router.get('/', async (req, res, next) => {
  */
 router.get('/:id', async (req, res, next) => {
   try {
-    const tenantId = req.user.tenant_id;
+    const tenantId = req.user.tenantId;
     const { id } = req.params;
 
     // Get service
@@ -93,7 +93,7 @@ router.get('/:id', async (req, res, next) => {
  */
 router.post('/', requireRole('admin'), async (req, res, next) => {
   try {
-    const tenantId = req.user.tenant_id;
+    const tenantId = req.user.tenantId;
 
     const {
       name,
@@ -138,7 +138,7 @@ router.post('/', requireRole('admin'), async (req, res, next) => {
  */
 router.put('/:id', requireRole('admin'), async (req, res, next) => {
   try {
-    const tenantId = req.user.tenant_id;
+    const tenantId = req.user.tenantId;
     const { id } = req.params;
 
     const {
@@ -194,7 +194,7 @@ router.put('/:id', requireRole('admin'), async (req, res, next) => {
  */
 router.delete('/:id', requireRole('admin'), async (req, res, next) => {
   try {
-    const tenantId = req.user.tenant_id;
+    const tenantId = req.user.tenantId;
     const { id } = req.params;
     const { hard_delete } = req.query;
 
