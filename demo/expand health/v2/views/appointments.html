@@ -3184,6 +3184,20 @@
     let endsMode = 'on';
     let aptType = 'appointment';
 
+    // Toggle functions (defined early for onclick handlers)
+    function toggleRecurring() {
+      isRecurring = !isRecurring;
+      document.getElementById('recurringToggle').classList.toggle('active', isRecurring);
+      document.getElementById('recurringLabel').textContent = isRecurring ? 'Yes' : 'No';
+      document.getElementById('recurringOptions').classList.toggle('show', isRecurring);
+    }
+
+    function setEndsMode(mode) {
+      endsMode = mode;
+      document.getElementById('endsOnBtn').classList.toggle('active', mode === 'on');
+      document.getElementById('endsAfterBtn').classList.toggle('active', mode === 'after');
+    }
+
     // Initialize
     document.addEventListener('DOMContentLoaded', async () => {
       updateWeekDisplay();
@@ -4230,19 +4244,6 @@
       document.querySelectorAll('.apt-type-btn').forEach(btn => {
         btn.classList.toggle('active', btn.textContent.toLowerCase().includes(type === 'appointment' ? 'appointment' : 'time block'));
       });
-    }
-
-    window.toggleRecurring = function() {
-      isRecurring = !isRecurring;
-      document.getElementById('recurringToggle').classList.toggle('active', isRecurring);
-      document.getElementById('recurringLabel').textContent = isRecurring ? 'Yes' : 'No';
-      document.getElementById('recurringOptions').classList.toggle('show', isRecurring);
-    }
-
-    window.setEndsMode = function(mode) {
-      endsMode = mode;
-      document.getElementById('endsOnBtn').classList.toggle('active', mode === 'on');
-      document.getElementById('endsAfterBtn').classList.toggle('active', mode === 'after');
     }
 
     function onServiceChange() {
