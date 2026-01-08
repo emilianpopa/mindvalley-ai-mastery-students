@@ -4231,14 +4231,14 @@
       });
     }
 
-    function toggleRecurring() {
+    window.toggleRecurring = function() {
       isRecurring = !isRecurring;
       document.getElementById('recurringToggle').classList.toggle('active', isRecurring);
       document.getElementById('recurringLabel').textContent = isRecurring ? 'Yes' : 'No';
       document.getElementById('recurringOptions').classList.toggle('show', isRecurring);
     }
 
-    function setEndsMode(mode) {
+    window.setEndsMode = function(mode) {
       endsMode = mode;
       document.getElementById('endsOnBtn').classList.toggle('active', mode === 'on');
       document.getElementById('endsAfterBtn').classList.toggle('active', mode === 'after');
