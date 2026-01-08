@@ -3175,6 +3175,15 @@
     let isCheckedIn = false;
     let clients = [];
 
+    // New appointment modal state
+    let newAptServices = [];
+    let newAptStaffList = [];
+    let newAptVenues = [];
+    let newAptCustomers = [];
+    let isRecurring = false;
+    let endsMode = 'on';
+    let aptType = 'appointment';
+
     // Initialize
     document.addEventListener('DOMContentLoaded', async () => {
       updateWeekDisplay();
@@ -4061,14 +4070,6 @@
     // =====================
     // New Appointment Modal
     // =====================
-
-    let newAptServices = [];
-    let newAptStaffList = [];
-    let newAptVenues = [];
-    let newAptCustomers = [];
-    let isRecurring = false;
-    let endsMode = 'on';
-    let aptType = 'appointment';
 
     async function openNewAptModal(date) {
       try {
