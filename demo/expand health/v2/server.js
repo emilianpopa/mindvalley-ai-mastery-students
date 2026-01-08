@@ -153,12 +153,6 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// Debug endpoint to check user object (temporary)
-const { authenticateToken } = require('./middleware/auth');
-app.get('/api/debug/me', authenticateToken, (req, res) => {
-  res.json({ user: req.user });
-});
-
 // ============================================
 // SERVE HTML PAGES
 // ============================================

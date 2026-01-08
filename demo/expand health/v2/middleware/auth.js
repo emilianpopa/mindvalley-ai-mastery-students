@@ -69,6 +69,7 @@ async function authenticateToken(req, res, next) {
     }
 
     // Attach user to request (with tenant info if available)
+    // Include both camelCase and snake_case for backwards compatibility
     req.user = {
       id: user.id,
       email: user.email,
@@ -76,6 +77,7 @@ async function authenticateToken(req, res, next) {
       lastName: user.last_name,
       status: user.status,
       tenantId: user.tenant_id || null,
+      tenant_id: user.tenant_id || null,  // backwards compat
       isPlatformAdmin: user.is_platform_admin || false,
       tenantName: user.tenant_name || null,
       tenantSlug: user.tenant_slug || null
