@@ -9,3 +9,5 @@ create-*.js
 run-*.js
 assign-*.js
 update-full-nav.js
+nul
+reset-password.js

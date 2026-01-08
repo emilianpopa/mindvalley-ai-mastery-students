@@ -9,11 +9,23 @@
   <script src="/js/feature-flags.js"></script>
   <script src="/js/nav.js"></script>
   <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      display: flex;
+      min-height: 100vh;
+    }
+
     .main-content {
       flex: 1;
       margin-left: 260px;
       overflow-y: auto;
       background: #f8f9fa;
+      min-height: 100vh;
     }
 
     .service-page {
@@ -290,6 +302,402 @@
       color: var(--gray-600);
     }
 
+    /* Staff Row Dropdown Menu */
+    .staff-actions {
+      position: relative;
+    }
+
+    .staff-dropdown {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 100%;
+      margin-top: 4px;
+      background: white;
+      border: 1px solid var(--gray-200);
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      min-width: 180px;
+      z-index: 100;
+      padding: 4px 0;
+    }
+
+    .staff-dropdown.show {
+      display: block;
+    }
+
+    .staff-dropdown-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      padding: 10px 16px;
+      border: none;
+      background: none;
+      font-size: 0.875rem;
+      color: var(--gray-700);
+      cursor: pointer;
+      text-align: left;
+    }
+
+    .staff-dropdown-item:hover {
+      background: var(--gray-50);
+    }
+
+    .staff-dropdown-item svg {
+      width: 16px;
+      height: 16px;
+      color: var(--gray-500);
+    }
+
+    .staff-dropdown-item.danger {
+      color: #dc2626;
+    }
+
+    .staff-dropdown-item.danger svg {
+      color: #dc2626;
+    }
+
+    /* Modal Styles */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-overlay.show {
+      display: flex;
+    }
+
+    .modal {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+      width: 100%;
+      max-width: 400px;
+      overflow: hidden;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .modal-title {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      padding: 4px;
+      cursor: pointer;
+      color: var(--gray-400);
+    }
+
+    .modal-close:hover {
+      color: var(--gray-600);
+    }
+
+    .modal-close svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    .modal-body {
+      padding: 24px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--gray-700);
+      margin-bottom: 8px;
+    }
+
+    .form-label svg {
+      width: 14px;
+      height: 14px;
+      color: var(--gray-400);
+    }
+
+    .form-select-wrapper {
+      display: flex;
+      gap: 8px;
+    }
+
+    .form-select {
+      flex: 1;
+      padding: 10px 12px;
+      border: 1px solid var(--gray-300);
+      border-radius: 8px;
+      font-size: 0.875rem;
+      color: var(--gray-700);
+      background: white;
+      cursor: pointer;
+    }
+
+    .form-select:focus {
+      outline: none;
+      border-color: var(--teal-500);
+      box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
+    }
+
+    .form-add-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      border: 1px solid var(--gray-300);
+      border-radius: 8px;
+      background: white;
+      cursor: pointer;
+      color: var(--gray-500);
+    }
+
+    .form-add-btn:hover {
+      background: var(--gray-50);
+      color: var(--gray-700);
+    }
+
+    .form-add-btn svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      padding: 16px 24px;
+      border-top: 1px solid var(--gray-200);
+      background: var(--gray-50);
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .btn-secondary {
+      background: white;
+      border: 1px solid var(--gray-300);
+      color: var(--gray-700);
+    }
+
+    .btn-secondary:hover {
+      background: var(--gray-50);
+    }
+
+    .btn-primary {
+      background: var(--teal-600);
+      border: 1px solid var(--teal-600);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--teal-700);
+      border-color: var(--teal-700);
+    }
+
+    /* Filter Panel Styles */
+    .filter-panel-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.3);
+      z-index: 999;
+    }
+
+    .filter-panel-overlay.show {
+      display: block;
+    }
+
+    .filter-panel {
+      position: fixed;
+      top: 0;
+      right: -320px;
+      width: 320px;
+      height: 100vh;
+      background: white;
+      box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15);
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      transition: right 0.3s ease;
+    }
+
+    .filter-panel.show {
+      right: 0;
+    }
+
+    .filter-panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .filter-panel-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--gray-700);
+    }
+
+    .filter-panel-title svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .filter-panel-close {
+      background: none;
+      border: none;
+      padding: 4px;
+      cursor: pointer;
+      color: var(--gray-400);
+    }
+
+    .filter-panel-close:hover {
+      color: var(--gray-600);
+    }
+
+    .filter-panel-close svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    .filter-panel-body {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+    }
+
+    .filter-group {
+      margin-bottom: 20px;
+    }
+
+    .filter-group-label {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--gray-700);
+      margin-bottom: 8px;
+    }
+
+    .filter-select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--gray-300);
+      border-radius: 8px;
+      font-size: 0.875rem;
+      color: var(--gray-500);
+      background: white;
+      cursor: pointer;
+    }
+
+    .filter-select:focus {
+      outline: none;
+      border-color: var(--teal-500);
+    }
+
+    .filter-panel-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      border-top: 1px solid var(--gray-200);
+      background: white;
+    }
+
+    .clear-filters-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: none;
+      border: none;
+      font-size: 0.875rem;
+      color: var(--gray-600);
+      cursor: pointer;
+      padding: 0;
+    }
+
+    .clear-filters-btn:hover {
+      color: var(--gray-900);
+    }
+
+    .clear-filters-btn svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    .apply-filter-btn {
+      padding: 10px 20px;
+      background: var(--teal-600);
+      border: none;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: white;
+      cursor: pointer;
+    }
+
+    .apply-filter-btn:hover {
+      background: var(--teal-700);
+    }
+
+    /* Filter Button in Header */
+    .filter-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      background: var(--teal-50);
+      border: 1px solid var(--teal-200);
+      border-radius: 8px;
+      font-size: 0.875rem;
+      color: var(--teal-700);
+      cursor: pointer;
+    }
+
+    .filter-btn:hover {
+      background: var(--teal-100);
+    }
+
+    .filter-btn svg {
+      width: 16px;
+      height: 16px;
+    }
+
     /* Add-ons Section */
     .addons-section {
       background: white;
@@ -309,7 +717,7 @@
     .addons-title {
       font-size: 1rem;
       font-weight: 600;
-      color: #dc2626;
+      color: var(--gray-900);
     }
 
     .addons-link {
@@ -393,7 +801,7 @@
     .info-card-title {
       font-size: 1rem;
       font-weight: 600;
-      color: #dc2626;
+      color: var(--gray-900);
     }
 
     .info-card-content {
@@ -481,7 +889,7 @@
     .timing-title {
       font-size: 1rem;
       font-weight: 600;
-      color: #dc2626;
+      color: var(--gray-900);
     }
 
     .timing-content {
@@ -603,7 +1011,116 @@
   </style>
 </head>
 <body>
-  <%- include('partials/sidebar') %>
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="logo">
+        <svg class="logo-icon" width="28" height="28" viewBox="0 0 24 24" fill="none">
+          <path d="M4 4L11 12L4 20" stroke="#0F766E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M20 4L13 12L20 20" stroke="#0F766E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <div class="logo-text">
+          <span class="logo-expand">EXPAND</span>
+          <span class="logo-health">HEALTH</span>
+        </div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="/dashboard" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+        <span>Dashboard</span>
+      </a>
+      <a href="/clients" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+        <span>Clients</span>
+      </a>
+      <div class="nav-section-title">AI ADMIN</div>
+      <a href="/forms" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+        <span>Forms</span>
+      </a>
+      <a href="/protocol-templates" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+        <span>Protocol Templates</span>
+      </a>
+      <a href="/admin" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+        <span>Admin Settings</span>
+      </a>
+      <a href="/kb-admin" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+        <span>AI Knowledge Base</span>
+      </a>
+      <div class="nav-section-title">BOOKING</div>
+      <a href="/inbox" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+        <span>Inbox</span>
+      </a>
+      <a href="/pos" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+        <span>Point of sale</span>
+      </a>
+      <a href="/classes" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+        <span>Classes</span>
+      </a>
+      <div class="nav-dropdown">
+        <div class="nav-dropdown-trigger">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+          <span>Appointments</span>
+          <svg class="nav-dropdown-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </div>
+        <div class="nav-dropdown-menu">
+          <div class="nav-dropdown-header">APPOINTMENTS</div>
+          <a href="/appointments" class="nav-dropdown-item">Schedule</a>
+          <a href="/reservations" class="nav-dropdown-item">Reservations</a>
+          <a href="/services" class="nav-dropdown-item active">Services & add-ons</a>
+          <a href="/boards" class="nav-dropdown-item">Boards</a>
+        </div>
+      </div>
+      <a href="/community" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+        <span>Community</span>
+      </a>
+      <a href="/on-demand" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+        <span>On-Demand</span>
+      </a>
+      <a href="/memberships" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+        <span>Memberships</span>
+      </a>
+      <a href="/customers" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+        <span>Customers</span>
+      </a>
+      <a href="/marketing" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
+        <span>Marketing</span>
+      </a>
+      <a href="/analytics" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+        <span>Analytics</span>
+      </a>
+      <a href="/financials" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+        <span>Financials</span>
+      </a>
+      <a href="/studio-setup" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+        <span>Studio set-up</span>
+      </a>
+      <a href="/integrations" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>
+        <span>Apps & Integrations</span>
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <a href="/settings" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+        <span>Settings</span>
+      </a>
+    </div>
+  </aside>
 
   <div class="main-content">
     <div class="service-page">
@@ -620,6 +1137,20 @@
       <div class="service-header">
         <h1 id="serviceName">Loading...</h1>
         <div class="header-actions">
+          <button class="filter-btn" onclick="openFilterPanel()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="4" y1="21" x2="4" y2="14"/>
+              <line x1="4" y1="10" x2="4" y2="3"/>
+              <line x1="12" y1="21" x2="12" y2="12"/>
+              <line x1="12" y1="8" x2="12" y2="3"/>
+              <line x1="20" y1="21" x2="20" y2="16"/>
+              <line x1="20" y1="12" x2="20" y2="3"/>
+              <line x1="1" y1="14" x2="7" y2="14"/>
+              <line x1="9" y1="8" x2="15" y2="8"/>
+              <line x1="17" y1="16" x2="23" y2="16"/>
+            </svg>
+            Filter
+          </button>
           <div class="actions-wrapper">
             <button class="actions-btn" onclick="toggleActionsMenu()">
               Actions
@@ -956,9 +1487,105 @@
     </div>
   </div>
 
+  <!-- Edit Pay Rate Modal -->
+  <div class="modal-overlay" id="payRateModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">Edit assignment</h3>
+        <button class="modal-close" onclick="closePayRateModal()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">
+            Assignment pay rate
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+              <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+          </label>
+          <div class="form-select-wrapper">
+            <select class="form-select" id="payRateSelect">
+              <option value="">Select a pay rate</option>
+              <option value="50_50">50 50</option>
+              <option value="60_percent">60% per ticket</option>
+              <option value="fixed_1500">Fixed Fee R1500</option>
+              <option value="fixed_600">Fixed Fee R600</option>
+            </select>
+            <button class="form-add-btn" title="Add new pay rate">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"/>
+                <line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closePayRateModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="submitPayRate()">Submit</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter Panel -->
+  <div class="filter-panel-overlay" id="filterOverlay" onclick="closeFilterPanel()"></div>
+  <div class="filter-panel" id="filterPanel">
+    <div class="filter-panel-header">
+      <div class="filter-panel-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="4" y1="21" x2="4" y2="14"/>
+          <line x1="4" y1="10" x2="4" y2="3"/>
+          <line x1="12" y1="21" x2="12" y2="12"/>
+          <line x1="12" y1="8" x2="12" y2="3"/>
+          <line x1="20" y1="21" x2="20" y2="16"/>
+          <line x1="20" y1="12" x2="20" y2="3"/>
+          <line x1="1" y1="14" x2="7" y2="14"/>
+          <line x1="9" y1="8" x2="15" y2="8"/>
+          <line x1="17" y1="16" x2="23" y2="16"/>
+        </svg>
+        Filter
+      </div>
+      <button class="filter-panel-close" onclick="closeFilterPanel()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <div class="filter-panel-body">
+      <div class="filter-group">
+        <div class="filter-group-label">Tags</div>
+        <select class="filter-select" id="filterTags">
+          <option value="">Select...</option>
+          <option value="wellness">Wellness</option>
+          <option value="therapy">Therapy</option>
+          <option value="consultation">Consultation</option>
+          <option value="treatment">Treatment</option>
+        </select>
+      </div>
+    </div>
+    <div class="filter-panel-footer">
+      <button class="clear-filters-btn" onclick="clearFilters()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+        Clear filters
+      </button>
+      <button class="apply-filter-btn" onclick="applyFilters()">Apply filter</button>
+    </div>
+  </div>
+
   <script>
     let serviceId = null;
     let serviceData = null;
+    let editingStaffId = null;
 
     // Get service ID from URL
     const urlParams = new URLSearchParams(window.location.search);
@@ -972,22 +1599,30 @@
     async function loadService() {
       try {
         const token = localStorage.getItem('auth_token');
+        console.log('Loading service:', serviceId, 'with token:', token ? 'present' : 'missing');
+
         const response = await fetch(`/api/services/${serviceId}`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
         });
 
+        console.log('API response status:', response.status);
+
         if (!response.ok) {
+          const errorText = await response.text();
+          console.error('API error response:', errorText);
           throw new Error('Service not found');
         }
 
         serviceData = await response.json();
+        console.log('Service data loaded:', serviceData);
         renderService();
       } catch (error) {
         console.error('Error loading service:', error);
-        alert('Service not found');
-        window.location.href = '/appointments';
+        // Show error but don't redirect - let user see the error
+        document.getElementById('serviceName').textContent = 'Service not found';
+        document.getElementById('serviceName').style.color = '#dc2626';
       }
     }
 
@@ -1005,7 +1640,7 @@
       staffBody.innerHTML = '';
 
       if (serviceData.staff && serviceData.staff.length > 0) {
-        serviceData.staff.forEach(staff => {
+        serviceData.staff.forEach((staff, index) => {
           const price = staff.custom_price || serviceData.price || 0;
           const row = document.createElement('tr');
           row.innerHTML = `
@@ -1015,13 +1650,43 @@
             <td>-</td>
             <td>ZAR ${parseFloat(price).toFixed(2)}</td>
             <td class="staff-actions">
-              <button class="staff-action-btn">
+              <button class="staff-action-btn" onclick="toggleStaffMenu(event, ${index})">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;">
                   <circle cx="12" cy="12" r="1"/>
                   <circle cx="19" cy="12" r="1"/>
                   <circle cx="5" cy="12" r="1"/>
                 </svg>
               </button>
+              <div class="staff-dropdown" id="staffMenu${index}">
+                <button class="staff-dropdown-item" onclick="viewStaffDetail(${staff.id})">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                    <circle cx="12" cy="7" r="4"/>
+                  </svg>
+                  Detail
+                </button>
+                <button class="staff-dropdown-item" onclick="editPayRate(${staff.id})">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
+                  </svg>
+                  Edit pay rate
+                </button>
+                <button class="staff-dropdown-item" onclick="editPractitionerPrice(${staff.id})">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
+                  </svg>
+                  Edit practitioner price
+                </button>
+                <button class="staff-dropdown-item danger" onclick="removeStaffFromService(${staff.id})">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                    <circle cx="9" cy="7" r="4"/>
+                    <line x1="18" y1="8" x2="23" y2="13"/>
+                    <line x1="23" y1="8" x2="18" y2="13"/>
+                  </svg>
+                  Remove
+                </button>
+              </div>
             </td>
           `;
           staffBody.appendChild(row);
@@ -1077,24 +1742,50 @@
     }
 
     async function loadAddons() {
-      // Placeholder add-ons - in real app would come from API
-      const addons = [
-        { name: 'Inbody', price: 150, duration: 10 },
-        { name: 'Somedome', price: 150, duration: 20 },
-        { name: 'Compression Boots', price: 150, duration: 30 },
-        { name: 'Cold Plunge + Infrared Sauna', price: 550, duration: 45 },
-        { name: 'Infrared Sauna', price: 500, duration: 45 },
-        { name: 'Cold Plunge', price: 150, duration: 3 },
-        { name: 'Red Light Therapy', price: 500, duration: 20 },
-        { name: 'PEMF', price: 300, duration: 12 },
-        { name: '30 min Massage', price: 400, duration: 30 }
-      ];
+      // Fetch add-on services from API (services in Modalities category are add-ons)
+      const token = localStorage.getItem('auth_token');
+      let addons = [];
+
+      try {
+        const response = await fetch('/api/services?category=Modalities', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          addons = data.services || data || [];
+        }
+      } catch (error) {
+        console.log('Could not load add-ons from API, using defaults');
+      }
+
+      // Fallback to placeholder if API doesn't return add-ons
+      if (!addons.length) {
+        addons = [
+          { id: null, name: 'Inbody', price: 150, duration_minutes: 10 },
+          { id: null, name: 'Somadome', price: 150, duration_minutes: 20 },
+          { id: null, name: 'Compression Boots', price: 150, duration_minutes: 30 },
+          { id: null, name: 'Cold Plunge + Infrared Sauna', price: 550, duration_minutes: 45 },
+          { id: null, name: 'Infrared Sauna', price: 500, duration_minutes: 40 },
+          { id: null, name: 'Cold Plunge', price: 150, duration_minutes: 3 },
+          { id: null, name: 'Red Light Therapy', price: 500, duration_minutes: 20 },
+          { id: null, name: 'PEMF', price: 300, duration_minutes: 12 }
+        ];
+      }
 
       const tbody = document.getElementById('addonsTableBody');
       tbody.innerHTML = '';
 
       addons.forEach(addon => {
         const row = document.createElement('tr');
+        row.style.cursor = 'pointer';
+        row.onclick = function(e) {
+          if (e.target.closest('.staff-action-btn') || e.target.closest('.addon-checkbox')) return;
+          if (addon.id) {
+            window.location.href = `/service-detail?id=${addon.id}`;
+          }
+        };
+        const price = addon.price ? parseFloat(addon.price).toFixed(2) : '0.00';
+        const duration = addon.duration_minutes || addon.duration || 0;
         row.innerHTML = `
           <td><input type="checkbox" class="addon-checkbox"></td>
           <td class="addon-drag">
@@ -1107,9 +1798,9 @@
               <line x1="3" y1="18" x2="3.01" y2="18"/>
             </svg>
           </td>
-          <td><a href="#" class="addon-name">${addon.name}</a></td>
-          <td>ZAR ${addon.price.toFixed(2)}</td>
-          <td>${addon.duration}min</td>
+          <td><span class="addon-name" style="color: var(--teal-600); cursor: pointer;">${addon.name}</span></td>
+          <td>ZAR ${price}</td>
+          <td>${duration}min</td>
           <td>
             <button class="staff-action-btn">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;">
@@ -1129,7 +1820,7 @@
     }
 
     function editService() {
-      alert('Edit service functionality coming soon');
+      window.location.href = `/service-edit?id=${serviceId}`;
     }
 
     function duplicateService() {
@@ -1146,10 +1837,100 @@
       alert('Edit staff functionality coming soon');
     }
 
+    // Staff dropdown menu functions
+    function toggleStaffMenu(event, index) {
+      event.stopPropagation();
+      // Close all other staff menus first
+      document.querySelectorAll('.staff-dropdown').forEach(menu => {
+        menu.classList.remove('show');
+      });
+      // Toggle this menu
+      const menu = document.getElementById(`staffMenu${index}`);
+      menu.classList.toggle('show');
+    }
+
+    function viewStaffDetail(staffId) {
+      window.location.href = `/practitioner-detail?id=${staffId}`;
+    }
+
+    function editPayRate(staffId) {
+      editingStaffId = staffId;
+      // Close any open dropdown menus
+      document.querySelectorAll('.staff-dropdown').forEach(menu => {
+        menu.classList.remove('show');
+      });
+      // Open the modal
+      document.getElementById('payRateModal').classList.add('show');
+      // Reset the select
+      document.getElementById('payRateSelect').value = '';
+    }
+
+    function closePayRateModal() {
+      document.getElementById('payRateModal').classList.remove('show');
+      editingStaffId = null;
+    }
+
+    function submitPayRate() {
+      const payRate = document.getElementById('payRateSelect').value;
+      if (!payRate) {
+        alert('Please select a pay rate');
+        return;
+      }
+      // For now, just show confirmation - actual API integration would go here
+      alert(`Pay rate updated for staff ID ${editingStaffId}: ${payRate}`);
+      closePayRateModal();
+    }
+
+    function editPractitionerPrice(staffId) {
+      alert('Edit practitioner price functionality coming soon');
+    }
+
+    function removeStaffFromService(staffId) {
+      if (confirm('Are you sure you want to remove this practitioner from this service?')) {
+        alert('Remove practitioner functionality coming soon');
+      }
+    }
+
+    // Filter panel functions
+    function openFilterPanel() {
+      document.getElementById('filterPanel').classList.add('show');
+      document.getElementById('filterOverlay').classList.add('show');
+    }
+
+    function closeFilterPanel() {
+      document.getElementById('filterPanel').classList.remove('show');
+      document.getElementById('filterOverlay').classList.remove('show');
+    }
+
+    function clearFilters() {
+      document.getElementById('filterTags').value = '';
+    }
+
+    function applyFilters() {
+      const tags = document.getElementById('filterTags').value;
+      if (tags) {
+        alert(`Filter applied: ${tags}`);
+      }
+      closeFilterPanel();
+    }
+
     // Close menus when clicking outside
     document.addEventListener('click', (e) => {
       if (!e.target.closest('.actions-wrapper')) {
         document.getElementById('actionsMenu').classList.remove('show');
+      }
+      // Close staff dropdowns when clicking outside
+      if (!e.target.closest('.staff-actions')) {
+        document.querySelectorAll('.staff-dropdown').forEach(menu => {
+          menu.classList.remove('show');
+        });
+      }
+    });
+
+    // Close modal when clicking outside
+    document.getElementById('payRateModal').addEventListener('click', (e) => {
+      if (e.target.classList.contains('modal-overlay')) {
+        closePayRateModal();
       }
     });
 

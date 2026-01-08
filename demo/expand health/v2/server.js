@@ -472,6 +472,10 @@ app.get('/service-detail', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'service-detail.html'));
 });
 
+app.get('/service-edit', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'service-edit.html'));
+});
+
 app.get('/studio/pay-rates', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'studio-pay-rates.html'));
 });

@@ -1,0 +1,1015 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Edit Service - ExpandHealth</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cline x1='20' y1='20' x2='80' y2='80' stroke='%230F766E' stroke-width='12' stroke-linecap='round'/%3E%3Cline x1='80' y1='20' x2='20' y2='80' stroke='%230F766E' stroke-width='12' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/css/main.css">
+  <script src="/js/feature-flags.js"></script>
+  <style>
+    :root {
+      --teal-600: #0d9488;
+      --teal-50: #f0fdfa;
+      --gray-50: #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-300: #d1d5db;
+      --gray-400: #9ca3af;
+      --gray-500: #6b7280;
+      --gray-600: #4b5563;
+      --gray-700: #374151;
+      --gray-900: #111827;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f8f9fa;
+      min-height: 100vh;
+    }
+
+    .page-container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    /* Header */
+    .page-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .back-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      background: white;
+      border: 1px solid var(--gray-200);
+      border-radius: 8px;
+      color: var(--gray-600);
+      text-decoration: none;
+    }
+
+    .back-btn:hover {
+      background: var(--gray-50);
+    }
+
+    .back-btn svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    .page-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--teal-600);
+    }
+
+    /* Section */
+    .section {
+      background: white;
+      border: 1px solid var(--gray-200);
+      border-radius: 12px;
+      margin-bottom: 24px;
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .section-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+
+    .section-link {
+      color: var(--teal-600);
+      text-decoration: none;
+      font-size: 0.875rem;
+    }
+
+    .section-link:hover {
+      text-decoration: underline;
+    }
+
+    .section-content {
+      padding: 20px;
+    }
+
+    .section-description {
+      font-size: 0.875rem;
+      color: var(--gray-500);
+      margin-bottom: 16px;
+      line-height: 1.5;
+    }
+
+    /* Form Elements */
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group:last-child {
+      margin-bottom: 0;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--gray-700);
+      margin-bottom: 6px;
+    }
+
+    .form-label .optional {
+      color: var(--gray-400);
+      font-weight: 400;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid var(--gray-300);
+      border-radius: 8px;
+      font-size: 0.875rem;
+      color: var(--gray-900);
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: var(--teal-600);
+      box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
+    }
+
+    .form-input::placeholder {
+      color: var(--gray-400);
+    }
+
+    textarea.form-input {
+      min-height: 100px;
+      resize: vertical;
+    }
+
+    .form-select {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid var(--gray-300);
+      border-radius: 8px;
+      font-size: 0.875rem;
+      color: var(--gray-900);
+      background: white;
+      cursor: pointer;
+    }
+
+    .form-select:focus {
+      outline: none;
+      border-color: var(--teal-600);
+    }
+
+    /* Color Picker */
+    .color-picker {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .color-swatch {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 2px solid white;
+      box-shadow: 0 0 0 1px var(--gray-300);
+      cursor: pointer;
+    }
+
+    .color-name {
+      font-size: 0.875rem;
+      color: var(--gray-700);
+    }
+
+    /* Toggle Switch */
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--gray-100);
+    }
+
+    .toggle-row:last-child {
+      border-bottom: none;
+    }
+
+    .toggle-label {
+      font-size: 0.875rem;
+      color: var(--gray-700);
+    }
+
+    .toggle-label .info {
+      color: var(--gray-400);
+      margin-left: 4px;
+    }
+
+    .toggle-switch {
+      position: relative;
+      width: 44px;
+      height: 24px;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: var(--gray-300);
+      border-radius: 24px;
+      transition: 0.3s;
+    }
+
+    .toggle-slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background: white;
+      border-radius: 50%;
+      transition: 0.3s;
+    }
+
+    .toggle-switch input:checked + .toggle-slider {
+      background: var(--teal-600);
+    }
+
+    .toggle-switch input:checked + .toggle-slider:before {
+      transform: translateX(20px);
+    }
+
+    /* Checkbox List */
+    .checkbox-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .checkbox-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .checkbox-item input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--teal-600);
+    }
+
+    .checkbox-item label {
+      font-size: 0.875rem;
+      color: var(--gray-700);
+      cursor: pointer;
+    }
+
+    /* Button Group */
+    .btn-group {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .btn-option {
+      padding: 8px 16px;
+      border: 1px solid var(--gray-300);
+      border-radius: 6px;
+      background: white;
+      font-size: 0.875rem;
+      color: var(--gray-700);
+      cursor: pointer;
+    }
+
+    .btn-option:hover {
+      background: var(--gray-50);
+    }
+
+    .btn-option.active {
+      background: var(--teal-600);
+      border-color: var(--teal-600);
+      color: white;
+    }
+
+    /* Info Box */
+    .info-box {
+      padding: 12px 16px;
+      background: #FEF3C7;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      color: #92400E;
+      margin-top: 12px;
+    }
+
+    /* Inline Input */
+    .inline-input {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .inline-input .form-input {
+      width: 80px;
+    }
+
+    .inline-input span {
+      font-size: 0.875rem;
+      color: var(--gray-600);
+    }
+
+    /* Search Box */
+    .search-box {
+      position: relative;
+      margin-bottom: 16px;
+    }
+
+    .search-box input {
+      width: 100%;
+      padding: 10px 14px 10px 40px;
+      border: 1px solid var(--gray-300);
+      border-radius: 8px;
+      font-size: 0.875rem;
+    }
+
+    .search-box svg {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 16px;
+      height: 16px;
+      color: var(--gray-400);
+    }
+
+    /* Staff List */
+    .staff-list {
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    /* Expandable */
+    .expandable-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+    }
+
+    .expand-icon {
+      width: 24px;
+      height: 24px;
+      background: var(--teal-50);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--teal-600);
+    }
+
+    .expand-arrow {
+      margin-left: auto;
+      color: var(--gray-400);
+    }
+
+    /* Price Input */
+    .price-input {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .price-input .currency {
+      font-size: 0.875rem;
+      color: var(--gray-500);
+    }
+
+    .price-input .form-input {
+      width: 120px;
+    }
+
+    /* Save Button */
+    .save-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: white;
+      border-top: 1px solid var(--gray-200);
+      padding: 16px 24px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+    }
+
+    .btn-secondary {
+      background: white;
+      border: 1px solid var(--gray-300);
+      color: var(--gray-700);
+    }
+
+    .btn-secondary:hover {
+      background: var(--gray-50);
+    }
+
+    .btn-primary {
+      background: var(--teal-600);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #0f766e;
+    }
+
+    /* Add padding at bottom for save bar */
+    .page-container {
+      padding-bottom: 100px;
+    }
+  </style>
+</head>
+<body>
+  <div class="page-container">
+    <!-- Header -->
+    <div class="page-header">
+      <a href="/services" class="back-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+      </a>
+      <h1 class="page-title">Edit service</h1>
+    </div>
+
+    <!-- Basic Info -->
+    <div class="section">
+      <div class="section-header">
+        <h2 class="section-title">Basic Info</h2>
+      </div>
+      <div class="section-content">
+        <div class="form-group">
+          <label class="form-label">Name</label>
+          <input type="text" class="form-input" id="serviceName" placeholder="Service name">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Description</label>
+          <textarea class="form-input" id="serviceDescription" placeholder="Provide your 1 hour description"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Color</label>
+          <div class="color-picker">
+            <input type="color" id="serviceColor" class="color-swatch" value="#3B82F6">
+            <span class="color-name" id="colorName">Blue</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Variants -->
+    <div class="section">
+      <div class="section-header">
+        <h2 class="section-title">Variants</h2>
+      </div>
+      <div class="section-content">
+        <p class="section-description">With variants, you can create multiple versions of a service, each with its own price, duration, name, and additional description. Customers & staff need to select a variant when booking. You can specify variants after you create the service, from its detail. Once a service is marked as using variants, this setting cannot be changed.</p>
+        <div class="toggle-row">
+          <span class="toggle-label">Service has variants</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="hasVariants">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Category -->
+    <div class="section">
+      <div class="section-header">
+        <h2 class="section-title">Category</h2>
+        <a href="/services?tab=categories" class="section-link">Manage categories</a>
+      </div>
+      <div class="section-content">
+        <p class="section-description">Optionally, you can assign this service to a service category. Customers will be able to filter your services by service categories when making bookings. This is useful if you offer many services and want your customers to be able to filter the list of services.</p>
+        <select class="form-select" id="serviceCategory">
+          <option value="">Select category...</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Boards -->
+    <div class="section">
+      <div class="section-header">
+        <h2 class="section-title">Boards</h2>
+        <a href="/boards" class="section-link">Manage boards</a>
+      </div>
+      <div class="section-content">
+        <p class="section-description">Choose which boards will offer this service.</p>
+        <div class="checkbox-list" id="boardsList">
+          <div class="checkbox-item">
+            <input type="checkbox" id="selectAllBoards" checked>
+            <label for="selectAllBoards">Select all</label>
+          </div>
+          <div class="checkbox-item">
+            <input type="checkbox" id="board1" checked>
+            <label for="board1">Expand Health</label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pricing & Customers -->
+    <div class="section">
+      <div class="section-header">
+        <h2 class="section-title">Pricing & Customers</h2>
+      </div>
+      <div class="section-content">
+        <div class="toggle-row">
+          <span class="toggle-label">Specify prices per level</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="pricesPerLevel">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+
+        <div class="form-group" style="margin-top: 16px;">
+          <label class="form-label">Price</label>
+          <div class="price-input">
+            <span class="currency">ZAR</span>
+            <input type="number" class="form-input" id="servicePrice" value="3000" step="0.01">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Price in appointment credits</label>
+          <input type="number" class="form-input" id="appointmentCredits" value="1" style="width: 100px;">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Tax rate (optional)</label>
+          <select class="form-select" id="taxRate" style="width: 200px;">
+            <option value="">Select...</option>
+            <option value="0">0%</option>
+            <option value="15">15% VAT</option>
+          </select>
+          <a href="#" class="section-link" style="display: block; margin-top: 8px;">+ Add tax rate</a>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Max. customers</label>
+          <input type="number" class="form-input" id="maxCustomers" value="1" style="width: 100px;">
+        </div>
+
+        <div class="toggle-row">
+          <span class="toggle-label">Price is per customer</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="pricePerCustomer">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+
+        <div class="form-group" style="margin-top: 16px;">
+          <label class="form-label">Checkout payment options</label>
+          <div class="btn-group">
+            <button class="btn-option" data-payment="full">Pay full price</button>
+            <button class="btn-option" data-payment="deposit">Pay deposit</button>
+            <button class="btn-option" data-payment="later-card">Pay later, put card on file</button>
+            <button class="btn-option active" data-payment="later">Pay later</button>
+          </div>
+          <div class="info-box">
+            Customers will not be asked to pay or put card on file.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Price rules -->
+    <div class="section">
+      <div class="section-header">
+        <div class="expandable-header" onclick="toggleSection('priceRules')">
+          <div class="expand-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;">
+              <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+            </svg>
+          </div>
+          <span class="section-title">Price rules</span>
+          <span style="color: var(--gray-500); font-size: 0.875rem;">1</span>
+        </div>
+        <svg class="expand-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Checkout -->
+    <div class="section">
+      <div class="section-header">
+        <h2 class="section-title">Checkout</h2>
+      </div>
+      <div class="section-content">
+        <p class="section-description">Choose what this service requires to be performed. Impacts behaviour of both customer checkout and dashboard.</p>
+
+        <div class="form-group">
+          <label class="form-label">Checkout behaviour</label>
+          <div class="btn-group">
+            <button class="btn-option active" data-checkout="follow">Follow board default</button>
+            <button class="btn-option" data-checkout="location">Requires location only</button>
+            <button class="btn-option" data-checkout="staff">Requires staff only</button>
+            <button class="btn-option" data-checkout="both">Requires location and staff</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Cut-off time</label>
+          <div class="inline-input">
+            <button class="btn-option active">Follow board default</button>
+            <span>or</span>
+            <input type="number" class="form-input" placeholder="min">
+            <span>min</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Staff -->
+    <div class="section">
+      <div class="section-header">
+        <h2 class="section-title">Staff</h2>
+      </div>
+      <div class="section-content">
+        <p class="section-description">Choose which staff will be able to perform this service. You can always edit this later by editing the service after it is created.</p>
+
+        <div class="toggle-row">
+          <span class="toggle-label">Requires two practitioners</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="requiresTwoPractitioners">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+
+        <div class="toggle-row">
+          <span class="toggle-label">Assign all practitioners to the service</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="assignAllPractitioners">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+
+        <div class="checkbox-list staff-list" id="staffList" style="margin-top: 16px;">
+          <div class="checkbox-item">
+            <input type="checkbox" id="selectAllStaff">
+            <label for="selectAllStaff">Select all</label>
+          </div>
+          <!-- Staff will be populated dynamically -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Locations -->
+    <div class="section">
+      <div class="section-header">
+        <h2 class="section-title">Locations</h2>
+      </div>
+      <div class="section-content">
+        <p class="section-description">Choose which locations offer this service. You can always edit this later by editing the service after it is created.</p>
+
+        <div class="toggle-row">
+          <span class="toggle-label">Assign all locations to the service</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="assignAllLocations" checked>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Booking conditions -->
+    <div class="section">
+      <div class="section-header">
+        <h2 class="section-title">Booking conditions</h2>
+      </div>
+      <div class="section-content">
+        <div class="toggle-row">
+          <span class="toggle-label">Service is private</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="isPrivate">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <span class="toggle-label">Bookable only once per customer</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="bookableOnce">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <span class="toggle-label">Allow recurring booking by customers</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="allowRecurring">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <span class="toggle-label">Limit max. concurrent reservations</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="limitConcurrent">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <span class="toggle-label">Disable booking with memberships</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="disableMemberships">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <span class="toggle-label">Require booking with memberships</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="requireMemberships">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+
+        <div class="expandable-header" style="margin-top: 16px; padding: 12px 0; border-top: 1px solid var(--gray-100);">
+          <div class="expand-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+            </svg>
+          </div>
+          <span style="font-size: 0.875rem; color: var(--gray-700);">Applicable memberships</span>
+          <span style="color: var(--gray-500); font-size: 0.875rem;" id="membershipCount">10</span>
+          <svg class="expand-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px; margin-left: auto;">
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+        </div>
+
+        <div class="toggle-row">
+          <span class="toggle-label">Restrict booking to customers with specific tags</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="restrictTags">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <span class="toggle-label">Restrict bookings to customers of specific ages</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="restrictAges">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Timing -->
+    <div class="section">
+      <div class="section-header">
+        <h2 class="section-title">Timing</h2>
+      </div>
+      <div class="section-content">
+        <div class="form-group">
+          <label class="form-label">Duration</label>
+          <div class="inline-input">
+            <input type="number" class="form-input" id="duration" value="112">
+            <span>min</span>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 24px; margin-top: 24px;">
+          <div style="flex: 1;">
+            <a href="#" class="section-link">Reservation preview</a>
+          </div>
+          <div>
+            <a href="#" class="section-link">Customize staff presence</a>
+          </div>
+          <div>
+            <a href="#" class="section-link">Customize location occupancy</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Save Bar -->
+  <div class="save-bar">
+    <button class="btn btn-secondary" onclick="cancel()">Cancel</button>
+    <button class="btn btn-primary" onclick="saveService()">Save changes</button>
+  </div>
+
+  <script>
+    let serviceId = null;
+    let serviceData = null;
+    let categories = [];
+    let staff = [];
+
+    // Get service ID from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    serviceId = urlParams.get('id');
+
+    // Load data
+    async function loadData() {
+      const token = localStorage.getItem('auth_token');
+
+      // Load categories
+      try {
+        const catResponse = await fetch('/api/services/categories/list', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        categories = await catResponse.json();
+        populateCategories();
+      } catch (e) {
+        console.error('Failed to load categories:', e);
+      }
+
+      // Load staff
+      try {
+        const staffResponse = await fetch('/api/staff', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        staff = await staffResponse.json();
+        populateStaff();
+      } catch (e) {
+        console.error('Failed to load staff:', e);
+      }
+
+      // Load service if editing
+      if (serviceId) {
+        try {
+          const response = await fetch(`/api/services/${serviceId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          serviceData = await response.json();
+          populateForm();
+        } catch (e) {
+          console.error('Failed to load service:', e);
+        }
+      }
+    }
+
+    function populateCategories() {
+      const select = document.getElementById('serviceCategory');
+      select.innerHTML = '<option value="">Select category...</option>';
+      categories.forEach(cat => {
+        const option = document.createElement('option');
+        option.value = cat.id;
+        option.textContent = cat.name;
+        select.appendChild(option);
+      });
+    }
+
+    function populateStaff() {
+      const list = document.getElementById('staffList');
+      // Keep select all
+      const selectAll = list.querySelector('.checkbox-item');
+
+      staff.forEach(s => {
+        const item = document.createElement('div');
+        item.className = 'checkbox-item';
+        item.innerHTML = `
+          <input type="checkbox" id="staff_${s.id}" data-staff-id="${s.id}">
+          <label for="staff_${s.id}">${s.first_name} ${s.last_name}</label>
+        `;
+        list.appendChild(item);
+      });
+    }
+
+    function populateForm() {
+      if (!serviceData) return;
+
+      document.getElementById('serviceName').value = serviceData.name || '';
+      document.getElementById('serviceDescription').value = serviceData.description || '';
+      document.getElementById('serviceColor').value = serviceData.color || '#3B82F6';
+      document.getElementById('colorName').textContent = getColorName(serviceData.color);
+      document.getElementById('serviceCategory').value = serviceData.category_id || '';
+      document.getElementById('servicePrice').value = serviceData.price || 0;
+      document.getElementById('maxCustomers').value = serviceData.max_attendees || 1;
+      document.getElementById('duration').value = serviceData.duration_minutes || 60;
+
+      document.title = `Edit ${serviceData.name} - ExpandHealth`;
+
+      // Check staff that are assigned
+      if (serviceData.staff) {
+        serviceData.staff.forEach(s => {
+          const checkbox = document.querySelector(`[data-staff-id="${s.id}"]`);
+          if (checkbox) checkbox.checked = true;
+        });
+      }
+    }
+
+    function getColorName(hex) {
+      const colors = {
+        '#0d9488': 'Teal',
+        '#3B82F6': 'Blue',
+        '#6366f1': 'Indigo',
+        '#8B5CF6': 'Purple',
+        '#EC4899': 'Pink',
+        '#EF4444': 'Red',
+        '#F97316': 'Orange',
+        '#EAB308': 'Yellow',
+        '#22C55E': 'Green',
+        '#10B981': 'Emerald'
+      };
+      return colors[hex?.toUpperCase()] || colors[hex?.toLowerCase()] || hex || 'Blue';
+    }
+
+    // Color picker change
+    document.getElementById('serviceColor').addEventListener('change', (e) => {
+      document.getElementById('colorName').textContent = getColorName(e.target.value);
+    });
+
+    // Button group clicks
+    document.querySelectorAll('.btn-group').forEach(group => {
+      group.querySelectorAll('.btn-option').forEach(btn => {
+        btn.addEventListener('click', () => {
+          group.querySelectorAll('.btn-option').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+        });
+      });
+    });
+
+    function toggleSection(id) {
+      // Toggle section expansion
+    }
+
+    function cancel() {
+      if (serviceId) {
+        window.location.href = `/service-detail?id=${serviceId}`;
+      } else {
+        window.location.href = '/services';
+      }
+    }
+
+    async function saveService() {
+      const token = localStorage.getItem('auth_token');
+
+      const data = {
+        name: document.getElementById('serviceName').value,
+        description: document.getElementById('serviceDescription').value,
+        color: document.getElementById('serviceColor').value,
+        category_id: document.getElementById('serviceCategory').value || null,
+        price: parseFloat(document.getElementById('servicePrice').value) || 0,
+        max_attendees: parseInt(document.getElementById('maxCustomers').value) || 1,
+        duration_minutes: parseInt(document.getElementById('duration').value) || 60
+      };
+
+      try {
+        const url = serviceId ? `/api/services/${serviceId}` : '/api/services';
+        const method = serviceId ? 'PUT' : 'POST';
+
+        const response = await fetch(url, {
+          method,
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(data)
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to save service');
+        }
+
+        const result = await response.json();
+        window.location.href = `/service-detail?id=${result.id || serviceId}`;
+      } catch (error) {
+        console.error('Error saving service:', error);
+        alert('Failed to save service. Please try again.');
+      }
+    }
+
+    // Load data on page ready
+    loadData();
+  </script>
+</body>
+</html>

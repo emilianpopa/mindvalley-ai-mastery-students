@@ -22,7 +22,7 @@ router.use(authenticateToken);
 router.get('/', async (req, res, next) => {
   try {
     const tenantId = req.user.tenantId;
-    const { active_only } = req.query;
+    const { active_only, category } = req.query;
 
     let query = `
       SELECT
@@ -36,13 +36,21 @@ router.get('/', async (req, res, next) => {
       WHERE st.tenant_id = $1
     `;
 
+    const params = [tenantId];
+
     if (active_only === 'true') {
       query += ` AND st.is_active = true`;
     }
 
+    // Filter by category name if provided
+    if (category) {
+      params.push(category);
+      query += ` AND sc.name = $${params.length}`;
+    }
+
     query += ` GROUP BY st.id, sc.name, sc.color ORDER BY st.name ASC`;
 
-    const result = await db.query(query, [tenantId]);
+    const result = await db.query(query, params);
 
     res.json(result.rows);
   } catch (error) {
