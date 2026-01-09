@@ -2,6 +2,7 @@
  * Global Utility Bar Component
  * Injects the top utility bar on all pages
  * Includes Global Search functionality
+ * Version: 2026-01-09-v2
  */
 
 // Global search state
