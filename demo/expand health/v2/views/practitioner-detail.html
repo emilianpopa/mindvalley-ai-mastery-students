@@ -1335,7 +1335,7 @@
   <div class="modal-overlay" id="payRateModal">
     <div class="modal">
       <div class="modal-header">
-        <h3 class="modal-title">Edit pay rate</h3>
+        <h3 class="modal-title">Edit assignment</h3>
         <button class="modal-close" onclick="closePayRateModal()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="18" y1="6" x2="6" y2="18"/>
@@ -1346,7 +1346,7 @@
       <div class="modal-body">
         <div class="form-group">
           <label class="form-label">
-            Pay rate
+            Assignment pay rate
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="12" cy="12" r="10"/>
               <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
@@ -1561,7 +1561,8 @@
       });
       // Open the modal
       document.getElementById('payRateModal').classList.add('show');
-      document.querySelector('.modal-title').textContent = `Edit pay rate - ${templateName}`;
+      // Keep title as "Edit assignment" to match Momence
+      document.querySelector('.modal-title').textContent = 'Edit assignment';
       // Reset the select
       document.getElementById('payRateSelect').value = '';
     }
@@ -1642,11 +1643,8 @@
 
       // Open the modal with bulk context
       document.getElementById('payRateModal').classList.add('show');
-      if (selectedTemplateIds.length === 1) {
-        document.querySelector('.modal-title').textContent = `Edit pay rate - ${selectedTemplateIds[0].name}`;
-      } else {
-        document.querySelector('.modal-title').textContent = `Edit pay rate (${selectedTemplateIds.length} templates)`;
-      }
+      // Keep title as "Edit assignment" to match Momence
+      document.querySelector('.modal-title').textContent = 'Edit assignment';
       // Reset the select
       document.getElementById('payRateSelect').value = '';
     }
