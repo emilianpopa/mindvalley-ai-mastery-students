@@ -1,7 +1,7 @@
 /**
  * ExpandHealth V2 - Main Server
  * Express-based API server with PostgreSQL
- * Updated: 2025-12-30
+ * Updated: 2026-01-09 - Added global search API
  */
 
 require('dotenv').config();
