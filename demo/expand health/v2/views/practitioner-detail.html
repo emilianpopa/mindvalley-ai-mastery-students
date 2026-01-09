@@ -1331,7 +1331,53 @@
     </div>
   </div>
 
-  <!-- Pay Rate Modal -->
+  <!-- Add Assignment Modal (for Assign Classes) -->
+  <div class="modal-overlay" id="addAssignmentModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">Add assignment</h3>
+        <button class="modal-close" onclick="closeAddAssignmentModal()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">
+            Assignment pay rate
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+              <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+          </label>
+          <div class="form-select-wrapper">
+            <select class="form-select" id="addAssignmentPayRateSelect">
+              <option value="">Select a pay rate</option>
+              <option value="50_50">50 50</option>
+              <option value="60_percent">60% per ticket</option>
+              <option value="fixed_1500">Fixed Fee R1500</option>
+              <option value="fixed_600">Fixed Fee R600</option>
+            </select>
+            <button class="form-add-btn" title="Add new pay rate">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"/>
+                <line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeAddAssignmentModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="submitAddAssignment()">Submit</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Assignment Modal (for Edit pay rate) -->
   <div class="modal-overlay" id="payRateModal">
     <div class="modal">
       <div class="modal-header">
@@ -1719,8 +1765,33 @@
     }
 
     function assignClasses() {
-      alert('Assign classes - Feature coming soon');
+      // Open the Add Assignment modal
+      document.getElementById('addAssignmentModal').classList.add('show');
+      // Reset the select
+      document.getElementById('addAssignmentPayRateSelect').value = '';
     }
+
+    function closeAddAssignmentModal() {
+      document.getElementById('addAssignmentModal').classList.remove('show');
+    }
+
+    function submitAddAssignment() {
+      const payRate = document.getElementById('addAssignmentPayRateSelect').value;
+      if (!payRate) {
+        alert('Please select a pay rate');
+        return;
+      }
+      // For now, just show confirmation - actual API integration would go here
+      alert(`Assignment added with pay rate: ${payRate}`);
+      closeAddAssignmentModal();
+    }
+
+    // Close Add Assignment modal when clicking outside
+    document.getElementById('addAssignmentModal').addEventListener('click', (e) => {
+      if (e.target.classList.contains('modal-overlay')) {
+        closeAddAssignmentModal();
+      }
+    });
 
     // Initialize
     loadPractitioner();
