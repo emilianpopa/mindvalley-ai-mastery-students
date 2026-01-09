@@ -1,7 +1,12 @@
 /**
  * Global Utility Bar Component
  * Injects the top utility bar on all pages
+ * Includes Global Search functionality
  */
+
+// Global search state
+let globalSearchTimeout = null;
+let globalSearchResults = { clients: [], staff: [], services: [], appointments: [] };
 
 function initUtilityBar(activePage = '') {
   // Get current user info from localStorage
@@ -13,12 +18,39 @@ function initUtilityBar(activePage = '') {
   const utilityBarHTML = `
     <div class="global-utility-bar">
       <div class="utility-bar-left">
-        <button class="utility-btn feedback-btn">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-          </svg>
-          Feedback
-        </button>
+        <!-- Global Search -->
+        <div class="global-search-wrapper">
+          <div class="global-search-input-container">
+            <svg class="global-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"/>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input
+              type="text"
+              class="global-search-input"
+              id="globalSearchInput"
+              placeholder="Search..."
+              autocomplete="off"
+            />
+            <kbd class="global-search-shortcut">S</kbd>
+          </div>
+          <div class="global-search-dropdown" id="globalSearchDropdown">
+            <div class="global-search-header" id="globalSearchHeader" style="display: none;">
+              <span>Show all results for <strong id="globalSearchQuery"></strong></span>
+            </div>
+            <div class="global-search-loading" id="globalSearchLoading" style="display: none;">
+              <div class="search-spinner"></div>
+              Searching...
+            </div>
+            <div class="global-search-results" id="globalSearchResults"></div>
+            <div class="global-search-empty" id="globalSearchEmpty" style="display: none;">
+              No results found
+            </div>
+            <div class="global-search-hint" id="globalSearchHint">
+              Type to search clients, practitioners, services...
+            </div>
+          </div>
+        </div>
         <div class="utility-divider"></div>
         <div class="utility-add-group">
           <span class="utility-add-label">Add:</span>
@@ -114,13 +146,309 @@ function initUtilityBar(activePage = '') {
 
   container.innerHTML = utilityBarHTML;
 
+  // Initialize global search event listeners
+  initGlobalSearch();
+
   // Close dropdown when clicking outside
   document.addEventListener('click', (e) => {
     if (!e.target.closest('.utility-user-dropdown')) {
       const menu = document.getElementById('utilityUserDropdownMenu');
       if (menu) menu.classList.remove('show');
     }
+    // Close search dropdown when clicking outside
+    if (!e.target.closest('.global-search-wrapper')) {
+      hideGlobalSearchDropdown();
+    }
   });
+}
+
+// ============================================
+// GLOBAL SEARCH FUNCTIONS
+// ============================================
+
+function initGlobalSearch() {
+  const input = document.getElementById('globalSearchInput');
+  if (!input) return;
+
+  // Input handler with debounce
+  input.addEventListener('input', (e) => {
+    handleGlobalSearch(e.target.value);
+  });
+
+  // Focus handler
+  input.addEventListener('focus', () => {
+    showGlobalSearchDropdown();
+  });
+
+  // Keyboard navigation
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      hideGlobalSearchDropdown();
+      input.blur();
+    } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      navigateSearchResults(e.key === 'ArrowDown' ? 1 : -1);
+    } else if (e.key === 'Enter') {
+      const selected = document.querySelector('.global-search-item.selected');
+      if (selected) {
+        selected.click();
+      }
+    }
+  });
+
+  // Global keyboard shortcut (S key when not in input)
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 's' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      const activeElement = document.activeElement;
+      const isInputField = activeElement.tagName === 'INPUT' ||
+                          activeElement.tagName === 'TEXTAREA' ||
+                          activeElement.isContentEditable;
+      if (!isInputField) {
+        e.preventDefault();
+        input.focus();
+        showGlobalSearchDropdown();
+      }
+    }
+  });
+}
+
+function showGlobalSearchDropdown() {
+  const dropdown = document.getElementById('globalSearchDropdown');
+  if (dropdown) {
+    dropdown.classList.add('show');
+  }
+}
+
+function hideGlobalSearchDropdown() {
+  const dropdown = document.getElementById('globalSearchDropdown');
+  if (dropdown) {
+    dropdown.classList.remove('show');
+  }
+}
+
+async function handleGlobalSearch(query) {
+  // Clear previous timeout
+  if (globalSearchTimeout) {
+    clearTimeout(globalSearchTimeout);
+  }
+
+  const loading = document.getElementById('globalSearchLoading');
+  const results = document.getElementById('globalSearchResults');
+  const empty = document.getElementById('globalSearchEmpty');
+  const hint = document.getElementById('globalSearchHint');
+  const header = document.getElementById('globalSearchHeader');
+  const querySpan = document.getElementById('globalSearchQuery');
+
+  if (!query || query.length < 2) {
+    if (loading) loading.style.display = 'none';
+    if (results) results.innerHTML = '';
+    if (empty) empty.style.display = 'none';
+    if (hint) hint.style.display = 'block';
+    if (header) header.style.display = 'none';
+    return;
+  }
+
+  // Show loading
+  if (hint) hint.style.display = 'none';
+  if (loading) loading.style.display = 'flex';
+  if (empty) empty.style.display = 'none';
+  if (header) {
+    header.style.display = 'flex';
+    if (querySpan) querySpan.textContent = query;
+  }
+
+  // Debounce the search
+  globalSearchTimeout = setTimeout(async () => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch(`/api/search?q=${encodeURIComponent(query)}&limit=5`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Search failed');
+      }
+
+      globalSearchResults = await response.json();
+      renderSearchResults(globalSearchResults, query);
+    } catch (error) {
+      console.error('Search error:', error);
+      if (results) results.innerHTML = '<div class="search-error">Search failed. Please try again.</div>';
+    } finally {
+      if (loading) loading.style.display = 'none';
+    }
+  }, 300);
+}
+
+function renderSearchResults(data, query) {
+  const results = document.getElementById('globalSearchResults');
+  const empty = document.getElementById('globalSearchEmpty');
+
+  if (!results) return;
+
+  const { clients, staff, services, appointments } = data;
+  const hasResults = clients.length || staff.length || services.length || appointments.length;
+
+  if (!hasResults) {
+    results.innerHTML = '';
+    if (empty) empty.style.display = 'block';
+    return;
+  }
+
+  if (empty) empty.style.display = 'none';
+
+  let html = '';
+
+  // Clients section
+  if (clients.length > 0) {
+    html += `
+      <div class="search-section">
+        <div class="search-section-header">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
+          </svg>
+          Clients
+        </div>
+        ${clients.map(client => `
+          <a href="/client-profile?id=${client.id}" class="global-search-item" data-type="client">
+            <div class="search-item-avatar">${(client.first_name?.[0] || '') + (client.last_name?.[0] || '')}</div>
+            <div class="search-item-content">
+              <div class="search-item-name">${highlightMatch(client.first_name + ' ' + client.last_name, query)}</div>
+              <div class="search-item-meta">${client.email || ''}</div>
+            </div>
+          </a>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  // Staff/Practitioners section
+  if (staff.length > 0) {
+    html += `
+      <div class="search-section">
+        <div class="search-section-header">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+          Practitioners
+        </div>
+        ${staff.map(s => `
+          <a href="/practitioner-detail?id=${s.id}" class="global-search-item" data-type="staff">
+            <div class="search-item-avatar staff">${(s.first_name?.[0] || '') + (s.last_name?.[0] || '')}</div>
+            <div class="search-item-content">
+              <div class="search-item-name">${highlightMatch(s.first_name + ' ' + s.last_name, query)}</div>
+              <div class="search-item-meta">${s.email || ''}</div>
+            </div>
+          </a>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  // Services section
+  if (services.length > 0) {
+    html += `
+      <div class="search-section">
+        <div class="search-section-header">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
+            <line x1="7" y1="7" x2="7.01" y2="7"/>
+          </svg>
+          Services
+        </div>
+        ${services.map(service => `
+          <a href="/service-detail?id=${service.id}" class="global-search-item" data-type="service">
+            <div class="search-item-icon service">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
+                <line x1="7" y1="7" x2="7.01" y2="7"/>
+              </svg>
+            </div>
+            <div class="search-item-content">
+              <div class="search-item-name">${highlightMatch(service.name, query)}</div>
+              <div class="search-item-meta">ZAR ${parseFloat(service.price || 0).toFixed(2)} · ${service.duration_minutes || 60} min</div>
+            </div>
+          </a>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  // Appointments section
+  if (appointments.length > 0) {
+    html += `
+      <div class="search-section">
+        <div class="search-section-header">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+            <line x1="16" y1="2" x2="16" y2="6"/>
+            <line x1="8" y1="2" x2="8" y2="6"/>
+            <line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
+          Appointments
+        </div>
+        ${appointments.map(apt => {
+          const date = new Date(apt.start_time);
+          const dateStr = date.toLocaleDateString('en-ZA', { month: 'short', day: 'numeric', year: 'numeric' });
+          const timeStr = date.toLocaleTimeString('en-ZA', { hour: '2-digit', minute: '2-digit' });
+          return `
+            <a href="/appointments?date=${date.toISOString().split('T')[0]}" class="global-search-item" data-type="appointment">
+              <div class="search-item-icon appointment">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                  <line x1="16" y1="2" x2="16" y2="6"/>
+                  <line x1="8" y1="2" x2="8" y2="6"/>
+                  <line x1="3" y1="10" x2="21" y2="10"/>
+                </svg>
+              </div>
+              <div class="search-item-content">
+                <div class="search-item-name">${highlightMatch(apt.title || 'Appointment', query)}</div>
+                <div class="search-item-meta">${apt.client_first_name ? apt.client_first_name + ' ' + apt.client_last_name + ' · ' : ''}${dateStr}, ${timeStr}</div>
+              </div>
+            </a>
+          `;
+        }).join('')}
+      </div>
+    `;
+  }
+
+  results.innerHTML = html;
+}
+
+function highlightMatch(text, query) {
+  if (!query || !text) return text;
+  const regex = new RegExp(`(${escapeRegex(query)})`, 'gi');
+  return text.replace(regex, '<mark>$1</mark>');
+}
+
+function escapeRegex(string) {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function navigateSearchResults(direction) {
+  const items = document.querySelectorAll('.global-search-item');
+  if (!items.length) return;
+
+  const current = document.querySelector('.global-search-item.selected');
+  let index = -1;
+
+  if (current) {
+    current.classList.remove('selected');
+    index = Array.from(items).indexOf(current);
+  }
+
+  index += direction;
+  if (index < 0) index = items.length - 1;
+  if (index >= items.length) index = 0;
+
+  items[index].classList.add('selected');
+  items[index].scrollIntoView({ block: 'nearest' });
 }
 
 function toggleUtilityUserMenu() {
@@ -160,6 +488,257 @@ function injectUtilityBarStyles() {
       display: flex;
       align-items: center;
       gap: 8px;
+    }
+
+    /* Global Search Styles */
+    .global-search-wrapper {
+      position: relative;
+    }
+
+    .global-search-input-container {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      background: #f3f4f6;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      width: 280px;
+      transition: all 0.15s;
+    }
+
+    .global-search-input-container:focus-within {
+      background: white;
+      border-color: #6366f1;
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+
+    .global-search-icon {
+      width: 16px;
+      height: 16px;
+      color: #9ca3af;
+      flex-shrink: 0;
+    }
+
+    .global-search-input {
+      flex: 1;
+      border: none;
+      background: transparent;
+      font-size: 0.875rem;
+      color: #374151;
+      outline: none;
+    }
+
+    .global-search-input::placeholder {
+      color: #9ca3af;
+    }
+
+    .global-search-shortcut {
+      padding: 2px 6px;
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 4px;
+      font-size: 0.6875rem;
+      font-family: system-ui, sans-serif;
+      color: #9ca3af;
+    }
+
+    .global-search-dropdown {
+      display: none;
+      position: absolute;
+      top: calc(100% + 8px);
+      left: 0;
+      width: 420px;
+      max-height: 480px;
+      overflow-y: auto;
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+      z-index: 1001;
+    }
+
+    .global-search-dropdown.show {
+      display: block;
+    }
+
+    .global-search-header {
+      display: flex;
+      align-items: center;
+      padding: 12px 16px;
+      background: #6366f1;
+      color: white;
+      font-size: 0.875rem;
+      border-radius: 11px 11px 0 0;
+    }
+
+    .global-search-header strong {
+      margin-left: 4px;
+    }
+
+    .global-search-loading {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 20px 16px;
+      color: #6b7280;
+      font-size: 0.875rem;
+    }
+
+    .search-spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid #e5e7eb;
+      border-top-color: #6366f1;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .global-search-hint {
+      padding: 20px 16px;
+      color: #9ca3af;
+      font-size: 0.875rem;
+      text-align: center;
+    }
+
+    .global-search-empty {
+      padding: 20px 16px;
+      color: #6b7280;
+      font-size: 0.875rem;
+      text-align: center;
+    }
+
+    .search-error {
+      padding: 16px;
+      color: #dc2626;
+      font-size: 0.875rem;
+      text-align: center;
+    }
+
+    .search-section {
+      border-bottom: 1px solid #f3f4f6;
+    }
+
+    .search-section:last-child {
+      border-bottom: none;
+    }
+
+    .search-section-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      background: #f9fafb;
+    }
+
+    .search-section-header svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    .global-search-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 16px;
+      text-decoration: none;
+      color: inherit;
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+
+    .global-search-item:hover,
+    .global-search-item.selected {
+      background: #f3f4f6;
+    }
+
+    .search-item-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: #6366f1;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+
+    .search-item-avatar.staff {
+      background: #0d9488;
+    }
+
+    .search-item-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      background: #f3f4f6;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .search-item-icon svg {
+      width: 18px;
+      height: 18px;
+      color: #6b7280;
+    }
+
+    .search-item-icon.service {
+      background: #fef3c7;
+    }
+
+    .search-item-icon.service svg {
+      color: #d97706;
+    }
+
+    .search-item-icon.appointment {
+      background: #dbeafe;
+    }
+
+    .search-item-icon.appointment svg {
+      color: #2563eb;
+    }
+
+    .search-item-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .search-item-name {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: #111827;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .search-item-name mark {
+      background: #fef08a;
+      color: inherit;
+      padding: 0 2px;
+      border-radius: 2px;
+    }
+
+    .search-item-meta {
+      font-size: 0.75rem;
+      color: #6b7280;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .utility-btn {
@@ -371,6 +950,25 @@ function injectUtilityBarStyles() {
     .feedback-btn:hover {
       background: #faf5ff;
       border-color: #d8b4fe;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 1024px) {
+      .global-search-input-container {
+        width: 200px;
+      }
+      .global-search-dropdown {
+        width: 350px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .global-search-wrapper {
+        display: none;
+      }
+      .utility-add-group {
+        display: none;
+      }
     }
   `;
   document.head.appendChild(styles);

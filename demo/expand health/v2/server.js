@@ -43,6 +43,7 @@ const locationsRoutes = require('./api/locations');
 const tagsRoutes = require('./api/tags');
 const membershipsRoutes = require('./api/memberships');
 const discountsRoutes = require('./api/discounts');
+const searchRoutes = require('./api/search');
 
 // Initialize Express app
 const app = express();
@@ -147,6 +148,7 @@ app.use('/api/locations', locationsRoutes);
 app.use('/api/tags', tagsRoutes);
 app.use('/api/memberships', membershipsRoutes);
 app.use('/api/discounts', discountsRoutes);
+app.use('/api/search', searchRoutes);
 
 // Health check endpoint (no auth required) - for Railway health checks
 app.get('/api/health', (req, res) => {
