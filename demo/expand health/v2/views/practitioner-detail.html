@@ -1825,6 +1825,34 @@
       }
     });
 
+    // Search functionality for templates
+    document.getElementById('templateSearch').addEventListener('input', function(e) {
+      const searchTerm = e.target.value.toLowerCase().trim();
+      const rows = document.querySelectorAll('#templatesTableBody tr');
+
+      rows.forEach(row => {
+        const templateName = row.querySelector('.template-name');
+        if (templateName) {
+          const name = templateName.textContent.toLowerCase();
+          row.style.display = name.includes(searchTerm) ? '' : 'none';
+        }
+      });
+    });
+
+    // Search functionality for rate table (auto-substitution eligibility)
+    document.getElementById('rateSearch').addEventListener('input', function(e) {
+      const searchTerm = e.target.value.toLowerCase().trim();
+      // Currently empty state - when data is added, filter rows here
+      console.log('Rate search:', searchTerm);
+    });
+
+    // Search functionality for practitioner classes
+    document.getElementById('classSearch').addEventListener('input', function(e) {
+      const searchTerm = e.target.value.toLowerCase().trim();
+      // Currently empty state - when data is added, filter rows here
+      console.log('Class search:', searchTerm);
+    });
+
     // Initialize
     loadPractitioner();
   </script>
