@@ -1193,18 +1193,18 @@
                       <line x1="12" y1="8" x2="12.01" y2="8"></line>
                     </svg>
                   </div>
-                  <button class="assign-btn" onclick="assignClasses()">
+                  <button class="assign-btn" id="assignClassesBtn" onclick="assignClasses()">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <line x1="12" y1="5" x2="12" y2="19"></line>
                       <line x1="5" y1="12" x2="19" y2="12"></line>
                     </svg>
-                    Assign classes
+                    <span id="assignBtnText">Assign classes</span>
                   </button>
                 </div>
 
-                <div class="sub-tabs">
-                  <button class="sub-tab active">One-off classes</button>
-                  <button class="sub-tab">Recurring classes</button>
+                <div class="sub-tabs" id="eligibilitySubTabs">
+                  <button class="sub-tab active" onclick="switchEligibilityTab('one-off')">One-off classes</button>
+                  <button class="sub-tab" onclick="switchEligibilityTab('recurring')">Recurring classes</button>
                 </div>
 
                 <div class="search-input-wrapper">
@@ -1212,11 +1212,14 @@
                     <circle cx="11" cy="11" r="8"></circle>
                     <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                   </svg>
-                  <input type="text" class="search-input" placeholder="Search rate..." id="rateSearch">
+                  <input type="text" class="search-input" placeholder="Search table..." id="rateSearch">
                 </div>
 
-                <div class="empty-state" id="substitutionEmpty">
+                <div class="empty-state" id="oneOffEmpty">
                   No eligible classes have been assigned yet. <a href="#" onclick="assignClasses()">Assign classes</a>
+                </div>
+                <div class="empty-state" id="recurringEmpty" style="display: none;">
+                  No class assigned <a href="#" onclick="assignClasses()">Assign recurring class</a>
                 </div>
               </div>
 
@@ -1344,6 +1347,12 @@
         </button>
       </div>
       <div class="modal-body">
+        <p id="assignmentHelperText" style="color: var(--gray-500); font-size: 0.875rem; margin-bottom: 16px;">
+          Please select classes in which this practitioner would be assignable as a substitute
+        </p>
+        <p id="noClassFoundText" style="color: var(--gray-700); font-size: 0.875rem; font-weight: 500; margin-bottom: 16px;">
+          No class found
+        </p>
         <div class="form-group">
           <label class="form-label">
             Assignment pay rate
@@ -1764,11 +1773,34 @@
       alert('Manage services - Feature coming soon');
     }
 
+    // Track current eligibility tab
+    let currentEligibilityTab = 'one-off';
+
+    function switchEligibilityTab(tab) {
+      currentEligibilityTab = tab;
+      const subTabs = document.querySelectorAll('#eligibilitySubTabs .sub-tab');
+      subTabs.forEach((btn, index) => {
+        btn.classList.toggle('active', (index === 0 && tab === 'one-off') || (index === 1 && tab === 'recurring'));
+      });
+
+      // Show/hide appropriate empty states
+      document.getElementById('oneOffEmpty').style.display = tab === 'one-off' ? 'block' : 'none';
+      document.getElementById('recurringEmpty').style.display = tab === 'recurring' ? 'block' : 'none';
+
+      // Update button text
+      document.getElementById('assignBtnText').textContent = tab === 'recurring' ? 'Assign recurring class' : 'Assign classes';
+    }
+
     function assignClasses() {
       // Open the Add Assignment modal
       document.getElementById('addAssignmentModal').classList.add('show');
       // Reset the select
       document.getElementById('addAssignmentPayRateSelect').value = '';
+
+      // Update helper text with practitioner name
+      const practitionerName = practitioner ? practitioner.first_name : 'this practitioner';
+      document.getElementById('assignmentHelperText').textContent =
+        `Please select classes in which ${practitionerName} would be assignable as a substitute`;
     }
 
     function closeAddAssignmentModal() {
