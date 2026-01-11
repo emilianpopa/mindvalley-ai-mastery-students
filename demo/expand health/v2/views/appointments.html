@@ -3780,6 +3780,52 @@
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
+    function addToCalendar() {
+      if (!selectedAppointment) return;
+
+      const apt = selectedAppointment;
+
+      // Format dates for Google Calendar (YYYYMMDDTHHmmssZ format)
+      const startDate = new Date(apt.start_time);
+      const endDate = new Date(apt.end_time);
+
+      const formatDate = (date) => {
+        return date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+      };
+
+      const startStr = formatDate(startDate);
+      const endStr = formatDate(endDate);
+
+      // Build event title
+      const title = apt.title || 'Appointment';
+
+      // Build description
+      let description = '';
+      if (apt.client_name) {
+        description += `Client: ${apt.client_name}\n`;
+      }
+      if (apt.staff_name) {
+        description += `Practitioner: ${apt.staff_name}\n`;
+      }
+      if (apt.notes) {
+        description += `\nNotes: ${apt.notes}`;
+      }
+
+      // Location (use clinic name if available)
+      const location = 'Expand Health';
+
+      // Build Google Calendar URL
+      const googleCalUrl = new URL('https://calendar.google.com/calendar/render');
+      googleCalUrl.searchParams.set('action', 'TEMPLATE');
+      googleCalUrl.searchParams.set('text', title);
+      googleCalUrl.searchParams.set('dates', `${startStr}/${endStr}`);
+      googleCalUrl.searchParams.set('details', description);
+      googleCalUrl.searchParams.set('location', location);
+
+      // Open in new tab
+      window.open(googleCalUrl.toString(), '_blank');
+    }
+
     function showPanelTab(tab) {
       document.querySelectorAll('.panel-tab').forEach((t, i) => {
         t.classList.toggle('active', (tab === 'details' && i === 0) || (tab === 'timing' && i === 1));
@@ -4610,7 +4656,7 @@
       </div>
 
       <!-- Add to Calendar -->
-      <button class="panel-add-calendar">
+      <button class="panel-add-calendar" onclick="addToCalendar()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
           <line x1="16" y1="2" x2="16" y2="6"></line>
