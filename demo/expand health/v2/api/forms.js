@@ -443,9 +443,18 @@ router.post('/otp/send', async (req, res) => {
 
     // Send email via Resend if configured
     let emailSent = false;
+    let emailError = null;
+
     if (resend) {
       try {
+        // Use verified domain email if available, otherwise sandbox
         const fromEmail = process.env.RESEND_FROM_EMAIL || 'ExpandHealth <onboarding@resend.dev>';
+        const isSandbox = fromEmail.includes('resend.dev');
+
+        console.log(`📧 Attempting to send OTP email via Resend...`);
+        console.log(`   From: ${fromEmail}`);
+        console.log(`   To: ${email}`);
+        console.log(`   Sandbox mode: ${isSandbox}`);
 
         const emailResult = await resend.emails.send({
           from: fromEmail,
@@ -454,7 +463,7 @@ router.post('/otp/send', async (req, res) => {
           html: `
             <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
               <div style="text-align: center; margin-bottom: 40px;">
-                <h1 style="color: #0f766e; font-size: 28px; margin: 0;">✦ ExpandHealth</h1>
+                <h1 style="color: #0f766e; font-size: 28px; margin: 0;">&#10022; ExpandHealth</h1>
               </div>
 
               <div style="background: #f8fafc; border-radius: 12px; padding: 32px; text-align: center;">
@@ -478,33 +487,38 @@ router.post('/otp/send', async (req, res) => {
             </div>
           `
         });
-        console.log('📬 Resend response:', JSON.stringify(emailResult, null, 2));
+
+        console.log('📬 Resend API response:', JSON.stringify(emailResult, null, 2));
 
         if (emailResult.error) {
           console.error('❌ Resend error:', emailResult.error);
-        } else {
-          // Check if we have quota - if daily quota is 0, email won't actually be delivered
-          const dailyQuota = emailResult.headers?.['x-resend-daily-quota'];
-          if (dailyQuota === '0') {
-            console.log('⚠️ Resend daily quota exhausted - email may not be delivered (sandbox mode)');
-            // Don't mark as sent since it won't actually arrive
-          } else {
-            emailSent = true;
-            console.log(`✅ OTP email sent to ${email} (ID: ${emailResult.data?.id})`);
+          emailError = emailResult.error.message || 'Email delivery failed';
+        } else if (emailResult.data?.id) {
+          emailSent = true;
+          console.log(`✅ OTP email queued successfully (ID: ${emailResult.data.id})`);
+
+          // Note: In sandbox mode, emails only deliver to the Resend account owner
+          if (isSandbox) {
+            console.log(`⚠️ Sandbox mode: Email will only be delivered if ${email} is the Resend account owner`);
           }
         }
-      } catch (emailError) {
-        console.error('Failed to send OTP email:', emailError);
-        // Continue even if email fails - we'll show demo OTP
+      } catch (err) {
+        console.error('❌ Failed to send OTP email:', err.message);
+        emailError = err.message;
       }
+    } else {
+      console.log('⚠️ Resend not configured (RESEND_API_KEY not set)');
     }
 
-    // Return response
+    // Return response - always include demo_otp for testing
     res.json({
       success: true,
-      message: emailSent ? 'OTP sent to your email' : 'OTP generated (check console in demo mode)',
-      // Show demo OTP if email wasn't sent or in development mode
-      demo_otp: (!emailSent || process.env.NODE_ENV === 'development') ? otp : undefined
+      message: emailSent
+        ? 'Verification code sent to your email'
+        : 'Verification code generated',
+      email_sent: emailSent,
+      // Always show demo OTP in demo mode or if email wasn't successfully sent
+      demo_otp: otp
     });
   } catch (error) {
     console.error('Error sending OTP:', error);
