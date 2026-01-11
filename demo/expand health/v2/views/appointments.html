@@ -1678,6 +1678,26 @@
       color: var(--gray-500);
     }
 
+    .panel-service-row-clickable {
+      cursor: pointer;
+      border-radius: 8px;
+      padding: 8px;
+      margin: -8px;
+      transition: background-color 0.15s;
+    }
+
+    .panel-service-row-clickable:hover {
+      background-color: var(--gray-50);
+    }
+
+    .panel-service-row-clickable .panel-service-name {
+      text-decoration: none;
+    }
+
+    .panel-service-row-clickable:hover .panel-service-name {
+      text-decoration: underline;
+    }
+
     /* Add to Calendar */
     .panel-add-calendar {
       display: flex;
@@ -3750,6 +3770,16 @@
       selectedAppointment = null;
     }
 
+    function navigateToSchedule() {
+      // Navigate to the appointments schedule page
+      // The current page IS the schedule, so we just close the panel
+      // and scroll to the calendar view if needed
+      closeAppointmentPanel();
+
+      // Scroll to top where the calendar is
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
     function showPanelTab(tab) {
       document.querySelectorAll('.panel-tab').forEach((t, i) => {
         t.classList.toggle('active', (tab === 'details' && i === 0) || (tab === 'timing' && i === 1));
@@ -4565,7 +4595,7 @@
       <!-- Service & Board Section -->
       <div class="panel-section">
         <div class="panel-section-title">Service & Board</div>
-        <div class="panel-service-row">
+        <div class="panel-service-row panel-service-row-clickable" onclick="navigateToSchedule()">
           <div class="panel-service-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
@@ -4573,7 +4603,7 @@
             </svg>
           </div>
           <div class="panel-info-content">
-            <a href="#" class="panel-service-name" id="panelServiceName">Service</a>
+            <span class="panel-service-name" id="panelServiceName">Service</span>
             <div class="panel-service-board">on <span id="panelBoardName">Expand Health</span></div>
           </div>
         </div>
