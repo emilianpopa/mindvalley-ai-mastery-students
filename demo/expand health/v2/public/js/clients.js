@@ -308,12 +308,31 @@ function toggleMoreMenu(event, id) {
   document.querySelectorAll('.more-menu.active').forEach(menu => {
     if (menu.id !== `moreMenu-${id}`) {
       menu.classList.remove('active');
+      menu.classList.remove('dropdown-up');
     }
   });
 
   // Toggle this menu
   const menu = document.getElementById(`moreMenu-${id}`);
   if (menu) {
+    const isOpening = !menu.classList.contains('active');
+
+    if (isOpening) {
+      // Check if dropdown would go below viewport
+      const button = event.target.closest('.more-btn');
+      const buttonRect = button.getBoundingClientRect();
+      const menuHeight = 180; // Approximate height of dropdown
+      const viewportHeight = window.innerHeight;
+      const spaceBelow = viewportHeight - buttonRect.bottom;
+
+      // If not enough space below, open upward
+      if (spaceBelow < menuHeight && buttonRect.top > menuHeight) {
+        menu.classList.add('dropdown-up');
+      } else {
+        menu.classList.remove('dropdown-up');
+      }
+    }
+
     menu.classList.toggle('active');
   }
 }
