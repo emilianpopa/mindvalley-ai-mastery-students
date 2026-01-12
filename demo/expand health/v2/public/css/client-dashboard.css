@@ -350,6 +350,7 @@
 .tab-content {
   display: none;
   animation: fadeIn 0.3s ease-in;
+  padding-bottom: 100px; /* Space for Quick Notes FAB */
 }
 
 .tab-content.active {
