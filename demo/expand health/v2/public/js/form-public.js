@@ -15,6 +15,7 @@ let sections = [];
 let responses = {};
 let linkToken = null;
 let linkClientId = null;
+let clientPrefillData = null; // Stores client data for pre-filling form fields
 
 // Check if in preview mode
 let isPreviewMode = false;
@@ -132,6 +133,15 @@ async function validateLinkToken(token) {
       // Store the values
       userName = clientName;
       userEmail = clientEmail;
+
+      // Store client data for pre-filling form fields later
+      clientPrefillData = {
+        phone: data.client.phone,
+        date_of_birth: data.client.date_of_birth,
+        first_name: data.client.first_name,
+        last_name: data.client.last_name,
+        email: data.client.email
+      };
     }
 
   } catch (error) {
@@ -452,8 +462,70 @@ function initializeForm() {
   // Render sections
   renderSections();
 
+  // Pre-fill form fields with client data if available (from personalized link)
+  if (clientPrefillData) {
+    prefillFormFields();
+  }
+
   // Show first section
   showSection(0);
+}
+
+// Pre-fill form fields with client data from personalized link
+function prefillFormFields() {
+  if (!clientPrefillData) return;
+
+  // Common field name patterns to match
+  const fieldMappings = {
+    // Phone field patterns
+    phone: ['phone', 'phone_number', 'phonenumber', 'mobile', 'cell', 'telephone', 'contact_number'],
+    // DOB field patterns
+    date_of_birth: ['date_of_birth', 'dob', 'dateofbirth', 'birth_date', 'birthdate', 'birthday'],
+    // Email field patterns
+    email: ['email', 'email_address', 'emailaddress', 'e_mail'],
+    // Name field patterns
+    first_name: ['first_name', 'firstname', 'fname', 'given_name'],
+    last_name: ['last_name', 'lastname', 'lname', 'surname', 'family_name']
+  };
+
+  // Iterate through all form fields
+  formData.fields.forEach(field => {
+    const fieldIdLower = (field.id || '').toLowerCase();
+    const fieldLabelLower = (field.label || '').toLowerCase();
+
+    // Check each mapping
+    for (const [dataKey, patterns] of Object.entries(fieldMappings)) {
+      const clientValue = clientPrefillData[dataKey];
+      if (!clientValue) continue;
+
+      // Check if field matches any pattern
+      const matches = patterns.some(pattern =>
+        fieldIdLower.includes(pattern) || fieldLabelLower.includes(pattern)
+      );
+
+      if (matches) {
+        const inputEl = document.getElementById(field.id);
+        if (inputEl && !inputEl.value) {
+          // Format date for date inputs
+          if (field.type === 'date' && dataKey === 'date_of_birth') {
+            // Ensure date is in YYYY-MM-DD format
+            const dateVal = new Date(clientValue);
+            if (!isNaN(dateVal.getTime())) {
+              inputEl.value = dateVal.toISOString().split('T')[0];
+            }
+          } else {
+            inputEl.value = clientValue;
+          }
+          // Add visual indicator that field was pre-filled
+          inputEl.classList.add('prefilled');
+        }
+        break;
+      }
+    }
+  });
+
+  // Update progress after pre-filling
+  updateProgress();
 }
 
 // Organize fields into logical sections based on section breaks
@@ -669,7 +741,7 @@ function renderField(field) {
         const optValue = typeof opt === 'string' ? opt : opt.value;
         const optLabel = typeof opt === 'string' ? opt : opt.label;
         return `
-          <div class="option-item" onclick="selectOption(this, '${field.id}')">
+          <div class="option-item" onclick="selectOption(this, '${field.id}', event)">
             <input
               type="radio"
               name="${field.id}"
@@ -692,11 +764,12 @@ function renderField(field) {
       break;
 
     case 'checkbox':
-      const checkboxOptions = (field.options || []).map(opt => {
+      const checkboxOpts = field.options || [];
+      const checkboxOptions = checkboxOpts.map(opt => {
         const optValue = typeof opt === 'string' ? opt : opt.value;
         const optLabel = typeof opt === 'string' ? opt : opt.label;
         return `
-          <div class="option-item" onclick="toggleCheckbox(this, '${field.id}')">
+          <div class="option-item" data-search-text="${escapeHtml(optLabel.toLowerCase())}" onclick="toggleCheckbox(this, '${field.id}', event)">
             <input
               type="checkbox"
               name="${field.id}[]"
@@ -708,10 +781,25 @@ function renderField(field) {
         `;
       }).join('');
 
+      // Add search filter for long lists (more than 6 options)
+      const showSearchFilter = checkboxOpts.length > 6;
+      const searchFilterHTML = showSearchFilter ? `
+        <div class="options-search-container">
+          <input
+            type="text"
+            class="options-search-input"
+            placeholder="Type to filter options..."
+            oninput="filterOptions(this, '${field.id}')"
+          >
+          <span class="options-count" id="count-${field.id}">${checkboxOpts.length} options</span>
+        </div>
+      ` : '';
+
       fieldHTML = `
         <div class="field-container" data-field-id="${field.id}">
           <label class="field-label">${escapeHtml(field.label)} ${required}</label>
-          <div class="field-options">${checkboxOptions}</div>
+          ${searchFilterHTML}
+          <div class="field-options" id="options-${field.id}" ${showSearchFilter ? 'style="max-height: 400px; overflow-y: auto;"' : ''}>${checkboxOptions}</div>
           <div class="field-error" id="error-${field.id}"></div>
         </div>
       `;
@@ -777,20 +865,143 @@ function renderField(field) {
 }
 
 // Select radio option
-function selectOption(element, fieldId) {
+function selectOption(element, fieldId, event) {
+  // Prevent double-action when clicking directly on radio
+  if (event && event.target.type === 'radio') {
+    // Let the radio handle itself, just update styling
+    setTimeout(() => {
+      const container = element.closest('.field-options');
+      container.querySelectorAll('.option-item').forEach(opt => {
+        opt.classList.remove('selected');
+        // Hide any "Other" text inputs
+        const otherInput = opt.querySelector('.other-text-input');
+        if (otherInput) otherInput.style.display = 'none';
+      });
+      element.classList.add('selected');
+      // Handle "Other" option text input
+      handleOtherOption(element, fieldId, true);
+      updateProgress();
+      evaluateAllConditions();
+    }, 0);
+    return;
+  }
+
   const container = element.closest('.field-options');
-  container.querySelectorAll('.option-item').forEach(opt => opt.classList.remove('selected'));
+  container.querySelectorAll('.option-item').forEach(opt => {
+    opt.classList.remove('selected');
+    // Hide any "Other" text inputs
+    const otherInput = opt.querySelector('.other-text-input');
+    if (otherInput) otherInput.style.display = 'none';
+  });
   element.classList.add('selected');
   element.querySelector('input').checked = true;
+  // Handle "Other" option text input
+  handleOtherOption(element, fieldId, true);
   updateProgress();
+  evaluateAllConditions();
+}
+
+// Filter options in a checkbox/radio list based on search input
+function filterOptions(inputEl, fieldId) {
+  const searchText = inputEl.value.toLowerCase().trim();
+  const optionsContainer = document.getElementById(`options-${fieldId}`);
+  const countEl = document.getElementById(`count-${fieldId}`);
+
+  if (!optionsContainer) return;
+
+  const options = optionsContainer.querySelectorAll('.option-item');
+  let visibleCount = 0;
+  let selectedCount = 0;
+
+  options.forEach(option => {
+    const optionText = option.getAttribute('data-search-text') || option.textContent.toLowerCase();
+    const checkbox = option.querySelector('input[type="checkbox"]');
+    const isChecked = checkbox && checkbox.checked;
+
+    // Always show selected items, otherwise filter by search text
+    if (isChecked || searchText === '' || optionText.includes(searchText)) {
+      option.style.display = 'flex';
+      visibleCount++;
+      if (isChecked) selectedCount++;
+    } else {
+      option.style.display = 'none';
+    }
+  });
+
+  // Update count display
+  if (countEl) {
+    if (searchText) {
+      countEl.textContent = `${visibleCount} of ${options.length} shown${selectedCount > 0 ? ` (${selectedCount} selected)` : ''}`;
+    } else {
+      countEl.textContent = selectedCount > 0 ? `${options.length} options (${selectedCount} selected)` : `${options.length} options`;
+    }
+  }
+}
+
+// Handle "Other" option - show/hide text input
+function handleOtherOption(element, fieldId, isSelected) {
+  const label = element.querySelector('.option-label');
+  const labelText = label ? label.textContent.trim().toLowerCase() : '';
+
+  // Check if this is an "Other" option
+  if (labelText === 'other' || labelText.startsWith('other')) {
+    let otherInput = element.querySelector('.other-text-input');
+
+    if (isSelected) {
+      // Create text input if it doesn't exist
+      if (!otherInput) {
+        otherInput = document.createElement('input');
+        otherInput.type = 'text';
+        otherInput.className = 'field-input other-text-input';
+        otherInput.placeholder = 'Please specify...';
+        otherInput.name = `${fieldId}_other`;
+        otherInput.id = `${fieldId}_other`;
+        otherInput.style.marginTop = '12px';
+        otherInput.onclick = (e) => e.stopPropagation(); // Prevent toggle when clicking input
+        element.appendChild(otherInput);
+      }
+      otherInput.style.display = 'block';
+      setTimeout(() => otherInput.focus(), 100);
+    } else if (otherInput) {
+      otherInput.style.display = 'none';
+      otherInput.value = '';
+    }
+  }
 }
 
 // Toggle checkbox
-function toggleCheckbox(element, fieldId) {
-  element.classList.toggle('selected');
+function toggleCheckbox(element, fieldId, event) {
+  // Prevent double-toggle when clicking directly on checkbox
+  if (event && event.target.type === 'checkbox') {
+    // Let the checkbox handle itself, just update styling
+    setTimeout(() => {
+      const checkbox = element.querySelector('input');
+      if (checkbox.checked) {
+        element.classList.add('selected');
+      } else {
+        element.classList.remove('selected');
+      }
+      // Handle "Other" option text input
+      handleOtherOption(element, fieldId, checkbox.checked);
+      updateProgress();
+      evaluateAllConditions();
+    }, 0);
+    return;
+  }
+
   const checkbox = element.querySelector('input');
   checkbox.checked = !checkbox.checked;
+
+  if (checkbox.checked) {
+    element.classList.add('selected');
+  } else {
+    element.classList.remove('selected');
+  }
+
+  // Handle "Other" option text input
+  handleOtherOption(element, fieldId, checkbox.checked);
   updateProgress();
+  evaluateAllConditions();
 }
 
 // Show specific section
@@ -1176,6 +1387,8 @@ function renderFallbackQuestions(fieldId, count) {
 // Make functions globally available
 window.selectOption = selectOption;
 window.toggleCheckbox = toggleCheckbox;
+window.handleOtherOption = handleOtherOption;
+window.filterOptions = filterOptions;
 window.prevSection = prevSection;
 window.nextSection = nextSection;
 window.goBackToEmail = goBackToEmail;

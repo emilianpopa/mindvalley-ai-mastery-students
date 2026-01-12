@@ -473,7 +473,7 @@ router.post('/personality-insights/:clientId', authenticateToken, async (req, re
     try {
       // Get form submissions (intake forms, questionnaires)
       formsResult = await db.query(
-        `SELECT fs.form_data, fs.ai_summary, fs.submitted_at, ft.name as form_name
+        `SELECT fs.responses as form_data, fs.ai_summary, fs.submitted_at, ft.name as form_name
          FROM form_submissions fs
          JOIN form_templates ft ON fs.form_id = ft.id
          WHERE fs.client_id = $1
@@ -722,7 +722,7 @@ router.post('/client-summary/:clientId', authenticateToken, async (req, res, nex
     try {
       // Get form submissions
       formsResult = await db.query(
-        `SELECT fs.form_data, fs.ai_summary, fs.submitted_at, ft.name as form_name
+        `SELECT fs.responses as form_data, fs.ai_summary, fs.submitted_at, ft.name as form_name
          FROM form_submissions fs
          JOIN form_templates ft ON fs.form_id = ft.id
          WHERE fs.client_id = $1
@@ -802,15 +802,18 @@ CLIENT PROFILE:
         }
         try {
           const formData = typeof form.form_data === 'string' ? JSON.parse(form.form_data) : form.form_data;
+          console.log(`[Client Summary] Processing form data for ${form.form_name}:`, formData ? Object.keys(formData).length + ' fields' : 'null');
           if (formData && typeof formData === 'object') {
             Object.entries(formData).forEach(([key, value]) => {
               if (value && String(value).trim()) {
-                clientContext += `- ${key}: ${String(value).substring(0, 300)}\n`;
+                // Handle arrays (checkbox selections) specially
+                const displayValue = Array.isArray(value) ? value.join(', ') : String(value);
+                clientContext += `- ${key}: ${displayValue.substring(0, 500)}\n`;
               }
             });
           }
         } catch (e) {
-          // Skip if can't parse
+          console.error(`[Client Summary] Error parsing form data for ${form.form_name}:`, e.message);
         }
       });
     }

@@ -996,18 +996,10 @@ function viewActivityItem(type, id) {
   }
 }
 
-// Refresh AI Summary
+// Refresh AI Summary - calls the real regenerateSummary function
 function refreshSummary() {
-  const btn = event.target;
-  const originalText = btn.textContent;
-  btn.textContent = 'Refreshing...';
-  btn.disabled = true;
-
-  setTimeout(() => {
-    btn.textContent = originalText;
-    btn.disabled = false;
-    alert('AI summary refreshed! In production, this would call the AI to regenerate the summary based on latest data.');
-  }, 1500);
+  // Redirect to the actual AI summary generation function
+  regenerateSummary();
 }
 
 // Assign Form - Open modal and load forms

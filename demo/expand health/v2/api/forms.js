@@ -662,7 +662,8 @@ router.get('/links/validate/:token', async (req, res) => {
     try {
       const result = await pool.query(
         `SELECT fl.*, ft.name as form_name, ft.status as form_status,
-                c.first_name as client_first_name, c.last_name as client_last_name, c.email as client_email
+                c.first_name as client_first_name, c.last_name as client_last_name,
+                c.email as client_email, c.phone as client_phone, c.date_of_birth as client_dob
          FROM form_links fl
          INNER JOIN form_templates ft ON fl.form_id = ft.id
          LEFT JOIN clients c ON fl.client_id = c.id
@@ -691,14 +692,22 @@ router.get('/links/validate/:token', async (req, res) => {
         return res.status(400).json({ error: 'This form is no longer available', valid: false });
       }
 
+      // Build client data if personalized link
+      const clientData = link.client_id ? {
+        first_name: link.client_first_name,
+        last_name: link.client_last_name,
+        email: link.client_email,
+        phone: link.client_phone,
+        date_of_birth: link.client_dob
+      } : null;
+
       res.json({
         valid: true,
         link_type: link.link_type,
         form_id: link.form_id,
         form_name: link.form_name,
         client_id: link.client_id,
-        client_name: link.client_id ? `${link.client_first_name} ${link.client_last_name}`.trim() : null,
-        client_email: link.client_email,
+        client: clientData,
         expires_at: link.expires_at
       });
     } catch (dbError) {
