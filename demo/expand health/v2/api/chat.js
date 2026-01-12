@@ -739,10 +739,10 @@ router.post('/client-summary/:clientId', authenticateToken, async (req, res, nex
     try {
       // Get lab results
       labsResult = await db.query(
-        `SELECT name, lab_type, test_date, ai_summary, biomarkers, status
+        `SELECT title as name, lab_type, test_date, ai_summary, extracted_data as biomarkers
          FROM labs
          WHERE client_id = $1
-         ORDER BY test_date DESC
+         ORDER BY COALESCE(test_date, created_at) DESC
          LIMIT 10`,
         [clientId]
       );
@@ -822,14 +822,30 @@ CLIENT PROFILE:
     if (labs.length > 0) {
       clientContext += '\nLAB RESULTS:\n';
       labs.forEach((lab) => {
-        clientContext += `\n[${lab.name} - ${new Date(lab.test_date).toLocaleDateString()}]:\n`;
+        const labDate = lab.test_date ? new Date(lab.test_date).toLocaleDateString() : 'Date not specified';
+        clientContext += `\n[${lab.name} - ${labDate}]:\n`;
         if (lab.ai_summary) {
           clientContext += `AI Summary: ${lab.ai_summary}\n`;
         }
-        if (lab.biomarkers && Array.isArray(lab.biomarkers)) {
-          const outOfRange = lab.biomarkers.filter(b => b.status === 'high' || b.status === 'low');
-          if (outOfRange.length > 0) {
-            clientContext += `Out of range markers: ${outOfRange.map(b => `${b.name}: ${b.value} ${b.unit} (${b.status})`).join(', ')}\n`;
+        // Handle extracted_data (biomarkers) - can be object or array
+        if (lab.biomarkers) {
+          try {
+            const biomarkersData = typeof lab.biomarkers === 'string' ? JSON.parse(lab.biomarkers) : lab.biomarkers;
+            if (Array.isArray(biomarkersData)) {
+              const outOfRange = biomarkersData.filter(b => b.status === 'high' || b.status === 'low');
+              if (outOfRange.length > 0) {
+                clientContext += `Out of range markers: ${outOfRange.map(b => `${b.name}: ${b.value} ${b.unit || ''} (${b.status})`).join(', ')}\n`;
+              }
+            } else if (typeof biomarkersData === 'object') {
+              // If it's an object with key-value pairs
+              Object.entries(biomarkersData).forEach(([key, value]) => {
+                if (value) {
+                  clientContext += `- ${key}: ${String(value).substring(0, 200)}\n`;
+                }
+              });
+            }
+          } catch (e) {
+            console.error('[Client Summary] Error parsing biomarkers:', e.message);
           }
         }
       });
