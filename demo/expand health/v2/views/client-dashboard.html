@@ -1041,13 +1041,16 @@
           </div>
 
           <!-- Email Options (hidden by default) -->
-          <div id="emailOptionsSection" style="display: none; margin-top: 20px;">
+          <div id="emailOptionsSection" style="display: none; margin-top: 20px; border-top: 1px solid #E5E7EB; padding-top: 20px;">
             <div class="form-group">
               <label for="emailMessage">Personal Message (Optional)</label>
               <textarea id="emailMessage" class="form-textarea" rows="3" placeholder="Add a personal message to include in the email..."></textarea>
             </div>
-            <button class="btn-primary" onclick="confirmSendEmail()" style="width: 100%;">
-              <span>📧</span>
+            <button class="send-email-btn" onclick="confirmSendEmail()">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 2L11 13"></path>
+                <path d="M22 2L15 22L11 13L2 9L22 2Z"></path>
+              </svg>
               <span>Send Email Now</span>
             </button>
           </div>
