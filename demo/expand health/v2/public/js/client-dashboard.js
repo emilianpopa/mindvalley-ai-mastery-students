@@ -3634,11 +3634,11 @@ function sendFormViaEmail() {
 
 // Send form via WhatsApp
 function sendFormViaWhatsApp() {
-  if (!currentFormLinkData || !clientData) return;
+  if (!currentFormLinkData || !currentClient) return;
 
-  const phone = clientData.phone ? clientData.phone.replace(/\D/g, '') : '';
+  const phone = currentClient.phone ? currentClient.phone.replace(/\D/g, '') : '';
   const message = encodeURIComponent(
-    `Hi ${clientData.first_name || 'there'}! Please fill out this form for your upcoming appointment:\n\n${currentFormLinkData.link_url}`
+    `Hi ${currentClient.first_name || 'there'}! Please fill out this form for your upcoming appointment:\n\n${currentFormLinkData.link_url}`
   );
 
   if (phone) {
@@ -3650,7 +3650,10 @@ function sendFormViaWhatsApp() {
 
 // Confirm send email
 async function confirmSendEmail() {
-  if (!currentFormLinkData || !clientData) return;
+  if (!currentFormLinkData || !currentClient) {
+    showToast('Please create a form link first', 'warning');
+    return;
+  }
 
   const message = document.getElementById('emailMessage').value;
   const btn = event.target;
@@ -3682,7 +3685,7 @@ async function confirmSendEmail() {
       throw new Error(error.error || 'Failed to send email');
     }
 
-    showToast('Email sent successfully to ' + (clientData.email || 'client'), 'success');
+    showToast('Email sent successfully to ' + (currentClient.email || 'client'), 'success');
     closeSendFormModal();
 
   } catch (error) {
