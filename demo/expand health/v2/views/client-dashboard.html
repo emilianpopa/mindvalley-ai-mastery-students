@@ -909,7 +909,7 @@
   <div id="rightPanel" class="right-panel" style="display: none;">
     <div class="panel-header">
       <h3>Notes on the Go</h3>
-      <button class="close-panel" onclick="closeRightPanel()">Ã—</button>
+      <button class="close-panel" onclick="closeRightPanel()">×</button>
     </div>
     <div class="panel-content">
       <textarea id="quickNotes" placeholder="Quick notes about this client..."></textarea>
@@ -937,7 +937,7 @@
     <div class="modal-container">
       <div class="modal-header">
         <h2>Send Form to Client</h2>
-        <button class="close-modal" onclick="closeSendFormModal()">Ã—</button>
+        <button class="close-modal" onclick="closeSendFormModal()">×</button>
       </div>
       <div class="modal-body">
         <p class="modal-description">Select a form and choose how to send it to the client. The form will be automatically linked to their profile.</p>
@@ -966,7 +966,7 @@
         <!-- Step 2: Generated Link + Send Options -->
         <div id="sendFormStep2" style="display: none;">
           <div class="generated-link-success">
-            <div class="success-icon">âœ…</div>
+            <div class="success-icon">✅</div>
             <p>Form link created successfully!</p>
           </div>
 
@@ -1023,7 +1023,7 @@
     <div class="modal-container modal-large">
       <div class="modal-header">
         <h2>New Consultation Note</h2>
-        <button class="close-modal" onclick="closeNewNoteModal()">Ã—</button>
+        <button class="close-modal" onclick="closeNewNoteModal()">×</button>
       </div>
       <div class="modal-body">
         <p class="modal-description">Create a consultation note with speech-to-text input and AI scribe assistance.</p>
@@ -1052,7 +1052,7 @@
                 <span id="voiceText">Start Voice</span>
               </button>
               <button class="btn-icon" id="aiScribeBtn" onclick="toggleAIScribe()" title="AI Scribe">
-                <span>âœ¨</span>
+                <span>✨</span>
                 <span>AI Scribe</span>
               </button>
             </div>
@@ -1095,7 +1095,7 @@
     <div class="modal-container">
       <div class="modal-header">
         <h2>Upload New File</h2>
-        <button class="close-modal" onclick="closeUploadLabModal()">Ã—</button>
+        <button class="close-modal" onclick="closeUploadLabModal()">×</button>
       </div>
       <div class="modal-body">
         <div class="form-group">
@@ -1138,7 +1138,7 @@
                 <p class="file-name" id="selectedFileName">filename.pdf</p>
                 <p class="file-size" id="selectedFileSize">2.3 MB</p>
               </div>
-              <button class="btn-icon-small" onclick="clearFileSelection()">âœ•</button>
+              <button class="btn-icon-small" onclick="clearFileSelection()">✕</button>
             </div>
           </div>
         </div>
@@ -1204,7 +1204,7 @@
           <!-- Summary Section -->
           <div class="lab-summary-section">
             <div class="lab-section-header">
-              <span class="lab-section-icon">âœ¨</span>
+              <span class="lab-section-icon">✨</span>
               <h3>Summary</h3>
               <span class="ai-badge">AI</span>
             </div>
@@ -1212,7 +1212,7 @@
               <p class="summary-placeholder">Click below to generate an AI summary of this document.</p>
             </div>
             <button class="btn-generate-summary" id="generateLabSummaryBtn" onclick="generateLabSummary()">
-              âœ¨ Generate Summary
+              ✨ Generate Summary
             </button>
           </div>
 

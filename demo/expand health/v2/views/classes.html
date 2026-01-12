@@ -3696,7 +3696,7 @@
                         <polyline points="14 2 14 8 20 8"></polyline>
                       </svg>
                       <span id="emailAttachmentName" style="flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></span>
-                      <button type="button" class="remove-file-btn" onclick="removeEmailAttachment()">Ã—</button>
+                      <button type="button" class="remove-file-btn" onclick="removeEmailAttachment()">×</button>
                     </div>
                     <input type="file" id="emailAttachmentInput" style="display: none;" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg" onchange="handleEmailAttachmentSelect(event)">
                   </div>
@@ -3894,7 +3894,7 @@
           <div class="tag-applies-chips" id="tagAppliesChips">
             <span class="tag-chip">
               Classes
-              <button class="tag-chip-remove" onclick="removeTagApplies('classes')">Ã—</button>
+              <button class="tag-chip-remove" onclick="removeTagApplies('classes')">×</button>
             </span>
           </div>
         </div>
@@ -5245,7 +5245,7 @@
       uploadText.innerHTML = `
         <div class="image-preview-container">
           <img src="${imageData}" alt="${fileName}" class="image-preview">
-          <button type="button" class="image-remove-btn" onclick="removeImage(event, '${type}')" title="Remove image">Ã—</button>
+          <button type="button" class="image-remove-btn" onclick="removeImage(event, '${type}')" title="Remove image">×</button>
         </div>
       `;
     }
