@@ -5,6 +5,11 @@
 
 const API_BASE = window.location.origin;
 
+// Initialize utility bar
+if (typeof initUtilityBar === 'function') {
+  initUtilityBar('clients');
+}
+
 // ========== User Menu Functions ==========
 
 // Toggle user dropdown menu
