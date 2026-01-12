@@ -165,7 +165,7 @@
       <header class="header">
         <div class="header-left">
           <p class="breadcrumb">
-            <a href="/">Home</a> â†’ <a href="/clients">Clients</a> â†’ <span id="breadcrumbName">Loading...</span>
+            <a href="/">Home</a> → <a href="/clients">Clients</a> → <span id="breadcrumbName">Loading...</span>
           </p>
         </div>
         <div class="header-right">
@@ -415,7 +415,7 @@
                     <span class="stat-value" id="chronoAge">--</span>
                   </div>
                   <div class="age-difference" id="ageDifference" style="display: none;">
-                    <span class="diff-arrow">â†“</span>
+                    <span class="diff-arrow">←“</span>
                     <span class="diff-value">-- years younger</span>
                   </div>
                 </div>
@@ -450,7 +450,7 @@
                   </div>
                 </div>
                 <div class="vital-item">
-                  <span class="vital-icon">ðŸ“Š</span>
+                  <span class="vital-icon">📊</span>
                   <div class="vital-info">
                     <span class="vital-label">BMI</span>
                     <span class="vital-value" id="vitalBMI">--</span>
@@ -755,7 +755,7 @@
             <h2>Labs & Tests</h2>
             <div class="header-actions">
               <button class="btn-primary" onclick="openUploadLabModal()">
-                <span>ðŸ“¤</span>
+                <span>📤</span>
                 <span>Upload New File</span>
               </button>
             </div>
@@ -980,7 +980,7 @@
             <label>Form Link</label>
             <div class="link-display">
               <input type="text" id="generatedFormLink" class="form-input" readonly>
-              <button class="btn-icon" onclick="copyFormLink()" title="Copy Link">ðŸ“‹</button>
+              <button class="btn-icon" onclick="copyFormLink()" title="Copy Link">📋</button>
             </div>
             <p class="link-expiry-info" id="formLinkExpiry"></p>
           </div>
@@ -989,15 +989,15 @@
             <p class="send-options-label">Share this link:</p>
             <div class="send-options-buttons">
               <button class="send-option-btn" onclick="copyFormLink()">
-                <span>ðŸ“‹</span>
+                <span>📋</span>
                 <span>Copy Link</span>
               </button>
               <button class="send-option-btn" onclick="sendFormViaEmail()">
-                <span>ðŸ“§</span>
+                <span>📧</span>
                 <span>Send Email</span>
               </button>
               <button class="send-option-btn" onclick="sendFormViaWhatsApp()">
-                <span>ðŸ’¬</span>
+                <span>💬</span>
                 <span>WhatsApp</span>
               </button>
             </div>
@@ -1010,7 +1010,7 @@
               <textarea id="emailMessage" class="form-textarea" rows="3" placeholder="Add a personal message to include in the email..."></textarea>
             </div>
             <button class="btn-primary" onclick="confirmSendEmail()" style="width: 100%;">
-              <span>ðŸ“§</span>
+              <span>📧</span>
               <span>Send Email Now</span>
             </button>
           </div>
@@ -1054,7 +1054,7 @@
             <label for="noteContent" style="margin-bottom: 0;">Note Content</label>
             <div class="note-input-controls">
               <button class="btn-icon" id="voiceInputBtn" onclick="toggleVoiceInput()" title="Voice Input">
-                <span id="voiceIcon">ðŸŽ¤</span>
+                <span id="voiceIcon">🎤</span>
                 <span id="voiceText">Start Voice</span>
               </button>
               <button class="btn-icon" id="aiScribeBtn" onclick="toggleAIScribe()" title="AI Scribe">
@@ -1069,7 +1069,7 @@
           </div>
           <textarea id="noteContent" class="form-textarea" rows="8" placeholder="Enter consultation notes here, or use voice input..."></textarea>
           <div class="note-helper-text">
-            ðŸ’¡ Tip: Use voice input for faster note-taking during consultations
+            💡 Tip: Use voice input for faster note-taking during consultations
           </div>
         </div>
 
@@ -1134,12 +1134,12 @@
           <div class="file-upload-zone" id="fileUploadZone">
             <input type="file" id="labFileInput" accept=".pdf,.doc,.docx" style="display: none;">
             <div class="upload-placeholder" id="uploadPlaceholder">
-              <span class="upload-icon">ðŸ“„</span>
+              <span class="upload-icon">📄</span>
               <p class="upload-text">Drag and drop a file here or <span class="upload-link">browse</span></p>
               <p class="upload-hint">Supports PDF and Word documents (max 50MB)</p>
             </div>
             <div class="upload-preview" id="uploadPreview" style="display: none;">
-              <span class="file-icon">ðŸ“„</span>
+              <span class="file-icon">📄</span>
               <div class="file-info">
                 <p class="file-name" id="selectedFileName">filename.pdf</p>
                 <p class="file-size" id="selectedFileSize">2.3 MB</p>
