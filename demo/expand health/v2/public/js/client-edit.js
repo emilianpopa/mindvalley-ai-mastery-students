@@ -248,20 +248,14 @@ document.addEventListener('DOMContentLoaded', () => {
   clientForm.addEventListener('submit', handleSubmit);
   cancelBtn.addEventListener('click', handleCancel);
 
-  // Phone number formatting (optional)
+  // Phone number formatting - supports international numbers
+  // Allows +, digits, spaces, dashes, and parentheses
   const phoneInput = document.getElementById('phone');
   if (phoneInput) {
     phoneInput.addEventListener('input', (e) => {
-      let value = e.target.value.replace(/\D/g, '');
-      if (value.length > 0) {
-        if (value.length <= 3) {
-          value = `(${value}`;
-        } else if (value.length <= 6) {
-          value = `(${value.slice(0, 3)}) ${value.slice(3)}`;
-        } else {
-          value = `(${value.slice(0, 3)}) ${value.slice(3, 6)}-${value.slice(6, 10)}`;
-        }
-      }
+      // Allow international format: +44, spaces, dashes, parentheses, and digits
+      // Only remove characters that are definitely not part of phone numbers
+      let value = e.target.value.replace(/[^\d\s\-\+\(\)]/g, '');
       e.target.value = value;
     });
   }
