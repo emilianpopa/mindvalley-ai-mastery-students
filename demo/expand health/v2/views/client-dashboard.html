@@ -436,34 +436,51 @@
               </div>
               <div class="vitals-grid">
                 <div class="vital-item">
-                  <span class="vital-icon">âš–ï¸</span>
+                  <span class="vital-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="5" r="3"/>
+                      <path d="M12 8v8M9 12h6"/>
+                    </svg>
+                  </span>
                   <div class="vital-info">
                     <span class="vital-label">Weight</span>
                     <span class="vital-value" id="vitalWeight">-- <small>kg</small></span>
                   </div>
                 </div>
                 <div class="vital-item">
-                  <span class="vital-icon">ðŸ“</span>
+                  <span class="vital-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M12 2v20M8 6h8"/>
+                    </svg>
+                  </span>
                   <div class="vital-info">
                     <span class="vital-label">Height</span>
                     <span class="vital-value" id="vitalHeight">-- <small>cm</small></span>
                   </div>
                 </div>
                 <div class="vital-item">
-                  <span class="vital-icon">📊</span>
+                  <span class="vital-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M18 20V10M12 20V4M6 20v-6"/>
+                    </svg>
+                  </span>
                   <div class="vital-info">
                     <span class="vital-label">BMI</span>
                     <span class="vital-value" id="vitalBMI">--</span>
                   </div>
                 </div>
                 <div class="vital-item">
-                  <span class="vital-icon">â¤ï¸</span>
+                  <span class="vital-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+                    </svg>
+                  </span>
                   <div class="vital-info">
                     <span class="vital-label">Blood Pressure</span>
                     <span class="vital-value" id="vitalBP">-- <small>mmHg</small></span>
                   </div>
                 </div>
-              </div>
+              </div></div>
               <p class="vitals-updated">Last updated: <span id="vitalsDate">No data</span></p>
             </div>
 
@@ -669,32 +686,34 @@
               </div>
               <button class="btn-refresh" onclick="regeneratePersonalityInsights()">Refresh</button>
             </div>
-            <div class="personality-grid">
+            <div class="personality-grid" id="personalityGrid">
               <div class="personality-item">
                 <span class="personality-label">Personality Type</span>
-                <span class="personality-value" id="personalityType">ENTJ - The Commander</span>
+                <span class="personality-value" id="personalityType">--</span>
               </div>
               <div class="personality-item">
                 <span class="personality-label">Communication Style</span>
-                <span class="personality-value" id="communicationStyle">Direct & Analytical</span>
+                <span class="personality-value" id="communicationStyle">--</span>
               </div>
               <div class="personality-item">
                 <span class="personality-label">Decision Making</span>
-                <span class="personality-value" id="decisionMaking">Data-Driven</span>
+                <span class="personality-value" id="decisionMaking">--</span>
               </div>
               <div class="personality-item">
                 <span class="personality-label">Motivation Driver</span>
-                <span class="personality-value" id="motivationDriver">Achievement & Results</span>
+                <span class="personality-value" id="motivationDriver">--</span>
               </div>
             </div>
-            <div class="personality-insights">
-              <h4>AI-Generated Insights</h4>
-              <ul id="personalityInsightsList">
-                <li><strong>Best approach:</strong> Present information with clear data and evidence. This client values efficiency and logical reasoning over emotional appeals.</li>
-                <li><strong>Communication tip:</strong> Be direct and concise. They appreciate professionals who respect their time and get to the point quickly.</li>
-                <li><strong>Engagement style:</strong> Focus on measurable outcomes and progress tracking. Set clear milestones and provide regular status updates.</li>
-                <li><strong>Potential challenges:</strong> May resist recommendations that seem too slow or lack clear rationale. Ensure protocols include clear timelines and expected outcomes.</li>
-              </ul>
+            <div class="personality-insights" id="personalityInsightsContainer">
+              <p class="empty-insights-message" id="emptyInsightsMessage" style="color: #6b7280; font-style: italic;">
+                No personality insights available yet. Complete an intake form to generate AI-powered personality insights.
+              </p>
+              <div id="personalityInsightsContent" style="display: none;">
+                <h4>AI-Generated Insights</h4>
+                <ul id="personalityInsightsList">
+                  <!-- Populated by JavaScript when intake data is available -->
+                </ul>
+              </div>
             </div>
           </div>
 
