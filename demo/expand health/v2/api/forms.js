@@ -1752,15 +1752,39 @@ router.post('/send-email', authenticateToken, async (req, res) => {
     }
 
     const fromEmail = process.env.RESEND_FROM_EMAIL || 'ExpandHealth <noreply@expandhealth.com>';
+    const isSandbox = fromEmail.includes('resend.dev');
 
-    await resend.emails.send({
+    console.log(`📧 Sending form email via Resend...`);
+    console.log(`   From: ${fromEmail}`);
+    console.log(`   To: ${client.email}`);
+    console.log(`   Subject: ${formName} - Please Complete Your Form`);
+    console.log(`   Sandbox mode: ${isSandbox}`);
+
+    const emailResult = await resend.emails.send({
       from: fromEmail,
       to: client.email,
       subject: `${formName} - Please Complete Your Form`,
       html: emailHtml
     });
 
-    res.json({ success: true, message: 'Email sent successfully' });
+    console.log('📬 Resend API response:', JSON.stringify(emailResult, null, 2));
+
+    if (emailResult.error) {
+      console.error('❌ Resend error:', emailResult.error);
+      return res.status(500).json({ error: emailResult.error.message || 'Email delivery failed' });
+    }
+
+    // Warn about sandbox mode
+    if (isSandbox) {
+      console.log(`⚠️ Sandbox mode: Email will only be delivered if ${client.email} is the Resend account owner`);
+    }
+
+    res.json({
+      success: true,
+      message: 'Email sent successfully',
+      sandbox_mode: isSandbox,
+      email_id: emailResult.data?.id
+    });
 
   } catch (error) {
     console.error('Error sending form email:', error);

@@ -3685,7 +3685,14 @@ async function confirmSendEmail() {
       throw new Error(error.error || 'Failed to send email');
     }
 
-    showToast('Email sent successfully to ' + (currentClient.email || 'client'), 'success');
+    const result = await response.json();
+
+    // Check if in sandbox mode
+    if (result.sandbox_mode) {
+      showToast('Email queued! Note: Sandbox mode - only delivers to Resend account owner. Verify a domain for production use.', 'warning', 8000);
+    } else {
+      showToast('Email sent successfully to ' + (currentClient.email || 'client'), 'success');
+    }
     closeSendFormModal();
 
   } catch (error) {
