@@ -2562,7 +2562,7 @@ async function regenerateSummary() {
           ).join('')}
         </ul>
         <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #E5E7EB; font-size: 11px; color: #9CA3AF;">
-          Based on ${data.dataSourcesUsed?.notes || 0} notes, ${data.dataSourcesUsed?.forms || 0} forms, ${data.dataSourcesUsed?.labs || 0} labs
+          Based on ${data.dataSourcesUsed?.notes || 0} notes, ${data.dataSourcesUsed?.forms || 0} forms, ${data.dataSourcesUsed?.labs || 0} labs, ${data.dataSourcesUsed?.protocols || 0} protocols
         </div>
       `;
     } else {

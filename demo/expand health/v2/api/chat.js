@@ -752,12 +752,32 @@ router.post('/client-summary/:clientId', authenticateToken, async (req, res, nex
       labsResult = { rows: [] };
     }
 
+    // Get protocols
+    let protocolsResult;
+    try {
+      protocolsResult = await db.query(
+        `SELECT p.id, p.status, p.notes, p.modules, p.created_at,
+                pt.name as template_name, pt.description as template_description, pt.category
+         FROM protocols p
+         LEFT JOIN protocol_templates pt ON p.template_id = pt.id
+         WHERE p.client_id = $1
+         ORDER BY p.created_at DESC
+         LIMIT 10`,
+        [clientId]
+      );
+      console.log(`[Client Summary] Protocols found: ${protocolsResult.rows.length}`);
+    } catch (dbError) {
+      console.error('[Client Summary] Protocols query error:', dbError.message);
+      protocolsResult = { rows: [] };
+    }
+
     const notes = notesResult.rows;
     const formSubmissions = formsResult.rows;
     const labs = labsResult.rows;
+    const protocols = protocolsResult.rows;
 
     // Check if we have any data to summarize
-    const hasData = notes.length > 0 || formSubmissions.length > 0 || labs.length > 0 ||
+    const hasData = notes.length > 0 || formSubmissions.length > 0 || labs.length > 0 || protocols.length > 0 ||
                     client.medical_history || client.current_medications || client.allergies;
 
     if (!hasData) {
@@ -765,8 +785,8 @@ router.post('/client-summary/:clientId', authenticateToken, async (req, res, nex
       return res.json({
         clientId,
         summary: null,
-        message: 'No data available to generate summary. Add notes, forms, or lab results first.',
-        dataSourcesUsed: { notes: 0, forms: 0, labs: 0 },
+        message: 'No data available to generate summary. Add notes, forms, lab results, or protocols first.',
+        dataSourcesUsed: { notes: 0, forms: 0, labs: 0, protocols: 0 },
         generatedAt: new Date().toISOString()
       });
     }
@@ -851,6 +871,39 @@ CLIENT PROFILE:
       });
     }
 
+    // Add protocols context
+    if (protocols.length > 0) {
+      clientContext += '\nACTIVE PROTOCOLS:\n';
+      protocols.forEach((protocol) => {
+        // Extract title from notes field (format: "Title: xxx\n\n...")
+        const titleMatch = protocol.notes?.match(/^Title:\s*(.+?)(?:\n|$)/);
+        const title = titleMatch ? titleMatch[1] : protocol.template_name || 'Custom Protocol';
+        const protocolDate = new Date(protocol.created_at).toLocaleDateString();
+
+        clientContext += `\n[${title} - ${protocolDate}] (${protocol.status || 'draft'}):\n`;
+
+        if (protocol.template_description) {
+          clientContext += `Description: ${protocol.template_description}\n`;
+        }
+        if (protocol.category) {
+          clientContext += `Category: ${protocol.category}\n`;
+        }
+
+        // Include module summaries if available
+        if (protocol.modules && Array.isArray(protocol.modules) && protocol.modules.length > 0) {
+          clientContext += `Modules:\n`;
+          protocol.modules.forEach((module) => {
+            const moduleName = module.name || module.title || 'Module';
+            clientContext += `- ${moduleName}`;
+            if (module.goal) {
+              clientContext += `: ${module.goal.substring(0, 150)}`;
+            }
+            clientContext += '\n';
+          });
+        }
+      });
+    }
+
     // Call Claude to generate summary
     const summaryPrompt = `You are a clinical assistant for a functional medicine practice. Based on the following client data, generate a concise health summary for the practitioner's dashboard.
 
@@ -866,6 +919,7 @@ Generate a summary with the following bullet points (only include categories whe
 6. **Allergies** - Drug or food allergies (or state "No known allergies" if none)
 7. **Key lab findings** - Any notable lab results or trends (if labs available)
 8. **Current medications** - What they're currently taking
+9. **Active protocols** - Brief summary of current treatment protocols assigned to this client (if any)
 
 Format your response as a JSON object:
 {
@@ -933,7 +987,8 @@ Rules:
       dataSourcesUsed: {
         notes: notes.length,
         forms: formSubmissions.length,
-        labs: labs.length
+        labs: labs.length,
+        protocols: protocols.length
       },
       generatedAt: new Date().toISOString()
     });
