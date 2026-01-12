@@ -2133,6 +2133,249 @@
       border-color: var(--purple-700);
     }
 
+    /* Edit Appointment Modal */
+    .edit-apt-modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 2000;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.2s ease;
+    }
+
+    .edit-apt-modal-overlay.show {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .edit-apt-modal {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.95);
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+      z-index: 2001;
+      width: 600px;
+      max-width: 90vw;
+      max-height: 90vh;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .edit-apt-modal.show {
+      opacity: 1;
+      visibility: visible;
+      transform: translate(-50%, -50%) scale(1);
+    }
+
+    .edit-apt-modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .edit-apt-modal-header h3 {
+      margin: 0;
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+
+    .edit-apt-modal-body {
+      padding: 24px;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    .edit-apt-form-row {
+      display: flex;
+      align-items: center;
+      margin-bottom: 20px;
+      gap: 16px;
+    }
+
+    .edit-apt-form-row-top {
+      align-items: flex-start;
+    }
+
+    .edit-apt-form-label {
+      width: 140px;
+      flex-shrink: 0;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--gray-700);
+    }
+
+    .edit-apt-form-value {
+      font-size: 0.875rem;
+      color: var(--gray-900);
+    }
+
+    .edit-apt-form-control {
+      flex: 1;
+    }
+
+    .edit-apt-form-control-with-btn {
+      display: flex;
+      gap: 8px;
+    }
+
+    .edit-apt-form-input,
+    .edit-apt-form-select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--gray-300);
+      border-radius: 8px;
+      font-size: 0.875rem;
+      color: var(--gray-900);
+      background: white;
+    }
+
+    .edit-apt-form-input:focus,
+    .edit-apt-form-select:focus {
+      outline: none;
+      border-color: var(--purple-500);
+      box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+    }
+
+    .edit-apt-form-textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--gray-300);
+      border-radius: 8px;
+      font-size: 0.875rem;
+      color: var(--gray-900);
+      resize: vertical;
+      font-family: inherit;
+    }
+
+    .edit-apt-form-textarea:focus {
+      outline: none;
+      border-color: var(--purple-500);
+      box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+    }
+
+    .edit-apt-form-hint {
+      font-size: 0.75rem;
+      color: var(--gray-500);
+      margin-top: -12px;
+      margin-bottom: 20px;
+      padding-left: 156px;
+    }
+
+    .edit-apt-add-btn {
+      width: 40px;
+      height: 40px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--gray-100);
+      border: 1px solid var(--gray-300);
+      border-radius: 8px;
+      font-size: 1.25rem;
+      color: var(--gray-600);
+      cursor: pointer;
+    }
+
+    .edit-apt-add-btn:hover {
+      background: var(--gray-200);
+    }
+
+    .edit-apt-duration-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .edit-apt-duration-field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .edit-apt-duration-input {
+      width: 70px;
+      text-align: center;
+    }
+
+    .edit-apt-duration-label {
+      font-size: 0.7rem;
+      color: var(--gray-500);
+      text-align: center;
+    }
+
+    .edit-apt-duration-unit {
+      font-size: 0.875rem;
+      color: var(--gray-600);
+      align-self: center;
+      padding-top: 10px;
+    }
+
+    .edit-apt-price-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .edit-apt-currency {
+      font-size: 0.875rem;
+      color: var(--gray-600);
+    }
+
+    .edit-apt-price-input {
+      width: 120px;
+    }
+
+    .edit-apt-modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      padding: 16px 24px;
+      border-top: 1px solid var(--gray-200);
+      background: white;
+    }
+
+    .edit-apt-btn {
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .edit-apt-btn-cancel {
+      background: white;
+      border: 1px solid var(--gray-300);
+      color: var(--gray-700);
+    }
+
+    .edit-apt-btn-cancel:hover {
+      background: var(--gray-50);
+    }
+
+    .edit-apt-btn-save {
+      background: var(--purple-600);
+      border: none;
+      color: white;
+    }
+
+    .edit-apt-btn-save:hover {
+      background: var(--purple-700);
+    }
+
     /* New Appointment Modal */
     .new-apt-modal-overlay {
       position: fixed;
@@ -3834,6 +4077,174 @@
     }
 
     // =====================
+    // Edit Appointment Modal
+    // =====================
+
+    async function openEditAppointmentModal() {
+      if (!selectedAppointment) return;
+
+      const apt = selectedAppointment;
+
+      // Populate the form with current appointment data
+      document.getElementById('editAptBoard').textContent = 'Expand Health';
+
+      // Set starts at datetime
+      if (apt.start_time) {
+        const startDate = new Date(apt.start_time);
+        const localDateTime = new Date(startDate.getTime() - startDate.getTimezoneOffset() * 60000)
+          .toISOString()
+          .slice(0, 16);
+        document.getElementById('editAptStartsAt').value = localDateTime;
+      }
+
+      // Load and populate services dropdown
+      await loadServicesForEdit();
+      if (apt.service_id) {
+        document.getElementById('editAptService').value = apt.service_id;
+      }
+
+      // Load and populate staff dropdown
+      await loadStaffForEdit();
+      if (apt.staff_id) {
+        document.getElementById('editAptStaff').value = apt.staff_id;
+      }
+
+      // Set duration (calculate from start/end time or use default)
+      if (apt.start_time && apt.end_time) {
+        const start = new Date(apt.start_time);
+        const end = new Date(apt.end_time);
+        const durationMinutes = Math.round((end - start) / (1000 * 60));
+        document.getElementById('editAptDuration').value = durationMinutes;
+      } else {
+        document.getElementById('editAptDuration').value = 45;
+      }
+
+      // Set buffers (default values)
+      document.getElementById('editAptBufferStart').value = 5;
+      document.getElementById('editAptBufferEnd').value = 5;
+
+      // Set price
+      if (apt.price) {
+        document.getElementById('editAptPrice').value = apt.price;
+      } else {
+        document.getElementById('editAptPrice').value = 0;
+      }
+
+      // Set notes
+      document.getElementById('editAptNotes').value = apt.notes || '';
+
+      // Show modal
+      document.getElementById('editAptModalOverlay').classList.add('show');
+      document.getElementById('editAptModal').classList.add('show');
+    }
+
+    function closeEditAppointmentModal() {
+      document.getElementById('editAptModalOverlay').classList.remove('show');
+      document.getElementById('editAptModal').classList.remove('show');
+    }
+
+    async function loadServicesForEdit() {
+      try {
+        const response = await fetch('/api/services', {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (response.ok) {
+          const services = await response.json();
+          const select = document.getElementById('editAptService');
+          select.innerHTML = '<option value="">Select service...</option>';
+
+          services.forEach(service => {
+            const option = document.createElement('option');
+            option.value = service.id;
+            option.textContent = service.name;
+            select.appendChild(option);
+          });
+        }
+      } catch (error) {
+        console.error('Error loading services:', error);
+      }
+    }
+
+    async function loadStaffForEdit() {
+      try {
+        const response = await fetch('/api/staff', {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (response.ok) {
+          const staff = await response.json();
+          const select = document.getElementById('editAptStaff');
+          select.innerHTML = '<option value="">Select staff...</option>';
+
+          (staff.staff || staff).forEach(member => {
+            const option = document.createElement('option');
+            option.value = member.id;
+            option.textContent = `${member.first_name} ${member.last_name}`;
+            select.appendChild(option);
+          });
+        }
+      } catch (error) {
+        console.error('Error loading staff:', error);
+      }
+    }
+
+    async function saveAppointmentChanges() {
+      if (!selectedAppointment) return;
+
+      const apt = selectedAppointment;
+
+      // Gather form data
+      const startDateTime = document.getElementById('editAptStartsAt').value;
+      const serviceId = document.getElementById('editAptService').value;
+      const staffId = document.getElementById('editAptStaff').value;
+      const duration = parseInt(document.getElementById('editAptDuration').value) || 45;
+      const price = parseFloat(document.getElementById('editAptPrice').value) || 0;
+      const notes = document.getElementById('editAptNotes').value;
+
+      // Calculate end time based on duration
+      const startDate = new Date(startDateTime);
+      const endDate = new Date(startDate.getTime() + duration * 60 * 1000);
+
+      try {
+        const response = await fetch(`/api/appointments/${apt.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            start_time: startDate.toISOString(),
+            end_time: endDate.toISOString(),
+            service_id: serviceId || null,
+            staff_id: staffId || null,
+            price: price,
+            notes: notes
+          })
+        });
+
+        if (response.ok) {
+          closeEditAppointmentModal();
+          closeAppointmentPanel();
+          // Refresh the calendar view
+          loadAppointments();
+        } else {
+          const error = await response.json();
+          alert('Error saving changes: ' + (error.error || 'Unknown error'));
+        }
+      } catch (error) {
+        console.error('Error saving appointment:', error);
+        alert('Error saving changes. Please try again.');
+      }
+    }
+
+    // =====================
     // Add Customer Modal
     // =====================
 
@@ -4667,6 +5078,22 @@
       </button>
     </div>
 
+    <!-- Panel Footer -->
+    <div class="panel-footer">
+      <button class="panel-btn panel-btn-edit" onclick="openEditAppointmentModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+        </svg>
+        Edit
+      </button>
+      <button class="panel-btn panel-btn-paid" id="panelPaidBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+        Paid
+      </button>
+    </div>
   </div>
 
   <!-- Add Customer Modal -->
@@ -4753,6 +5180,126 @@
     <div class="create-customer-modal-footer">
       <button class="modal-btn modal-btn-cancel" onclick="closeCreateCustomerModal()">Cancel</button>
       <button class="modal-btn modal-btn-create" onclick="createNewCustomer()">Create</button>
+    </div>
+  </div>
+
+  <!-- Edit Appointment Modal -->
+  <div class="edit-apt-modal-overlay" id="editAptModalOverlay" onclick="closeEditAppointmentModal()"></div>
+  <div class="edit-apt-modal" id="editAptModal">
+    <div class="edit-apt-modal-header">
+      <h3>Edit appointment reservation</h3>
+      <button class="modal-close-btn" onclick="closeEditAppointmentModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+    <div class="edit-apt-modal-body">
+      <!-- Board (read-only) -->
+      <div class="edit-apt-form-row">
+        <label class="edit-apt-form-label">Board</label>
+        <div class="edit-apt-form-value" id="editAptBoard">Expand Health</div>
+      </div>
+
+      <!-- Starts at -->
+      <div class="edit-apt-form-row">
+        <label class="edit-apt-form-label">Starts at</label>
+        <div class="edit-apt-form-control">
+          <input type="datetime-local" class="edit-apt-form-input" id="editAptStartsAt">
+        </div>
+      </div>
+
+      <!-- Service -->
+      <div class="edit-apt-form-row">
+        <label class="edit-apt-form-label">Service</label>
+        <div class="edit-apt-form-control">
+          <select class="edit-apt-form-select" id="editAptService">
+            <option value="">Select service...</option>
+          </select>
+        </div>
+      </div>
+      <div class="edit-apt-form-hint">Reservation with paid deposits or paid attendees can't have service changed</div>
+
+      <!-- Staff -->
+      <div class="edit-apt-form-row">
+        <label class="edit-apt-form-label">Staff</label>
+        <div class="edit-apt-form-control">
+          <select class="edit-apt-form-select" id="editAptStaff">
+            <option value="">Select staff...</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Venue -->
+      <div class="edit-apt-form-row">
+        <label class="edit-apt-form-label">Venue</label>
+        <div class="edit-apt-form-control">
+          <select class="edit-apt-form-select" id="editAptVenue">
+            <option value="">Select venue...</option>
+            <option value="event-space">Event Space</option>
+            <option value="consultation-room">Consultation Room</option>
+            <option value="treatment-room">Treatment Room</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Pay rate -->
+      <div class="edit-apt-form-row">
+        <label class="edit-apt-form-label">Pay rate</label>
+        <div class="edit-apt-form-control edit-apt-form-control-with-btn">
+          <select class="edit-apt-form-select" id="editAptPayRate">
+            <option value="">Pay rate not specified</option>
+          </select>
+          <button class="edit-apt-add-btn" type="button">+</button>
+        </div>
+      </div>
+
+      <!-- Duration & Buffers -->
+      <div class="edit-apt-form-row">
+        <label class="edit-apt-form-label">Duration &<br>Buffers/Overlaps</label>
+        <div class="edit-apt-form-control">
+          <div class="edit-apt-duration-row">
+            <div class="edit-apt-duration-field">
+              <input type="number" class="edit-apt-form-input edit-apt-duration-input" id="editAptBufferStart" value="5" min="0">
+              <span class="edit-apt-duration-label">Buffer at start</span>
+            </div>
+            <div class="edit-apt-duration-field">
+              <input type="number" class="edit-apt-form-input edit-apt-duration-input" id="editAptDuration" value="45" min="1">
+              <span class="edit-apt-duration-label">Duration</span>
+            </div>
+            <div class="edit-apt-duration-field">
+              <input type="number" class="edit-apt-form-input edit-apt-duration-input" id="editAptBufferEnd" value="5" min="0">
+              <span class="edit-apt-duration-label">Buffer at end</span>
+            </div>
+            <span class="edit-apt-duration-unit">minutes</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Total price -->
+      <div class="edit-apt-form-row">
+        <label class="edit-apt-form-label">Total price</label>
+        <div class="edit-apt-form-control">
+          <div class="edit-apt-price-row">
+            <span class="edit-apt-currency">ZAR</span>
+            <input type="number" class="edit-apt-form-input edit-apt-price-input" id="editAptPrice" value="0" min="0" step="0.01">
+          </div>
+        </div>
+      </div>
+      <div class="edit-apt-form-hint">You can charge the customer or send a payment link once the appointment is created.</div>
+
+      <!-- Additional note -->
+      <div class="edit-apt-form-row edit-apt-form-row-top">
+        <label class="edit-apt-form-label">Additional note</label>
+        <div class="edit-apt-form-control">
+          <textarea class="edit-apt-form-textarea" id="editAptNotes" rows="3" placeholder=""></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="edit-apt-modal-footer">
+      <button class="edit-apt-btn edit-apt-btn-cancel" onclick="closeEditAppointmentModal()">Cancel</button>
+      <button class="edit-apt-btn edit-apt-btn-save" onclick="saveAppointmentChanges()">Save changes</button>
     </div>
   </div>
 
