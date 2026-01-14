@@ -6,6 +6,7 @@ const multer = require('multer');
 const pdfParse = require('pdf-parse');
 const { GoogleGenAI } = require('@google/genai');
 const { Resend } = require('resend');
+const Anthropic = require('@anthropic-ai/sdk');
 
 // Initialize Resend for email
 let resend = null;
@@ -22,6 +23,12 @@ const pool = new Pool({
 let genAI = null;
 if (process.env.GEMINI_API_KEY) {
   genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+}
+
+// Initialize Anthropic client (fallback for AI summaries)
+let anthropic = null;
+if (process.env.ANTHROPIC_API_KEY) {
+  anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 }
 
 // Configure multer for PDF upload
@@ -1531,9 +1538,10 @@ router.post('/submissions/:id/create-client', authenticateToken, async (req, res
 
 // Background function to generate and save AI summary
 async function generateAndSaveAISummary(submissionId, responses, formName) {
-  if (!genAI) {
-    console.log('Gemini model not configured, skipping AI summary');
-    return;
+  // Check if any AI service is available
+  if (!genAI && !anthropic) {
+    console.log('No AI service configured (need GEMINI_API_KEY or ANTHROPIC_API_KEY)');
+    throw new Error('AI service not configured. Please set GEMINI_API_KEY or ANTHROPIC_API_KEY.');
   }
 
   try {
@@ -1560,11 +1568,25 @@ Provide a summary with:
 
 Keep the summary professional and actionable. Use bullet points for clarity.`;
 
-    const result = await genAI.models.generateContent({
-      model: 'gemini-2.0-flash-001',
-      contents: prompt
-    });
-    const summary = result.text;
+    let summary;
+
+    // Try Gemini first, fall back to Claude
+    if (genAI) {
+      console.log('Using Gemini for AI summary...');
+      const result = await genAI.models.generateContent({
+        model: 'gemini-2.0-flash-001',
+        contents: prompt
+      });
+      summary = result.text;
+    } else if (anthropic) {
+      console.log('Using Claude for AI summary...');
+      const result = await anthropic.messages.create({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1024,
+        messages: [{ role: 'user', content: prompt }]
+      });
+      summary = result.content[0].text;
+    }
 
     // Save to database
     await pool.query(
