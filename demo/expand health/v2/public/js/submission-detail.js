@@ -355,16 +355,26 @@ function renderQuestions() {
   const container = document.getElementById('questionsList');
   const responses = submissionData.responses || submissionData.response_data || {};
 
+  console.log('[renderQuestions] Responses:', responses);
+  console.log('[renderQuestions] Response keys:', Object.keys(responses));
+
   // Build field labels map from form template
   const fieldLabels = {};
   const fieldCategories = {};
 
   if (formData && formData.fields) {
+    console.log('[renderQuestions] Form fields count:', formData.fields.length);
     formData.fields.forEach(field => {
+      console.log('[renderQuestions] Field:', field.id, '-> Label:', field.label, '-> Category:', field.category);
       fieldLabels[field.id] = field.label;
       fieldCategories[field.id] = field.category || detectCategory(field.label);
     });
+  } else {
+    console.log('[renderQuestions] No form fields found!');
   }
+
+  console.log('[renderQuestions] Built fieldLabels:', Object.keys(fieldLabels));
+  console.log('[renderQuestions] Built fieldCategories:', fieldCategories);
 
   // Track categories for filter tags
   const usedCategories = new Set();
@@ -372,8 +382,11 @@ function renderQuestions() {
   // Render each question/answer
   const questionsHtml = Object.entries(responses).map(([key, value]) => {
     const label = fieldLabels[key] || formatFieldLabel(key);
-    const category = fieldCategories[key] || detectCategory(label);
+    const precomputedCategory = fieldCategories[key];
+    const category = precomputedCategory || detectCategory(label);
     const displayValue = formatAnswer(value);
+
+    console.log(`[renderQuestions] Processing: key="${key.substring(0,30)}...", precomputedCategory=${precomputedCategory}, finalCategory=${category}`);
 
     usedCategories.add(category);
 
@@ -500,14 +513,27 @@ function renderFormNotes() {
 
 // Detect category from question text using regex patterns
 function detectCategory(text) {
+  if (!text) {
+    console.log('[detectCategory] Empty text, returning general');
+    return 'general';
+  }
+
+  // Normalize text - remove extra whitespace, normalize quotes
+  const normalizedText = text.toString().trim();
+
+  console.log('[detectCategory] Testing text:', normalizedText.substring(0, 50) + '...');
+
   // Check patterns in order - more specific categories first
   for (const { category, patterns } of categoryPatterns) {
     for (const pattern of patterns) {
-      if (pattern.test(text)) {
+      if (pattern.test(normalizedText)) {
+        console.log('[detectCategory] Matched category:', category, 'with pattern:', pattern.toString());
         return category;
       }
     }
   }
+
+  console.log('[detectCategory] No match found, returning general');
   return 'general';
 }
 
