@@ -505,7 +505,7 @@ Keep the analysis professional, clinically relevant, and actionable for a health
         const pdfBase64 = Buffer.from(pdfBuffer).toString('base64');
 
         const result = await genAI.models.generateContent({
-          model: 'gemini-2.0-flash-001',
+          model: 'gemini-2.0-flash',
           contents: [
             {
               parts: [
@@ -548,7 +548,7 @@ Keep the analysis professional, clinically relevant, and actionable for a health
         }
 
         const fallbackResult = await genAI.models.generateContent({
-          model: 'gemini-2.0-flash-001',
+          model: 'gemini-2.0-flash',
           contents: fallbackPrompt
         });
         summary = fallbackResult.text;
@@ -575,7 +575,7 @@ Keep the analysis professional, clinically relevant, and actionable for a health
 
       console.log('Calling Gemini API with text-only analysis...');
       const result = await genAI.models.generateContent({
-        model: 'gemini-2.0-flash-001',
+        model: 'gemini-2.0-flash',
         contents: fallbackPrompt
       });
       summary = result.text;
