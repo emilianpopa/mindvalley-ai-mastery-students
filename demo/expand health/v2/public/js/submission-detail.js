@@ -383,7 +383,10 @@ function renderQuestions() {
   const questionsHtml = Object.entries(responses).map(([key, value]) => {
     const label = fieldLabels[key] || formatFieldLabel(key);
     const precomputedCategory = fieldCategories[key];
-    const category = precomputedCategory || detectCategory(label);
+    // Pass the key to detectCategory so it can extract category from key prefix
+    const category = (precomputedCategory && precomputedCategory !== 'general')
+      ? precomputedCategory
+      : detectCategory(label, key);
     const displayValue = formatAnswer(value);
 
     console.log(`[renderQuestions] Processing: key="${key.substring(0,30)}...", precomputedCategory=${precomputedCategory}, finalCategory=${category}`);
@@ -511,8 +514,37 @@ function renderFormNotes() {
   `).join('');
 }
 
+// Extract category from field key prefix (e.g., "diet_emotional_eating" -> "diet")
+function extractCategoryFromKey(key) {
+  if (!key) return null;
+
+  const keyLower = key.toLowerCase();
+
+  // Check for category prefixes in the key
+  const categoryPrefixes = ['diet', 'sleep', 'activity', 'stress', 'lifestyle', 'history', 'goals', 'symptoms', 'emotional', 'general'];
+
+  for (const prefix of categoryPrefixes) {
+    if (keyLower.startsWith(prefix + '_') || keyLower.startsWith(prefix + '-')) {
+      // Map 'emotional' to 'stress' category
+      if (prefix === 'emotional') return 'stress';
+      return prefix;
+    }
+  }
+
+  return null;
+}
+
 // Detect category from question text using regex patterns
-function detectCategory(text) {
+function detectCategory(text, key = null) {
+  // First try to extract from key prefix
+  if (key) {
+    const keyCategory = extractCategoryFromKey(key);
+    if (keyCategory) {
+      console.log('[detectCategory] Extracted from key:', key, '->', keyCategory);
+      return keyCategory;
+    }
+  }
+
   if (!text) {
     console.log('[detectCategory] Empty text, returning general');
     return 'general';
