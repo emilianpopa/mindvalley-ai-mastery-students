@@ -128,7 +128,7 @@ ${pdfText}
 Return ONLY the JSON object, no other text.`;
 
     const result = await genAI.models.generateContent({
-      model: 'gemini-2.0-flash-001',
+      model: 'gemini-2.0-flash',
       contents: prompt
     });
     const responseText = result.text;
@@ -1050,7 +1050,7 @@ Provide a 2-3 sentence summary highlighting:
 Keep your response concise and professional.`;
 
     const result = await genAI.models.generateContent({
-      model: 'gemini-2.0-flash-001',
+      model: 'gemini-2.0-flash',
       contents: prompt
     });
     const summary = result.text;
@@ -1578,11 +1578,28 @@ Keep the summary professional and actionable. Use bullet points for clarity.`;
     // Try Gemini first, fall back to Claude
     if (genAI) {
       console.log('Using Gemini for AI summary...');
-      const result = await genAI.models.generateContent({
-        model: 'gemini-2.0-flash-001',
-        contents: prompt
-      });
-      summary = result.text;
+      try {
+        const result = await genAI.models.generateContent({
+          model: 'gemini-2.0-flash',
+          contents: prompt
+        });
+        summary = result.text;
+        console.log('Gemini summary generated successfully');
+      } catch (geminiError) {
+        console.error('Gemini API error:', geminiError.message);
+        // Fall back to Claude if Gemini fails
+        if (anthropic) {
+          console.log('Falling back to Claude...');
+          const result = await anthropic.messages.create({
+            model: 'claude-sonnet-4-20250514',
+            max_tokens: 1024,
+            messages: [{ role: 'user', content: prompt }]
+          });
+          summary = result.content[0].text;
+        } else {
+          throw geminiError;
+        }
+      }
     } else if (anthropic) {
       console.log('Using Claude for AI summary...');
       const result = await anthropic.messages.create({
