@@ -27,7 +27,7 @@ const categoryPatterns = [
       /family history/i,
       /medical history/i,
       /diagnosed with/i,
-      /previous(ly)?s+(had|diagnosed|treated)/i,
+      /previous(ly)?\s+(had|diagnosed|treated)/i,
       /surgery|operation|procedure/i,
       /hospital(ized)?/i
     ]
@@ -36,7 +36,7 @@ const categoryPatterns = [
   {
     category: 'diet',
     patterns: [
-      /(Is+)?(eat|drink|consume)/i,
+      /(I\s+)?(eat|drink|consume)/i,
       /(food|meal|breakfast|lunch|dinner|snack)s?/i,
       /(wheat|gluten|dairy|sugar|sweet|chocolate|candy|pastries)/i,
       /(vegetable|fruit|meat|fish|protein)s?/i,
@@ -52,9 +52,9 @@ const categoryPatterns = [
     patterns: [
       /sleep(ing)?/i,
       /(go to |in )bed/i,
-      /wakes*(up)?/i,
+      /wake\s*(up)?/i,
       /insomnia/i,
-      /hours?s+(ofs+)?sleep/i,
+      /hours?\s+(of\s+)?sleep/i,
       /rest(ful|less)?/i,
       /tired|fatigue(d)?/i
     ]
@@ -67,7 +67,7 @@ const categoryPatterns = [
       /workout/i,
       /(gym|fitness)/i,
       /(walk|run|jog|swim|cycle|sport)s?/i,
-      /physical(ly)?s+active/i,
+      /physical(ly)?\s+active/i,
       /sedentary/i,
       /yoga|stretch/i
     ]
@@ -81,7 +81,7 @@ const categoryPatterns = [
       /(worry|worried|worries)/i,
       /(relax|calm|peace)/i,
       /(overwhelm|pressure)/i,
-      /mentals+(health|state|wellbeing)/i,
+      /mental\s+(health|state|wellbeing)/i,
       /meditat/i,
       /mindful/i
     ]
@@ -91,7 +91,7 @@ const categoryPatterns = [
   {
     category: 'lifestyle',
     patterns: [
-      /socials+life/i,
+      /social\s+life/i,
       /relationship/i,
       /supported/i,
       /loved/i,
@@ -112,8 +112,8 @@ const categoryPatterns = [
       /achiev/i,
       /objective/i,
       /target/i,
-      /wants+to/i,
-      /hopes+to/i,
+      /want\s+to/i,
+      /hope\s+to/i,
       /motivat/i,
       /improve/i
     ]
