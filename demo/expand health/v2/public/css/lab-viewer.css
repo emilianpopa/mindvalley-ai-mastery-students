@@ -259,6 +259,42 @@
   image-rendering: crisp-edges;
 }
 
+/* PDF Pages Container - for continuous scrolling of all pages */
+.pdf-pages-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  padding: 20px;
+  min-height: 100%;
+}
+
+/* Individual page wrapper */
+.pdf-page-wrapper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.pdf-page-wrapper canvas {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  background: white;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+}
+
+/* Page number label */
+.pdf-page-label {
+  margin-top: 8px;
+  padding: 4px 12px;
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  font-size: 12px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
 /* PDF Loading indicator */
 .pdf-loading {
   display: flex;
