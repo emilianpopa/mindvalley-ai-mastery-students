@@ -267,6 +267,9 @@ function renderSubmission() {
 
   // Render AI summary
   renderAISummary();
+  // Calculate and render wellness scores
+  renderWellnessScores();
+
 
   // Render questions
   renderQuestions();
@@ -687,3 +690,183 @@ window.regenerateSummary = regenerateSummary;
 window.openQuickNotes = openQuickNotes;
 window.closeQuickNotes = closeQuickNotes;
 window.saveQuickNote = saveQuickNote;
+
+// ============================================
+// WELLNESS SCORES CALCULATION
+// ============================================
+
+// Question patterns for wellness score categories
+var wellnessQuestionPatterns = {
+  sleep: [/sleep/i, /bed\s*time/i, /wake/i, /tired/i, /toilet.*night/i, /fall\s*asleep/i],
+  stress: [/stress/i, /anxious/i, /anxiety/i, /mood/i, /confidence/i, /worthy/i, /motivated/i, /joy/i, /loved/i, /supported/i, /relationship/i, /social life/i],
+  diet: [/eat/i, /drink/i, /food/i, /water/i, /alcohol/i, /sugar/i, /sweet/i, /wheat/i, /gluten/i, /meat/i, /processed/i, /caffeine/i, /liter/i],
+  activity: [/exercise/i, /workout/i, /step/i, /walk/i, /running/i, /HIIT/i, /yoga/i, /pilates/i, /cycling/i, /swimming/i, /active/i, /intensity/i]
+};
+
+// Convert answer to score (0-4 scale)
+function answerToScore(answer, isNegative) {
+  var normalized = String(answer).toLowerCase().replace(/-/g, ' ').trim();
+  var agreementScores = { 'strongly agree': 4, 'agree': 3, 'neutral': 2, 'disagree': 1, 'strongly disagree': 0 };
+  var frequencyScores = { 'always': 4, 'often': 3, 'sometimes': 2, 'rarely': 1, 'never': 0 };
+  var score = (agreementScores[normalized] !== undefined) ? agreementScores[normalized] : 
+              ((frequencyScores[normalized] !== undefined) ? frequencyScores[normalized] : 2);
+  return isNegative ? (4 - score) : score;
+}
+
+// Check if question is negative (higher frequency = worse outcome)
+function isNegativeQuestion(text) {
+  var negPatterns = [
+    /less than/i, /struggle/i, /wake up tired/i, /close to.*bed/i, 
+    /toilet.*night/i, /overeat/i, /high.fat/i, /processed/i, 
+    /sugar/i, /sweet tooth/i, /alcohol/i, /cigarette/i, /vape/i,
+    /more than.*before/i
+  ];
+  for (var i = 0; i < negPatterns.length; i++) {
+    if (negPatterns[i].test(text)) return true;
+  }
+  return false;
+}
+
+// Calculate wellness scores from form responses
+function calculateWellnessScores() {
+  var responses = submissionData.responses || {};
+  var scores = { 
+    sleep: { total: 0, count: 0 }, 
+    stress: { total: 0, count: 0 }, 
+    diet: { total: 0, count: 0 }, 
+    activity: { total: 0, count: 0 } 
+  };
+  
+  var fieldLabels = {};
+  if (formData && formData.fields) {
+    for (var i = 0; i < formData.fields.length; i++) {
+      var f = formData.fields[i];
+      fieldLabels[f.id] = f.label;
+    }
+  }
+
+  var keys = Object.keys(responses);
+  for (var k = 0; k < keys.length; k++) {
+    var key = keys[k];
+    var value = responses[key];
+    var label = fieldLabels[key] || key;
+    var isNeg = isNegativeQuestion(label);
+    
+    for (var cat in wellnessQuestionPatterns) {
+      var patterns = wellnessQuestionPatterns[cat];
+      var matched = false;
+      for (var p = 0; p < patterns.length; p++) {
+        if (patterns[p].test(label)) {
+          matched = true;
+          break;
+        }
+      }
+      if (matched) {
+        scores[cat].total += answerToScore(value, isNeg);
+        scores[cat].count += 1;
+        break;
+      }
+    }
+  }
+
+  var result = {};
+  for (var cat in scores) {
+    var data = scores[cat];
+    result[cat] = data.count > 0 ? Math.round((data.total / data.count / 4) * 10) : null;
+  }
+  return result;
+}
+
+// Extract medical history highlights
+function extractMedicalHistory() {
+  var responses = submissionData.responses || {};
+  var highlights = [];
+  
+  var fieldLabels = {};
+  if (formData && formData.fields) {
+    for (var i = 0; i < formData.fields.length; i++) {
+      var f = formData.fields[i];
+      fieldLabels[f.id] = f.label;
+    }
+  }
+
+  var keys = Object.keys(responses);
+  for (var k = 0; k < keys.length; k++) {
+    var key = keys[k];
+    var value = responses[key];
+    var label = fieldLabels[key] || key;
+    
+    if (/history.*disease|history.*condition|diagnosed/i.test(label)) {
+      if (value && String(value).trim() && String(value).toLowerCase() !== 'none') {
+        var clean = String(value).replace(/-/g, ' ').replace(/\s+/g, ' ').trim();
+        clean = clean.charAt(0).toUpperCase() + clean.slice(1);
+        highlights.push(clean);
+      }
+    }
+  }
+  return highlights;
+}
+
+// Render wellness scores section
+function renderWellnessScores() {
+  var section = document.getElementById('wellnessScoresSection');
+  if (!section) {
+    console.log('[WellnessScores] Section element not found');
+    return;
+  }
+
+  var formName = (formData.name || '').toLowerCase();
+  if (formName.indexOf('wellbeing') === -1 && formName.indexOf('check-in') === -1 && formName.indexOf('wellness') === -1) {
+    console.log('[WellnessScores] Not a wellness form, hiding section');
+    section.style.display = 'none';
+    return;
+  }
+
+  var scores = calculateWellnessScores();
+  var history = extractMedicalHistory();
+  
+  console.log('[WellnessScores] Calculated scores:', scores);
+  console.log('[WellnessScores] Medical history:', history);
+  
+  var hasScores = false;
+  for (var cat in scores) {
+    if (scores[cat] !== null) hasScores = true;
+  }
+
+  if (!hasScores) {
+    console.log('[WellnessScores] No scores calculated, hiding section');
+    section.style.display = 'none';
+    return;
+  }
+
+  section.style.display = 'block';
+
+  var categories = ['sleep', 'stress', 'diet', 'activity'];
+  for (var i = 0; i < categories.length; i++) {
+    var cat = categories[i];
+    var scoreEl = document.getElementById(cat + 'Score');
+    var fillEl = document.getElementById(cat + 'ScoreFill');
+    if (scoreEl && scores[cat] !== null) {
+      scoreEl.textContent = scores[cat];
+      if (fillEl) {
+        fillEl.style.width = (scores[cat] * 10) + '%';
+      }
+    }
+  }
+
+  // Add medical history if present
+  if (history.length > 0) {
+    var existingHistory = section.querySelector('.medical-highlights');
+    if (existingHistory) existingHistory.remove();
+    
+    var historyHtml = '<div class="medical-highlights">' +
+      '<h4>Medical History</h4>' +
+      '<ul>' + history.map(function(h) { return '<li>' + escapeHtml(h) + '</li>'; }).join('') + '</ul>' +
+      '</div>';
+    
+    var grid = section.querySelector('.wellness-scores-grid');
+    if (grid) {
+      grid.insertAdjacentHTML('afterend', historyHtml);
+    }
+  }
+}
