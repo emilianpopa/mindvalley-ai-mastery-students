@@ -31,6 +31,11 @@ if (process.env.ANTHROPIC_API_KEY) {
   anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 }
 
+// Log AI service availability at startup
+console.log('📋 Forms API - AI Services:');
+console.log('  - Gemini:', genAI ? '✅ configured' : '❌ not configured (GEMINI_API_KEY missing)');
+console.log('  - Anthropic:', anthropic ? '✅ configured' : '❌ not configured (ANTHROPIC_API_KEY missing)');
+
 // Configure multer for PDF upload
 const storage = multer.memoryStorage();
 const upload = multer({
@@ -1636,7 +1641,12 @@ router.post('/submissions/:id/regenerate-summary', authenticateToken, async (req
     });
   } catch (error) {
     console.error('Error regenerating summary:', error);
-    res.status(500).json({ error: 'Failed to regenerate summary' });
+    // Return more specific error message
+    const errorMessage = error.message || 'Failed to regenerate summary';
+    res.status(500).json({
+      error: errorMessage,
+      details: process.env.NODE_ENV !== 'production' ? error.stack : undefined
+    });
   }
 });
 
