@@ -16,13 +16,151 @@ let clientData = null;
 let notes = [];
 let currentNoteTarget = null; // 'form' or question ID
 
-// Category mapping for questions
+// Category mapping using regex patterns - checked in order (more specific first)
+const categoryPatterns = [
+  // Medical History - check FIRST with very specific patterns
+  // "Do you have any history of disease" should be HISTORY, not symptoms
+  {
+    category: 'history',
+    patterns: [
+      /history of/i,  // "history of disease", "history of conditions"
+      /family history/i,
+      /medical history/i,
+      /diagnosed with/i,
+      /previous(ly)?s+(had|diagnosed|treated)/i,
+      /surgery|operation|procedure/i,
+      /hospital(ized)?/i
+    ]
+  },
+  // Diet/food questions - "I eat wheat", "I drink alcohol"
+  {
+    category: 'diet',
+    patterns: [
+      /(Is+)?(eat|drink|consume)/i,
+      /(food|meal|breakfast|lunch|dinner|snack)s?/i,
+      /(wheat|gluten|dairy|sugar|sweet|chocolate|candy|pastries)/i,
+      /(vegetable|fruit|meat|fish|protein)s?/i,
+      /(water|liter|hydration|caffeine|coffee|tea|alcohol)/i,
+      /(bread|pasta|rice|grain|processed)/i,
+      /appetite|hunger|cravings?/i,
+      /diet(ary)?|nutrition/i
+    ]
+  },
+  // Sleep questions
+  {
+    category: 'sleep',
+    patterns: [
+      /sleep(ing)?/i,
+      /(go to |in )bed/i,
+      /wakes*(up)?/i,
+      /insomnia/i,
+      /hours?s+(ofs+)?sleep/i,
+      /rest(ful|less)?/i,
+      /tired|fatigue(d)?/i
+    ]
+  },
+  // Activity/exercise questions
+  {
+    category: 'activity',
+    patterns: [
+      /exercise/i,
+      /workout/i,
+      /(gym|fitness)/i,
+      /(walk|run|jog|swim|cycle|sport)s?/i,
+      /physical(ly)?s+active/i,
+      /sedentary/i,
+      /yoga|stretch/i
+    ]
+  },
+  // Stress/mental wellness - emotional state questions
+  {
+    category: 'stress',
+    patterns: [
+      /stress(ed|ful)?/i,
+      /anxi(ety|ous)/i,
+      /(worry|worried|worries)/i,
+      /(relax|calm|peace)/i,
+      /(overwhelm|pressure)/i,
+      /mentals+(health|state|wellbeing)/i,
+      /meditat/i,
+      /mindful/i
+    ]
+  },
+  // Lifestyle/wellbeing - general life quality questions
+  // "I have a healthy social life", "I feel loved and supported"
+  {
+    category: 'lifestyle',
+    patterns: [
+      /socials+life/i,
+      /relationship/i,
+      /supported/i,
+      /loved/i,
+      /lifestyle/i,
+      /habit/i,
+      /routine/i,
+      /balance/i,
+      /quality of life/i,
+      /healthy.*life/i,
+      /work.life/i
+    ]
+  },
+  // Goals and motivations
+  {
+    category: 'goals',
+    patterns: [
+      /goal/i,
+      /achiev/i,
+      /objective/i,
+      /target/i,
+      /wants+to/i,
+      /hopes+to/i,
+      /motivat/i,
+      /improve/i
+    ]
+  },
+  // Symptoms - physical complaints
+  {
+    category: 'symptoms',
+    patterns: [
+      /symptom/i,
+      /pain/i,
+      /ache/i,
+      /discomfort/i,
+      /complaint/i,
+      /bloat/i,
+      /digest/i,
+      /headache|migraine/i,
+      /nausea/i,
+      /cramp/i
+    ]
+  },
+  // General/contact info - personal details
+  {
+    category: 'general',
+    patterns: [
+      /(first|last)?s*name/i,
+      /email/i,
+      /phone/i,
+      /mobile/i,
+      /address/i,
+      /(date of )?birth/i,
+      /age/i,
+      /gender/i,
+      /occupation/i
+    ]
+  }
+]
+
+// Legacy map for filter tag display
 const categoryKeywords = {
-  goals: ['goal', 'achieve', 'success', 'want', 'hope', 'objective', 'target'],
-  symptoms: ['symptom', 'pain', 'feel', 'problem', 'issue', 'condition', 'health'],
-  lifestyle: ['diet', 'sleep', 'exercise', 'activity', 'lifestyle', 'habit', 'routine', 'alcohol', 'smoke', 'caffeine'],
-  history: ['history', 'past', 'previous', 'family', 'medical', 'surgery', 'medication'],
-  readiness: ['ready', 'commit', 'motivation', 'holding', 'barrier', 'challenge', 'support']
+  goals: ['goal'],
+  symptoms: ['symptom'],
+  lifestyle: ['lifestyle'],
+  history: ['history'],
+  diet: ['diet'],
+  sleep: ['sleep'],
+  activity: ['activity'],
+  stress: ['stress']
 };
 
 // Initialize page
@@ -289,14 +427,17 @@ function renderQuestionNotes(notesList) {
 function renderFilterTags(usedCategories) {
   const container = document.getElementById('filterTags');
 
-  const categoryOrder = ['all', 'goals', 'symptoms', 'lifestyle', 'history', 'readiness', 'general'];
+  const categoryOrder = ['all', 'goals', 'symptoms', 'lifestyle', 'diet', 'sleep', 'activity', 'stress', 'history', 'general'];
   const categoryLabels = {
     all: 'All Questions',
     goals: 'Goals',
     symptoms: 'Symptoms',
     lifestyle: 'Lifestyle',
+    diet: 'Diet',
+    sleep: 'Sleep',
+    activity: 'Activity',
+    stress: 'Stress',
     history: 'History',
-    readiness: 'Readiness',
     general: 'General'
   };
 
@@ -354,16 +495,16 @@ function renderFormNotes() {
   `).join('');
 }
 
-// Detect category from question text
+// Detect category from question text using regex patterns
 function detectCategory(text) {
-  const lowerText = text.toLowerCase();
-
-  for (const [category, keywords] of Object.entries(categoryKeywords)) {
-    if (keywords.some(kw => lowerText.includes(kw))) {
-      return category;
+  // Check patterns in order - more specific categories first
+  for (const { category, patterns } of categoryPatterns) {
+    for (const pattern of patterns) {
+      if (pattern.test(text)) {
+        return category;
+      }
     }
   }
-
   return 'general';
 }
 

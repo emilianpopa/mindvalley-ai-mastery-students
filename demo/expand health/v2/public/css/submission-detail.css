@@ -769,3 +769,209 @@
     width: 100%;
   }
 }
+
+/* ============================================
+   WELLNESS SCORES SECTION
+   ============================================ */
+
+.wellness-scores-section {
+  margin-bottom: 24px;
+}
+
+.wellness-scores-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.wellness-score-card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.wellness-score-card .score-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.wellness-score-card .score-icon.sleep {
+  background: #EEF2FF;
+  color: #6366F1;
+}
+
+.wellness-score-card .score-icon.stress {
+  background: #FEF3C7;
+  color: #D97706;
+}
+
+.wellness-score-card .score-icon.diet {
+  background: #D1FAE5;
+  color: #059669;
+}
+
+.wellness-score-card .score-icon.activity {
+  background: #FCE7F3;
+  color: #DB2777;
+}
+
+.wellness-score-card .score-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.wellness-score-card .score-label {
+  font-size: 14px;
+  color: #6B7280;
+  font-weight: 500;
+}
+
+.wellness-score-card .score-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.wellness-score-card .score-value::after {
+  content: '/10';
+  font-size: 14px;
+  font-weight: 400;
+  color: #9CA3AF;
+  margin-left: 2px;
+}
+
+.wellness-score-card .score-bar {
+  height: 8px;
+  background: #F3F4F6;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.wellness-score-card .score-fill {
+  height: 100%;
+  background: #6366F1;
+  border-radius: 4px;
+  transition: width 0.5s ease-out;
+}
+
+.wellness-score-card .score-fill.stress {
+  background: #D97706;
+}
+
+.wellness-score-card .score-fill.diet {
+  background: #059669;
+}
+
+.wellness-score-card .score-fill.activity {
+  background: #DB2777;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .wellness-scores-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 500px) {
+  .wellness-scores-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Filter tag colors for new categories */
+.filter-tag[data-category="diet"] {
+  background: #D1FAE5;
+  color: #059669;
+  border-color: #A7F3D0;
+}
+
+.filter-tag[data-category="diet"].active,
+.filter-tag[data-category="diet"]:hover {
+  background: #059669;
+  color: white;
+}
+
+.filter-tag[data-category="sleep"] {
+  background: #EEF2FF;
+  color: #6366F1;
+  border-color: #C7D2FE;
+}
+
+.filter-tag[data-category="sleep"].active,
+.filter-tag[data-category="sleep"]:hover {
+  background: #6366F1;
+  color: white;
+}
+
+.filter-tag[data-category="activity"] {
+  background: #FCE7F3;
+  color: #DB2777;
+  border-color: #FBCFE8;
+}
+
+.filter-tag[data-category="activity"].active,
+.filter-tag[data-category="activity"]:hover {
+  background: #DB2777;
+  color: white;
+}
+
+.filter-tag[data-category="stress"] {
+  background: #FEF3C7;
+  color: #D97706;
+  border-color: #FDE68A;
+}
+
+.filter-tag[data-category="stress"].active,
+.filter-tag[data-category="stress"]:hover {
+  background: #D97706;
+  color: white;
+}
+
+/* Question category badges */
+.question-category.diet {
+  background: #D1FAE5;
+  color: #059669;
+}
+
+.question-category.sleep {
+  background: #EEF2FF;
+  color: #6366F1;
+}
+
+.question-category.activity {
+  background: #FCE7F3;
+  color: #DB2777;
+}
+
+.question-category.stress {
+  background: #FEF3C7;
+  color: #D97706;
+}
+
+/* Lifestyle filter tag and question badge */
+.filter-tag[data-category="lifestyle"] {
+  background: #E0F2FE;
+  color: #0284C7;
+  border-color: #BAE6FD;
+}
+
+.filter-tag[data-category="lifestyle"].active,
+.filter-tag[data-category="lifestyle"]:hover {
+  background: #0284C7;
+  color: white;
+}
+
+.question-category.lifestyle {
+  background: #E0F2FE;
+  color: #0284C7;
+}
