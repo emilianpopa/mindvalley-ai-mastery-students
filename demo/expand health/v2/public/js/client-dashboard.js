@@ -1864,20 +1864,51 @@ function showLabMoreOptions() {
   }
 }
 
-// Generate AI summary
+// Track pending AI summary generations
+let pendingSummaryGenerations = new Map();
+
+// Generate AI summary - runs in background so user can continue working
 async function generateLabSummary() {
   if (!currentViewingLab) return;
+
+  const labId = currentViewingLab.id;
+  const labTitle = currentViewingLab.title || 'Lab Result';
+
+  // Check if already generating for this lab
+  if (pendingSummaryGenerations.has(labId)) {
+    showToast('AI summary is already being generated for this document.', 'info');
+    return;
+  }
 
   const btn = document.getElementById('generateLabSummaryBtn');
   const summaryContainer = document.getElementById('labAiSummary');
 
+  // Update UI to show generating state
   btn.disabled = true;
-  btn.textContent = 'Generating...';
-  summaryContainer.innerHTML = '<p style="color: #6B7280; font-style: italic;">Analyzing document...</p>';
+  btn.textContent = '⏳ Generating...';
+  summaryContainer.innerHTML = `
+    <div style="text-align: center; padding: 20px;">
+      <div class="mini-loader" style="margin: 0 auto 12px;"></div>
+      <p style="color: #6B7280; margin: 0;">Analyzing document in background...</p>
+      <p style="color: #9CA3AF; font-size: 12px; margin-top: 8px;">You can close this and continue working. We'll notify you when it's ready.</p>
+    </div>
+  `;
 
+  // Show toast notification
+  showToast(`Generating AI summary for "${labTitle}"... You can continue working.`, 'info', 5000);
+
+  // Track this generation
+  pendingSummaryGenerations.set(labId, { title: labTitle, startTime: Date.now() });
+
+  // Run generation in background
+  generateLabSummaryInBackground(labId, labTitle);
+}
+
+// Background AI summary generation
+async function generateLabSummaryInBackground(labId, labTitle) {
   try {
     const token = localStorage.getItem('auth_token');
-    const response = await fetch(`${API_BASE}/api/labs/${currentViewingLab.id}/generate-summary`, {
+    const response = await fetch(`${API_BASE}/api/labs/${labId}/generate-summary`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`
@@ -1887,23 +1918,57 @@ async function generateLabSummary() {
     const data = await response.json();
 
     if (data.summary) {
-      summaryContainer.innerHTML = formatAISummary(data.summary);
-      currentViewingLab.ai_summary = data.summary;
-
-      // Update the table view as well
-      const labIndex = clientLabs.findIndex(l => l.id === currentViewingLab.id);
+      // Update the lab data in memory
+      const labIndex = clientLabs.findIndex(l => l.id === labId);
       if (labIndex >= 0) {
         clientLabs[labIndex].ai_summary = data.summary;
         renderLabsTable();
       }
+
+      // If the modal is still open for this lab, update the UI
+      if (currentViewingLab && currentViewingLab.id === labId) {
+        const summaryContainer = document.getElementById('labAiSummary');
+        const btn = document.getElementById('generateLabSummaryBtn');
+
+        if (summaryContainer) {
+          summaryContainer.innerHTML = formatAISummary(data.summary);
+        }
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = '🔄 Regenerate Summary';
+        }
+        currentViewingLab.ai_summary = data.summary;
+      }
+
+      // Show success notification
+      showToast(`✨ AI summary for "${labTitle}" is ready!`, 'success', 8000);
+
+    } else {
+      throw new Error(data.error || 'Failed to generate summary');
     }
 
   } catch (error) {
     console.error('Error generating summary:', error);
-    summaryContainer.innerHTML = '<p style="color: #DC2626;">Error generating summary. Please try again.</p>';
+
+    // Show error notification
+    showToast(`Failed to generate AI summary for "${labTitle}". Please try again.`, 'error', 8000);
+
+    // If modal is still open, show error state
+    if (currentViewingLab && currentViewingLab.id === labId) {
+      const summaryContainer = document.getElementById('labAiSummary');
+      const btn = document.getElementById('generateLabSummaryBtn');
+
+      if (summaryContainer) {
+        summaryContainer.innerHTML = '<p style="color: #DC2626;">Error generating summary. Please try again.</p>';
+      }
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = '✨ Generate Summary';
+      }
+    }
   } finally {
-    btn.disabled = false;
-    btn.textContent = '🔄 Regenerate Summary';
+    // Remove from pending
+    pendingSummaryGenerations.delete(labId);
   }
 }
 
