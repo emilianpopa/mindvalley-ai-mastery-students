@@ -1740,7 +1740,15 @@ function formatAISummary(summary) {
 // Close lab viewer modal
 function closeLabViewerModal() {
   document.getElementById('labViewerModal').style.display = 'none';
-  document.getElementById('labPdfFrame').src = '';
+  // Clear iframe src if it exists (may have been removed by PDF.js rendering)
+  const iframe = document.getElementById('labPdfFrame');
+  if (iframe) {
+    iframe.src = '';
+  }
+  // Clear PDF.js document
+  labPdfDoc = null;
+  labPdfCurrentPage = 1;
+  labPdfTotalPages = 0;
   currentViewingLab = null;
 }
 
