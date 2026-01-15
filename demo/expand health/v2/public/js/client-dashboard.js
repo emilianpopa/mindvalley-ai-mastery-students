@@ -1883,16 +1883,45 @@ async function generateLabSummary() {
   const btn = document.getElementById('generateLabSummaryBtn');
   const summaryContainer = document.getElementById('labAiSummary');
 
-  // Update UI to show generating state
+  // Update UI to show generating state with progress bar
   btn.disabled = true;
-  btn.textContent = '⏳ Generating...';
+  btn.innerHTML = `
+    <span class="btn-spinner"></span>
+    <span>Analyzing...</span>
+  `;
+  btn.classList.add('generating');
+
   summaryContainer.innerHTML = `
-    <div style="text-align: center; padding: 20px;">
-      <div class="mini-loader" style="margin: 0 auto 12px;"></div>
-      <p style="color: #6B7280; margin: 0;">Analyzing document in background...</p>
-      <p style="color: #9CA3AF; font-size: 12px; margin-top: 8px;">You can close this and continue working. We'll notify you when it's ready.</p>
+    <div class="ai-progress-container">
+      <div class="ai-progress-header">
+        <span class="ai-progress-icon">🧠</span>
+        <span class="ai-progress-title">AI Analysis in Progress</span>
+      </div>
+      <div class="ai-progress-bar-wrapper">
+        <div class="ai-progress-bar">
+          <div class="ai-progress-fill"></div>
+        </div>
+      </div>
+      <div class="ai-progress-steps">
+        <div class="ai-step active" id="aiStep1">
+          <span class="step-dot"></span>
+          <span class="step-text">Reading document</span>
+        </div>
+        <div class="ai-step" id="aiStep2">
+          <span class="step-dot"></span>
+          <span class="step-text">Analyzing biomarkers</span>
+        </div>
+        <div class="ai-step" id="aiStep3">
+          <span class="step-dot"></span>
+          <span class="step-text">Generating insights</span>
+        </div>
+      </div>
+      <p class="ai-progress-hint">You can close this and continue working. We'll notify you when it's ready.</p>
     </div>
   `;
+
+  // Start the progress animation
+  startProgressAnimation();
 
   // Show toast notification
   showToast(`Generating AI summary for "${labTitle}"... You can continue working.`, 'info', 5000);
@@ -1935,9 +1964,11 @@ async function generateLabSummaryInBackground(labId, labTitle) {
         }
         if (btn) {
           btn.disabled = false;
-          btn.textContent = '🔄 Regenerate Summary';
+          btn.innerHTML = '🔄 Regenerate Summary';
+          btn.classList.remove('generating');
         }
         currentViewingLab.ai_summary = data.summary;
+        stopProgressAnimation();
       }
 
       // Show success notification
@@ -1963,12 +1994,68 @@ async function generateLabSummaryInBackground(labId, labTitle) {
       }
       if (btn) {
         btn.disabled = false;
-        btn.textContent = '✨ Generate Summary';
+        btn.innerHTML = '✨ Generate Summary';
+        btn.classList.remove('generating');
       }
+      stopProgressAnimation();
     }
   } finally {
     // Remove from pending
     pendingSummaryGenerations.delete(labId);
+  }
+}
+
+// Progress animation state
+let progressAnimationInterval = null;
+let progressStep = 0;
+
+// Start the animated progress for AI generation
+function startProgressAnimation() {
+  progressStep = 0;
+
+  // Animate through steps
+  progressAnimationInterval = setInterval(() => {
+    progressStep++;
+
+    const step1 = document.getElementById('aiStep1');
+    const step2 = document.getElementById('aiStep2');
+    const step3 = document.getElementById('aiStep3');
+
+    if (!step1) {
+      // Elements no longer exist, stop animation
+      stopProgressAnimation();
+      return;
+    }
+
+    // Update steps based on progress
+    if (progressStep >= 2) {
+      step1.classList.add('completed');
+      step2.classList.add('active');
+    }
+    if (progressStep >= 4) {
+      step2.classList.add('completed');
+      step3.classList.add('active');
+    }
+    if (progressStep >= 6) {
+      step3.classList.add('completed');
+    }
+
+    // Loop the animation for long operations
+    if (progressStep >= 8) {
+      progressStep = 0;
+      step1.classList.remove('completed');
+      step2.classList.remove('completed', 'active');
+      step3.classList.remove('completed', 'active');
+      step1.classList.add('active');
+    }
+  }, 2000);
+}
+
+// Stop the progress animation
+function stopProgressAnimation() {
+  if (progressAnimationInterval) {
+    clearInterval(progressAnimationInterval);
+    progressAnimationInterval = null;
   }
 }
 

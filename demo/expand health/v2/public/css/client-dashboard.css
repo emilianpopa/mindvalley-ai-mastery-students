@@ -6636,3 +6636,171 @@
 .send-email-btn svg {
   flex-shrink: 0;
 }
+
+/* ============================================
+   AI SUMMARY PROGRESS BAR STYLES
+   ============================================ */
+
+.ai-progress-container {
+  padding: 20px;
+  background: linear-gradient(135deg, #F0FDF4 0%, #ECFDF5 100%);
+  border: 1px solid #86EFAC;
+  border-radius: 12px;
+}
+
+.ai-progress-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.ai-progress-icon {
+  font-size: 24px;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.ai-progress-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #166534;
+}
+
+/* Progress bar wrapper */
+.ai-progress-bar-wrapper {
+  margin-bottom: 20px;
+}
+
+.ai-progress-bar {
+  height: 8px;
+  background: rgba(22, 101, 52, 0.15);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.ai-progress-fill {
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(90deg, #10B981, #059669, #10B981);
+  background-size: 200% 100%;
+  border-radius: 4px;
+  animation: progressShimmer 2s linear infinite;
+}
+
+@keyframes progressShimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(1.1); }
+}
+
+/* Progress steps */
+.ai-progress-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.ai-step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  opacity: 0.4;
+  transition: all 0.3s ease;
+}
+
+.ai-step.active {
+  opacity: 1;
+}
+
+.ai-step.completed {
+  opacity: 0.7;
+}
+
+.step-dot {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #D1D5DB;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  transition: all 0.3s ease;
+}
+
+.ai-step.active .step-dot {
+  background: #10B981;
+  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2);
+  animation: stepPulse 1.5s ease-in-out infinite;
+}
+
+.ai-step.completed .step-dot {
+  background: #10B981;
+}
+
+.ai-step.completed .step-dot::after {
+  content: '✓';
+  color: white;
+  font-weight: bold;
+}
+
+@keyframes stepPulse {
+  0%, 100% { box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2); }
+  50% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0.1); }
+}
+
+.step-text {
+  font-size: 13px;
+  color: #374151;
+  font-weight: 500;
+}
+
+.ai-step.active .step-text {
+  color: #166534;
+  font-weight: 600;
+}
+
+.ai-step.completed .step-text {
+  text-decoration: line-through;
+  color: #6B7280;
+}
+
+.ai-progress-hint {
+  font-size: 12px;
+  color: #6B7280;
+  text-align: center;
+  margin: 0;
+  font-style: italic;
+}
+
+/* Button spinner for generating state */
+.btn-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  display: inline-block;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Generating button state */
+#generateLabSummaryBtn.generating {
+  background: linear-gradient(135deg, #059669 0%, #10B981 100%);
+  cursor: wait;
+}
+
+#generateLabSummaryBtn.generating span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
