@@ -3269,10 +3269,9 @@
   overflow-x: auto;
   position: relative;
   background: #525659;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 20px 0;
+  display: block;
+  padding: 20px;
+  text-align: center;
 }
 
 .lab-viewer-modal .pdf-container iframe {
