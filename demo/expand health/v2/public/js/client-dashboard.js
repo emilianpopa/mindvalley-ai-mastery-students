@@ -1470,6 +1470,9 @@ async function loadLabPdfWithPdfJs(url) {
     }
     console.log('🔷 All pages rendered successfully');
 
+    // Scroll to top of container to show page 1
+    container.scrollTop = 0;
+
     // Update page info
     updateLabPdfPageInfo();
 
