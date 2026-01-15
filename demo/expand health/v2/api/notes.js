@@ -28,6 +28,11 @@ router.get('/client/:clientId', async (req, res) => {
     if (type) {
       query += ` AND n.note_type = $${params.length + 1}`;
       params.push(type);
+      // When fetching quick_notes, exclude consultation notes
+      // (consultation notes may have note_type set but is_consultation=true)
+      if (type === 'quick_note') {
+        query += ` AND (n.is_consultation = false OR n.is_consultation IS NULL)`;
+      }
     }
 
     query += ` ORDER BY n.created_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
@@ -43,6 +48,10 @@ router.get('/client/:clientId', async (req, res) => {
     if (type) {
       countQuery += ` AND note_type = $2`;
       countParams.push(type);
+      // Match the main query's consultation exclusion for quick_notes
+      if (type === 'quick_note') {
+        countQuery += ` AND (is_consultation = false OR is_consultation IS NULL)`;
+      }
     }
     const countResult = await pool.query(countQuery, countParams);
 
