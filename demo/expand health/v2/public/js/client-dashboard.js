@@ -1471,9 +1471,21 @@ async function loadLabPdfWithPdfJs(url) {
     console.log('🔷 All pages rendered successfully');
 
     // Scroll to top of container to show page 1
+    // Use multiple methods to ensure scroll works
     container.scrollTop = 0;
 
+    // Also scroll first page into view after a short delay to ensure DOM is ready
+    setTimeout(() => {
+      container.scrollTop = 0;
+      const firstPage = container.querySelector('.pdf-page-canvas');
+      if (firstPage) {
+        firstPage.scrollIntoView({ behavior: 'instant', block: 'start' });
+      }
+      console.log('🔷 Scrolled to top, scrollTop:', container.scrollTop);
+    }, 100);
+
     // Update page info
+    labPdfCurrentPage = 1;
     updateLabPdfPageInfo();
 
   } catch (error) {
