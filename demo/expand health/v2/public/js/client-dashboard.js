@@ -12446,19 +12446,23 @@ function filterRefForms() {
   renderRefForms(filtered);
 }
 
-// View reference items
-function viewRefProtocol(protocolId) {
-  // Check both data sources (protocol builder uses refPanelProtocolsData, existing editor uses refPanelProtocolData)
-  // Use == for loose equality to handle string/number type mismatches
-  let protocol = refPanelProtocolsData?.find(p => p.id == protocolId);
-  if (!protocol && typeof refPanelProtocolData !== 'undefined') {
-    protocol = refPanelProtocolData?.find(p => p.id == protocolId);
-  }
+// View reference items - fetch full protocol data from API
+async function viewRefProtocol(protocolId) {
+  try {
+    const token = localStorage.getItem('auth_token');
+    const response = await fetch(`${API_BASE}/api/protocols/${protocolId}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
 
-  if (protocol) {
-    showProtocolViewModal(protocol);
-  } else {
-    console.error('[viewRefProtocol] Protocol not found:', protocolId);
+    if (response.ok) {
+      const data = await response.json();
+      showProtocolViewModal(data.protocol || data);
+    } else {
+      console.error('[viewRefProtocol] Failed to fetch protocol:', response.status);
+      showNotification('Could not load protocol', 'error');
+    }
+  } catch (error) {
+    console.error('[viewRefProtocol] Error fetching protocol:', error);
     showNotification('Could not load protocol', 'error');
   }
 }
