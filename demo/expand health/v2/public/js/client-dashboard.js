@@ -6132,7 +6132,8 @@ function showProtocolViewModal(protocol) {
   const modal = document.createElement('div');
   modal.id = 'protocolViewModal';
   modal.className = 'modal-overlay';
-  modal.style.cssText = 'display: flex; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;';
+  // Use very high z-index to ensure modal appears above protocol editor view
+  modal.style.cssText = 'display: flex; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 10000; align-items: center; justify-content: center;';
 
   const protocolContent = protocol.content || '';
   const hasContent = protocolContent.length > 0;
