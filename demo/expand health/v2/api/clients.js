@@ -598,4 +598,147 @@ function calculateBMI(weightKg, heightCm) {
   return Math.round((weightKg / (heightM * heightM)) * 10) / 10;
 }
 
+// ============================================
+// BULK IMPORT CLIENTS FROM MOMENCE CSV
+// ============================================
+
+// Parse CSV line handling quoted fields
+function parseCSVLine(line) {
+  const values = [];
+  let current = '';
+  let inQuotes = false;
+
+  for (const char of line) {
+    if (char === '"') {
+      inQuotes = !inQuotes;
+    } else if (char === ',' && !inQuotes) {
+      values.push(current.trim());
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+  values.push(current.trim());
+  return values;
+}
+
+// Parse customer from Momence format: "Name (email@example.com)"
+function parseCustomerFromMomence(customerField) {
+  const match = customerField.match(/^(.+?)\s*\(([^)]+)\)$/);
+  if (match) {
+    const fullName = match[1].trim();
+    const email = match[2].trim().toLowerCase();
+
+    // Split name into first and last
+    const nameParts = fullName.split(/\s+/);
+    const firstName = nameParts[0] || '';
+    const lastName = nameParts.slice(1).join(' ') || '';
+
+    return { firstName, lastName, email };
+  }
+  return null;
+}
+
+// Import clients from Momence appointments CSV
+router.post('/import/momence', async (req, res, next) => {
+  try {
+    const { csvData, dryRun = true } = req.body;
+
+    if (!csvData) {
+      return res.status(400).json({ error: 'csvData is required' });
+    }
+
+    // Get tenant context
+    const tenantId = req.tenant?.id;
+    if (!tenantId) {
+      return res.status(400).json({
+        error: 'Tenant context required to import clients'
+      });
+    }
+
+    // Parse CSV
+    const lines = csvData.trim().split('\n');
+    const header = parseCSVLine(lines[0]);
+
+    // Find Customer column index
+    const customerIndex = header.findIndex(h =>
+      h.toLowerCase().includes('customer') || h.toLowerCase().includes('client')
+    );
+
+    if (customerIndex === -1) {
+      return res.status(400).json({
+        error: 'Could not find Customer column in CSV. Headers found: ' + header.join(', ')
+      });
+    }
+
+    // Extract unique customers
+    const customersMap = new Map();
+
+    for (let i = 1; i < lines.length; i++) {
+      const values = parseCSVLine(lines[i]);
+      const customerField = values[customerIndex];
+
+      if (!customerField) continue;
+
+      const parsed = parseCustomerFromMomence(customerField);
+      if (parsed && parsed.email && !customersMap.has(parsed.email)) {
+        customersMap.set(parsed.email, {
+          firstName: parsed.firstName,
+          lastName: parsed.lastName,
+          email: parsed.email
+        });
+      }
+    }
+
+    const uniqueCustomers = Array.from(customersMap.values());
+
+    // Get existing clients in this tenant
+    const existingResult = await db.query(
+      'SELECT email FROM clients WHERE tenant_id = $1',
+      [tenantId]
+    );
+    const existingEmails = new Set(existingResult.rows.map(r => r.email?.toLowerCase()));
+
+    // Separate new vs existing
+    const newCustomers = uniqueCustomers.filter(c => !existingEmails.has(c.email));
+    const existingCustomers = uniqueCustomers.filter(c => existingEmails.has(c.email));
+
+    let imported = 0;
+    let errors = [];
+
+    if (!dryRun) {
+      // Import new customers
+      for (const customer of newCustomers) {
+        try {
+          await db.query(
+            `INSERT INTO clients (tenant_id, first_name, last_name, email, status, created_at)
+             VALUES ($1, $2, $3, $4, 'active', CURRENT_TIMESTAMP)`,
+            [tenantId, customer.firstName, customer.lastName, customer.email]
+          );
+          imported++;
+        } catch (err) {
+          errors.push(`${customer.email}: ${err.message}`);
+        }
+      }
+    }
+
+    res.json({
+      dryRun,
+      totalInCSV: lines.length - 1,
+      uniqueCustomers: uniqueCustomers.length,
+      newCustomers: newCustomers.length,
+      existingCustomers: existingCustomers.length,
+      imported: dryRun ? 0 : imported,
+      errors: errors.slice(0, 10),
+      preview: {
+        newCustomers: newCustomers.slice(0, 20),
+        existingCustomers: existingCustomers.slice(0, 10).map(c => c.email)
+      }
+    });
+
+  } catch (error) {
+    next(error);
+  }
+});
+
 module.exports = router;
