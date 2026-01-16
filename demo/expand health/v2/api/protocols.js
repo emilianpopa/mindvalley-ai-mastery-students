@@ -2525,18 +2525,31 @@ Create a summary that includes:
 
 Keep the summary concise (150-250 words), professional, and easy for both practitioners and clients to understand. Use clear, non-technical language where possible.`;
 
-    // Check if AI is configured
-    if (!anthropic) {
-      return res.status(500).json({ error: 'AI service not configured. Please set ANTHROPIC_API_KEY environment variable.' });
+    let summary = '';
+
+    // Try Claude first, fall back to Gemini
+    if (anthropic) {
+      console.log('[Generate Protocol Summary] Using Claude/Anthropic');
+      const response = await anthropic.messages.create({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1024,
+        messages: [{ role: 'user', content: prompt }]
+      });
+      summary = response.content[0].text;
+    } else if (process.env.GEMINI_API_KEY) {
+      console.log('[Generate Protocol Summary] Using Gemini (Claude not configured)');
+      const result = await genAI.models.generateContent({
+        model: 'gemini-2.0-flash',
+        contents: prompt
+      });
+      summary = result.text || '';
+    } else {
+      return res.status(500).json({ error: 'AI service not configured. Please set ANTHROPIC_API_KEY or GEMINI_API_KEY environment variable.' });
     }
 
-    const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 1024,
-      messages: [{ role: 'user', content: prompt }]
-    });
-
-    const summary = response.content[0].text;
+    if (!summary) {
+      throw new Error('AI returned empty summary');
+    }
 
     // Save the summary to the protocol
     await db.pool.query(
