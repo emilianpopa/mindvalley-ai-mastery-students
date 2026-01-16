@@ -12447,6 +12447,7 @@ function filterRefForms() {
 
 // View reference items
 function viewRefProtocol(protocolId) {
+  alert('viewRefProtocol called with ID: ' + protocolId);
   console.log('[viewRefProtocol] Called with protocolId:', protocolId, 'type:', typeof protocolId);
   console.log('[viewRefProtocol] refPanelProtocolsData length:', refPanelProtocolsData?.length);
   console.log('[viewRefProtocol] refPanelProtocolData length:', refPanelProtocolData?.length);
