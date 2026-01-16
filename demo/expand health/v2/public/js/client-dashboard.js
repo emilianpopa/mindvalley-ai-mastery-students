@@ -12447,17 +12447,26 @@ function filterRefForms() {
 
 // View reference items
 function viewRefProtocol(protocolId) {
+  console.log('[viewRefProtocol] Called with protocolId:', protocolId, 'type:', typeof protocolId);
+  console.log('[viewRefProtocol] refPanelProtocolsData length:', refPanelProtocolsData?.length);
+  console.log('[viewRefProtocol] refPanelProtocolData length:', refPanelProtocolData?.length);
+
   // Open protocol in the protocol view modal
   // Check both data sources (protocol builder uses refPanelProtocolsData, existing editor uses refPanelProtocolData)
-  let protocol = refPanelProtocolsData?.find(p => p.id === protocolId);
+  // Use == for loose equality to handle string/number type mismatches
+  let protocol = refPanelProtocolsData?.find(p => p.id == protocolId);
   if (!protocol && typeof refPanelProtocolData !== 'undefined') {
-    protocol = refPanelProtocolData?.find(p => p.id === protocolId);
+    protocol = refPanelProtocolData?.find(p => p.id == protocolId);
   }
+
+  console.log('[viewRefProtocol] Found protocol:', protocol);
+
   if (protocol) {
     // Use the existing showProtocolViewModal function
     showProtocolViewModal(protocol);
   } else {
-    console.error('Protocol not found:', protocolId);
+    console.error('[viewRefProtocol] Protocol not found:', protocolId);
+    console.log('[viewRefProtocol] Available protocols IDs:', refPanelProtocolsData?.map(p => p.id), refPanelProtocolData?.map(p => p.id));
     showNotification('Could not load protocol', 'error');
   }
 }
