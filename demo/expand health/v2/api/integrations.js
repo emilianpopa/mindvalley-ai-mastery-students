@@ -517,12 +517,41 @@ router.post('/:id/sync/appointments', async (req, res, next) => {
       if (integration.platform === 'momence') {
         service = new MomenceService(integration);
 
-        // Legacy API v1 uses /Events endpoint
-        const events = await service.getEvents();
-        console.log(`Fetched ${Array.isArray(events) ? events.length : 0} events from Momence`);
+        console.log('[Momence Sync] Starting appointment/session fetch...');
 
-        // Map events to appointments format
-        appointments = (Array.isArray(events) ? events : []).map(e => ({ ...e, type: 'event' }));
+        // Fetch from multiple endpoints to get all booking types:
+        // 1. /appointments/reservations - 1-on-1 appointments
+        // 2. /sessions - Class/group sessions
+        // 3. /Events - Event listings (class templates, not individual bookings)
+
+        // Get 1-on-1 appointments
+        try {
+          const apptReservations = await service.getAllAppointments();
+          console.log(`[Momence Sync] Fetched ${apptReservations.length} appointment reservations`);
+          appointments.push(...apptReservations.map(a => ({ ...a, type: 'appointment' })));
+        } catch (apptErr) {
+          console.log(`[Momence Sync] Appointments endpoint error (may not be available):`, apptErr.message);
+        }
+
+        // Get sessions/class bookings
+        try {
+          const sessions = await service.getAllSessions();
+          console.log(`[Momence Sync] Fetched ${sessions.length} sessions`);
+          appointments.push(...sessions.map(s => ({ ...s, type: 'session' })));
+        } catch (sessErr) {
+          console.log(`[Momence Sync] Sessions endpoint error (may not be available):`, sessErr.message);
+        }
+
+        // Get events (class templates) - these are different from actual bookings
+        try {
+          const events = await service.getEvents();
+          console.log(`[Momence Sync] Fetched ${events.length} events`);
+          appointments.push(...events.map(e => ({ ...e, type: 'event' })));
+        } catch (evtErr) {
+          console.log(`[Momence Sync] Events endpoint error:`, evtErr.message);
+        }
+
+        console.log(`[Momence Sync] Total items to process: ${appointments.length}`);
       }
 
       // Process each appointment

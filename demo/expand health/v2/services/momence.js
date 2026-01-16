@@ -304,12 +304,111 @@ class MomenceService {
   // ============================================
 
   /**
-   * Get events from Momence
+   * Get events (classes/sessions) from Momence
    * Uses Legacy API v1 /Events endpoint
    * @returns {Array} List of events
    */
   async getEvents() {
-    return this.request('/Events');
+    const result = await this.request('/Events');
+
+    // DEBUG: Log the raw response structure
+    console.log(`[Momence API] /Events response type:`, typeof result);
+    console.log(`[Momence API] /Events is array:`, Array.isArray(result));
+    console.log(`[Momence API] /Events keys:`, result ? Object.keys(result) : 'null');
+
+    // Handle multiple response formats
+    let events = [];
+    if (Array.isArray(result)) {
+      events = result;
+    } else if (result && result.payload && Array.isArray(result.payload)) {
+      events = result.payload;
+    } else if (result && result.events && Array.isArray(result.events)) {
+      events = result.events;
+    } else if (result && result.data && Array.isArray(result.data)) {
+      events = result.data;
+    } else {
+      console.log(`[Momence API] /Events unknown format:`, JSON.stringify(result).substring(0, 500));
+    }
+
+    console.log(`[Momence API] /Events returned ${events.length} events`);
+    return events;
+  }
+
+  /**
+   * Get all appointments (1-on-1 bookings) from Momence
+   * Uses Legacy API v1 /appointments/reservations endpoint
+   * @param {Object} params - Query parameters (from, to dates)
+   * @returns {Array} List of appointment reservations
+   */
+  async getAllAppointments(params = {}) {
+    // Default to last 90 days and next 90 days if no date range specified
+    const now = new Date();
+    const from = params.from || new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    const to = params.to || new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+    console.log(`[Momence API] Fetching appointments from ${from} to ${to}`);
+
+    const result = await this.request('/appointments/reservations', {}, { from, to });
+
+    // DEBUG: Log the raw response structure
+    console.log(`[Momence API] /appointments/reservations response type:`, typeof result);
+    console.log(`[Momence API] /appointments/reservations is array:`, Array.isArray(result));
+    console.log(`[Momence API] /appointments/reservations keys:`, result ? Object.keys(result) : 'null');
+
+    // Handle multiple response formats
+    let appointments = [];
+    if (Array.isArray(result)) {
+      appointments = result;
+    } else if (result && result.payload && Array.isArray(result.payload)) {
+      appointments = result.payload;
+    } else if (result && result.reservations && Array.isArray(result.reservations)) {
+      appointments = result.reservations;
+    } else if (result && result.data && Array.isArray(result.data)) {
+      appointments = result.data;
+    } else {
+      console.log(`[Momence API] /appointments/reservations unknown format:`, JSON.stringify(result).substring(0, 500));
+    }
+
+    console.log(`[Momence API] /appointments/reservations returned ${appointments.length} appointments`);
+    return appointments;
+  }
+
+  /**
+   * Get all sessions (class bookings) from Momence
+   * @param {Object} params - Query parameters (from, to dates)
+   * @returns {Array} List of sessions
+   */
+  async getAllSessions(params = {}) {
+    // Default to last 90 days and next 90 days if no date range specified
+    const now = new Date();
+    const from = params.from || new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    const to = params.to || new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+    console.log(`[Momence API] Fetching sessions from ${from} to ${to}`);
+
+    const result = await this.request('/sessions', {}, { from, to });
+
+    // DEBUG: Log the raw response structure
+    console.log(`[Momence API] /sessions response type:`, typeof result);
+    console.log(`[Momence API] /sessions is array:`, Array.isArray(result));
+    console.log(`[Momence API] /sessions keys:`, result ? Object.keys(result) : 'null');
+
+    // Handle multiple response formats
+    let sessions = [];
+    if (Array.isArray(result)) {
+      sessions = result;
+    } else if (result && result.payload && Array.isArray(result.payload)) {
+      sessions = result.payload;
+    } else if (result && result.sessions && Array.isArray(result.sessions)) {
+      sessions = result.sessions;
+    } else if (result && result.data && Array.isArray(result.data)) {
+      sessions = result.data;
+    } else {
+      console.log(`[Momence API] /sessions unknown format:`, JSON.stringify(result).substring(0, 500));
+    }
+
+    console.log(`[Momence API] /sessions returned ${sessions.length} sessions`);
+    return sessions;
   }
 
   /**
