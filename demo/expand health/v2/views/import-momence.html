@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Import from Momence - ExpandHealth</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+  <!-- Header -->
+  <header class="bg-white border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center h-16">
+        <div class="flex items-center gap-4">
+          <a href="/dashboard" class="text-gray-500 hover:text-gray-700">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            </svg>
+          </a>
+          <h1 class="text-xl font-semibold text-gray-900">Import from Momence</h1>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-4xl mx-auto py-8 px-4">
+    <!-- Tab Navigation -->
+    <div class="mb-6">
+      <div class="border-b border-gray-200">
+        <nav class="-mb-px flex space-x-8">
+          <button id="tabCustomers" class="tab-btn border-emerald-500 text-emerald-600 border-b-2 py-4 px-1 text-sm font-medium">
+            Import Customers
+          </button>
+          <button id="tabAppointments" class="tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 border-b-2 py-4 px-1 text-sm font-medium">
+            Import Appointments
+          </button>
+        </nav>
+      </div>
+    </div>
+
+    <!-- Customers Tab -->
+    <div id="customersPanel" class="tab-panel">
+      <!-- Instructions -->
+      <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+        <h3 class="font-medium text-blue-900 mb-2">Import Customers from Momence Appointments</h3>
+        <ol class="list-decimal list-inside text-sm text-blue-800 space-y-1">
+          <li>Export appointments from Momence (contains customer info)</li>
+          <li>Upload the CSV file below</li>
+          <li>Unique customers will be extracted from the appointments</li>
+          <li>New customers will be added (existing ones skipped)</li>
+        </ol>
+      </div>
+
+      <!-- Upload Form -->
+      <div class="bg-white shadow rounded-lg p-6 mb-6">
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            Upload Momence Appointments CSV
+          </label>
+          <input
+            type="file"
+            id="csvFileCustomers"
+            accept=".csv"
+            class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer"
+          />
+        </div>
+
+        <div id="fileInfoCustomers" class="hidden mb-4 p-3 bg-gray-50 rounded-lg">
+          <p class="text-sm text-gray-600">
+            File loaded: <span id="fileNameCustomers" class="font-medium"></span>
+            (<span id="rowCountCustomers" class="font-medium"></span> rows)
+          </p>
+        </div>
+
+        <div class="flex items-center gap-4 mb-4">
+          <label class="flex items-center">
+            <input type="checkbox" id="dryRunCustomers" checked class="h-4 w-4 text-emerald-600 rounded border-gray-300">
+            <span class="ml-2 text-sm text-gray-700">Preview only (dry run)</span>
+          </label>
+        </div>
+
+        <button
+          id="importBtnCustomers"
+          disabled
+          class="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+        >
+          Preview Customer Import
+        </button>
+      </div>
+
+      <!-- Results -->
+      <div id="resultsCustomers" class="hidden bg-white shadow rounded-lg p-6">
+        <h2 class="text-lg font-semibold mb-4" id="resultsTitleCustomers">Results</h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <div class="bg-gray-50 p-4 rounded-lg text-center">
+            <p class="text-sm text-gray-500">Rows in CSV</p>
+            <p class="text-2xl font-bold" id="statTotalCustomers">0</p>
+          </div>
+          <div class="bg-blue-50 p-4 rounded-lg text-center">
+            <p class="text-sm text-gray-500">Unique Customers</p>
+            <p class="text-2xl font-bold text-blue-600" id="statUniqueCustomers">0</p>
+          </div>
+          <div class="bg-emerald-50 p-4 rounded-lg text-center">
+            <p class="text-sm text-gray-500" id="newLabelCustomers">New</p>
+            <p class="text-2xl font-bold text-emerald-600" id="statNewCustomers">0</p>
+          </div>
+          <div class="bg-yellow-50 p-4 rounded-lg text-center">
+            <p class="text-sm text-gray-500">Already Exist</p>
+            <p class="text-2xl font-bold text-yellow-600" id="statExistingCustomers">0</p>
+          </div>
+        </div>
+        <div id="previewCustomers" class="mb-4 max-h-48 overflow-y-auto border rounded p-2 bg-gray-50 text-sm"></div>
+        <div id="actionCustomers" class="flex gap-3">
+          <button id="runImportCustomers" class="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 font-medium">
+            Run Import
+          </button>
+        </div>
+        <div id="successCustomers" class="hidden mt-4 p-4 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-800 font-medium"></div>
+      </div>
+    </div>
+
+    <!-- Appointments Tab -->
+    <div id="appointmentsPanel" class="tab-panel hidden">
+      <!-- Instructions -->
+      <div class="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-6">
+        <h3 class="font-medium text-purple-900 mb-2">Import Appointments from Momence</h3>
+        <ol class="list-decimal list-inside text-sm text-purple-800 space-y-1">
+          <li>Export appointments from Momence</li>
+          <li>Upload the CSV file below</li>
+          <li>Appointments will be matched to existing customers by email</li>
+          <li>Services will be created if they don't exist</li>
+        </ol>
+      </div>
+
+      <!-- Upload Form -->
+      <div class="bg-white shadow rounded-lg p-6 mb-6">
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            Upload Momence Appointments CSV
+          </label>
+          <input
+            type="file"
+            id="csvFileAppointments"
+            accept=".csv"
+            class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100 cursor-pointer"
+          />
+        </div>
+
+        <div id="fileInfoAppointments" class="hidden mb-4 p-3 bg-gray-50 rounded-lg">
+          <p class="text-sm text-gray-600">
+            File loaded: <span id="fileNameAppointments" class="font-medium"></span>
+            (<span id="rowCountAppointments" class="font-medium"></span> rows)
+          </p>
+        </div>
+
+        <div class="flex items-center gap-4 mb-4">
+          <label class="flex items-center">
+            <input type="checkbox" id="dryRunAppointments" checked class="h-4 w-4 text-purple-600 rounded border-gray-300">
+            <span class="ml-2 text-sm text-gray-700">Preview only (dry run)</span>
+          </label>
+        </div>
+
+        <button
+          id="importBtnAppointments"
+          disabled
+          class="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+        >
+          Preview Appointment Import
+        </button>
+      </div>
+
+      <!-- Results -->
+      <div id="resultsAppointments" class="hidden bg-white shadow rounded-lg p-6">
+        <h2 class="text-lg font-semibold mb-4" id="resultsTitleAppointments">Results</h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <div class="bg-gray-50 p-4 rounded-lg text-center">
+            <p class="text-sm text-gray-500">Rows in CSV</p>
+            <p class="text-2xl font-bold" id="statTotalAppointments">0</p>
+          </div>
+          <div class="bg-purple-50 p-4 rounded-lg text-center">
+            <p class="text-sm text-gray-500" id="newLabelAppointments">To Import</p>
+            <p class="text-2xl font-bold text-purple-600" id="statNewAppointments">0</p>
+          </div>
+          <div class="bg-yellow-50 p-4 rounded-lg text-center">
+            <p class="text-sm text-gray-500">Skipped</p>
+            <p class="text-2xl font-bold text-yellow-600" id="statSkippedAppointments">0</p>
+          </div>
+          <div class="bg-red-50 p-4 rounded-lg text-center">
+            <p class="text-sm text-gray-500">Errors</p>
+            <p class="text-2xl font-bold text-red-600" id="statErrorsAppointments">0</p>
+          </div>
+        </div>
+        <div id="previewAppointments" class="mb-4">
+          <h3 class="font-medium mb-2">Services Found:</h3>
+          <div id="servicesFound" class="flex flex-wrap gap-2 mb-4"></div>
+          <h3 class="font-medium mb-2">Date Range:</h3>
+          <p id="dateRange" class="text-sm text-gray-600 mb-4"></p>
+        </div>
+        <div id="actionAppointments" class="flex gap-3">
+          <button id="runImportAppointments" class="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 font-medium">
+            Run Import
+          </button>
+        </div>
+        <div id="successAppointments" class="hidden mt-4 p-4 bg-purple-50 border border-purple-200 rounded-lg text-purple-800 font-medium"></div>
+      </div>
+    </div>
+
+    <!-- Loading -->
+    <div id="loading" class="hidden fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+      <div class="bg-white rounded-lg p-6 flex items-center gap-3">
+        <svg class="animate-spin h-6 w-6 text-emerald-600" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <span class="text-gray-700">Processing...</span>
+      </div>
+    </div>
+
+    <!-- Error Toast -->
+    <div id="errorToast" class="hidden fixed bottom-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg shadow-lg max-w-md">
+      <p id="errorMessage"></p>
+    </div>
+  </main>
+
+  <script>
+    let csvDataCustomers = null;
+    let csvDataAppointments = null;
+
+    // Tab switching
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => {
+          b.classList.remove('border-emerald-500', 'text-emerald-600', 'border-purple-500', 'text-purple-600');
+          b.classList.add('border-transparent', 'text-gray-500');
+        });
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+
+        if (btn.id === 'tabCustomers') {
+          btn.classList.add('border-emerald-500', 'text-emerald-600');
+          document.getElementById('customersPanel').classList.remove('hidden');
+        } else {
+          btn.classList.add('border-purple-500', 'text-purple-600');
+          document.getElementById('appointmentsPanel').classList.remove('hidden');
+        }
+      });
+    });
+
+    // ==================== CUSTOMERS ====================
+    document.getElementById('csvFileCustomers').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        csvDataCustomers = event.target.result;
+        const lines = csvDataCustomers.trim().split('\n');
+        document.getElementById('fileNameCustomers').textContent = file.name;
+        document.getElementById('rowCountCustomers').textContent = lines.length - 1;
+        document.getElementById('fileInfoCustomers').classList.remove('hidden');
+        document.getElementById('importBtnCustomers').disabled = false;
+        document.getElementById('resultsCustomers').classList.add('hidden');
+      };
+      reader.readAsText(file);
+    });
+
+    document.getElementById('dryRunCustomers').addEventListener('change', (e) => {
+      document.getElementById('importBtnCustomers').textContent = e.target.checked ? 'Preview Customer Import' : 'Run Customer Import';
+    });
+
+    document.getElementById('importBtnCustomers').addEventListener('click', () => importCustomers(document.getElementById('dryRunCustomers').checked));
+    document.getElementById('runImportCustomers').addEventListener('click', () => importCustomers(false));
+
+    async function importCustomers(dryRun) {
+      if (!csvDataCustomers) return;
+      showLoading();
+      try {
+        const response = await fetch('/api/clients/import/momence', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ csvData: csvDataCustomers, dryRun })
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Import failed');
+
+        document.getElementById('resultsCustomers').classList.remove('hidden');
+        document.getElementById('resultsTitleCustomers').textContent = dryRun ? 'Preview Results' : 'Import Complete';
+        document.getElementById('statTotalCustomers').textContent = data.totalInCSV;
+        document.getElementById('statUniqueCustomers').textContent = data.uniqueCustomers;
+        document.getElementById('statNewCustomers').textContent = dryRun ? data.newCustomers : data.imported;
+        document.getElementById('statExistingCustomers').textContent = data.existingCustomers;
+        document.getElementById('newLabelCustomers').textContent = dryRun ? 'New' : 'Imported';
+
+        const preview = data.preview?.newCustomers?.slice(0, 10).map(c => `${c.firstName} ${c.lastName} (${c.email})`).join('<br>') || 'No new customers';
+        document.getElementById('previewCustomers').innerHTML = `<strong>New customers:</strong><br>${preview}${data.newCustomers > 10 ? `<br>...and ${data.newCustomers - 10} more` : ''}`;
+
+        if (dryRun && data.newCustomers > 0) {
+          document.getElementById('actionCustomers').classList.remove('hidden');
+          document.getElementById('successCustomers').classList.add('hidden');
+        } else if (!dryRun) {
+          document.getElementById('actionCustomers').classList.add('hidden');
+          document.getElementById('successCustomers').classList.remove('hidden');
+          document.getElementById('successCustomers').textContent = `Successfully imported ${data.imported} customers!`;
+        } else {
+          document.getElementById('actionCustomers').classList.add('hidden');
+        }
+      } catch (err) {
+        showError(err.message);
+      } finally {
+        hideLoading();
+      }
+    }
+
+    // ==================== APPOINTMENTS ====================
+    document.getElementById('csvFileAppointments').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        csvDataAppointments = event.target.result;
+        const lines = csvDataAppointments.trim().split('\n');
+        document.getElementById('fileNameAppointments').textContent = file.name;
+        document.getElementById('rowCountAppointments').textContent = lines.length - 1;
+        document.getElementById('fileInfoAppointments').classList.remove('hidden');
+        document.getElementById('importBtnAppointments').disabled = false;
+        document.getElementById('resultsAppointments').classList.add('hidden');
+      };
+      reader.readAsText(file);
+    });
+
+    document.getElementById('dryRunAppointments').addEventListener('change', (e) => {
+      document.getElementById('importBtnAppointments').textContent = e.target.checked ? 'Preview Appointment Import' : 'Run Appointment Import';
+    });
+
+    document.getElementById('importBtnAppointments').addEventListener('click', () => importAppointments(document.getElementById('dryRunAppointments').checked));
+    document.getElementById('runImportAppointments').addEventListener('click', () => importAppointments(false));
+
+    async function importAppointments(dryRun) {
+      if (!csvDataAppointments) return;
+      showLoading();
+      try {
+        const response = await fetch('/api/appointments/import/momence', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ csvData: csvDataAppointments, dryRun })
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Import failed');
+
+        document.getElementById('resultsAppointments').classList.remove('hidden');
+        document.getElementById('resultsTitleAppointments').textContent = dryRun ? 'Preview Results' : 'Import Complete';
+        document.getElementById('statTotalAppointments').textContent = data.totalInCSV;
+        document.getElementById('statNewAppointments').textContent = dryRun ? data.toImport : data.imported;
+        document.getElementById('statSkippedAppointments').textContent = data.skipped || 0;
+        document.getElementById('statErrorsAppointments').textContent = data.errors?.length || 0;
+        document.getElementById('newLabelAppointments').textContent = dryRun ? 'To Import' : 'Imported';
+
+        // Services
+        const servicesDiv = document.getElementById('servicesFound');
+        servicesDiv.innerHTML = (data.services || []).map(s => `<span class="px-2 py-1 bg-purple-100 text-purple-800 rounded text-sm">${s}</span>`).join('');
+
+        // Date range
+        document.getElementById('dateRange').textContent = data.dateRange ? `${data.dateRange.from} to ${data.dateRange.to}` : 'N/A';
+
+        if (dryRun && data.toImport > 0) {
+          document.getElementById('actionAppointments').classList.remove('hidden');
+          document.getElementById('successAppointments').classList.add('hidden');
+        } else if (!dryRun) {
+          document.getElementById('actionAppointments').classList.add('hidden');
+          document.getElementById('successAppointments').classList.remove('hidden');
+          document.getElementById('successAppointments').textContent = `Successfully imported ${data.imported} appointments!`;
+        } else {
+          document.getElementById('actionAppointments').classList.add('hidden');
+        }
+      } catch (err) {
+        showError(err.message);
+      } finally {
+        hideLoading();
+      }
+    }
+
+    // ==================== HELPERS ====================
+    function showLoading() {
+      document.getElementById('loading').classList.remove('hidden');
+    }
+    function hideLoading() {
+      document.getElementById('loading').classList.add('hidden');
+    }
+    function showError(msg) {
+      document.getElementById('errorMessage').textContent = msg;
+      document.getElementById('errorToast').classList.remove('hidden');
+      setTimeout(() => document.getElementById('errorToast').classList.add('hidden'), 5000);
+    }
+  </script>
+</body>
+</html>

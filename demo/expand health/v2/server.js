@@ -173,6 +173,11 @@ app.get('/clients', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'clients.html'));
 });
 
+// Import from Momence (before /customers/:id to avoid conflict)
+app.get('/import', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'import-momence.html'));
+});
+
 // Customers CRM (Momence-style)
 app.get('/customers', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'customers.html'));

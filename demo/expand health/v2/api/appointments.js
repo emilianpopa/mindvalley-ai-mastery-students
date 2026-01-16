@@ -653,4 +653,224 @@ router.get('/availability/slots', async (req, res, next) => {
   }
 });
 
+// ============================================
+// IMPORT APPOINTMENTS FROM MOMENCE CSV
+// ============================================
+
+function parseCSVLine(line) {
+  const values = [];
+  let current = '';
+  let inQuotes = false;
+  for (const char of line) {
+    if (char === '"') {
+      inQuotes = !inQuotes;
+    } else if (char === ',' && !inQuotes) {
+      values.push(current.trim());
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+  values.push(current.trim());
+  return values;
+}
+
+function parseMomenceDate(dateStr) {
+  // Format: "2024-11-04, 2:30 PM"
+  const [datePart, timePart] = dateStr.split(', ');
+  const [year, month, day] = datePart.split('-').map(Number);
+  const timeMatch = timePart.match(/(\d+):(\d+)\s*(AM|PM)/i);
+  if (!timeMatch) return null;
+
+  let hours = parseInt(timeMatch[1]);
+  const minutes = parseInt(timeMatch[2]);
+  const period = timeMatch[3].toUpperCase();
+
+  if (period === 'PM' && hours !== 12) hours += 12;
+  else if (period === 'AM' && hours === 12) hours = 0;
+
+  return new Date(year, month - 1, day, hours, minutes, 0);
+}
+
+function parseCustomerEmail(customerField) {
+  const match = customerField.match(/\(([^)]+)\)$/);
+  return match ? match[1].trim().toLowerCase() : null;
+}
+
+// Service durations based on name
+const SERVICE_DURATIONS = {
+  'cold plunge': 30, 'red light': 20, 'hbot': 60, 'infrared sauna': 45,
+  'pemf': 30, 'massage': 45, 'somadome': 30, 'hocatt': 45, 'tour': 30,
+  'lymphatic': 30, '30 min': 30, '45 min': 45, '60 min': 60, '90 min': 90
+};
+
+function getServiceDuration(serviceName) {
+  const lower = serviceName.toLowerCase();
+  for (const [key, duration] of Object.entries(SERVICE_DURATIONS)) {
+    if (lower.includes(key)) return duration;
+  }
+  const match = serviceName.match(/(\d+)\s*min/i);
+  return match ? parseInt(match[1]) : 30;
+}
+
+router.post('/import/momence', async (req, res, next) => {
+  try {
+    const { csvData, dryRun = true } = req.body;
+    const tenantId = req.user?.tenantId;
+
+    if (!csvData) return res.status(400).json({ error: 'csvData is required' });
+    if (!tenantId) return res.status(400).json({ error: 'Tenant context required' });
+
+    const lines = csvData.trim().split('\n');
+    const header = parseCSVLine(lines[0]).map(h => h.toLowerCase());
+
+    // Find column indexes
+    const dateIdx = header.findIndex(h => h.includes('date'));
+    const serviceIdx = header.findIndex(h => h.includes('service'));
+    const customerIdx = header.findIndex(h => h.includes('customer'));
+    const practitionerIdx = header.findIndex(h => h.includes('practitioner'));
+    const locationIdx = header.findIndex(h => h.includes('location'));
+    const cancelledIdx = header.findIndex(h => h.includes('cancel'));
+    const paidIdx = header.findIndex(h => h.includes('paid'));
+
+    if (dateIdx === -1 || serviceIdx === -1 || customerIdx === -1) {
+      return res.status(400).json({ error: 'CSV must have date, service, and customer columns' });
+    }
+
+    // Get existing clients and services
+    const clientsResult = await db.query('SELECT id, email FROM clients WHERE tenant_id = $1', [tenantId]);
+    const clientsByEmail = new Map(clientsResult.rows.map(c => [c.email?.toLowerCase(), c.id]));
+
+    const servicesResult = await db.query('SELECT id, name FROM service_types WHERE tenant_id = $1', [tenantId]);
+    const servicesByName = new Map(servicesResult.rows.map(s => [s.name.toLowerCase().trim(), s.id]));
+
+    // Get default staff
+    const staffResult = await db.query('SELECT id FROM staff WHERE tenant_id = $1 LIMIT 1', [tenantId]);
+    const defaultStaffId = staffResult.rows[0]?.id;
+
+    let toImport = 0;
+    let skipped = 0;
+    let imported = 0;
+    let errors = [];
+    const servicesFound = new Set();
+    const newServices = [];
+    let minDate = null, maxDate = null;
+
+    // Parse rows
+    const appointments = [];
+    for (let i = 1; i < lines.length; i++) {
+      const values = parseCSVLine(lines[i]);
+      if (values.length < Math.max(dateIdx, serviceIdx, customerIdx) + 1) continue;
+
+      const dateStr = values[dateIdx];
+      const serviceName = values[serviceIdx]?.trim();
+      const customerField = values[customerIdx];
+      const cancelled = cancelledIdx >= 0 && values[cancelledIdx]?.toLowerCase() === 'yes';
+
+      if (!dateStr || !serviceName || !customerField || cancelled) {
+        skipped++;
+        continue;
+      }
+
+      const startTime = parseMomenceDate(dateStr);
+      if (!startTime) { skipped++; continue; }
+
+      const email = parseCustomerEmail(customerField);
+      const clientId = email ? clientsByEmail.get(email) : null;
+      if (!clientId) { skipped++; continue; }
+
+      servicesFound.add(serviceName);
+
+      // Track date range
+      if (!minDate || startTime < minDate) minDate = startTime;
+      if (!maxDate || startTime > maxDate) maxDate = startTime;
+
+      // Find or note service
+      let serviceId = servicesByName.get(serviceName.toLowerCase().trim());
+      if (!serviceId && !newServices.includes(serviceName)) {
+        newServices.push(serviceName);
+      }
+
+      const duration = getServiceDuration(serviceName);
+      const endTime = new Date(startTime.getTime() + duration * 60000);
+
+      appointments.push({
+        clientId,
+        serviceName,
+        serviceId,
+        startTime,
+        endTime,
+        duration,
+        practitioner: practitionerIdx >= 0 ? values[practitionerIdx] : null,
+        location: locationIdx >= 0 ? values[locationIdx] : null,
+        paid: paidIdx >= 0 && values[paidIdx]?.toLowerCase() === 'yes'
+      });
+      toImport++;
+    }
+
+    if (!dryRun) {
+      // Create missing services first
+      for (const serviceName of newServices) {
+        try {
+          const result = await db.query(
+            `INSERT INTO service_types (tenant_id, name, duration_minutes, price, status, created_at)
+             VALUES ($1, $2, $3, 0, 'active', NOW()) RETURNING id`,
+            [tenantId, serviceName, getServiceDuration(serviceName)]
+          );
+          servicesByName.set(serviceName.toLowerCase().trim(), result.rows[0].id);
+        } catch (err) {
+          errors.push(`Service ${serviceName}: ${err.message}`);
+        }
+      }
+
+      // Import appointments
+      for (const appt of appointments) {
+        try {
+          const serviceId = appt.serviceId || servicesByName.get(appt.serviceName.toLowerCase().trim());
+          if (!serviceId) {
+            errors.push(`No service ID for: ${appt.serviceName}`);
+            continue;
+          }
+
+          await db.query(
+            `INSERT INTO appointments (tenant_id, client_id, service_type_id, staff_id, start_time, end_time, status, notes, created_at)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())`,
+            [
+              tenantId,
+              appt.clientId,
+              serviceId,
+              defaultStaffId,
+              appt.startTime,
+              appt.endTime,
+              'confirmed',
+              `Imported from Momence. Location: ${appt.location || 'N/A'}. Paid: ${appt.paid ? 'Yes' : 'No'}`
+            ]
+          );
+          imported++;
+        } catch (err) {
+          errors.push(`Appointment: ${err.message}`);
+        }
+      }
+    }
+
+    res.json({
+      dryRun,
+      totalInCSV: lines.length - 1,
+      toImport,
+      imported: dryRun ? 0 : imported,
+      skipped,
+      errors: errors.slice(0, 10),
+      services: Array.from(servicesFound),
+      newServices,
+      dateRange: minDate && maxDate ? {
+        from: minDate.toLocaleDateString(),
+        to: maxDate.toLocaleDateString()
+      } : null
+    });
+
+  } catch (error) {
+    next(error);
+  }
+});
+
 module.exports = router;
