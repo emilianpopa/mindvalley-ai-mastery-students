@@ -175,6 +175,7 @@ app.get('/clients', (req, res) => {
 
 // Import from Momence (before /customers/:id to avoid conflict)
 app.get('/import', (req, res) => {
+  console.log('Import route hit');
   res.sendFile(path.join(__dirname, 'views', 'import-momence.html'));
 });
 
