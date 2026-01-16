@@ -170,6 +170,7 @@ class MomenceService {
     let page = 1;
     const pageSize = 100;
     let hasMore = true;
+    let totalCount = 0;
 
     while (hasMore && allCustomers.length < maxRecords) {
       const result = await this.getCustomers({ page, pageSize });
@@ -188,18 +189,18 @@ class MomenceService {
       // 2. Direct array of customers
       // 3. { customers: [...] } or other formats
       let customers = [];
-      let totalCount = 0;
 
       if (Array.isArray(result)) {
-        // Direct array response
+        // Direct array response - no pagination info, stop after first page
         customers = result;
         totalCount = result.length;
+        hasMore = false; // Direct array means no pagination
         console.log(`[Momence API] Direct array format, ${customers.length} customers`);
       } else if (result && result.payload && Array.isArray(result.payload)) {
-        // Expected format with payload
+        // Expected format with payload and pagination
         customers = result.payload;
-        totalCount = result.pagination?.totalCount || result.payload.length;
-        console.log(`[Momence API] Payload format, ${customers.length} customers, total: ${totalCount}`);
+        totalCount = result.pagination?.totalCount || 0;
+        console.log(`[Momence API] Payload format, ${customers.length} customers on page ${page}, total: ${totalCount}`);
       } else if (result && result.customers && Array.isArray(result.customers)) {
         // Alternative format with 'customers' key
         customers = result.customers;
@@ -212,11 +213,14 @@ class MomenceService {
         console.log(`[Momence API] Data format, ${customers.length} customers`);
       } else {
         console.log(`[Momence API] Unknown response format:`, JSON.stringify(result).substring(0, 500));
+        hasMore = false;
       }
 
       if (customers.length > 0) {
         allCustomers.push(...customers);
-        hasMore = allCustomers.length < totalCount && allCustomers.length < maxRecords;
+        // Continue if we haven't reached totalCount yet and got a full page
+        hasMore = hasMore !== false && customers.length === pageSize && allCustomers.length < totalCount && allCustomers.length < maxRecords;
+        console.log(`[Momence API] Progress: ${allCustomers.length}/${totalCount} customers, hasMore: ${hasMore}`);
         page++;
       } else {
         hasMore = false;
