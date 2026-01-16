@@ -6978,6 +6978,34 @@ async function saveExistingProtocolEditor() {
     }
   });
 
+  // Collect updated item names from each section
+  document.querySelectorAll('.protocol-section').forEach((section, sectionIndex) => {
+    if (generatedProtocolData.modules[sectionIndex]) {
+      const module = generatedProtocolData.modules[sectionIndex];
+
+      // Get the items array based on section type
+      const itemsKey = module.supplements ? 'supplements' :
+                       module.interventions ? 'interventions' :
+                       module.treatments ? 'treatments' :
+                       module.lifestyle ? 'lifestyle' :
+                       module.tests ? 'tests' :
+                       module.items ? 'items' : null;
+
+      if (itemsKey && module[itemsKey]) {
+        section.querySelectorAll('.item-name, .item-text').forEach((el, itemIndex) => {
+          if (module[itemsKey][itemIndex]) {
+            const newName = el.textContent.trim();
+            if (typeof module[itemsKey][itemIndex] === 'string') {
+              module[itemsKey][itemIndex] = newName;
+            } else {
+              module[itemsKey][itemIndex].name = newName;
+            }
+          }
+        });
+      }
+    }
+  });
+
   // Convert modules back to content format
   const content = modulesToContent(generatedProtocolData.modules);
 

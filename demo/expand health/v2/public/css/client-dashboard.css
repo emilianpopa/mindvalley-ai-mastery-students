@@ -4268,6 +4268,55 @@
   color: #0F766E;
 }
 
+/* Editable text styles for protocol modules */
+.module-title-text,
+.module-goal-text,
+.item-text[contenteditable="true"],
+.item-name[contenteditable="true"] {
+  cursor: text;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: background-color 0.2s, box-shadow 0.2s;
+  outline: none;
+  min-width: 50px;
+  display: inline-block;
+}
+
+.module-title-text:hover,
+.module-goal-text:hover,
+.item-text[contenteditable="true"]:hover,
+.item-name[contenteditable="true"]:hover {
+  background-color: rgba(15, 118, 110, 0.08);
+}
+
+.module-title-text:focus,
+.module-goal-text:focus,
+.item-text[contenteditable="true"]:focus,
+.item-name[contenteditable="true"]:focus {
+  background-color: #fff;
+  box-shadow: 0 0 0 2px rgba(15, 118, 110, 0.3);
+}
+
+/* Edit hint on hover */
+.module-title-text:hover::after,
+.module-goal-text:hover::after {
+  content: ' ✎';
+  font-size: 12px;
+  color: #9CA3AF;
+}
+
+/* Section goal styling */
+.section-goal {
+  color: #6B7280;
+  font-size: 14px;
+  margin: 8px 0 16px 0;
+  line-height: 1.5;
+}
+
+.section-goal strong {
+  color: #374151;
+}
+
 .engagement-card {
   border-left: 3px solid #0F766E;
 }
