@@ -2440,12 +2440,55 @@ async function saveNote() {
   // Build the full content with AI summary if requested
   let fullContent = content;
 
+  // Get modal elements for progress bar
+  const modalBody = document.querySelector('#newNoteModal .modal-body');
+  const saveBtn = document.querySelector('#newNoteModal .btn-primary');
+  const cancelBtn = document.querySelector('#newNoteModal .btn-secondary');
+
   if (generateSummary && content.length > 50) {
-    // Show loading state
-    const saveBtn = document.querySelector('.modal-footer .btn-primary');
-    const originalText = saveBtn.textContent;
-    saveBtn.textContent = 'Generating AI Summary...';
-    saveBtn.disabled = true;
+    // Show progress bar above the modal body
+    const progressHtml = `
+      <div id="saveNoteProgress" class="save-note-progress">
+        <div class="progress-status">
+          <span class="progress-icon">✨</span>
+          <span class="progress-text">Generating AI Summary...</span>
+        </div>
+        <div class="progress-bar-container">
+          <div class="progress-bar-fill"></div>
+        </div>
+        <div class="progress-steps">
+          <span class="step active">Analyzing content</span>
+          <span class="step">Generating insights</span>
+          <span class="step">Finalizing</span>
+        </div>
+      </div>
+    `;
+    modalBody.insertAdjacentHTML('afterend', progressHtml);
+
+    // Disable buttons during generation
+    if (saveBtn) saveBtn.disabled = true;
+    if (cancelBtn) cancelBtn.disabled = true;
+
+    // Animate progress
+    const progressBar = document.querySelector('#saveNoteProgress .progress-bar-fill');
+    const steps = document.querySelectorAll('#saveNoteProgress .step');
+    let progress = 0;
+
+    const noteProgressInterval = setInterval(() => {
+      progress += Math.random() * 12;
+      if (progress > 90) progress = 90;
+      if (progressBar) progressBar.style.width = `${progress}%`;
+
+      // Update steps
+      if (progress > 30 && steps[1]) {
+        steps[0].classList.remove('active');
+        steps[1].classList.add('active');
+      }
+      if (progress > 65 && steps[2]) {
+        steps[1].classList.remove('active');
+        steps[2].classList.add('active');
+      }
+    }, 400);
 
     try {
       const token = localStorage.getItem('auth_token');
@@ -2461,6 +2504,9 @@ async function saveNote() {
         })
       });
 
+      clearInterval(noteProgressInterval);
+      if (progressBar) progressBar.style.width = '100%';
+
       if (summaryResponse.ok) {
         const summaryData = await summaryResponse.json();
         if (summaryData.summary) {
@@ -2469,11 +2515,17 @@ async function saveNote() {
       }
     } catch (summaryError) {
       console.error('Error generating AI summary:', summaryError);
+      clearInterval(noteProgressInterval);
       // Continue without summary if AI fails
     } finally {
-      saveBtn.textContent = originalText;
-      saveBtn.disabled = false;
+      // Update progress to show saving
+      const progressStatus = document.querySelector('#saveNoteProgress .progress-text');
+      if (progressStatus) progressStatus.textContent = 'Saving note...';
     }
+  } else if (saveBtn) {
+    // Show simple saving state if no AI summary
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<span class="saving-spinner"></span> Saving...';
   }
 
   try {
