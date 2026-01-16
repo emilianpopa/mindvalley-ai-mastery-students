@@ -336,47 +336,64 @@ class MomenceService {
 
   /**
    * Get all appointments (1-on-1 bookings) from Momence
-   * Tries multiple possible endpoint names for Legacy API v1
+   * Tries multiple possible endpoint names and parameter combinations for Legacy API v1
    * @param {Object} params - Query parameters (from, to dates)
    * @returns {Array} List of appointment reservations
    */
   async getAllAppointments(params = {}) {
     const now = new Date();
-    const from = params.from || new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-    const to = params.to || new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    // Use wider date range - 1 year back, 1 year forward
+    const from = params.from || new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    const to = params.to || new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
     console.log(`[Momence API] Fetching appointments from ${from} to ${to}`);
 
-    // Try multiple possible endpoint names (Legacy API may use different naming)
+    // Try multiple endpoint + parameter combinations
     const endpointsToTry = [
-      '/Appointments',
-      '/appointments',
-      '/AppointmentReservations',
-      '/appointments/reservations',
-      '/Reservations',
-      '/Bookings'
+      { path: '/Appointments', params: { from, to } },
+      { path: '/Appointments', params: { startDate: from, endDate: to } },
+      { path: '/Appointments', params: {} }, // Try without date params
+      { path: '/appointments', params: { from, to } },
+      { path: '/AppointmentReservations', params: { from, to } },
+      { path: '/appointments/reservations', params: { from, to } },
+      { path: '/Reservations', params: { from, to } },
+      { path: '/Bookings', params: { from, to } },
+      { path: '/AppointmentBookings', params: { from, to } },
+      { path: '/appointment-bookings', params: { from, to } },
+      { path: '/Appointments', params: { page: 1, pageSize: 100 } },
+      { path: '/Reservations', params: { page: 1, pageSize: 100 } },
+      { path: '/Schedule', params: { from, to } },
+      { path: '/schedule', params: { from, to } },
     ];
 
-    for (const endpoint of endpointsToTry) {
+    for (const { path, params: queryParams } of endpointsToTry) {
       try {
-        console.log(`[Momence API] Trying endpoint: ${endpoint}`);
-        const result = await this.request(endpoint, {}, { from, to });
+        console.log(`[Momence API] Trying endpoint: ${path} with params:`, queryParams);
+        const result = await this.request(path, {}, queryParams);
 
-        console.log(`[Momence API] ${endpoint} response type:`, typeof result);
-        console.log(`[Momence API] ${endpoint} is array:`, Array.isArray(result));
+        console.log(`[Momence API] ${path} response type:`, typeof result);
+        console.log(`[Momence API] ${path} is array:`, Array.isArray(result));
         if (result && typeof result === 'object') {
-          console.log(`[Momence API] ${endpoint} keys:`, Object.keys(result));
+          console.log(`[Momence API] ${path} keys:`, Object.keys(result));
+          // Log first 500 chars of response to see structure
+          console.log(`[Momence API] ${path} sample:`, JSON.stringify(result).substring(0, 500));
         }
 
         // Parse response
-        let appointments = this.parseArrayResponse(result, ['appointments', 'reservations', 'bookings', 'payload', 'data']);
+        let appointments = this.parseArrayResponse(result, ['appointments', 'reservations', 'bookings', 'payload', 'data', 'schedule', 'items']);
 
         if (appointments.length > 0) {
-          console.log(`[Momence API] ${endpoint} returned ${appointments.length} appointments`);
+          console.log(`[Momence API] ${path} returned ${appointments.length} appointments`);
+          // Log first appointment structure
+          if (appointments[0]) {
+            console.log(`[Momence API] First appointment keys:`, Object.keys(appointments[0]));
+          }
           return appointments;
+        } else {
+          console.log(`[Momence API] ${path} returned 0 appointments`);
         }
       } catch (err) {
-        console.log(`[Momence API] ${endpoint} failed:`, err.message);
+        console.log(`[Momence API] ${path} failed:`, err.message);
       }
     }
 
