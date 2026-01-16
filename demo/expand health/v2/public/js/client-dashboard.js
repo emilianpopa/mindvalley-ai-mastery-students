@@ -2492,8 +2492,7 @@ async function saveNote() {
         clientName: `${currentClient.first_name} ${currentClient.last_name}`,
         title,
         type,
-        content,
-        aiSummary,
+        content: fullContent,
         createdAt: savedNote.created_at
       };
       savedNotes.unshift(noteData);
