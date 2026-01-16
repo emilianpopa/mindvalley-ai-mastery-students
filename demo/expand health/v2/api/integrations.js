@@ -320,7 +320,7 @@ router.post('/:id/sync/clients', async (req, res, next) => {
 
         // Use getAllCustomers which handles pagination automatically
         // Limit to first 500 for initial sync (can be adjusted)
-        members = await service.getAllCustomers(500);
+        members = await service.getAllCustomers(5000); // Increased limit to sync all customers
         console.log(`[Momence Sync] Fetched ${members.length} customers from Momence`);
 
         if (members.length > 0) {
