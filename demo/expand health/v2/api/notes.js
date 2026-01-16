@@ -2,8 +2,25 @@ const express = require('express');
 const { authenticateToken } = require('../middleware/auth');
 const db = require('../database/db');
 const pool = db.pool;  // For backwards compatibility
+const { GoogleGenAI } = require('@google/genai');
+const Anthropic = require('@anthropic-ai/sdk');
 
 const router = express.Router();
+
+// Initialize AI clients
+let genAI = null;
+let anthropic = null;
+
+if (process.env.GEMINI_API_KEY) {
+  genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+}
+if (process.env.ANTHROPIC_API_KEY) {
+  anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+}
+
+console.log('[Notes API] AI Status:');
+console.log('  - Gemini:', genAI ? '✅ configured' : '❌ not configured');
+console.log('  - Claude:', anthropic ? '✅ configured' : '❌ not configured');
 
 // ============================================
 // DEBUG: List all notes to see their types (temporary)
@@ -383,6 +400,81 @@ router.delete('/:noteId', async (req, res) => {
   } catch (error) {
     console.error('Error deleting note:', error);
     res.status(500).json({ error: 'Failed to delete note' });
+  }
+});
+
+// ============================================
+// GENERATE AI SUMMARY FOR NOTE CONTENT
+// ============================================
+router.post('/generate-summary', async (req, res) => {
+  try {
+    const { content, noteType } = req.body;
+
+    if (!content) {
+      return res.status(400).json({ error: 'Content is required' });
+    }
+
+    if (!genAI && !anthropic) {
+      return res.status(500).json({ error: 'AI services not configured' });
+    }
+
+    const isConsultation = noteType === 'consultation' || noteType === 'progress';
+
+    const prompt = isConsultation
+      ? `You are a medical note summarizer. Analyze the following consultation note and extract the key points in a concise, structured format.
+
+Consultation Note:
+${content}
+
+Create a summary with:
+1. Main reason for visit/consultation
+2. Key findings or observations (2-4 bullet points)
+3. Any recommendations or next steps mentioned
+
+Keep the summary brief and clinically relevant. Use bullet points for clarity.`
+      : `Summarize the following note in 2-3 concise bullet points:
+
+${content}
+
+Keep each bullet point brief and focused on the key information.`;
+
+    let summary = '';
+
+    // Try Gemini first, fall back to Claude
+    if (genAI) {
+      try {
+        const result = await genAI.models.generateContent({
+          model: 'gemini-2.0-flash',
+          contents: prompt
+        });
+        summary = result.text || '';
+      } catch (geminiError) {
+        console.error('[Notes AI] Gemini failed:', geminiError.message);
+        if (anthropic) {
+          const claudeResult = await anthropic.messages.create({
+            model: 'claude-sonnet-4-20250514',
+            max_tokens: 1024,
+            messages: [{ role: 'user', content: prompt }]
+          });
+          summary = claudeResult.content[0].text || '';
+        } else {
+          throw geminiError;
+        }
+      }
+    } else if (anthropic) {
+      const claudeResult = await anthropic.messages.create({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1024,
+        messages: [{ role: 'user', content: prompt }]
+      });
+      summary = claudeResult.content[0].text || '';
+    }
+
+    res.json({ summary });
+
+  } catch (error) {
+    console.error('[Notes AI] Error generating summary:', error);
+    res.status(500).json({ error: 'Failed to generate AI summary', details: error.message });
   }
 });
 

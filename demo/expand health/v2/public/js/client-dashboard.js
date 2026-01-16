@@ -2413,23 +2413,6 @@ async function saveNote() {
     return;
   }
 
-  // Generate AI summary if requested
-  let aiSummary = null;
-  if (generateSummary) {
-    aiSummary = generateSimpleAISummary(content);
-  }
-
-  // Build the full content with title and AI summary
-  let fullContent = content;
-  if (aiSummary) {
-    fullContent += `\n\n---\n**AI Summary:**\n`;
-    if (aiSummary.keyPoints && aiSummary.keyPoints.length > 0) {
-      aiSummary.keyPoints.forEach(point => {
-        fullContent += `• ${point}\n`;
-      });
-    }
-  }
-
   // Map UI note types to API note types
   // HTML select values: consultation, quick, transcript, progress
   const noteTypeMap = {
@@ -2440,6 +2423,45 @@ async function saveNote() {
   };
   const apiNoteType = noteTypeMap[type] || 'quick_note';
   const isConsultation = type === 'consultation' || type === 'progress';
+
+  // Build the full content with AI summary if requested
+  let fullContent = content;
+
+  if (generateSummary && content.length > 50) {
+    // Show loading state
+    const saveBtn = document.querySelector('.modal-footer .btn-primary');
+    const originalText = saveBtn.textContent;
+    saveBtn.textContent = 'Generating AI Summary...';
+    saveBtn.disabled = true;
+
+    try {
+      const token = localStorage.getItem('auth_token');
+      const summaryResponse = await fetch(`${API_BASE}/api/notes/generate-summary`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          content: content,
+          noteType: type
+        })
+      });
+
+      if (summaryResponse.ok) {
+        const summaryData = await summaryResponse.json();
+        if (summaryData.summary) {
+          fullContent += `\n\n---\n**AI Summary:**\n${summaryData.summary}`;
+        }
+      }
+    } catch (summaryError) {
+      console.error('Error generating AI summary:', summaryError);
+      // Continue without summary if AI fails
+    } finally {
+      saveBtn.textContent = originalText;
+      saveBtn.disabled = false;
+    }
+  }
 
   try {
     const token = localStorage.getItem('auth_token');
