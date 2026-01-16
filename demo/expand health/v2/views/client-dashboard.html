@@ -1090,26 +1090,29 @@
         </div>
 
         <div class="form-group">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-            <label for="noteContent" style="margin-bottom: 0;">Note Content</label>
-            <div class="note-input-controls">
-              <button class="btn-icon" id="voiceInputBtn" onclick="toggleVoiceInput()" title="Voice Input">
-                <span id="voiceIcon">🎤</span>
-                <span id="voiceText">Start Voice</span>
-              </button>
-              <button class="btn-icon" id="aiScribeBtn" onclick="toggleAIScribe()" title="AI Scribe">
-                <span>✨</span>
-                <span>AI Scribe</span>
-              </button>
+          <label for="noteContent">Note Content</label>
+          <textarea id="noteContent" class="form-textarea" rows="8" placeholder="Enter consultation notes here, or use voice dictation..."></textarea>
+          <div class="wispr-flow-tip">
+            <div class="wispr-tip-header">
+              <span class="wispr-icon">🎙️</span>
+              <span class="wispr-title">Voice Dictation with Wispr Flow</span>
+              <span class="wispr-badge">HIPAA Compliant</span>
             </div>
-          </div>
-          <div id="aiScribeStatus" class="ai-scribe-status" style="display: none;">
-            <span class="recording-indicator"></span>
-            <span>AI Scribe is listening and will generate a summary...</span>
-          </div>
-          <textarea id="noteContent" class="form-textarea" rows="8" placeholder="Enter consultation notes here, or use voice input..."></textarea>
-          <div class="note-helper-text">
-            💡 Tip: Use voice input for faster note-taking during consultations
+            <p class="wispr-description">For accurate voice-to-text, we recommend <a href="https://www.wispr.ai/" target="_blank" rel="noopener">Wispr Flow</a>. Click in the text area above, then:</p>
+            <div class="wispr-shortcuts">
+              <div class="shortcut-item">
+                <span class="shortcut-label">Mac:</span>
+                <kbd>Fn</kbd> <span class="shortcut-plus">+</span> <kbd>Fn</kbd>
+                <span class="shortcut-or">or</span>
+                <kbd>⌃ Control</kbd> <span class="shortcut-note">(hold)</span>
+              </div>
+              <div class="shortcut-item">
+                <span class="shortcut-label">Windows:</span>
+                <kbd>Ctrl</kbd> <span class="shortcut-plus">+</span> <kbd>Ctrl</kbd>
+                <span class="shortcut-or">or</span>
+                <kbd>⊞ Win</kbd> <span class="shortcut-plus">+</span> <kbd>H</kbd>
+              </div>
+            </div>
           </div>
         </div>
 
