@@ -456,6 +456,35 @@ async function initProtocolsAISummary() {
 }
 
 /**
+ * Initialize lab_notes table for storing notes on lab results
+ */
+async function initLabNotes() {
+  const createTableSQL = `
+    CREATE TABLE IF NOT EXISTS lab_notes (
+      id SERIAL PRIMARY KEY,
+      lab_id INTEGER NOT NULL REFERENCES labs(id) ON DELETE CASCADE,
+      content TEXT NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      created_by INTEGER REFERENCES users(id)
+    );
+  `;
+
+  const createIndexSQL = `
+    CREATE INDEX IF NOT EXISTS idx_lab_notes_lab_id ON lab_notes(lab_id);
+  `;
+
+  try {
+    await db.query(createTableSQL);
+    await db.query(createIndexSQL);
+    console.log('✅ lab_notes table ready');
+    return true;
+  } catch (error) {
+    console.error('❌ Failed to initialize lab_notes:', error.message);
+    return false;
+  }
+}
+
+/**
  * Run all database initializations
  */
 async function initDatabase() {
@@ -464,6 +493,9 @@ async function initDatabase() {
   try {
     // Initialize protocols AI summary column
     await initProtocolsAISummary();
+
+    // Initialize lab_notes table
+    await initLabNotes();
 
     // Initialize audit logs table
     await initAuditLogs();
@@ -502,5 +534,6 @@ module.exports = {
   initIntegrations,
   initMessages,
   initStaffTasks,
-  initProtocolsAISummary
+  initProtocolsAISummary,
+  initLabNotes
 };
