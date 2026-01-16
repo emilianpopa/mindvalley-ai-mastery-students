@@ -2885,3 +2885,144 @@ textarea.form-input {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
+
+/* Inline Editable Fields for Protocol Items */
+.editable-field {
+  cursor: text !important;
+  transition: all 0.2s ease;
+  outline: none;
+  border: 1px solid transparent;
+  position: relative;
+  z-index: 10;
+  display: inline-block;
+  min-height: 1em;
+}
+
+.editable-field:hover {
+  background: rgba(15, 118, 110, 0.08) !important;
+  border-color: rgba(15, 118, 110, 0.3);
+  border-radius: 4px;
+}
+
+.editable-field:focus {
+  background: rgba(15, 118, 110, 0.12) !important;
+  border-color: #0F766E;
+  box-shadow: 0 0 0 2px rgba(15, 118, 110, 0.2);
+  border-radius: 4px;
+}
+
+.editable-field.empty-field {
+  color: #9CA3AF;
+  font-style: italic;
+}
+
+.editable-field.empty-field:focus {
+  color: #374151;
+  font-style: normal;
+}
+
+.editable-field .empty-placeholder {
+  color: #9CA3AF;
+  font-style: italic;
+  font-weight: normal;
+}
+
+.editable-field:focus .empty-placeholder {
+  display: none;
+}
+
+/* Item name styling */
+.editable-field.item-name {
+  padding: 4px 8px;
+  margin: -4px -8px;
+  border-radius: 6px;
+}
+
+/* Rationale and description styling */
+.editable-field.item-rationale,
+.editable-field.item-description {
+  display: block !important;
+  width: 100%;
+  padding: 6px 8px;
+  margin: 0 0 8px 0;
+  border-radius: 6px;
+  line-height: 1.5;
+  box-sizing: border-box;
+}
+
+/* Inline field values (dosage, timing, frequency) */
+.editable-field.item-dosage,
+.editable-field.item-timing,
+.editable-field.item-frequency {
+  display: inline-block;
+  min-width: 80px;
+  border-radius: 4px;
+}
+
+/* Contraindications styling */
+.editable-field.item-contraindications {
+  display: inline-block;
+  min-width: 100px;
+  border-radius: 4px;
+  line-height: 1.4;
+}
+
+/* Notes styling */
+.editable-field.item-notes {
+  display: inline-block;
+  min-width: 150px;
+  border-radius: 4px;
+  line-height: 1.4;
+}
+
+/* Clinical item container */
+.clinical-item {
+  position: relative;
+}
+
+.clinical-item .section-items {
+  position: relative;
+  z-index: 5;
+}
+
+/* Ensure proper positioning context */
+.clinical-item h4.editable-field,
+.clinical-item p.editable-field {
+  position: relative;
+}
+
+/* Visual hint for editable fields */
+.editable-field[title]:hover::after {
+  content: '✏️';
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 12px;
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* Supplement table editable cells */
+.supplement-table td.editable-field {
+  cursor: text;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.supplement-table td.editable-field:hover {
+  background: rgba(15, 118, 110, 0.05);
+  border-color: rgba(15, 118, 110, 0.2);
+}
+
+.supplement-table td.editable-field:focus {
+  background: rgba(15, 118, 110, 0.08);
+  border-color: #0F766E;
+  box-shadow: inset 0 0 0 1px rgba(15, 118, 110, 0.3);
+  outline: none;
+}
+
+.supplement-table td .empty-placeholder {
+  color: #9CA3AF;
+  font-style: italic;
+}

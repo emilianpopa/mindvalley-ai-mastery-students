@@ -6724,6 +6724,9 @@ function openProtocolEditorForExisting(protocol, modules) {
 
   // Load reference panel data for the existing protocol editor
   loadReferencePanelDataForExisting();
+
+  // Initialize editable field behaviors
+  initializeEditableFields();
 }
 
 // Toggle the existing protocol editor reference panel
@@ -7049,7 +7052,7 @@ function renderExistingProtocolSections(modules) {
   }).join('');
 }
 
-// Render clinical section list with enhanced item display
+// Render clinical section list with enhanced item display (all fields editable)
 function renderClinicalSectionList(items) {
   if (!items || items.length === 0) return '';
 
@@ -7061,28 +7064,40 @@ function renderClinicalSectionList(items) {
 
         if (isString) {
           return `<div class="section-item" style="padding: 12px; background: white; border-radius: 8px; margin-bottom: 8px; border: 1px solid #E5E7EB;">
-            <span contenteditable="true" class="item-text" data-index="${i}">${escapeHtml(itemName)}</span>
+            <span contenteditable="true" class="item-text editable-field" data-index="${i}" data-field="name" title="Click to edit">${escapeHtml(itemName)}</span>
           </div>`;
         }
 
-        // Complex item with fields
+        // Complex item with all fields editable
         return `
-          <div class="section-item clinical-item" style="padding: 16px; background: white; border-radius: 8px; margin-bottom: 12px; border: 1px solid #E5E7EB; border-left: 3px solid #0F766E;">
-            <h4 style="margin: 0 0 8px 0; color: #1F2937; font-size: 15px;" contenteditable="true" class="item-name" data-index="${i}">${escapeHtml(itemName)}</h4>
-            ${item.rationale ? `<p style="color: #374151; margin: 0 0 8px 0; font-size: 14px;">${escapeHtml(item.rationale)}</p>` : ''}
-            ${item.description ? `<p style="color: #6B7280; margin: 0 0 8px 0; font-size: 13px;">${escapeHtml(item.description)}</p>` : ''}
+          <div class="section-item clinical-item" data-item-index="${i}" style="padding: 16px; background: white; border-radius: 8px; margin-bottom: 12px; border: 1px solid #E5E7EB; border-left: 3px solid #0F766E;">
+            <h4 style="margin: 0 0 8px 0; color: #1F2937; font-size: 15px;" contenteditable="true" class="item-name editable-field" data-index="${i}" data-field="name" title="Click to edit name">${escapeHtml(itemName)}</h4>
+            ${item.rationale ? `<p contenteditable="true" class="editable-field item-rationale" data-index="${i}" data-field="rationale" title="Click to edit rationale" style="color: #374151; margin: 0 0 8px 0; font-size: 14px; padding: 4px; border-radius: 4px;">${escapeHtml(item.rationale)}</p>` : `<p contenteditable="true" class="editable-field item-rationale empty-field" data-index="${i}" data-field="rationale" title="Click to add rationale" style="color: #9CA3AF; margin: 0 0 8px 0; font-size: 14px; padding: 4px; border-radius: 4px; font-style: italic;">Add rationale...</p>`}
+            ${item.description ? `<p contenteditable="true" class="editable-field item-description" data-index="${i}" data-field="description" title="Click to edit description" style="color: #6B7280; margin: 0 0 8px 0; font-size: 13px; padding: 4px; border-radius: 4px;">${escapeHtml(item.description)}</p>` : ''}
             <div style="display: flex; flex-wrap: wrap; gap: 16px; margin-top: 8px;">
-              ${item.dosage ? `<span style="font-size: 13px; color: #059669;"><strong>Dosage:</strong> ${escapeHtml(item.dosage)}</span>` : ''}
-              ${item.timing ? `<span style="font-size: 13px; color: #0369A1;"><strong>Timing:</strong> ${escapeHtml(item.timing)}</span>` : ''}
-              ${item.frequency ? `<span style="font-size: 13px; color: #7C3AED;"><strong>Frequency:</strong> ${escapeHtml(item.frequency)}</span>` : ''}
+              <span style="font-size: 13px; color: #059669; display: flex; align-items: center; gap: 4px;">
+                <strong>Dosage:</strong>
+                <span contenteditable="true" class="editable-field item-dosage" data-index="${i}" data-field="dosage" title="Click to edit dosage" style="padding: 2px 6px; border-radius: 4px; min-width: 60px;">${item.dosage ? escapeHtml(item.dosage) : '<span class="empty-placeholder">Add dosage</span>'}</span>
+              </span>
+              <span style="font-size: 13px; color: #0369A1; display: flex; align-items: center; gap: 4px;">
+                <strong>Timing:</strong>
+                <span contenteditable="true" class="editable-field item-timing" data-index="${i}" data-field="timing" title="Click to edit timing" style="padding: 2px 6px; border-radius: 4px; min-width: 60px;">${item.timing ? escapeHtml(item.timing) : '<span class="empty-placeholder">Add timing</span>'}</span>
+              </span>
+              <span style="font-size: 13px; color: #7C3AED; display: flex; align-items: center; gap: 4px;">
+                <strong>Frequency:</strong>
+                <span contenteditable="true" class="editable-field item-frequency" data-index="${i}" data-field="frequency" title="Click to edit frequency" style="padding: 2px 6px; border-radius: 4px; min-width: 60px;">${item.frequency ? escapeHtml(item.frequency) : '<span class="empty-placeholder">Add frequency</span>'}</span>
+              </span>
               ${item.category ? `<span style="font-size: 11px; background: #F3F4F6; padding: 2px 8px; border-radius: 4px; color: #6B7280; text-transform: uppercase;">${escapeHtml(item.category)}</span>` : ''}
             </div>
-            ${item.contraindications ? `
-              <div style="background: #FEF2F2; padding: 8px 12px; border-radius: 6px; margin-top: 10px;">
-                <span style="font-size: 12px; color: #991B1B;"><strong>⚠️ Contraindications:</strong> ${escapeHtml(item.contraindications)}</span>
-              </div>
-            ` : ''}
-            ${item.notes ? `<p style="color: #6B7280; margin: 8px 0 0 0; font-size: 12px; font-style: italic;">📝 ${escapeHtml(item.notes)}</p>` : ''}
+            <div style="background: #FEF2F2; padding: 8px 12px; border-radius: 6px; margin-top: 10px;">
+              <span style="font-size: 12px; color: #991B1B; display: flex; align-items: flex-start; gap: 4px;">
+                <strong>⚠️ Contraindications:</strong>
+                <span contenteditable="true" class="editable-field item-contraindications" data-index="${i}" data-field="contraindications" title="Click to edit contraindications" style="padding: 2px 6px; border-radius: 4px; flex: 1;">${item.contraindications ? escapeHtml(item.contraindications) : '<span class="empty-placeholder">None specified</span>'}</span>
+              </span>
+            </div>
+            <p style="color: #6B7280; margin: 8px 0 0 0; font-size: 12px; display: flex; align-items: flex-start; gap: 4px;">
+              📝 <span contenteditable="true" class="editable-field item-notes" data-index="${i}" data-field="notes" title="Click to edit notes" style="padding: 2px 6px; border-radius: 4px; font-style: italic; flex: 1;">${item.notes ? escapeHtml(item.notes) : '<span class="empty-placeholder">Add notes...</span>'}</span>
+            </p>
           </div>
         `;
       }).join('')}
@@ -7090,10 +7105,64 @@ function renderClinicalSectionList(items) {
   `;
 }
 
+// Initialize editable field behaviors for inline editing
+function initializeEditableFields() {
+  // Handle placeholder behavior for editable fields
+  document.querySelectorAll('.editable-field').forEach(field => {
+    const placeholder = field.querySelector('.empty-placeholder');
+
+    field.addEventListener('focus', function() {
+      // Clear placeholder text on focus
+      if (placeholder) {
+        placeholder.style.display = 'none';
+      }
+      if (this.classList.contains('empty-field')) {
+        this.textContent = '';
+        this.classList.remove('empty-field');
+      }
+    });
+
+    field.addEventListener('blur', function() {
+      // Restore placeholder if field is empty on blur
+      const text = this.textContent.trim();
+      const fieldType = this.dataset.field;
+
+      if (!text || text === '') {
+        this.classList.add('empty-field');
+        const placeholders = {
+          'rationale': 'Add rationale...',
+          'dosage': 'Add dosage',
+          'timing': 'Add timing',
+          'frequency': 'Add frequency',
+          'contraindications': 'None specified',
+          'notes': 'Add notes...'
+        };
+        if (placeholders[fieldType]) {
+          this.innerHTML = `<span class="empty-placeholder">${placeholders[fieldType]}</span>`;
+        }
+      }
+    });
+
+    // Prevent Enter key from creating new lines in single-line fields
+    field.addEventListener('keydown', function(e) {
+      const fieldType = this.dataset.field;
+      const singleLineFields = ['dosage', 'timing', 'frequency', 'name'];
+      if (e.key === 'Enter' && singleLineFields.includes(fieldType)) {
+        e.preventDefault();
+        this.blur();
+      }
+    });
+  });
+}
+
 // Select existing protocol section
 function selectExistingSection(index, event) {
+  // Don't trigger section selection when clicking on editable fields
   if (event.target.tagName === 'INPUT' || event.target.tagName === 'BUTTON' ||
-      event.target.closest('.section-input') || event.target.contentEditable === 'true') {
+      event.target.closest('.section-input') ||
+      event.target.contentEditable === 'true' || event.target.contentEditable === true ||
+      event.target.closest('[contenteditable="true"]') ||
+      event.target.closest('.editable-field')) {
     return;
   }
 
@@ -7396,7 +7465,7 @@ async function saveExistingProtocolEditor() {
     }
   });
 
-  // Collect updated item names from each section
+  // Collect updated item data from each section (all editable fields)
   document.querySelectorAll('.protocol-section').forEach((section, sectionIndex) => {
     if (generatedProtocolData.modules[sectionIndex]) {
       const module = generatedProtocolData.modules[sectionIndex];
@@ -7410,14 +7479,109 @@ async function saveExistingProtocolEditor() {
                        module.items ? 'items' : null;
 
       if (itemsKey && module[itemsKey]) {
-        section.querySelectorAll('.item-name, .item-text').forEach((el, itemIndex) => {
-          if (module[itemsKey][itemIndex]) {
-            const newName = el.textContent.trim();
-            if (typeof module[itemsKey][itemIndex] === 'string') {
-              module[itemsKey][itemIndex] = newName;
-            } else {
-              module[itemsKey][itemIndex].name = newName;
+        // Collect all editable fields for each item
+        section.querySelectorAll('.clinical-item').forEach((itemEl) => {
+          const itemIndex = parseInt(itemEl.dataset.itemIndex);
+          if (isNaN(itemIndex) || !module[itemsKey][itemIndex]) return;
+
+          const item = module[itemsKey][itemIndex];
+
+          // Helper function to get clean text content (removes placeholder text)
+          const getFieldValue = (field) => {
+            const el = itemEl.querySelector(`.item-${field}`);
+            if (!el) return null;
+            const text = el.textContent.trim();
+            // Return null if it's placeholder text
+            if (text === 'Add dosage' || text === 'Add timing' || text === 'Add frequency' ||
+                text === 'None specified' || text === 'Add notes...' || text === 'Add rationale...') {
+              return null;
             }
+            return text || null;
+          };
+
+          if (typeof item === 'string') {
+            // Convert string item to object if fields are edited
+            const nameEl = itemEl.querySelector('.item-name');
+            if (nameEl) {
+              module[itemsKey][itemIndex] = nameEl.textContent.trim();
+            }
+          } else {
+            // Update all fields for complex items
+            const nameEl = itemEl.querySelector('.item-name');
+            if (nameEl) item.name = nameEl.textContent.trim();
+
+            const rationale = getFieldValue('rationale');
+            if (rationale !== null) item.rationale = rationale;
+            else delete item.rationale;
+
+            const dosage = getFieldValue('dosage');
+            if (dosage !== null) item.dosage = dosage;
+            else delete item.dosage;
+
+            const timing = getFieldValue('timing');
+            if (timing !== null) item.timing = timing;
+            else delete item.timing;
+
+            const frequency = getFieldValue('frequency');
+            if (frequency !== null) item.frequency = frequency;
+            else delete item.frequency;
+
+            const contraindications = getFieldValue('contraindications');
+            if (contraindications !== null) item.contraindications = contraindications;
+            else delete item.contraindications;
+
+            const notes = getFieldValue('notes');
+            if (notes !== null) item.notes = notes;
+            else delete item.notes;
+          }
+        });
+
+        // Also handle simple items (strings)
+        section.querySelectorAll('.section-item:not(.clinical-item) .item-text').forEach((el) => {
+          const itemIndex = parseInt(el.dataset.index);
+          if (!isNaN(itemIndex) && module[itemsKey][itemIndex]) {
+            if (typeof module[itemsKey][itemIndex] === 'string') {
+              module[itemsKey][itemIndex] = el.textContent.trim();
+            }
+          }
+        });
+
+        // Handle supplement table rows
+        section.querySelectorAll('.supplement-row').forEach((row) => {
+          const itemIndex = parseInt(row.dataset.itemIndex);
+          if (isNaN(itemIndex) || !module[itemsKey][itemIndex]) return;
+
+          const item = module[itemsKey][itemIndex];
+
+          // Helper function to get clean text from table cell
+          const getCellValue = (field) => {
+            const el = row.querySelector(`.item-${field}`);
+            if (!el) return null;
+            const text = el.textContent.trim();
+            if (text === '-' || text === '') return null;
+            return text;
+          };
+
+          if (typeof item === 'string') {
+            const nameEl = row.querySelector('.item-name');
+            if (nameEl) {
+              module[itemsKey][itemIndex] = nameEl.textContent.trim();
+            }
+          } else {
+            const nameEl = row.querySelector('.item-name');
+            if (nameEl) item.name = nameEl.textContent.trim();
+
+            const dosage = getCellValue('dosage');
+            if (dosage !== null) item.dosage = dosage;
+            else delete item.dosage;
+
+            const timing = getCellValue('timing');
+            if (timing !== null) item.timing = timing;
+            else delete item.timing;
+
+            const notes = getCellValue('notes');
+            if (notes !== null) item.notes = notes;
+            else delete item.notes;
           }
         });
       }
@@ -10743,7 +10907,7 @@ function getSectionType(name) {
   return 'general';
 }
 
-// Render supplement table
+// Render supplement table (all fields editable)
 function renderSupplementTable(items) {
   if (!items || items.length === 0) return '';
 
@@ -10758,17 +10922,17 @@ function renderSupplementTable(items) {
         </tr>
       </thead>
       <tbody>
-        ${items.map(item => {
+        ${items.map((item, i) => {
           const name = typeof item === 'string' ? item : (item.name || 'Supplement');
-          const dosage = item.dosage || '-';
-          const timing = item.timing || '-';
-          const notes = item.notes || item.description || '-';
+          const dosage = item.dosage || '';
+          const timing = item.timing || '';
+          const notes = item.notes || item.description || '';
           return `
-            <tr>
-              <td contenteditable="true">${escapeHtml(name)}</td>
-              <td contenteditable="true">${escapeHtml(dosage)}</td>
-              <td contenteditable="true">${escapeHtml(timing)}</td>
-              <td contenteditable="true">${escapeHtml(notes)}</td>
+            <tr class="supplement-row" data-item-index="${i}">
+              <td contenteditable="true" class="editable-field item-name" data-index="${i}" data-field="name">${escapeHtml(name)}</td>
+              <td contenteditable="true" class="editable-field item-dosage" data-index="${i}" data-field="dosage">${dosage ? escapeHtml(dosage) : '<span class="empty-placeholder">-</span>'}</td>
+              <td contenteditable="true" class="editable-field item-timing" data-index="${i}" data-field="timing">${timing ? escapeHtml(timing) : '<span class="empty-placeholder">-</span>'}</td>
+              <td contenteditable="true" class="editable-field item-notes" data-index="${i}" data-field="notes">${notes ? escapeHtml(notes) : '<span class="empty-placeholder">-</span>'}</td>
             </tr>
           `;
         }).join('')}
@@ -12244,25 +12408,122 @@ function filterRefForms() {
 
 // View reference items
 function viewRefProtocol(protocolId) {
-  // Open protocol in a preview modal or expand in panel
+  // Open protocol in the protocol view modal
   const protocol = refPanelProtocolsData.find(p => p.id === protocolId);
   if (protocol) {
-    alert(`Viewing Protocol: ${protocol.template_name || 'Custom Protocol'}\n\nThis feature will show protocol details in a preview panel.`);
+    // Use the existing showProtocolViewModal function
+    showProtocolViewModal(protocol);
   }
 }
 
 function viewRefNote(noteId) {
   const note = refPanelNotesData.find(n => n.id === noteId);
   if (note) {
-    alert(`Note Preview:\n\n${note.content?.substring(0, 500) || 'No content'}${note.content?.length > 500 ? '...' : ''}`);
+    // Show note in a modal
+    showNotePreviewModal(note);
   }
 }
 
 function viewRefForm(formId) {
   const form = refPanelFormsData.find(f => f.id === formId);
   if (form) {
-    alert(`Form: ${form.form_name || 'Form'}\n\nSubmitted: ${formatDate(form.submitted_at)}\n\nThis feature will show form details.`);
+    // Show form in a modal
+    showFormPreviewModal(form);
   }
+}
+
+// Show note preview modal
+function showNotePreviewModal(note) {
+  const existingModal = document.getElementById('notePreviewModal');
+  if (existingModal) existingModal.remove();
+
+  const noteDate = note.created_at ? new Date(note.created_at).toLocaleDateString('en-US', {
+    year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
+  }) : 'Unknown date';
+
+  const noteType = note.is_consultation ? 'Consultation Note' :
+                   note.note_type === 'quick_note' ? 'Quick Note' :
+                   note.note_type || 'Note';
+
+  const modal = document.createElement('div');
+  modal.id = 'notePreviewModal';
+  modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 3000; display: flex; align-items: center; justify-content: center;';
+  modal.innerHTML = `
+    <div style="background: white; border-radius: 16px; max-width: 700px; width: 90%; max-height: 80vh; overflow: hidden; display: flex; flex-direction: column;">
+      <div style="padding: 20px 24px; border-bottom: 1px solid #E5E7EB; display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <h2 style="margin: 0; font-size: 18px; color: #1F2937;">${noteType}</h2>
+          <p style="margin: 4px 0 0 0; font-size: 13px; color: #6B7280;">${noteDate}</p>
+        </div>
+        <button onclick="document.getElementById('notePreviewModal').remove()" style="background: none; border: none; cursor: pointer; padding: 8px;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <div style="padding: 24px; overflow-y: auto; flex: 1;">
+        <div style="white-space: pre-wrap; font-size: 14px; color: #374151; line-height: 1.6;">${escapeHtml(note.content || 'No content')}</div>
+      </div>
+    </div>
+  `;
+  modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+  document.body.appendChild(modal);
+}
+
+// Show form preview modal
+function showFormPreviewModal(form) {
+  const existingModal = document.getElementById('formPreviewModal');
+  if (existingModal) existingModal.remove();
+
+  const formDate = form.submitted_at ? new Date(form.submitted_at).toLocaleDateString('en-US', {
+    year: 'numeric', month: 'long', day: 'numeric'
+  }) : 'Unknown date';
+
+  // Parse form data if it exists
+  let formDataHtml = '<p style="color: #6B7280;">No form data available</p>';
+  if (form.form_data) {
+    try {
+      const data = typeof form.form_data === 'string' ? JSON.parse(form.form_data) : form.form_data;
+      formDataHtml = Object.entries(data).map(([key, value]) => {
+        const label = key.replace(/_/g, ' ').replace(/([A-Z])/g, ' $1').trim();
+        const displayValue = Array.isArray(value) ? value.join(', ') : (value || '-');
+        return `
+          <div style="margin-bottom: 12px;">
+            <label style="display: block; font-size: 12px; color: #6B7280; text-transform: capitalize; margin-bottom: 2px;">${label}</label>
+            <p style="margin: 0; font-size: 14px; color: #1F2937;">${escapeHtml(String(displayValue))}</p>
+          </div>
+        `;
+      }).join('');
+    } catch (e) {
+      formDataHtml = `<pre style="white-space: pre-wrap; font-size: 13px;">${escapeHtml(String(form.form_data))}</pre>`;
+    }
+  }
+
+  const modal = document.createElement('div');
+  modal.id = 'formPreviewModal';
+  modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 3000; display: flex; align-items: center; justify-content: center;';
+  modal.innerHTML = `
+    <div style="background: white; border-radius: 16px; max-width: 700px; width: 90%; max-height: 80vh; overflow: hidden; display: flex; flex-direction: column;">
+      <div style="padding: 20px 24px; border-bottom: 1px solid #E5E7EB; display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <h2 style="margin: 0; font-size: 18px; color: #1F2937;">${escapeHtml(form.form_name || 'Form')}</h2>
+          <p style="margin: 4px 0 0 0; font-size: 13px; color: #6B7280;">Submitted: ${formDate}</p>
+        </div>
+        <button onclick="document.getElementById('formPreviewModal').remove()" style="background: none; border: none; cursor: pointer; padding: 8px;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <div style="padding: 24px; overflow-y: auto; flex: 1;">
+        ${formDataHtml}
+      </div>
+    </div>
+  `;
+  modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+  document.body.appendChild(modal);
 }
 
 function pinRefProtocol(protocolId) {
