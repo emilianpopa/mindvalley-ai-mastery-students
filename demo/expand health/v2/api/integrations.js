@@ -666,4 +666,88 @@ router.post('/:id/sync/appointments', async (req, res, next) => {
   }
 });
 
+/**
+ * Debug endpoint to test Momence API endpoints
+ * Returns what each endpoint returns so we can see what's available
+ */
+router.get('/:id/debug/momence-endpoints', async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const tenantId = req.tenant?.id;
+
+    const integrationResult = await db.query(`
+      SELECT * FROM integrations WHERE id = $1 AND tenant_id = $2
+    `, [id, tenantId]);
+
+    if (integrationResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Integration not found' });
+    }
+
+    const integration = integrationResult.rows[0];
+
+    if (integration.platform !== 'momence') {
+      return res.status(400).json({ error: 'This debug endpoint is only for Momence' });
+    }
+
+    const service = new MomenceService(integration);
+    const results = {};
+
+    // Test various endpoints and capture responses
+    const endpointsToTest = [
+      '/Events',
+      '/Customers?page=1&pageSize=5',
+      '/Sessions',
+      '/sessions',
+      '/Appointments',
+      '/appointments',
+      '/Bookings',
+      '/bookings',
+      '/Classes',
+      '/classes',
+      '/Videos',
+      '/Schedule',
+      '/schedule'
+    ];
+
+    for (const endpoint of endpointsToTest) {
+      try {
+        // Build the full URL for logging
+        const baseUrl = 'https://momence.com/_api/primary/api/v1';
+        const testUrl = `${baseUrl}${endpoint}${endpoint.includes('?') ? '&' : '?'}hostId=${integration.platform_host_id}&token=***`;
+
+        const result = await service.request(endpoint.split('?')[0], {},
+          endpoint.includes('?') ? Object.fromEntries(new URLSearchParams(endpoint.split('?')[1])) : {}
+        );
+
+        results[endpoint] = {
+          success: true,
+          type: typeof result,
+          isArray: Array.isArray(result),
+          keys: result && typeof result === 'object' ? Object.keys(result) : null,
+          length: Array.isArray(result) ? result.length : (result?.payload?.length || result?.data?.length || null),
+          sample: JSON.stringify(result).substring(0, 300)
+        };
+      } catch (err) {
+        results[endpoint] = {
+          success: false,
+          error: err.message
+        };
+      }
+    }
+
+    res.json({
+      integration: {
+        id: integration.id,
+        platform: integration.platform,
+        hostId: integration.platform_host_id,
+        status: integration.status
+      },
+      endpoints: results
+    });
+
+  } catch (error) {
+    next(error);
+  }
+});
+
 module.exports = router;
