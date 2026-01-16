@@ -137,6 +137,7 @@ CREATE TABLE protocols (
   directional_prompt TEXT,
   template_ids INTEGER[] DEFAULT ARRAY[]::INTEGER[],
   note_ids INTEGER[] DEFAULT ARRAY[]::INTEGER[],
+  ai_summary TEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   created_by INTEGER REFERENCES users(id)
