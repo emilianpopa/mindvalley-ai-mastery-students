@@ -12480,10 +12480,16 @@ function viewRefNote(noteId) {
 }
 
 function viewRefForm(formId) {
-  const form = refPanelFormsData.find(f => f.id === formId);
+  console.log('[viewRefForm] Called with formId:', formId);
+  // Use loose equality to handle string/number type mismatches
+  const form = refPanelFormsData.find(f => f.id == formId);
+  console.log('[viewRefForm] Found form:', form);
   if (form) {
     // Show form in a modal
     showFormPreviewModal(form);
+  } else {
+    console.error('[viewRefForm] Form not found, available IDs:', refPanelFormsData.map(f => f.id));
+    showNotification('Could not load form', 'error');
   }
 }
 
@@ -12528,6 +12534,8 @@ function showNotePreviewModal(note) {
 
 // Show form preview modal
 function showFormPreviewModal(form) {
+  console.log('[showFormPreviewModal] Form data:', form);
+
   const existingModal = document.getElementById('formPreviewModal');
   if (existingModal) existingModal.remove();
 
@@ -12535,23 +12543,28 @@ function showFormPreviewModal(form) {
     year: 'numeric', month: 'long', day: 'numeric'
   }) : 'Unknown date';
 
-  // Parse form data if it exists
+  // Parse form data if it exists - check both 'responses' and 'form_data' fields
   let formDataHtml = '<p style="color: #6B7280;">No form data available</p>';
-  if (form.form_data) {
+  const rawData = form.responses || form.form_data || form.response_data;
+
+  if (rawData) {
     try {
-      const data = typeof form.form_data === 'string' ? JSON.parse(form.form_data) : form.form_data;
-      formDataHtml = Object.entries(data).map(([key, value]) => {
-        const label = key.replace(/_/g, ' ').replace(/([A-Z])/g, ' $1').trim();
-        const displayValue = Array.isArray(value) ? value.join(', ') : (value || '-');
-        return `
-          <div style="margin-bottom: 12px;">
-            <label style="display: block; font-size: 12px; color: #6B7280; text-transform: capitalize; margin-bottom: 2px;">${label}</label>
-            <p style="margin: 0; font-size: 14px; color: #1F2937;">${escapeHtml(String(displayValue))}</p>
-          </div>
-        `;
-      }).join('');
+      const data = typeof rawData === 'string' ? JSON.parse(rawData) : rawData;
+      if (data && typeof data === 'object' && Object.keys(data).length > 0) {
+        formDataHtml = Object.entries(data).map(([key, value]) => {
+          const label = key.replace(/_/g, ' ').replace(/([A-Z])/g, ' $1').trim();
+          const displayValue = Array.isArray(value) ? value.join(', ') : (value || '-');
+          return `
+            <div style="margin-bottom: 12px;">
+              <label style="display: block; font-size: 12px; color: #6B7280; text-transform: capitalize; margin-bottom: 2px;">${label}</label>
+              <p style="margin: 0; font-size: 14px; color: #1F2937;">${escapeHtml(String(displayValue))}</p>
+            </div>
+          `;
+        }).join('');
+      }
     } catch (e) {
-      formDataHtml = `<pre style="white-space: pre-wrap; font-size: 13px;">${escapeHtml(String(form.form_data))}</pre>`;
+      console.error('[showFormPreviewModal] Error parsing form data:', e);
+      formDataHtml = `<pre style="white-space: pre-wrap; font-size: 13px;">${escapeHtml(String(rawData))}</pre>`;
     }
   }
 
