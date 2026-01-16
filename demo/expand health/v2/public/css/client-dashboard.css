@@ -6489,3 +6489,109 @@
   margin-left: -16px;
   margin-top: 4px;
 }
+
+/* ============================================
+   WISPR FLOW VOICE DICTATION TIP
+   ============================================ */
+
+.wispr-flow-tip {
+  margin-top: 12px;
+  padding: 16px;
+  background: linear-gradient(135deg, #F0F9FF 0%, #E0F2FE 100%);
+  border: 1px solid #7DD3FC;
+  border-radius: 10px;
+}
+
+.wispr-tip-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.wispr-icon {
+  font-size: 20px;
+}
+
+.wispr-title {
+  font-weight: 600;
+  color: #0369A1;
+  font-size: 14px;
+}
+
+.wispr-badge {
+  background: #0EA5E9;
+  color: white;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.wispr-description {
+  font-size: 13px;
+  color: #475569;
+  margin: 0 0 12px 0;
+  line-height: 1.5;
+}
+
+.wispr-description a {
+  color: #0369A1;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.wispr-description a:hover {
+  text-decoration: underline;
+}
+
+.wispr-shortcuts {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.shortcut-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #334155;
+}
+
+.shortcut-label {
+  font-weight: 600;
+  min-width: 65px;
+  color: #0369A1;
+}
+
+.shortcut-item kbd {
+  background: white;
+  border: 1px solid #CBD5E1;
+  border-radius: 4px;
+  padding: 3px 8px;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Mono', 'Segoe UI', monospace;
+  font-size: 12px;
+  font-weight: 500;
+  color: #1E293B;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.shortcut-plus {
+  color: #94A3B8;
+  font-weight: 500;
+}
+
+.shortcut-or {
+  color: #94A3B8;
+  font-size: 11px;
+  margin: 0 4px;
+}
+
+.shortcut-note {
+  color: #64748B;
+  font-size: 11px;
+  font-style: italic;
+}
