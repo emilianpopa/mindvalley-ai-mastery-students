@@ -227,15 +227,21 @@
   </main>
 
   <script>
+    // Auth check - redirect to login if not authenticated
+    const token = localStorage.getItem('auth_token');
+    if (!token) {
+      window.location.href = '/login';
+    }
+
     let csvDataCustomers = null;
     let csvDataAppointments = null;
 
-    // Get auth token from localStorage
+    // Get auth headers for API calls
     function getAuthHeaders() {
-      const token = localStorage.getItem('token');
-      const headers = { 'Content-Type': 'application/json' };
-      if (token) headers['Authorization'] = `Bearer ${token}`;
-      return headers;
+      return {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      };
     }
 
     // Tab switching
