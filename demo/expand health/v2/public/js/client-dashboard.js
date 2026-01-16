@@ -12310,10 +12310,10 @@ async function openLabPreview(labId) {
   // Handle AI summary display and generate button
   if (summaryEl) {
     if (lab.ai_summary) {
-      summaryEl.textContent = lab.ai_summary;
+      summaryEl.innerHTML = formatLabSummary(lab.ai_summary);
       if (generateBtn) generateBtn.style.display = 'none';
     } else {
-      summaryEl.textContent = 'No AI summary available.';
+      summaryEl.innerHTML = '<p class="no-summary-text">No AI summary available. Click below to generate one.</p>';
       if (generateBtn) generateBtn.style.display = 'flex';
     }
   }
@@ -12404,6 +12404,31 @@ function closeLabPreview() {
   currentLabPreview = null;
 }
 
+// Format AI summary with markdown-like rendering
+function formatLabSummary(summary) {
+  if (!summary) return '';
+
+  // Convert markdown to HTML
+  let formatted = escapeHtml(summary)
+    // Headers
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    // Bullet points with dash
+    .replace(/^- (.+)$/gm, '<li>$1</li>')
+    // Bullet points with asterisk
+    .replace(/^\* (.+)$/gm, '<li>$1</li>')
+    // Numbered lists
+    .replace(/^\d+\.\s+(.+)$/gm, '<li>$1</li>')
+    // Line breaks
+    .replace(/\n\n/g, '</p><p>')
+    .replace(/\n/g, '<br>');
+
+  // Wrap consecutive <li> elements in <ul>
+  formatted = formatted.replace(/(<li>.*?<\/li>)(\s*<br>)?(\s*<li>)/g, '$1$3');
+  formatted = formatted.replace(/(<li>.*?<\/li>)+/g, '<ul class="lab-summary-list">$&</ul>');
+
+  return `<div class="lab-summary-formatted"><p>${formatted}</p></div>`;
+}
+
 // Generate AI summary for the current lab preview
 async function generateLabAISummary() {
   if (!currentLabPreview) {
@@ -12418,17 +12443,28 @@ async function generateLabAISummary() {
   const summaryEl = document.getElementById(isExisting ? 'existingLabPreviewSummary' : 'labPreviewSummary');
   const generateBtn = document.getElementById(isExisting ? 'existingGenerateLabSummaryBtn' : 'generateLabSummaryBtn');
 
-  // Show loading state
+  // Show loading state with progress bar
   if (generateBtn) {
-    generateBtn.disabled = true;
-    generateBtn.innerHTML = `
-      <svg class="animate-spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
-      </svg>
-      Generating...
+    generateBtn.style.display = 'none';
+  }
+  if (summaryEl) {
+    summaryEl.innerHTML = `
+      <div class="ai-summary-loading">
+        <div class="ai-summary-loading-header">
+          <svg class="animate-spin" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0F766E" stroke-width="2">
+            <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+          </svg>
+          <span>Analyzing lab results...</span>
+        </div>
+        <div class="ai-summary-progress-container">
+          <div class="ai-summary-progress-bar">
+            <div class="ai-summary-progress-fill"></div>
+          </div>
+          <span class="ai-summary-progress-text">This may take a few moments</span>
+        </div>
+      </div>
     `;
   }
-  if (summaryEl) summaryEl.textContent = 'Generating AI summary...';
 
   try {
     const token = localStorage.getItem('auth_token');
@@ -12442,9 +12478,10 @@ async function generateLabAISummary() {
 
     if (response.ok) {
       const data = await response.json();
-      if (summaryEl) summaryEl.textContent = data.summary || 'Summary generated successfully.';
+      if (summaryEl) {
+        summaryEl.innerHTML = formatLabSummary(data.summary) || '<p>Summary generated successfully.</p>';
+      }
       currentLabPreview.ai_summary = data.summary;
-      if (generateBtn) generateBtn.style.display = 'none';
       showNotification('AI summary generated successfully!', 'success');
 
       // Update the lab in the reference panel list
@@ -12458,19 +12495,20 @@ async function generateLabAISummary() {
     }
   } catch (error) {
     console.error('Error generating lab summary:', error);
-    if (summaryEl) summaryEl.textContent = 'Failed to generate summary. Please try again.';
-    showNotification(`Error: ${error.message}`, 'error');
-
-    // Reset button
-    if (generateBtn) {
-      generateBtn.disabled = false;
-      generateBtn.innerHTML = `
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-        </svg>
-        Generate AI Summary
+    if (summaryEl) {
+      summaryEl.innerHTML = `
+        <div class="ai-summary-error">
+          <p>Failed to generate summary. Please try again.</p>
+          <button onclick="generateLabAISummary()" class="generate-summary-btn" style="margin-top: 12px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+            </svg>
+            Try Again
+          </button>
+        </div>
       `;
     }
+    showNotification(`Error: ${error.message}`, 'error');
   }
 }
 
@@ -12781,6 +12819,8 @@ window.pinRefProtocol = pinRefProtocol;
 window.pinRefLab = pinRefLab;
 window.openLabPreview = openLabPreview;
 window.closeLabPreview = closeLabPreview;
+window.generateLabAISummary = generateLabAISummary;
+window.formatLabSummary = formatLabSummary;
 window.saveLabNote = saveLabNote;
 window.handleRefAIQuestion = handleRefAIQuestion;
 window.askRefAIQuestion = askRefAIQuestion;

@@ -2755,6 +2755,132 @@ textarea.form-input {
   animation: spin 1s linear infinite;
 }
 
+/* AI Summary Loading State */
+.ai-summary-loading {
+  padding: 16px 0;
+}
+
+.ai-summary-loading-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #0F766E;
+}
+
+.ai-summary-progress-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ai-summary-progress-bar {
+  width: 100%;
+  height: 6px;
+  background: #E5E7EB;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.ai-summary-progress-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #0F766E, #14B8A6, #0F766E);
+  background-size: 200% 100%;
+  border-radius: 3px;
+  animation: progressPulse 2s ease-in-out infinite, progressGrow 8s ease-out forwards;
+}
+
+@keyframes progressPulse {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+@keyframes progressGrow {
+  0% { width: 0%; }
+  20% { width: 30%; }
+  50% { width: 60%; }
+  80% { width: 85%; }
+  100% { width: 95%; }
+}
+
+.ai-summary-progress-text {
+  font-size: 12px;
+  color: #6B7280;
+  text-align: center;
+}
+
+/* AI Summary Error State */
+.ai-summary-error {
+  text-align: center;
+  padding: 12px;
+  color: #DC2626;
+}
+
+.ai-summary-error p {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+}
+
+/* Formatted Lab Summary */
+.lab-summary-formatted {
+  font-size: 13px;
+  line-height: 1.6;
+  color: #374151;
+}
+
+.lab-summary-formatted p {
+  margin: 0 0 12px 0;
+}
+
+.lab-summary-formatted p:last-child {
+  margin-bottom: 0;
+}
+
+.lab-summary-formatted strong {
+  color: #0F766E;
+  font-weight: 600;
+}
+
+.lab-summary-formatted ul.lab-summary-list {
+  margin: 8px 0;
+  padding-left: 0;
+  list-style: none;
+}
+
+.lab-summary-formatted ul.lab-summary-list li {
+  position: relative;
+  padding-left: 16px;
+  margin-bottom: 6px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.lab-summary-formatted ul.lab-summary-list li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 8px;
+  width: 6px;
+  height: 6px;
+  background: #0F766E;
+  border-radius: 50%;
+}
+
+.no-summary-text {
+  color: #6B7280;
+  font-size: 13px;
+  font-style: italic;
+  margin: 0;
+}
+
+/* Global animate-spin for SVG icons */
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
