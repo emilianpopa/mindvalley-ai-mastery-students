@@ -3361,21 +3361,62 @@ function viewNoteDetail(noteId) {
   document.body.style.overflow = 'hidden';
 }
 
-// Format AI summary for modal display
+// Format AI summary for modal display - supports markdown
 function formatAISummaryForModal(summary) {
-  // Split by bullet points or line breaks
-  const lines = summary.split(/\n|(?=[•\-\*])/g).filter(line => line.trim());
+  if (!summary) return '<p>No summary available</p>';
 
-  if (lines.length === 0) return `<p>${escapeHtml(summary)}</p>`;
+  // Simple markdown to HTML converter
+  let html = summary;
 
-  let html = '<ul class="ai-summary-list">';
-  lines.forEach(line => {
-    const cleaned = line.replace(/^[•\-\*]\s*/, '').trim();
-    if (cleaned) {
-      html += `<li>${escapeHtml(cleaned)}</li>`;
+  // Escape HTML first to prevent XSS
+  html = escapeHtml(html);
+
+  // Convert markdown headers (## Header)
+  html = html.replace(/^### (.+)$/gm, '<h4>$1</h4>');
+  html = html.replace(/^## (.+)$/gm, '<h3>$1</h3>');
+  html = html.replace(/^# (.+)$/gm, '<h2>$1</h2>');
+
+  // Convert bold (**text** or __text__)
+  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  html = html.replace(/__(.+?)__/g, '<strong>$1</strong>');
+
+  // Convert bullet points (lines starting with - or * or •)
+  const lines = html.split('\n');
+  let inList = false;
+  let result = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const bulletMatch = line.match(/^[\s]*[-*•]\s+(.+)$/);
+
+    if (bulletMatch) {
+      if (!inList) {
+        result.push('<ul class="ai-summary-list">');
+        inList = true;
+      }
+      result.push(`<li>${bulletMatch[1]}</li>`);
+    } else {
+      if (inList) {
+        result.push('</ul>');
+        inList = false;
+      }
+      // Keep headers as-is, wrap other content in paragraphs
+      const trimmed = line.trim();
+      if (trimmed && !trimmed.startsWith('<h')) {
+        result.push(`<p>${trimmed}</p>`);
+      } else if (trimmed) {
+        result.push(trimmed);
+      }
     }
-  });
-  html += '</ul>';
+  }
+
+  if (inList) {
+    result.push('</ul>');
+  }
+
+  // Join and clean up empty paragraphs
+  html = result.join('\n').replace(/<p><\/p>/g, '');
+
   return html;
 }
 

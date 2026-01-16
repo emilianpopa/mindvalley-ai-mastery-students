@@ -6359,8 +6359,41 @@
   line-height: 1.6;
 }
 
+.ai-summary-content h2,
+.ai-summary-content h3,
+.ai-summary-content h4 {
+  color: #1F2937;
+  margin: 0 0 12px 0;
+  font-weight: 600;
+}
+
+.ai-summary-content h2 {
+  font-size: 18px;
+}
+
+.ai-summary-content h3 {
+  font-size: 16px;
+}
+
+.ai-summary-content h4 {
+  font-size: 14px;
+}
+
+.ai-summary-content p {
+  margin: 0 0 8px 0;
+}
+
+.ai-summary-content p:last-child {
+  margin-bottom: 0;
+}
+
+.ai-summary-content strong {
+  font-weight: 600;
+  color: #1F2937;
+}
+
 .ai-summary-list {
-  margin: 0;
+  margin: 8px 0;
   padding-left: 20px;
 }
 
