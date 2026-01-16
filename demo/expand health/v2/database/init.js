@@ -438,12 +438,33 @@ async function initMessages() {
 }
 
 /**
+ * Initialize protocols AI summary column
+ */
+async function initProtocolsAISummary() {
+  const addColumnSQL = `
+    ALTER TABLE protocols ADD COLUMN IF NOT EXISTS ai_summary TEXT;
+  `;
+
+  try {
+    await db.query(addColumnSQL);
+    console.log('✅ Protocols ai_summary column ready');
+    return true;
+  } catch (error) {
+    console.error('❌ Failed to initialize protocols ai_summary:', error.message);
+    return false;
+  }
+}
+
+/**
  * Run all database initializations
  */
 async function initDatabase() {
   console.log('\n🔄 Initializing database schema...');
 
   try {
+    // Initialize protocols AI summary column
+    await initProtocolsAISummary();
+
     // Initialize audit logs table
     await initAuditLogs();
 
@@ -480,5 +501,6 @@ module.exports = {
   initScheduledMessages,
   initIntegrations,
   initMessages,
-  initStaffTasks
+  initStaffTasks,
+  initProtocolsAISummary
 };
