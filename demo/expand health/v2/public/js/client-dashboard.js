@@ -11842,9 +11842,10 @@ async function openLabPreview(labId) {
       try {
         const pdfUrl = lab.file_url.startsWith('/') ? `${API_BASE}${lab.file_url}` : lab.file_url;
 
-        // Fetch PDF with auth headers for API endpoints
+        // Fetch PDF with auth headers for API endpoints (handles both relative and absolute URLs)
         let pdfData;
-        if (lab.file_url.startsWith('/api/')) {
+        const needsAuth = lab.file_url.includes('/api/labs/') || lab.file_url.startsWith('/api/');
+        if (needsAuth) {
           const token = localStorage.getItem('auth_token');
           const response = await fetch(pdfUrl, {
             headers: { 'Authorization': `Bearer ${token}` }
