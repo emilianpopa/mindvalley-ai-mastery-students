@@ -2114,10 +2114,16 @@ async function loadLabNotes(labId) {
 
 // Add a note to the lab
 async function addLabNote() {
-  if (!currentViewingLab) return;
+  console.log('[addLabNote] Called, currentViewingLab:', currentViewingLab);
+  if (!currentViewingLab) {
+    console.error('[addLabNote] No currentViewingLab set');
+    alert('Error: No lab selected');
+    return;
+  }
 
   const input = document.getElementById('labNoteInput');
   const content = input.value.trim();
+  console.log('[addLabNote] Content:', content);
 
   if (!content) {
     alert('Please enter a note.');
@@ -2126,6 +2132,7 @@ async function addLabNote() {
 
   try {
     const token = localStorage.getItem('auth_token');
+    console.log('[addLabNote] Sending to API:', `${API_BASE}/api/labs/${currentViewingLab.id}/notes`);
     const response = await fetch(`${API_BASE}/api/labs/${currentViewingLab.id}/notes`, {
       method: 'POST',
       headers: {
@@ -2135,16 +2142,21 @@ async function addLabNote() {
       body: JSON.stringify({ content })
     });
 
+    console.log('[addLabNote] Response status:', response.status);
+    const responseData = await response.json();
+    console.log('[addLabNote] Response data:', responseData);
+
     if (!response.ok) {
-      throw new Error('Failed to add note');
+      throw new Error(responseData.error || 'Failed to add note');
     }
 
     input.value = '';
+    showNotification('Note added successfully', 'success');
     loadLabNotes(currentViewingLab.id);
 
   } catch (error) {
-    console.error('Error adding note:', error);
-    alert('Error adding note. Please try again.');
+    console.error('[addLabNote] Error:', error);
+    alert('Error adding note: ' + error.message);
   }
 }
 
