@@ -2431,14 +2431,15 @@ async function saveNote() {
   }
 
   // Map UI note types to API note types
+  // HTML select values: consultation, quick, transcript, progress
   const noteTypeMap = {
-    'Consultation': 'consultation',
-    'Follow-up': 'follow_up',
-    'Lab Notes': 'lab_note',
-    'General': 'quick_note'
+    'consultation': 'consultation',
+    'quick': 'quick_note',
+    'transcript': 'quick_note',
+    'progress': 'consultation'  // Progress notes are consultation-like
   };
   const apiNoteType = noteTypeMap[type] || 'quick_note';
-  const isConsultation = type === 'Consultation' || type === 'Follow-up';
+  const isConsultation = type === 'consultation' || type === 'progress';
 
   try {
     const token = localStorage.getItem('auth_token');
