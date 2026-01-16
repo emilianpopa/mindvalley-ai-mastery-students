@@ -10,12 +10,18 @@ const router = express.Router();
 // ============================================
 router.get('/debug-notes', async (req, res) => {
   try {
-    const result = await pool.query(`
-      SELECT id, note_type, is_consultation, LEFT(content, 100) as content_preview
+    const clientId = req.query.client_id || null;
+    let query = `
+      SELECT id, client_id, note_type, is_consultation, LEFT(content, 100) as content_preview
       FROM notes
-      ORDER BY id DESC
-      LIMIT 20
-    `);
+    `;
+    const params = [];
+    if (clientId) {
+      query += ` WHERE client_id = $1`;
+      params.push(clientId);
+    }
+    query += ` ORDER BY id DESC LIMIT 20`;
+    const result = await pool.query(query, params);
     res.json(result.rows);
   } catch (error) {
     res.status(500).json({ error: error.message });
