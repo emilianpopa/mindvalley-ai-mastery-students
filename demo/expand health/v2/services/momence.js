@@ -104,11 +104,48 @@ class MomenceService {
     while (hasMore && allCustomers.length < maxRecords) {
       const result = await this.getCustomers({ page, pageSize });
 
-      if (result.payload && result.payload.length > 0) {
-        allCustomers.push(...result.payload);
+      // DEBUG: Log the raw response structure
+      console.log(`[Momence API] Page ${page} response type:`, typeof result);
+      console.log(`[Momence API] Page ${page} is array:`, Array.isArray(result));
+      console.log(`[Momence API] Page ${page} keys:`, result ? Object.keys(result) : 'null');
+      if (result && !Array.isArray(result)) {
+        console.log(`[Momence API] payload exists:`, !!result.payload);
+        console.log(`[Momence API] pagination:`, result.pagination);
+      }
 
-        // Check if there are more pages
-        const totalCount = result.pagination?.totalCount || 0;
+      // Handle both response formats:
+      // 1. { payload: [...], pagination: {...} } - expected format
+      // 2. Direct array of customers
+      // 3. { customers: [...] } or other formats
+      let customers = [];
+      let totalCount = 0;
+
+      if (Array.isArray(result)) {
+        // Direct array response
+        customers = result;
+        totalCount = result.length;
+        console.log(`[Momence API] Direct array format, ${customers.length} customers`);
+      } else if (result && result.payload && Array.isArray(result.payload)) {
+        // Expected format with payload
+        customers = result.payload;
+        totalCount = result.pagination?.totalCount || result.payload.length;
+        console.log(`[Momence API] Payload format, ${customers.length} customers, total: ${totalCount}`);
+      } else if (result && result.customers && Array.isArray(result.customers)) {
+        // Alternative format with 'customers' key
+        customers = result.customers;
+        totalCount = result.totalCount || result.customers.length;
+        console.log(`[Momence API] Customers format, ${customers.length} customers`);
+      } else if (result && result.data && Array.isArray(result.data)) {
+        // Alternative format with 'data' key
+        customers = result.data;
+        totalCount = result.total || result.data.length;
+        console.log(`[Momence API] Data format, ${customers.length} customers`);
+      } else {
+        console.log(`[Momence API] Unknown response format:`, JSON.stringify(result).substring(0, 500));
+      }
+
+      if (customers.length > 0) {
+        allCustomers.push(...customers);
         hasMore = allCustomers.length < totalCount && allCustomers.length < maxRecords;
         page++;
       } else {
@@ -116,6 +153,7 @@ class MomenceService {
       }
     }
 
+    console.log(`[Momence API] Total customers fetched: ${allCustomers.length}`);
     return allCustomers.slice(0, maxRecords);
   }
 
