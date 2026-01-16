@@ -88,7 +88,7 @@ router.post('/', authenticateToken, async (req, res, next) => {
 
     // Call Claude API
     const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-5-20250929',
+      model: 'claude-sonnet-4-20250514',
       max_tokens: 2048,
       system: getSystemPrompt(),
       messages: messages
@@ -590,7 +590,7 @@ Return ONLY valid JSON, no markdown formatting.`;
 
     try {
       const response = await anthropic.messages.create({
-        model: 'claude-sonnet-4-5-20250929',
+        model: 'claude-sonnet-4-20250514',
         max_tokens: 1024,
         messages: [{
           role: 'user',
@@ -944,7 +944,7 @@ Rules:
     console.log('[Client Summary] Calling Claude API...');
 
     const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-5-20250929',
+      model: 'claude-sonnet-4-20250514',
       max_tokens: 1024,
       messages: [{
         role: 'user',

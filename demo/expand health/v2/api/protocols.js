@@ -1118,7 +1118,7 @@ router.post('/generate', authenticateToken, async (req, res, next) => {
 
     // Call Claude API with increased max_tokens to prevent truncation
     const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-5-20250929',
+      model: 'claude-sonnet-4-20250514',
       max_tokens: 8192,  // Increased from 4096 to prevent response truncation
       messages: [{
         role: 'user',
@@ -1470,7 +1470,7 @@ For diet modules, include: name, description, duration, notes
 Return ONLY valid JSON. No markdown, no code blocks.`;
 
       const response = await anthropic.messages.create({
-        model: 'claude-sonnet-4-5-20250929',
+        model: 'claude-sonnet-4-20250514',
         max_tokens: 2048,
         messages: [{ role: 'user', content: aiPrompt }]
       });
@@ -1538,7 +1538,7 @@ Return ONLY valid JSON. No markdown, no code blocks, no explanations.`;
     console.log('[Module Edit] Calling Claude API...');
 
     const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-5-20250929',
+      model: 'claude-sonnet-4-20250514',
       max_tokens: 2048,
       messages: [{ role: 'user', content: aiPrompt }]
     });
@@ -1643,7 +1643,7 @@ Return ONLY valid JSON. No markdown, no code blocks.`;
     console.log('[Module Generate] Calling Claude API...');
 
     const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-5-20250929',
+      model: 'claude-sonnet-4-20250514',
       max_tokens: 2048,
       messages: [{ role: 'user', content: aiPrompt }]
     });
@@ -2028,7 +2028,7 @@ Return ONLY valid JSON. No markdown, no code blocks.`;
     console.log('[Engagement Plan] Calling Claude API...');
 
     const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-5-20250929',
+      model: 'claude-sonnet-4-20250514',
       max_tokens: 4096,
       messages: [{ role: 'user', content: aiPrompt }]
     });
@@ -2304,7 +2304,7 @@ Generate an engagement phase with this EXACT JSON structure:
 Return ONLY valid JSON. No markdown, no code blocks.`;
 
       const response = await anthropic.messages.create({
-        model: 'claude-sonnet-4-5-20250929',
+        model: 'claude-sonnet-4-20250514',
         max_tokens: 2048,
         messages: [{ role: 'user', content: aiPrompt }]
       });
@@ -2374,7 +2374,7 @@ Return ONLY valid JSON. No markdown, no code blocks, no explanations.`;
     console.log('[Engagement Phase Edit] Calling Claude API...');
 
     const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-5-20250929',
+      model: 'claude-sonnet-4-20250514',
       max_tokens: 2048,
       messages: [{ role: 'user', content: aiPrompt }]
     });
