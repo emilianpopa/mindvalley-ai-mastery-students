@@ -2718,3 +2718,44 @@ textarea.form-input {
 .lab-preview-note-btn:hover {
   background: #0F766E;
 }
+
+/* Generate Summary Button */
+.generate-summary-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: linear-gradient(135deg, #0F766E 0%, #115E59 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  margin-top: 12px;
+  transition: all 0.2s;
+}
+
+.generate-summary-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #115E59 0%, #0F766E 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(15, 118, 110, 0.3);
+}
+
+.generate-summary-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.generate-summary-btn svg {
+  stroke: white;
+}
+
+.generate-summary-btn .animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

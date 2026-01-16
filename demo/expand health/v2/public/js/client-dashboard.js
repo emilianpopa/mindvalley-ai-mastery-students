@@ -11850,8 +11850,18 @@ async function openLabPreview(labId) {
   // Set lab info
   document.getElementById('labPreviewTitle').textContent = lab.file_name || lab.title || 'Lab Result';
   document.getElementById('labPreviewMeta').textContent = `${lab.lab_type || 'Lab'} | ${formatDate(lab.test_date || lab.uploaded_at)}`;
-  document.getElementById('labPreviewSummary').textContent = lab.ai_summary || 'No AI summary available. Click to generate.';
   document.getElementById('labPreviewNotes').textContent = lab.notes || 'No notes to show';
+
+  // Handle AI summary display and generate button
+  const summaryEl = document.getElementById('labPreviewSummary');
+  const generateBtn = document.getElementById('generateLabSummaryBtn');
+  if (lab.ai_summary) {
+    summaryEl.textContent = lab.ai_summary;
+    if (generateBtn) generateBtn.style.display = 'none';
+  } else {
+    summaryEl.textContent = 'No AI summary available.';
+    if (generateBtn) generateBtn.style.display = 'flex';
+  }
 
   // Render the lab document (PDF or image)
   const docContainer = document.getElementById('labPreviewDocument');
@@ -11933,6 +11943,72 @@ function closeLabPreview() {
   const panel = document.getElementById('labPreviewPanel');
   if (panel) panel.style.display = 'none';
   currentLabPreview = null;
+}
+
+// Generate AI summary for the current lab preview
+async function generateLabAISummary() {
+  if (!currentLabPreview) {
+    showNotification('No lab selected', 'error');
+    return;
+  }
+
+  const summaryEl = document.getElementById('labPreviewSummary');
+  const generateBtn = document.getElementById('generateLabSummaryBtn');
+
+  // Show loading state
+  if (generateBtn) {
+    generateBtn.disabled = true;
+    generateBtn.innerHTML = `
+      <svg class="animate-spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+      </svg>
+      Generating...
+    `;
+  }
+  summaryEl.textContent = 'Generating AI summary...';
+
+  try {
+    const token = localStorage.getItem('auth_token');
+    const response = await fetch(`${API_BASE}/api/labs/${currentLabPreview.id}/generate-summary`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      summaryEl.textContent = data.summary || 'Summary generated successfully.';
+      currentLabPreview.ai_summary = data.summary;
+      if (generateBtn) generateBtn.style.display = 'none';
+      showNotification('AI summary generated successfully!', 'success');
+
+      // Update the lab in the reference panel list
+      const labIndex = refPanelLabData.findIndex(l => l.id === currentLabPreview.id);
+      if (labIndex !== -1) {
+        refPanelLabData[labIndex].ai_summary = data.summary;
+      }
+    } else {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || 'Failed to generate summary');
+    }
+  } catch (error) {
+    console.error('Error generating lab summary:', error);
+    summaryEl.textContent = 'Failed to generate summary. Please try again.';
+    showNotification(`Error: ${error.message}`, 'error');
+
+    // Reset button
+    if (generateBtn) {
+      generateBtn.disabled = false;
+      generateBtn.innerHTML = `
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+        </svg>
+        Generate AI Summary
+      `;
+    }
+  }
 }
 
 function saveLabNote() {
