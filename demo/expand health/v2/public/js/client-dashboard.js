@@ -12447,11 +12447,6 @@ function filterRefForms() {
 
 // View reference items
 function viewRefProtocol(protocolId) {
-  console.log('[viewRefProtocol] Called with protocolId:', protocolId, 'type:', typeof protocolId);
-  console.log('[viewRefProtocol] refPanelProtocolsData length:', refPanelProtocolsData?.length);
-  console.log('[viewRefProtocol] refPanelProtocolData length:', refPanelProtocolData?.length);
-
-  // Open protocol in the protocol view modal
   // Check both data sources (protocol builder uses refPanelProtocolsData, existing editor uses refPanelProtocolData)
   // Use == for loose equality to handle string/number type mismatches
   let protocol = refPanelProtocolsData?.find(p => p.id == protocolId);
@@ -12459,22 +12454,10 @@ function viewRefProtocol(protocolId) {
     protocol = refPanelProtocolData?.find(p => p.id == protocolId);
   }
 
-  console.log('[viewRefProtocol] Found protocol:', protocol);
-
   if (protocol) {
-    // Use the existing showProtocolViewModal function
-    try {
-      console.log('[viewRefProtocol] Calling showProtocolViewModal...');
-      showProtocolViewModal(protocol);
-      console.log('[viewRefProtocol] showProtocolViewModal completed');
-    } catch (err) {
-      console.error('[viewRefProtocol] Error in showProtocolViewModal:', err);
-      alert('Error showing protocol: ' + err.message);
-    }
+    showProtocolViewModal(protocol);
   } else {
     console.error('[viewRefProtocol] Protocol not found:', protocolId);
-    console.log('[viewRefProtocol] Available protocols IDs:', refPanelProtocolsData?.map(p => p.id), refPanelProtocolData?.map(p => p.id));
-    alert('Protocol not found. IDs available: ' + JSON.stringify(refPanelProtocolsData?.map(p => p.id)));
     showNotification('Could not load protocol', 'error');
   }
 }
@@ -12488,15 +12471,12 @@ function viewRefNote(noteId) {
 }
 
 function viewRefForm(formId) {
-  console.log('[viewRefForm] Called with formId:', formId);
   // Use loose equality to handle string/number type mismatches
   const form = refPanelFormsData.find(f => f.id == formId);
-  console.log('[viewRefForm] Found form:', form);
   if (form) {
-    // Show form in a modal
     showFormPreviewModal(form);
   } else {
-    console.error('[viewRefForm] Form not found, available IDs:', refPanelFormsData.map(f => f.id));
+    console.error('[viewRefForm] Form not found:', formId);
     showNotification('Could not load form', 'error');
   }
 }
@@ -12542,8 +12522,6 @@ function showNotePreviewModal(note) {
 
 // Show form preview modal
 function showFormPreviewModal(form) {
-  console.log('[showFormPreviewModal] Form data:', form);
-
   const existingModal = document.getElementById('formPreviewModal');
   if (existingModal) existingModal.remove();
 
