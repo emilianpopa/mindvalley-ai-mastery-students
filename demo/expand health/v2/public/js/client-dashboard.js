@@ -5,6 +5,55 @@
 
 const API_BASE = window.location.origin;
 
+// Initialize utility bar
+if (typeof initUtilityBar === 'function') {
+  initUtilityBar('clients');
+}
+
+// ========== Toast Notification System ==========
+
+// Ensure toast container exists
+function ensureToastContainer() {
+  let container = document.getElementById('toastContainer');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'toastContainer';
+    container.className = 'toast-container';
+    document.body.appendChild(container);
+  }
+  return container;
+}
+
+// Show toast notification
+function showToast(message, type = 'info', duration = 5000) {
+  const container = ensureToastContainer();
+  const toast = document.createElement('div');
+  toast.className = `toast toast-${type}`;
+
+  const icons = {
+    success: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>',
+    error: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>',
+    warning: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>',
+    info: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>'
+  };
+
+  toast.innerHTML = `
+    <span class="toast-icon">${icons[type] || icons.info}</span>
+    <span class="toast-message">${message}</span>
+    <button class="toast-close" onclick="this.parentElement.remove()">&times;</button>
+  `;
+  container.appendChild(toast);
+
+  // Trigger animation
+  setTimeout(() => toast.classList.add('show'), 10);
+
+  // Auto remove
+  setTimeout(() => {
+    toast.classList.remove('show');
+    setTimeout(() => toast.remove(), 300);
+  }, duration);
+}
+
 // ========== User Menu Functions ==========
 
 // Toggle user dropdown menu
@@ -947,18 +996,10 @@ function viewActivityItem(type, id) {
   }
 }
 
-// Refresh AI Summary
+// Refresh AI Summary - calls the real regenerateSummary function
 function refreshSummary() {
-  const btn = event.target;
-  const originalText = btn.textContent;
-  btn.textContent = 'Refreshing...';
-  btn.disabled = true;
-
-  setTimeout(() => {
-    btn.textContent = originalText;
-    btn.disabled = false;
-    alert('AI summary refreshed! In production, this would call the AI to regenerate the summary based on latest data.');
-  }, 1500);
+  // Redirect to the actual AI summary generation function
+  regenerateSummary();
 }
 
 // Assign Form - Open modal and load forms
@@ -1429,7 +1470,22 @@ async function loadLabPdfWithPdfJs(url) {
     }
     console.log('🔷 All pages rendered successfully');
 
+    // Scroll to top of container to show page 1
+    // Use multiple methods to ensure scroll works
+    container.scrollTop = 0;
+
+    // Also scroll first page into view after a short delay to ensure DOM is ready
+    setTimeout(() => {
+      container.scrollTop = 0;
+      const firstPage = container.querySelector('.pdf-page-canvas');
+      if (firstPage) {
+        firstPage.scrollIntoView({ behavior: 'instant', block: 'start' });
+      }
+      console.log('🔷 Scrolled to top, scrollTop:', container.scrollTop);
+    }, 100);
+
     // Update page info
+    labPdfCurrentPage = 1;
     updateLabPdfPageInfo();
 
   } catch (error) {
@@ -1699,7 +1755,15 @@ function formatAISummary(summary) {
 // Close lab viewer modal
 function closeLabViewerModal() {
   document.getElementById('labViewerModal').style.display = 'none';
-  document.getElementById('labPdfFrame').src = '';
+  // Clear iframe src if it exists (may have been removed by PDF.js rendering)
+  const iframe = document.getElementById('labPdfFrame');
+  if (iframe) {
+    iframe.src = '';
+  }
+  // Clear PDF.js document
+  labPdfDoc = null;
+  labPdfCurrentPage = 1;
+  labPdfTotalPages = 0;
   currentViewingLab = null;
 }
 
@@ -1800,20 +1864,80 @@ function showLabMoreOptions() {
   }
 }
 
-// Generate AI summary
+// Track pending AI summary generations
+let pendingSummaryGenerations = new Map();
+
+// Generate AI summary - runs in background so user can continue working
 async function generateLabSummary() {
   if (!currentViewingLab) return;
+
+  const labId = currentViewingLab.id;
+  const labTitle = currentViewingLab.title || 'Lab Result';
+
+  // Check if already generating for this lab
+  if (pendingSummaryGenerations.has(labId)) {
+    showToast('AI summary is already being generated for this document.', 'info');
+    return;
+  }
 
   const btn = document.getElementById('generateLabSummaryBtn');
   const summaryContainer = document.getElementById('labAiSummary');
 
+  // Update UI to show generating state with progress bar
   btn.disabled = true;
-  btn.textContent = 'Generating...';
-  summaryContainer.innerHTML = '<p style="color: #6B7280; font-style: italic;">Analyzing document...</p>';
+  btn.innerHTML = `
+    <span class="btn-spinner"></span>
+    <span>Analyzing...</span>
+  `;
+  btn.classList.add('generating');
 
+  summaryContainer.innerHTML = `
+    <div class="ai-progress-container">
+      <div class="ai-progress-header">
+        <span class="ai-progress-icon">🧠</span>
+        <span class="ai-progress-title">AI Analysis in Progress</span>
+      </div>
+      <div class="ai-progress-bar-wrapper">
+        <div class="ai-progress-bar">
+          <div class="ai-progress-fill"></div>
+        </div>
+      </div>
+      <div class="ai-progress-steps">
+        <div class="ai-step active" id="aiStep1">
+          <span class="step-dot"></span>
+          <span class="step-text">Reading document</span>
+        </div>
+        <div class="ai-step" id="aiStep2">
+          <span class="step-dot"></span>
+          <span class="step-text">Analyzing biomarkers</span>
+        </div>
+        <div class="ai-step" id="aiStep3">
+          <span class="step-dot"></span>
+          <span class="step-text">Generating insights</span>
+        </div>
+      </div>
+      <p class="ai-progress-hint">You can close this and continue working. We'll notify you when it's ready.</p>
+    </div>
+  `;
+
+  // Start the progress animation
+  startProgressAnimation();
+
+  // Show toast notification
+  showToast(`Generating AI summary for "${labTitle}"... You can continue working.`, 'info', 5000);
+
+  // Track this generation
+  pendingSummaryGenerations.set(labId, { title: labTitle, startTime: Date.now() });
+
+  // Run generation in background
+  generateLabSummaryInBackground(labId, labTitle);
+}
+
+// Background AI summary generation
+async function generateLabSummaryInBackground(labId, labTitle) {
   try {
     const token = localStorage.getItem('auth_token');
-    const response = await fetch(`${API_BASE}/api/labs/${currentViewingLab.id}/generate-summary`, {
+    const response = await fetch(`${API_BASE}/api/labs/${labId}/generate-summary`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`
@@ -1823,23 +1947,115 @@ async function generateLabSummary() {
     const data = await response.json();
 
     if (data.summary) {
-      summaryContainer.innerHTML = formatAISummary(data.summary);
-      currentViewingLab.ai_summary = data.summary;
-
-      // Update the table view as well
-      const labIndex = clientLabs.findIndex(l => l.id === currentViewingLab.id);
+      // Update the lab data in memory
+      const labIndex = clientLabs.findIndex(l => l.id === labId);
       if (labIndex >= 0) {
         clientLabs[labIndex].ai_summary = data.summary;
         renderLabsTable();
       }
+
+      // If the modal is still open for this lab, update the UI
+      if (currentViewingLab && currentViewingLab.id === labId) {
+        const summaryContainer = document.getElementById('labAiSummary');
+        const btn = document.getElementById('generateLabSummaryBtn');
+
+        if (summaryContainer) {
+          summaryContainer.innerHTML = formatAISummary(data.summary);
+        }
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = '🔄 Regenerate Summary';
+          btn.classList.remove('generating');
+        }
+        currentViewingLab.ai_summary = data.summary;
+        stopProgressAnimation();
+      }
+
+      // Show success notification
+      showToast(`✨ AI summary for "${labTitle}" is ready!`, 'success', 8000);
+
+    } else {
+      throw new Error(data.error || 'Failed to generate summary');
     }
 
   } catch (error) {
     console.error('Error generating summary:', error);
-    summaryContainer.innerHTML = '<p style="color: #DC2626;">Error generating summary. Please try again.</p>';
+
+    // Show error notification
+    showToast(`Failed to generate AI summary for "${labTitle}". Please try again.`, 'error', 8000);
+
+    // If modal is still open, show error state
+    if (currentViewingLab && currentViewingLab.id === labId) {
+      const summaryContainer = document.getElementById('labAiSummary');
+      const btn = document.getElementById('generateLabSummaryBtn');
+
+      if (summaryContainer) {
+        summaryContainer.innerHTML = '<p style="color: #DC2626;">Error generating summary. Please try again.</p>';
+      }
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = '✨ Generate Summary';
+        btn.classList.remove('generating');
+      }
+      stopProgressAnimation();
+    }
   } finally {
-    btn.disabled = false;
-    btn.textContent = '🔄 Regenerate Summary';
+    // Remove from pending
+    pendingSummaryGenerations.delete(labId);
+  }
+}
+
+// Progress animation state
+let progressAnimationInterval = null;
+let progressStep = 0;
+
+// Start the animated progress for AI generation
+function startProgressAnimation() {
+  progressStep = 0;
+
+  // Animate through steps
+  progressAnimationInterval = setInterval(() => {
+    progressStep++;
+
+    const step1 = document.getElementById('aiStep1');
+    const step2 = document.getElementById('aiStep2');
+    const step3 = document.getElementById('aiStep3');
+
+    if (!step1) {
+      // Elements no longer exist, stop animation
+      stopProgressAnimation();
+      return;
+    }
+
+    // Update steps based on progress
+    if (progressStep >= 2) {
+      step1.classList.add('completed');
+      step2.classList.add('active');
+    }
+    if (progressStep >= 4) {
+      step2.classList.add('completed');
+      step3.classList.add('active');
+    }
+    if (progressStep >= 6) {
+      step3.classList.add('completed');
+    }
+
+    // Loop the animation for long operations
+    if (progressStep >= 8) {
+      progressStep = 0;
+      step1.classList.remove('completed');
+      step2.classList.remove('completed', 'active');
+      step3.classList.remove('completed', 'active');
+      step1.classList.add('active');
+    }
+  }, 2000);
+}
+
+// Stop the progress animation
+function stopProgressAnimation() {
+  if (progressAnimationInterval) {
+    clearInterval(progressAnimationInterval);
+    progressAnimationInterval = null;
   }
 }
 
@@ -2521,7 +2737,7 @@ async function regenerateSummary() {
           ).join('')}
         </ul>
         <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #E5E7EB; font-size: 11px; color: #9CA3AF;">
-          Based on ${data.dataSourcesUsed?.notes || 0} notes, ${data.dataSourcesUsed?.forms || 0} forms, ${data.dataSourcesUsed?.labs || 0} labs
+          Based on ${data.dataSourcesUsed?.notes || 0} notes, ${data.dataSourcesUsed?.forms || 0} forms, ${data.dataSourcesUsed?.labs || 0} labs, ${data.dataSourcesUsed?.protocols || 0} protocols
         </div>
       `;
     } else {
@@ -3568,12 +3784,12 @@ function copyFormLink() {
   input.select();
   input.setSelectionRange(0, 99999);
   navigator.clipboard.writeText(input.value).then(() => {
-    alert('Link copied to clipboard!');
+    showToast('Link copied to clipboard!', 'success');
   }).catch(err => {
     console.error('Failed to copy link:', err);
     // Fallback for older browsers
     document.execCommand('copy');
-    alert('Link copied to clipboard!');
+    showToast('Link copied to clipboard!', 'success');
   });
 }
 
@@ -3585,11 +3801,11 @@ function sendFormViaEmail() {
 
 // Send form via WhatsApp
 function sendFormViaWhatsApp() {
-  if (!currentFormLinkData || !clientData) return;
+  if (!currentFormLinkData || !currentClient) return;
 
-  const phone = clientData.phone ? clientData.phone.replace(/\D/g, '') : '';
+  const phone = currentClient.phone ? currentClient.phone.replace(/\D/g, '') : '';
   const message = encodeURIComponent(
-    `Hi ${clientData.first_name || 'there'}! Please fill out this form for your upcoming appointment:\n\n${currentFormLinkData.link_url}`
+    `Hi ${currentClient.first_name || 'there'}! Please fill out this form for your upcoming appointment:\n\n${currentFormLinkData.link_url}`
   );
 
   if (phone) {
@@ -3601,7 +3817,10 @@ function sendFormViaWhatsApp() {
 
 // Confirm send email
 async function confirmSendEmail() {
-  if (!currentFormLinkData || !clientData) return;
+  if (!currentFormLinkData || !currentClient) {
+    showToast('Please create a form link first', 'warning');
+    return;
+  }
 
   const message = document.getElementById('emailMessage').value;
   const btn = event.target;
@@ -3626,15 +3845,34 @@ async function confirmSendEmail() {
 
     if (!response.ok) {
       const error = await response.json();
+      // Handle specific error messages with user-friendly text
+      if (error.error === 'Email service not configured') {
+        throw new Error('EMAIL_NOT_CONFIGURED');
+      }
       throw new Error(error.error || 'Failed to send email');
     }
 
-    alert('Email sent successfully!');
+    const result = await response.json();
+
+    // Check if in sandbox mode
+    if (result.sandbox_mode) {
+      showToast('Email queued! Note: Sandbox mode - only delivers to Resend account owner. Verify a domain for production use.', 'warning', 8000);
+    } else {
+      showToast('Email sent successfully to ' + (currentClient.email || 'client'), 'success');
+    }
     closeSendFormModal();
 
   } catch (error) {
     console.error('Error sending email:', error);
-    alert('Failed to send email: ' + error.message);
+
+    if (error.message === 'EMAIL_NOT_CONFIGURED') {
+      // Show a more helpful message for unconfigured email
+      showToast('Email service is not configured. Please use "Copy Link" or "WhatsApp" to share the form instead.', 'warning', 8000);
+    } else if (error.message.includes('does not have an email')) {
+      showToast('This client does not have an email address on file. Please add their email first or use another sharing method.', 'warning', 6000);
+    } else {
+      showToast('Failed to send email: ' + error.message, 'error');
+    }
   } finally {
     btn.disabled = false;
     btn.innerHTML = '<span>📧</span><span>Send Email Now</span>';

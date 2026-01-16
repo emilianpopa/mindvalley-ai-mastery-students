@@ -13,9 +13,15 @@
     <!-- Sidebar -->
     <aside class="sidebar">
       <div class="sidebar-header">
-        <div class="logo-small">
-          <span class="logo-icon">✦</span>
-          <span class="logo-text">ExpandHealth</span>
+        <div class="logo">
+          <svg class="logo-icon" width="28" height="28" viewBox="0 0 24 24" fill="none">
+            <path d="M4 4L11 12L4 20" stroke="#0F766E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M20 4L13 12L20 20" stroke="#0F766E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <div class="logo-text">
+            <span class="logo-expand">EXPAND</span>
+            <span class="logo-health">HEALTH</span>
+          </div>
         </div>
       </div>
 
@@ -140,7 +146,7 @@
 
       <div class="sidebar-footer">
         <button class="ask-ai-btn" onclick="openQuickNotes()">
-          <span>ðŸ“</span>
+          <span>📝</span>
           <span>Quick Notes</span>
         </button>
       </div>
@@ -182,7 +188,7 @@
         <div class="responses-header">
           <p class="response-count" id="responseCount">0 lead responses</p>
           <div class="search-box">
-            <span class="search-icon">ðŸ”</span>
+            <span class="search-icon">🔍</span>
             <input type="text" id="searchInput" placeholder="Search responses" oninput="filterResponses()">
           </div>
         </div>
@@ -206,7 +212,7 @@
           <h3>No Responses Yet</h3>
           <p>Share your form to start collecting responses</p>
           <button class="btn-primary" onclick="copyFormLink()">
-            ðŸ“‹ Copy Form Link
+            📋 Copy Form Link
           </button>
         </div>
 

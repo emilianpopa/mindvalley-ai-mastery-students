@@ -12,15 +12,22 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script src="/js/feature-flags.js"></script>
   <script src="/js/nav.js"></script>
+  <script src="/js/utility-bar.js"></script>
 </head>
 <body>
   <div class="app-container">
     <!-- Sidebar -->
     <aside class="sidebar">
       <div class="sidebar-header">
-        <div class="logo-small">
-          <span class="logo-icon">✦</span>
-          <span class="logo-text">ExpandHealth</span>
+        <div class="logo">
+          <svg class="logo-icon" width="28" height="28" viewBox="0 0 24 24" fill="none">
+            <path d="M4 4L11 12L4 20" stroke="#0F766E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M20 4L13 12L20 20" stroke="#0F766E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <div class="logo-text">
+            <span class="logo-expand">EXPAND</span>
+            <span class="logo-health">HEALTH</span>
+          </div>
         </div>
       </div>
 
@@ -155,14 +162,31 @@
 
     <!-- Main Content -->
     <main class="main-content">
+      <!-- Global Utility Bar -->
+      <div id="utilityBarContainer"></div>
+
       <!-- Header -->
       <header class="header">
-        <div class="header-left">
+        <div class="header-left-mobile">
+          <!-- Mobile Menu Button -->
+          <button class="mobile-menu-btn" onclick="openMobileMenu()">
+            <svg viewBox="0 0 24 24" fill="none">
+              <line x1="3" y1="6" x2="21" y2="6"/>
+              <line x1="3" y1="12" x2="21" y2="12"/>
+              <line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+          </button>
           <p class="breadcrumb">
-            <a href="/">Home</a> â†’ <a href="/clients">Clients</a> â†’ <span id="breadcrumbName">Loading...</span>
+            <a href="/">Home</a> → <a href="/clients">Clients</a> → <span id="breadcrumbName">Loading...</span>
           </p>
         </div>
         <div class="header-right">
+          <button class="icon-btn notification-btn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+            </svg>
+          </button>
           <div class="user-menu-wrapper">
             <button class="user-avatar-btn" onclick="toggleUserMenu()">
               <img src="https://ui-avatars.com/api/?name=Admin&background=0F766E&color=fff&size=40" alt="User" class="user-avatar" id="userAvatar">
@@ -409,7 +433,7 @@
                     <span class="stat-value" id="chronoAge">--</span>
                   </div>
                   <div class="age-difference" id="ageDifference" style="display: none;">
-                    <span class="diff-arrow">â†“</span>
+                    <span class="diff-arrow">←“</span>
                     <span class="diff-value">-- years younger</span>
                   </div>
                 </div>
@@ -430,28 +454,45 @@
               </div>
               <div class="vitals-grid">
                 <div class="vital-item">
-                  <span class="vital-icon">âš–ï¸</span>
+                  <span class="vital-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="5" r="3"/>
+                      <path d="M12 8v8M9 12h6"/>
+                    </svg>
+                  </span>
                   <div class="vital-info">
                     <span class="vital-label">Weight</span>
                     <span class="vital-value" id="vitalWeight">-- <small>kg</small></span>
                   </div>
                 </div>
                 <div class="vital-item">
-                  <span class="vital-icon">ðŸ“</span>
+                  <span class="vital-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M12 2v20M8 6h8"/>
+                    </svg>
+                  </span>
                   <div class="vital-info">
                     <span class="vital-label">Height</span>
                     <span class="vital-value" id="vitalHeight">-- <small>cm</small></span>
                   </div>
                 </div>
                 <div class="vital-item">
-                  <span class="vital-icon">ðŸ“Š</span>
+                  <span class="vital-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M18 20V10M12 20V4M6 20v-6"/>
+                    </svg>
+                  </span>
                   <div class="vital-info">
                     <span class="vital-label">BMI</span>
                     <span class="vital-value" id="vitalBMI">--</span>
                   </div>
                 </div>
                 <div class="vital-item">
-                  <span class="vital-icon">â¤ï¸</span>
+                  <span class="vital-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+                    </svg>
+                  </span>
                   <div class="vital-info">
                     <span class="vital-label">Blood Pressure</span>
                     <span class="vital-value" id="vitalBP">-- <small>mmHg</small></span>
@@ -663,32 +704,34 @@
               </div>
               <button class="btn-refresh" onclick="regeneratePersonalityInsights()">Refresh</button>
             </div>
-            <div class="personality-grid">
+            <div class="personality-grid" id="personalityGrid">
               <div class="personality-item">
                 <span class="personality-label">Personality Type</span>
-                <span class="personality-value" id="personalityType">ENTJ - The Commander</span>
+                <span class="personality-value" id="personalityType">--</span>
               </div>
               <div class="personality-item">
                 <span class="personality-label">Communication Style</span>
-                <span class="personality-value" id="communicationStyle">Direct & Analytical</span>
+                <span class="personality-value" id="communicationStyle">--</span>
               </div>
               <div class="personality-item">
                 <span class="personality-label">Decision Making</span>
-                <span class="personality-value" id="decisionMaking">Data-Driven</span>
+                <span class="personality-value" id="decisionMaking">--</span>
               </div>
               <div class="personality-item">
                 <span class="personality-label">Motivation Driver</span>
-                <span class="personality-value" id="motivationDriver">Achievement & Results</span>
+                <span class="personality-value" id="motivationDriver">--</span>
               </div>
             </div>
-            <div class="personality-insights">
-              <h4>AI-Generated Insights</h4>
-              <ul id="personalityInsightsList">
-                <li><strong>Best approach:</strong> Present information with clear data and evidence. This client values efficiency and logical reasoning over emotional appeals.</li>
-                <li><strong>Communication tip:</strong> Be direct and concise. They appreciate professionals who respect their time and get to the point quickly.</li>
-                <li><strong>Engagement style:</strong> Focus on measurable outcomes and progress tracking. Set clear milestones and provide regular status updates.</li>
-                <li><strong>Potential challenges:</strong> May resist recommendations that seem too slow or lack clear rationale. Ensure protocols include clear timelines and expected outcomes.</li>
-              </ul>
+            <div class="personality-insights" id="personalityInsightsContainer">
+              <p class="empty-insights-message" id="emptyInsightsMessage" style="color: #6b7280; font-style: italic;">
+                No personality insights available yet. Complete an intake form to generate AI-powered personality insights.
+              </p>
+              <div id="personalityInsightsContent" style="display: none;">
+                <h4>AI-Generated Insights</h4>
+                <ul id="personalityInsightsList">
+                  <!-- Populated by JavaScript when intake data is available -->
+                </ul>
+              </div>
             </div>
           </div>
 
@@ -749,7 +792,7 @@
             <h2>Labs & Tests</h2>
             <div class="header-actions">
               <button class="btn-primary" onclick="openUploadLabModal()">
-                <span>ðŸ“¤</span>
+                <span>📤</span>
                 <span>Upload New File</span>
               </button>
             </div>
@@ -974,7 +1017,7 @@
             <label>Form Link</label>
             <div class="link-display">
               <input type="text" id="generatedFormLink" class="form-input" readonly>
-              <button class="btn-icon" onclick="copyFormLink()" title="Copy Link">ðŸ“‹</button>
+              <button class="btn-icon" onclick="copyFormLink()" title="Copy Link">📋</button>
             </div>
             <p class="link-expiry-info" id="formLinkExpiry"></p>
           </div>
@@ -983,28 +1026,31 @@
             <p class="send-options-label">Share this link:</p>
             <div class="send-options-buttons">
               <button class="send-option-btn" onclick="copyFormLink()">
-                <span>ðŸ“‹</span>
+                <span>📋</span>
                 <span>Copy Link</span>
               </button>
               <button class="send-option-btn" onclick="sendFormViaEmail()">
-                <span>ðŸ“§</span>
+                <span>📧</span>
                 <span>Send Email</span>
               </button>
               <button class="send-option-btn" onclick="sendFormViaWhatsApp()">
-                <span>ðŸ’¬</span>
+                <span>💬</span>
                 <span>WhatsApp</span>
               </button>
             </div>
           </div>
 
           <!-- Email Options (hidden by default) -->
-          <div id="emailOptionsSection" style="display: none; margin-top: 20px;">
+          <div id="emailOptionsSection" style="display: none; margin-top: 20px; border-top: 1px solid #E5E7EB; padding-top: 20px;">
             <div class="form-group">
               <label for="emailMessage">Personal Message (Optional)</label>
               <textarea id="emailMessage" class="form-textarea" rows="3" placeholder="Add a personal message to include in the email..."></textarea>
             </div>
-            <button class="btn-primary" onclick="confirmSendEmail()" style="width: 100%;">
-              <span>ðŸ“§</span>
+            <button class="send-email-btn" onclick="confirmSendEmail()">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 2L11 13"></path>
+                <path d="M22 2L15 22L11 13L2 9L22 2Z"></path>
+              </svg>
               <span>Send Email Now</span>
             </button>
           </div>
@@ -1048,7 +1094,7 @@
             <label for="noteContent" style="margin-bottom: 0;">Note Content</label>
             <div class="note-input-controls">
               <button class="btn-icon" id="voiceInputBtn" onclick="toggleVoiceInput()" title="Voice Input">
-                <span id="voiceIcon">ðŸŽ¤</span>
+                <span id="voiceIcon">🎤</span>
                 <span id="voiceText">Start Voice</span>
               </button>
               <button class="btn-icon" id="aiScribeBtn" onclick="toggleAIScribe()" title="AI Scribe">
@@ -1063,7 +1109,7 @@
           </div>
           <textarea id="noteContent" class="form-textarea" rows="8" placeholder="Enter consultation notes here, or use voice input..."></textarea>
           <div class="note-helper-text">
-            ðŸ’¡ Tip: Use voice input for faster note-taking during consultations
+            💡 Tip: Use voice input for faster note-taking during consultations
           </div>
         </div>
 
@@ -1128,12 +1174,12 @@
           <div class="file-upload-zone" id="fileUploadZone">
             <input type="file" id="labFileInput" accept=".pdf,.doc,.docx" style="display: none;">
             <div class="upload-placeholder" id="uploadPlaceholder">
-              <span class="upload-icon">ðŸ“„</span>
+              <span class="upload-icon">📄</span>
               <p class="upload-text">Drag and drop a file here or <span class="upload-link">browse</span></p>
               <p class="upload-hint">Supports PDF and Word documents (max 50MB)</p>
             </div>
             <div class="upload-preview" id="uploadPreview" style="display: none;">
-              <span class="file-icon">ðŸ“„</span>
+              <span class="file-icon">📄</span>
               <div class="file-info">
                 <p class="file-name" id="selectedFileName">filename.pdf</p>
                 <p class="file-size" id="selectedFileSize">2.3 MB</p>

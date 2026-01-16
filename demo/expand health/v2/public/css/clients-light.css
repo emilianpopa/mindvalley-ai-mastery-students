@@ -1088,6 +1088,17 @@ body {
   transform: translateY(0);
 }
 
+/* Dropdown opens upward when near bottom of screen */
+.more-menu.dropdown-up {
+  top: auto;
+  bottom: calc(100% + 4px);
+  transform: translateY(8px);
+}
+
+.more-menu.dropdown-up.active {
+  transform: translateY(0);
+}
+
 .more-menu-item {
   display: flex;
   align-items: center;

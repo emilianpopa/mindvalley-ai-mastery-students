@@ -12,11 +12,18 @@ const fs = require('fs').promises;
 const { authenticateToken } = require('../middleware/auth');
 const db = require('../db');
 const { GoogleGenAI } = require('@google/genai');
+const Anthropic = require('@anthropic-ai/sdk');
 
 // Initialize Gemini AI (using new SDK)
 let genAI = null;
 if (process.env.GEMINI_API_KEY) {
   genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+}
+
+// Initialize Anthropic Claude (fallback)
+let anthropic = null;
+if (process.env.ANTHROPIC_API_KEY) {
+  anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 }
 
 // Configure multer for file uploads - use memory storage to store in database
@@ -426,11 +433,11 @@ router.post('/:id/generate-summary', authenticateToken, async (req, res, next) =
 
     const lab = labResult.rows[0];
 
-    // Check if Gemini is configured
-    if (!genAI) {
+    // Check if any AI is configured
+    if (!genAI && !anthropic) {
       return res.status(500).json({
-        error: 'Gemini API key not configured',
-        summary: 'AI summary generation is not available. Please configure GEMINI_API_KEY in environment variables.'
+        error: 'AI API keys not configured',
+        summary: 'AI summary generation is not available. Please configure GEMINI_API_KEY or ANTHROPIC_API_KEY in environment variables.'
       });
     }
 
@@ -496,63 +503,105 @@ Keep the analysis professional, clinically relevant, and actionable for a health
       }
     }
 
-    if (pdfBuffer) {
-      // Use Gemini's multimodal capability to analyze PDF directly
-      console.log('Calling Gemini API with PDF for multimodal analysis...');
+    // Helper function to call Claude as fallback
+    async function callClaudeWithText(promptText) {
+      if (!anthropic) {
+        throw new Error('Claude API not configured');
+      }
+      console.log('Calling Claude API as fallback...');
+      const result = await anthropic.messages.create({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 4096,
+        messages: [{ role: 'user', content: promptText }]
+      });
+      return result.content[0].text;
+    }
 
+    // Helper function to extract text from PDF
+    async function extractPdfText(buffer) {
       try {
-        // Convert buffer to base64 for inline data
-        const pdfBase64 = Buffer.from(pdfBuffer).toString('base64');
+        const pdfParse = require('pdf-parse');
+        const pdfData = await pdfParse(buffer);
+        console.log(`Extracted ${pdfData.text.length} characters from PDF`);
+        return pdfData.text;
+      } catch (pdfError) {
+        console.log('Text extraction failed:', pdfError.message);
+        return '';
+      }
+    }
 
-        const result = await genAI.models.generateContent({
-          model: 'gemini-2.0-flash-001',
-          contents: [
-            {
-              parts: [
-                {
-                  inlineData: {
-                    mimeType: 'application/pdf',
-                    data: pdfBase64
-                  }
-                },
-                { text: analysisPrompt }
-              ]
-            }
-          ]
-        });
+    if (pdfBuffer) {
+      // Convert buffer to base64 for inline data
+      const pdfBase64 = Buffer.from(pdfBuffer).toString('base64');
 
-        summary = result.text;
-        console.log('Gemini multimodal response received, length:', summary.length);
-      } catch (multimodalError) {
-        console.error('Multimodal PDF analysis failed:', multimodalError.message);
-
-        // Fallback to text extraction if multimodal fails
-        console.log('Falling back to text extraction...');
-        let pdfText = '';
-
+      // Try Gemini multimodal first
+      if (genAI) {
+        console.log('Calling Gemini API with PDF for multimodal analysis...');
         try {
-          const pdfParse = require('pdf-parse');
-          const pdfData = await pdfParse(pdfBuffer);
-          pdfText = pdfData.text;
-          console.log(`Extracted ${pdfText.length} characters from PDF`);
-        } catch (pdfError) {
-          console.log('Text extraction also failed:', pdfError.message);
-        }
+          const result = await genAI.models.generateContent({
+            model: 'gemini-2.0-flash',
+            contents: [
+              {
+                parts: [
+                  {
+                    inlineData: {
+                      mimeType: 'application/pdf',
+                      data: pdfBase64
+                    }
+                  },
+                  { text: analysisPrompt }
+                ]
+              }
+            ]
+          });
 
-        // Build fallback prompt with extracted text
+          summary = result.text;
+          console.log('Gemini multimodal response received, length:', summary.length);
+        } catch (geminiError) {
+          console.error('Gemini multimodal PDF analysis failed:', geminiError.message);
+
+          // Try Claude with extracted text as fallback
+          if (anthropic) {
+            console.log('Falling back to Claude with text extraction...');
+            const pdfText = await extractPdfText(pdfBuffer);
+            let fallbackPrompt = analysisPrompt;
+            if (pdfText) {
+              fallbackPrompt += `\n\nLab Report Text:\n${pdfText.substring(0, 30000)}\n`;
+            } else {
+              fallbackPrompt += `\n\nNote: Could not extract lab data. Please provide a general analysis based on the lab type.\n`;
+            }
+            summary = await callClaudeWithText(fallbackPrompt);
+            console.log('Claude fallback response received, length:', summary.length);
+          } else {
+            // No Claude available, try Gemini text fallback
+            console.log('Falling back to Gemini text extraction...');
+            const pdfText = await extractPdfText(pdfBuffer);
+            let fallbackPrompt = analysisPrompt;
+            if (pdfText) {
+              fallbackPrompt += `\n\nLab Report Text:\n${pdfText.substring(0, 15000)}\n`;
+            } else {
+              fallbackPrompt += `\n\nNote: Could not extract lab data. Please provide a general analysis based on the lab type.\n`;
+            }
+            const fallbackResult = await genAI.models.generateContent({
+              model: 'gemini-2.0-flash',
+              contents: fallbackPrompt
+            });
+            summary = fallbackResult.text;
+            console.log('Gemini text fallback response received, length:', summary.length);
+          }
+        }
+      } else if (anthropic) {
+        // No Gemini available, use Claude with text extraction
+        console.log('Using Claude with text extraction (no Gemini available)...');
+        const pdfText = await extractPdfText(pdfBuffer);
         let fallbackPrompt = analysisPrompt;
         if (pdfText) {
-          fallbackPrompt += `\n\nLab Report Text:\n${pdfText.substring(0, 15000)}\n`;
+          fallbackPrompt += `\n\nLab Report Text:\n${pdfText.substring(0, 30000)}\n`;
         } else {
           fallbackPrompt += `\n\nNote: Could not extract lab data. Please provide a general analysis based on the lab type.\n`;
         }
-
-        const fallbackResult = await genAI.models.generateContent({
-          model: 'gemini-2.0-flash-001',
-          contents: fallbackPrompt
-        });
-        summary = fallbackResult.text;
-        console.log('Fallback text analysis completed, length:', summary.length);
+        summary = await callClaudeWithText(fallbackPrompt);
+        console.log('Claude response received, length:', summary.length);
       }
     } else {
       // No PDF available, use any extracted data we have
@@ -573,15 +622,31 @@ Keep the analysis professional, clinically relevant, and actionable for a health
         fallbackPrompt += `\n\nNote: No lab data available. Please provide a general analysis based on the lab type.\n`;
       }
 
-      console.log('Calling Gemini API with text-only analysis...');
-      const result = await genAI.models.generateContent({
-        model: 'gemini-2.0-flash-001',
-        contents: fallbackPrompt
-      });
-      summary = result.text;
-      console.log('Text-only analysis completed, length:', summary.length);
+      // Try Gemini first, then Claude
+      if (genAI) {
+        console.log('Calling Gemini API with text-only analysis...');
+        try {
+          const result = await genAI.models.generateContent({
+            model: 'gemini-2.0-flash',
+            contents: fallbackPrompt
+          });
+          summary = result.text;
+          console.log('Gemini text-only analysis completed, length:', summary.length);
+        } catch (geminiError) {
+          console.error('Gemini text-only analysis failed:', geminiError.message);
+          if (anthropic) {
+            summary = await callClaudeWithText(fallbackPrompt);
+            console.log('Claude text-only fallback completed, length:', summary.length);
+          } else {
+            throw geminiError;
+          }
+        }
+      } else if (anthropic) {
+        summary = await callClaudeWithText(fallbackPrompt);
+        console.log('Claude text-only analysis completed, length:', summary.length);
+      }
     }
-    console.log('Gemini response received, length:', summary.length);
+    console.log('AI response received, length:', summary.length);
 
     // Update lab with summary
     await db.query(

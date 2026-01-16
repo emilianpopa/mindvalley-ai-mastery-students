@@ -161,7 +161,7 @@ function displayLab(lab) {
   labView.style.display = 'block';
 }
 
-// Load PDF using PDF.js for high-quality rendering
+// Load PDF using PDF.js for high-quality rendering - renders ALL pages for scrolling
 async function loadPdfWithPdfJs(url) {
   // Check if this is a demo/placeholder URL (no real PDF file)
   if (url && url.includes('/demo-') && currentLab && currentLab.extracted_data) {
@@ -201,17 +201,28 @@ async function loadPdfWithPdfJs(url) {
     pdfDoc = await loadingTask.promise;
     totalPages = pdfDoc.numPages;
 
-    // Restore canvas
-    pdfContainer.innerHTML = '<canvas id="pdfCanvas"></canvas>';
+    console.log('PDF loaded successfully, pages:', totalPages);
+
+    // Create container for all pages
+    pdfContainer.innerHTML = '<div id="pdfPagesContainer" class="pdf-pages-container"></div>';
+    const pagesContainer = document.getElementById('pdfPagesContainer');
 
     // Calculate initial scale to fit width
     await calculateFitWidthScale();
 
-    // Render the first page
-    await renderPage(currentPage);
+    // Render ALL pages for continuous scrolling
+    for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
+      await renderPageToContainer(pageNum, pagesContainer);
+    }
+
+    console.log('All pages rendered successfully');
 
     // Update page info
+    currentPage = 1;
     updatePageInfo();
+
+    // Setup scroll observer to track current page
+    setupScrollObserver(pagesContainer);
 
   } catch (error) {
     console.error('Error loading PDF with PDF.js:', error);
@@ -234,6 +245,84 @@ async function loadPdfWithPdfJs(url) {
       `;
     }
   }
+}
+
+// Render a single page to the pages container
+async function renderPageToContainer(pageNum, container) {
+  if (!pdfDoc) return;
+
+  try {
+    const page = await pdfDoc.getPage(pageNum);
+
+    // Create a wrapper for this page
+    const pageWrapper = document.createElement('div');
+    pageWrapper.className = 'pdf-page-wrapper';
+    pageWrapper.dataset.pageNum = pageNum;
+
+    // Create canvas for this page
+    const canvas = document.createElement('canvas');
+    canvas.className = 'pdf-page-canvas';
+    const ctx = canvas.getContext('2d');
+
+    // Use device pixel ratio for sharp rendering on high-DPI displays
+    const devicePixelRatio = window.devicePixelRatio || 1;
+    const viewport = page.getViewport({ scale: currentScale });
+
+    // Set canvas dimensions for high-DPI rendering
+    canvas.width = viewport.width * devicePixelRatio;
+    canvas.height = viewport.height * devicePixelRatio;
+
+    // Set display size (CSS)
+    canvas.style.width = viewport.width + 'px';
+    canvas.style.height = viewport.height + 'px';
+
+    // Scale context for high-DPI
+    ctx.scale(devicePixelRatio, devicePixelRatio);
+
+    // Add page number label
+    const pageLabel = document.createElement('div');
+    pageLabel.className = 'pdf-page-label';
+    pageLabel.textContent = `Page ${pageNum} of ${totalPages}`;
+
+    pageWrapper.appendChild(canvas);
+    pageWrapper.appendChild(pageLabel);
+    container.appendChild(pageWrapper);
+
+    // Render the page with high quality settings
+    const renderContext = {
+      canvasContext: ctx,
+      viewport: viewport,
+      enableWebGL: true,
+      renderInteractiveForms: true
+    };
+
+    await page.render(renderContext).promise;
+
+  } catch (error) {
+    console.error('Error rendering page', pageNum, ':', error);
+  }
+}
+
+// Setup scroll observer to track which page is currently visible
+function setupScrollObserver(container) {
+  const pageWrappers = container.querySelectorAll('.pdf-page-wrapper');
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting && entry.intersectionRatio > 0.5) {
+        const pageNum = parseInt(entry.target.dataset.pageNum);
+        if (pageNum !== currentPage) {
+          currentPage = pageNum;
+          updatePageInfo();
+        }
+      }
+    });
+  }, {
+    root: pdfContainer,
+    threshold: 0.5
+  });
+
+  pageWrappers.forEach(wrapper => observer.observe(wrapper));
 }
 
 // Show extracted data when PDF is not available (demo labs)
@@ -402,7 +491,7 @@ function updatePageInfo() {
 function zoomIn() {
   if (currentScale < MAX_SCALE) {
     currentScale = Math.min(currentScale + SCALE_STEP, MAX_SCALE);
-    renderPage(currentPage);
+    rerenderAllPages();
   }
 }
 
@@ -410,35 +499,67 @@ function zoomIn() {
 function zoomOut() {
   if (currentScale > MIN_SCALE) {
     currentScale = Math.max(currentScale - SCALE_STEP, MIN_SCALE);
-    renderPage(currentPage);
+    rerenderAllPages();
   }
 }
 
 // Fit to width
 async function fitToWidth() {
   await calculateFitWidthScale();
-  renderPage(currentPage);
+  rerenderAllPages();
 }
 
-// Go to previous page
+// Re-render all pages with current scale
+async function rerenderAllPages() {
+  if (!pdfDoc) return;
+
+  const pagesContainer = document.getElementById('pdfPagesContainer');
+  if (!pagesContainer) return;
+
+  // Clear existing pages
+  pagesContainer.innerHTML = '';
+
+  // Re-render all pages with new scale
+  for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
+    await renderPageToContainer(pageNum, pagesContainer);
+  }
+
+  // Update zoom display
+  updateZoomDisplay();
+
+  // Scroll back to current page
+  scrollToPage(currentPage);
+
+  // Re-setup scroll observer
+  setupScrollObserver(pagesContainer);
+}
+
+// Go to previous page - scroll to it
 function prevPage() {
   if (currentPage > 1) {
     currentPage--;
-    renderPage(currentPage);
+    scrollToPage(currentPage);
     updatePageInfo();
-    // Scroll to top of PDF viewer
-    pdfContainer.scrollTop = 0;
   }
 }
 
-// Go to next page
+// Go to next page - scroll to it
 function nextPage() {
   if (currentPage < totalPages) {
     currentPage++;
-    renderPage(currentPage);
+    scrollToPage(currentPage);
     updatePageInfo();
-    // Scroll to top of PDF viewer
-    pdfContainer.scrollTop = 0;
+  }
+}
+
+// Scroll to a specific page
+function scrollToPage(pageNum) {
+  const pagesContainer = document.getElementById('pdfPagesContainer');
+  if (!pagesContainer) return;
+
+  const pageWrapper = pagesContainer.querySelector(`[data-page-num="${pageNum}"]`);
+  if (pageWrapper) {
+    pageWrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 }
 

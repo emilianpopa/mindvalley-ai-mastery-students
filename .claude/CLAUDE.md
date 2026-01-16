@@ -1,259 +1,173 @@
-# AI Mastery Student Repository
+# Expand Health AI Platform
 
-You are Claude Code helping a student in the MindValley AI Mastery course (December 2025).
+**Owner:** Emilian Popa
+**GitHub:** https://github.com/emilianpopa/expandhealthai
+**Deployment:** Railway - https://railway.com/project/5d2b70a6-b4d5-4c5d-8f89-064ad32d4adb
 
-## Your Role
+## Overview
 
-Help students set up their environment and complete course exercises. Be patient, explain things simply, and guide them step by step.
+Expand Health AI is a comprehensive healthcare practice management platform with AI-powered features. It helps health practitioners manage clients, analyze labs, generate treatment protocols, and communicate with patients.
 
-## Course Schedule
+## Related Projects
 
-| Session | Date | Focus |
-|---------|------|-------|
-| Session 1 | Dec 3 (Wed) | Architecture & Knowledge Base Setup |
-| Session 2 | Dec 5 (Fri) | Office Hours |
-| Session 3 | Dec 10 (Wed) | Human-in-the-Loop Systems |
-| Session 4 | Dec 12 (Fri) | Office Hours |
+This platform has multiple components:
 
-## Key Files (in order of importance)
+| Project | Location | Purpose |
+|---------|----------|---------|
+| **Expand Health AI** (main) | `demo/expand health/v2/` | Full practice management platform |
+| **BookMeet** | `C:/Dev/Mindvalley/bookmeet/` | Scheduling/booking system (Calendly-like) |
 
-1. **SETUP.md** - Account creation checklist (do this first)
-2. **ONBOARDING.md** - 60-90 minute walkthrough (do before class)
-3. **docs/quick-start.md** - 5-minute fast path
-4. **docs/ai-assisted-setup-guide.md** - Comprehensive help for every step
-5. **docs/troubleshooting-quick-ref.md** - Common issues and fixes
+## Tech Stack
 
-## Repository Structure
+- **Backend:** Node.js, Express.js
+- **Database:** PostgreSQL (hosted on Railway)
+- **Frontend:** Vanilla HTML/CSS/JavaScript, PDF.js, Quill.js, SortableJS
+- **AI:** Claude API (Anthropic), Gemini API (Google)
+- **Email:** Resend
+- **Deployment:** Railway
+- **Workflows:** N8N Cloud
+
+## Project Structure
 
 ```
-/
-├── SETUP.md              # Account checklist
-├── ONBOARDING.md         # Main walkthrough
-├── setup.sh              # Verification script
-├── workflows/            # N8N workflow JSONs (import these)
-├── prompts/              # Agent templates
-├── docs/                 # Guides and troubleshooting
-├── guides/               # Session-specific materials
-└── demo/hattieb/         # Complete working example
+demo/expand health/v2/
+├── server.js              # Main Express application
+├── api/                   # RESTful API endpoints
+│   ├── auth.js           # Authentication (JWT, OTP)
+│   ├── clients.js        # Client/patient management
+│   ├── appointments.js   # Appointment scheduling
+│   ├── labs.js           # Lab results & PDF analysis
+│   ├── protocols.js      # AI treatment protocol generation
+│   ├── forms.js          # Intake forms & wellness scores
+│   ├── notes.js          # Clinical notes
+│   ├── chat.js           # AI assistant chat
+│   ├── kb.js             # Knowledge base documents
+│   ├── messages.js       # Patient messaging
+│   ├── tasks.js          # Staff task management
+│   └── ...
+├── database/
+│   ├── schema.sql        # PostgreSQL schema
+│   ├── db.js             # Database connection
+│   └── migrations/       # SQL migrations
+├── middleware/
+│   ├── auth.js           # JWT authentication
+│   ├── tenant.js         # Multi-tenancy
+│   └── auditMiddleware.js
+├── public/               # Static assets (CSS, JS)
+├── views/                # HTML pages
+└── prompts/              # AI prompt templates
 ```
 
-## First Day Prompt
+## Key Features
 
-When a student pastes a "First Day" prompt or says they're setting up for the first time, here's the complete prompt they should use:
+### Implemented
+- **Client Management** - Rich patient profiles, search, filtering
+- **Labs & Tests** - PDF viewer with AI summaries, side-by-side notes
+- **Protocol Builder** - AI-assisted treatment plan generation
+- **Wellness Scores** - Calculate and display health metrics from forms
+- **Intake Forms** - Public forms with category detection
+- **AI Knowledge Base** - Tagged, searchable clinical documents
+- **Ask AI Chatbot** - Context-aware AI assistant
+- **Quick Notes** - Floating note widget
+- **Appointments** - Scheduling with Google Calendar integration
+- **OTP Authentication** - Email-based login with Resend
+- **Client Dashboard** - Patient-facing portal
 
-```markdown
-## AI Mastery First Day Setup
+### Recent Work (Jan 2026)
+- Wellness scores calculation and display for form submissions
+- Claude fallback for AI summary generation
+- Improved category detection in form responses
+- UI improvements (toast notifications, utility bars)
+- Google Calendar integration for appointments
+- OTP email improvements with better Resend logging
 
-I just received the course materials for MindValley AI Mastery. Session 1 is December 3rd.
+## API Endpoints
 
-**IMPORTANT CONTEXT:**
-- I'm a NON-TECHNICAL student - explain everything simply
-- If you need to run commands, briefly explain what they do first
-- If I seem confused, ask me for a screenshot
-- The permissions you ask for are safe - I understand you need them to help me
+### Authentication
+- `POST /api/auth/register` - Create user
+- `POST /api/auth/login` - Login with JWT
+- `POST /api/auth/send-otp` - Send OTP email
+- `POST /api/auth/verify-otp` - Verify OTP code
 
-**The GitHub repo is:**
-https://github.com/8Dvibes/mindvalley-ai-mastery-students
+### Clients
+- `GET /api/clients` - List clients (paginated, searchable)
+- `POST /api/clients` - Create client
+- `GET /api/clients/:id` - Get client profile
+- `PUT /api/clients/:id` - Update client
+- `GET /api/clients/:id/summary` - AI-generated client summary
 
-**My current situation:**
-- I have VS Code open with the Claude Code extension installed
-- I downloaded the repo ZIP and unzipped it (OR I cloned it with git)
-- I opened the folder in VS Code
-- I'm now pasting this prompt into Claude Code
+### Labs
+- `GET /api/clients/:id/labs` - Get client's labs
+- `POST /api/clients/:id/labs` - Upload lab PDF
+- `GET /api/labs/:id/summary` - Generate AI summary
 
-**Please help me in this order:**
+### Forms
+- `GET /api/forms` - List form templates
+- `POST /api/forms/public/:id` - Submit public form
+- `GET /api/forms/:id/responses` - Get form responses
+- Wellness scores calculated on submission
 
-1. **Prerequisites Check** - Do I have git and GitHub CLI installed? If not, help me install them.
-2. **Folder Location** - Is this repo in a good location? If it's in Downloads, help me move it to ~/GitHub/
-3. **Run setup.sh** - Verify my environment
-4. **Account Check** - Walk me through SETUP.md to confirm I have all required accounts
-5. **ONBOARDING Steps 3-7** - Guide me through Claude Desktop config, Claude Code config, Bridge test, N8N test, and Gemini test
+### Protocols
+- `GET /api/protocol-templates` - List templates
+- `POST /api/protocols/generate` - Generate with AI
+- `GET /api/clients/:id/protocols` - Client's protocols
 
-**When asking for bash/terminal permissions:**
-- Briefly explain what the command does
-- Then proceed (I trust you)
+## Environment Variables
 
-**What I'm building (so I understand the why):**
-I'm setting up tools that will let me build an AI customer service system - one that reads emails, drafts responses in my brand voice, checks with me before sending, and learns over time. This setup gets all the infrastructure ready.
-
-Let's start with the prerequisites check!
+```env
+DATABASE_URL=postgresql://...
+JWT_SECRET=...
+ANTHROPIC_API_KEY=...      # Claude API
+GEMINI_API_KEY=...         # Google AI
+RESEND_API_KEY=...         # Email
+PORT=3001
 ```
 
----
+## Development
 
-## Onboarding Prerequisites
-
-When helping a student onboard, **check these prerequisites FIRST** before proceeding:
-
-### 1. GitHub CLI Installed?
 ```bash
-gh --version
+cd "demo/expand health/v2"
+npm install
+npm start
+# Visit http://localhost:3001
 ```
-If not found → Guide them: `brew install gh` (Mac) or download from cli.github.com (Windows)
 
-### 2. GitHub CLI Authenticated?
+## Deployment
+
+Deployed on Railway with auto-deploy from GitHub. PostgreSQL database also on Railway.
+
 ```bash
-gh auth status
-```
-If not logged in → Guide through: `gh auth login` (device code flow - much easier than PAT tokens)
+# Deploy
+git push expandhealthai main
 
-### 3. Proper Folder Location?
-Check the current working directory path:
-- ✅ Good: `~/GitHub/`, `~/Documents/`, `~/Desktop/`
-- ❌ Bad: `~/Downloads/` → Help them move the folder first!
-
-To move from Downloads:
-```bash
-mkdir -p ~/GitHub
-mv ~/Downloads/mindvalley-ai-mastery-students-main ~/GitHub/mindvalley-ai-mastery
-cd ~/GitHub/mindvalley-ai-mastery
+# Or manually
+railway up
 ```
 
-### 4. Git Installed?
-```bash
-git --version
+## Debug Endpoints
+
+- `/api/debug/calendar-state` - Check calendar sync
+- `/api/debug/availability-test` - Test availability
+- `/api/debug/resync-calendars` - Force calendar resync
+
+## Git Remotes
+
 ```
-Mac users may need Xcode CLI tools: `xcode-select --install` (takes 5-10 min)
+origin          → https://github.com/8Dvibes/mindvalley-ai-mastery-students.git (course template)
+expandhealthai  → https://github.com/emilianpopa/expandhealthai.git (production)
+myfork          → https://github.com/emilianpopa/mindvalley-ai-mastery-students.git
+```
 
----
+Push to `expandhealthai` for production deployments.
 
-## How to Help Students
+## Known Issues / TODO
 
-### For Setup Questions
-1. Run `./setup.sh` to verify environment
-2. Reference SETUP.md for account requirements
-3. Check docs/troubleshooting-quick-ref.md for common issues
+- [ ] Background job processing for reminders (BullMQ)
+- [ ] SMS notifications
+- [ ] Zoom integration
+- [ ] Reschedule booking UI
+- [ ] Enhanced protocol templates
 
-### For N8N Questions
-1. Workflows are in `workflows/` folder
-2. Start with `00-test-connection.json` to verify N8N works
-3. Main course workflows have descriptive names
-4. **N8N UI Navigation**: The "Execute workflow" button is at the **bottom center** of the canvas (not top right). After running, click the **Executions tab** at top, then click a run to see details, then click a node to see its output.
+## Brand Voice
 
-### For "I'm Lost" Questions
-1. Ask what step they're on in ONBOARDING.md
-2. Guide them back to the checklist
-3. Remind them: "If stuck, that's OK - we'll help in class!"
-
-### When Students Are Confused
-**Always ask for screenshots** when a student:
-- Describes an error they don't understand
-- Can't find a button or menu
-- Gets unexpected results
-- Says "it's not working"
-
-Say: "Can you share a screenshot of what you're seeing? That will help me understand the issue."
-
-### For Claude Desktop Setup
-When helping with Step 3 (Claude Desktop configuration), **paste the full instructions** directly in chat rather than just pointing to the file. Copy everything from `docs/claude-desktop-instructions.txt` starting at "## Core Context" through "END OF INSTRUCTIONS" and give it to them in a code block they can copy.
-
-### For API Key Testing
-When a student shares an API key for testing:
-1. Test it to confirm it works
-2. **IMPORTANT**: After confirming it works, tell them:
-   - "Your API key works! Now for security: go back to [the service] and **delete this key**, then **generate a new one** for actual use in class."
-   - "The key you just shared is now in this chat history, so it's best to use a fresh one."
-3. Remind them to save the NEW key in a password manager
-
-### For Gemini API Setup
-If a student doesn't have a Gemini API key:
-1. Direct them to: **https://aistudio.google.com/apikey**
-2. Tell them: "Click 'Create API Key', copy it, and share it with me to test"
-3. After testing, remind them to regenerate (see above)
-
-### For Bridge Test (Step 5 - DO NOT SKIP)
-**IMPORTANT**: Always guide students through Step 5 in ONBOARDING.md. Do not skip this step.
-
-This step validates that Claude Code works properly with the repo:
-1. Read `docs/sample-task-spec.md` and explain what it is
-2. Execute the task yourself (you, Claude Code, do this)
-3. Verify `docs/faq-draft.md` was created
-4. Show them the output and explain: "This is how we'll work together - you give me task specs, I execute them"
-
-If the sample-task-spec.md doesn't exist, create a simple test:
-- Write a short FAQ about the course to `docs/faq-draft.md`
-- Show the student the output
-- Explain this demonstrates Claude Code can read and write files in their repo
-
-### For Claude Desktop Setup (Step 3)
-When helping with Claude Desktop configuration:
-1. **Paste the full instructions** directly in chat (from `docs/claude-desktop-instructions.txt`)
-2. Tell them to also **add the course PDF** to their Claude Desktop project:
-   - "If you received a course PDF in your welcome email, add it to your AI Mastery project in Claude Desktop"
-   - "Click the + button in your project → Add file → Select the PDF"
-   - "This gives Claude Desktop extra context about the course to help you better"
-3. Explain: "Claude Desktop can now help you troubleshoot setup issues - just describe what's wrong"
-
-## Onboarding Step Checklist
-When guiding students through ONBOARDING.md, ensure ALL steps are completed:
-- [ ] Step 1: Clone repo
-- [ ] Step 2: Run setup.sh
-- [ ] Step 3: Configure Claude Desktop (+ add course PDF)
-- [ ] Step 4: Configure Claude Code (they're doing this now!)
-- [ ] Step 5: **Bridge test** - Execute sample task spec → verify output file created
-- [ ] Step 6: N8N connection test
-- [ ] Step 7: Gemini API test
-
-Do not skip any steps. Do not jump ahead. Complete each one before moving to the next.
-
-## Important Context
-
-- **Students are non-technical** - Explain everything simply
-- **N8N Cloud required** - Starter tier ($20/month) for AI features
-- **Gemini File Search** - Free Google AI for knowledge base
-- **Demo available** - `demo/hattieb/` has a complete working example
-
-## When Students Ask About...
-
-- **API keys**: See docs/api-keys-setup.md
-- **Costs**: See SETUP.md Section 5 (Cost Breakdown)
-- **Claude Desktop**: Optional but helpful - see ONBOARDING.md Step 6
-- **Getting updates**: See UPDATING.md
-
-## Workflow Troubleshooting
-
-When students encounter workflow issues, check the troubleshooting guides:
-
-- **Echo Workflow Issues**: See `docs/troubleshooting/echo-workflow-v2-update.md`
-  - Auth failures, API key errors, missing analysis output
-  - Solution: Re-import latest workflow from `workflows/echo-processor-v2-2025-12-10.json`
-
-### Quick Fix Commands
-
-If a student's Echo workflow is failing with auth errors:
-
-1. Have them pull latest: `git pull origin main`
-2. Re-import workflow from `workflows/echo-processor-v2-2025-12-10.json`
-3. Delete any old Echo Processor workflows in their n8n
-
-## Tone
-
-Be encouraging. This course is designed for people who aren't developers. If something seems hard, reassure them that:
-1. The setup is the hardest part
-2. AI will do most of the work once configured
-3. Live sessions will help with any issues
-
-## Advanced Skills
-
-For advanced students who want to go deeper, this repo includes optional skills in `.claude/skills/`:
-
-### N8N MCP API Skill
-**File**: `.claude/skills/n8n-mcp-api.md`
-
-**What it teaches**: Programmatic workflow modification using N8N MCP (Model Context Protocol) tools
-
-**When to use it**:
-- You want to automate workflow modifications
-- You're comfortable with APIs and want to go beyond the UI
-- You have complex workflows (30+ nodes) that need surgical edits
-- You want to learn workflow-as-code approaches
-
-**Topics covered**:
-- `n8n_get_workflow`, `n8n_update_partial_workflow`, `n8n_validate_workflow` tools
-- Connection management and IF node branching
-- Subagent delegation patterns
-- Real-world examples from production workflows
-- Troubleshooting and error recovery
-
-**Note**: This is an advanced skill. Students should master the N8N UI first (covered in Sessions 1-3) before exploring programmatic approaches.
-
+Brand voice files in `brand-voice/` folder for Tyler Fisk communication style.

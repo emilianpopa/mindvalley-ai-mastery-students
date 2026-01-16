@@ -6,6 +6,7 @@ const multer = require('multer');
 const pdfParse = require('pdf-parse');
 const { GoogleGenAI } = require('@google/genai');
 const { Resend } = require('resend');
+const Anthropic = require('@anthropic-ai/sdk');
 
 // Initialize Resend for email
 let resend = null;
@@ -23,6 +24,17 @@ let genAI = null;
 if (process.env.GEMINI_API_KEY) {
   genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 }
+
+// Initialize Anthropic client (fallback for AI summaries)
+let anthropic = null;
+if (process.env.ANTHROPIC_API_KEY) {
+  anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+}
+
+// Log AI service availability at startup
+console.log('📋 Forms API - AI Services:');
+console.log('  - Gemini:', genAI ? '✅ configured' : '❌ not configured (GEMINI_API_KEY missing)');
+console.log('  - Anthropic:', anthropic ? '✅ configured' : '❌ not configured (ANTHROPIC_API_KEY missing)');
 
 // Configure multer for PDF upload
 const storage = multer.memoryStorage();
@@ -116,7 +128,7 @@ ${pdfText}
 Return ONLY the JSON object, no other text.`;
 
     const result = await genAI.models.generateContent({
-      model: 'gemini-2.0-flash-001',
+      model: 'gemini-2.0-flash',
       contents: prompt
     });
     const responseText = result.text;
@@ -662,7 +674,8 @@ router.get('/links/validate/:token', async (req, res) => {
     try {
       const result = await pool.query(
         `SELECT fl.*, ft.name as form_name, ft.status as form_status,
-                c.first_name as client_first_name, c.last_name as client_last_name, c.email as client_email
+                c.first_name as client_first_name, c.last_name as client_last_name,
+                c.email as client_email, c.phone as client_phone, c.date_of_birth as client_dob
          FROM form_links fl
          INNER JOIN form_templates ft ON fl.form_id = ft.id
          LEFT JOIN clients c ON fl.client_id = c.id
@@ -691,14 +704,22 @@ router.get('/links/validate/:token', async (req, res) => {
         return res.status(400).json({ error: 'This form is no longer available', valid: false });
       }
 
+      // Build client data if personalized link
+      const clientData = link.client_id ? {
+        first_name: link.client_first_name,
+        last_name: link.client_last_name,
+        email: link.client_email,
+        phone: link.client_phone,
+        date_of_birth: link.client_dob
+      } : null;
+
       res.json({
         valid: true,
         link_type: link.link_type,
         form_id: link.form_id,
         form_name: link.form_name,
         client_id: link.client_id,
-        client_name: link.client_id ? `${link.client_first_name} ${link.client_last_name}`.trim() : null,
-        client_email: link.client_email,
+        client: clientData,
         expires_at: link.expires_at
       });
     } catch (dbError) {
@@ -1029,7 +1050,7 @@ Provide a 2-3 sentence summary highlighting:
 Keep your response concise and professional.`;
 
     const result = await genAI.models.generateContent({
-      model: 'gemini-2.0-flash-001',
+      model: 'gemini-2.0-flash',
       contents: prompt
     });
     const summary = result.text;
@@ -1522,9 +1543,10 @@ router.post('/submissions/:id/create-client', authenticateToken, async (req, res
 
 // Background function to generate and save AI summary
 async function generateAndSaveAISummary(submissionId, responses, formName) {
-  if (!genAI) {
-    console.log('Gemini model not configured, skipping AI summary');
-    return;
+  // Check if any AI service is available
+  if (!genAI && !anthropic) {
+    console.log('No AI service configured (need GEMINI_API_KEY or ANTHROPIC_API_KEY)');
+    throw new Error('AI service not configured. Please set GEMINI_API_KEY or ANTHROPIC_API_KEY.');
   }
 
   try {
@@ -1551,11 +1573,42 @@ Provide a summary with:
 
 Keep the summary professional and actionable. Use bullet points for clarity.`;
 
-    const result = await genAI.models.generateContent({
-      model: 'gemini-2.0-flash-001',
-      contents: prompt
-    });
-    const summary = result.text;
+    let summary;
+
+    // Try Gemini first, fall back to Claude
+    if (genAI) {
+      console.log('Using Gemini for AI summary...');
+      try {
+        const result = await genAI.models.generateContent({
+          model: 'gemini-2.0-flash',
+          contents: prompt
+        });
+        summary = result.text;
+        console.log('Gemini summary generated successfully');
+      } catch (geminiError) {
+        console.error('Gemini API error:', geminiError.message);
+        // Fall back to Claude if Gemini fails
+        if (anthropic) {
+          console.log('Falling back to Claude...');
+          const result = await anthropic.messages.create({
+            model: 'claude-sonnet-4-20250514',
+            max_tokens: 1024,
+            messages: [{ role: 'user', content: prompt }]
+          });
+          summary = result.content[0].text;
+        } else {
+          throw geminiError;
+        }
+      }
+    } else if (anthropic) {
+      console.log('Using Claude for AI summary...');
+      const result = await anthropic.messages.create({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1024,
+        messages: [{ role: 'user', content: prompt }]
+      });
+      summary = result.content[0].text;
+    }
 
     // Save to database
     await pool.query(
@@ -1605,7 +1658,12 @@ router.post('/submissions/:id/regenerate-summary', authenticateToken, async (req
     });
   } catch (error) {
     console.error('Error regenerating summary:', error);
-    res.status(500).json({ error: 'Failed to regenerate summary' });
+    // Return more specific error message
+    const errorMessage = error.message || 'Failed to regenerate summary';
+    res.status(500).json({
+      error: errorMessage,
+      details: process.env.NODE_ENV !== 'production' ? error.stack : undefined
+    });
   }
 });
 
@@ -1752,15 +1810,39 @@ router.post('/send-email', authenticateToken, async (req, res) => {
     }
 
     const fromEmail = process.env.RESEND_FROM_EMAIL || 'ExpandHealth <noreply@expandhealth.com>';
+    const isSandbox = fromEmail.includes('resend.dev');
 
-    await resend.emails.send({
+    console.log(`📧 Sending form email via Resend...`);
+    console.log(`   From: ${fromEmail}`);
+    console.log(`   To: ${client.email}`);
+    console.log(`   Subject: ${formName} - Please Complete Your Form`);
+    console.log(`   Sandbox mode: ${isSandbox}`);
+
+    const emailResult = await resend.emails.send({
       from: fromEmail,
       to: client.email,
       subject: `${formName} - Please Complete Your Form`,
       html: emailHtml
     });
 
-    res.json({ success: true, message: 'Email sent successfully' });
+    console.log('📬 Resend API response:', JSON.stringify(emailResult, null, 2));
+
+    if (emailResult.error) {
+      console.error('❌ Resend error:', emailResult.error);
+      return res.status(500).json({ error: emailResult.error.message || 'Email delivery failed' });
+    }
+
+    // Warn about sandbox mode
+    if (isSandbox) {
+      console.log(`⚠️ Sandbox mode: Email will only be delivered if ${client.email} is the Resend account owner`);
+    }
+
+    res.json({
+      success: true,
+      message: 'Email sent successfully',
+      sandbox_mode: isSandbox,
+      email_id: emailResult.data?.id
+    });
 
   } catch (error) {
     console.error('Error sending form email:', error);
