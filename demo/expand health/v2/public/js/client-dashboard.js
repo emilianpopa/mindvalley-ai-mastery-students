@@ -6126,6 +6126,9 @@ function showProtocolViewModal(protocol) {
   const existingModal = document.getElementById('protocolViewModal');
   if (existingModal) existingModal.remove();
 
+  // Store protocol ID for summary generation
+  window.currentViewingProtocolId = protocol.id;
+
   const modal = document.createElement('div');
   modal.id = 'protocolViewModal';
   modal.className = 'modal-overlay';
@@ -6133,6 +6136,35 @@ function showProtocolViewModal(protocol) {
 
   const protocolContent = protocol.content || '';
   const hasContent = protocolContent.length > 0;
+
+  // Build AI Summary section
+  const hasSummary = protocol.ai_summary && protocol.ai_summary.trim().length > 0;
+  const aiSummaryHtml = `
+    <div style="margin-bottom: 24px;">
+      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0F766E" stroke-width="2">
+          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+        </svg>
+        <h3 style="font-size: 16px; font-weight: 600; color: #374151; margin: 0;">AI Summary</h3>
+        <span style="background: linear-gradient(135deg, #0F766E 0%, #115E59 100%); color: white; padding: 2px 8px; border-radius: 12px; font-size: 10px; font-weight: 500;">AI</span>
+      </div>
+      <div id="protocolAISummaryContainer" style="background: linear-gradient(135deg, #F0FDFA 0%, #ECFDF5 100%); border: 1px solid #99F6E4; border-radius: 12px; padding: 16px;">
+        ${hasSummary ? `
+          <p id="protocolAISummaryText" style="margin: 0; font-size: 14px; line-height: 1.6; color: #134E4A; white-space: pre-wrap;">${escapeHtml(protocol.ai_summary)}</p>
+        ` : `
+          <div id="protocolAISummaryText" style="text-align: center; padding: 12px;">
+            <p style="margin: 0 0 12px 0; color: #6b7280; font-size: 14px;">No AI summary yet. Generate one to get a quick overview of this protocol.</p>
+            <button onclick="generateProtocolAISummary()" id="generateProtocolSummaryBtn" style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; background: linear-gradient(135deg, #0F766E 0%, #115E59 100%); color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.2s;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+              </svg>
+              Generate AI Summary
+            </button>
+          </div>
+        `}
+      </div>
+    </div>
+  `;
 
   // Build content sections - View Protocol only shows protocol content, NOT engagement plan
   let contentHtml = '';
@@ -6172,6 +6204,7 @@ function showProtocolViewModal(protocol) {
           <span style="padding: 4px 12px; background: ${protocol.status === 'active' ? '#DEF7EC' : '#FEF3C7'}; color: ${protocol.status === 'active' ? '#03543F' : '#92400E'}; border-radius: 20px; font-size: 12px; font-weight: 500;">${protocol.status || 'draft'}</span>
           <span style="color: #6b7280; font-size: 14px;">Created: ${formatDate(protocol.created_at)}</span>
         </div>
+        ${aiSummaryHtml}
         ${contentHtml}
       </div>
       <div class="modal-footer" style="padding: 16px 24px; border-top: 1px solid #e5e7eb; display: flex; justify-content: flex-end; gap: 12px;">
@@ -6187,6 +6220,65 @@ function showProtocolViewModal(protocol) {
   modal.addEventListener('click', (e) => {
     if (e.target === modal) closeProtocolViewModal();
   });
+}
+
+// Generate AI summary for the protocol being viewed
+async function generateProtocolAISummary() {
+  const protocolId = window.currentViewingProtocolId;
+  if (!protocolId) {
+    showNotification('No protocol selected', 'error');
+    return;
+  }
+
+  const summaryContainer = document.getElementById('protocolAISummaryText');
+  const generateBtn = document.getElementById('generateProtocolSummaryBtn');
+
+  // Show loading state
+  if (generateBtn) {
+    generateBtn.disabled = true;
+    generateBtn.innerHTML = `
+      <svg class="animate-spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+      </svg>
+      Generating...
+    `;
+  }
+
+  try {
+    const token = localStorage.getItem('auth_token');
+    const response = await fetch(`${API_BASE}/api/protocols/${protocolId}/generate-summary`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      if (summaryContainer) {
+        summaryContainer.innerHTML = `<p style="margin: 0; font-size: 14px; line-height: 1.6; color: #134E4A; white-space: pre-wrap;">${escapeHtml(data.summary)}</p>`;
+      }
+      showNotification('AI summary generated successfully!', 'success');
+    } else {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || 'Failed to generate summary');
+    }
+  } catch (error) {
+    console.error('Error generating protocol summary:', error);
+    showNotification(`Error: ${error.message}`, 'error');
+
+    // Reset button
+    if (generateBtn) {
+      generateBtn.disabled = false;
+      generateBtn.innerHTML = `
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+        </svg>
+        Generate AI Summary
+      `;
+    }
+  }
 }
 
 // Switch tabs in view modal
@@ -12552,6 +12644,7 @@ window.printProtocol = printProtocol;
 window.saveProtocolAsPDF = saveProtocolAsPDF;
 window.showProtocolViewModal = showProtocolViewModal;
 window.closeProtocolViewModal = closeProtocolViewModal;
+window.generateProtocolAISummary = generateProtocolAISummary;
 window.switchViewTab = switchViewTab;
 window.showProtocolEditModal = showProtocolEditModal;
 window.closeProtocolEditModal = closeProtocolEditModal;

@@ -2454,4 +2454,95 @@ router.put('/:id/engagement-plan', authenticateToken, async (req, res, next) => 
   }
 });
 
+// ============================================
+// GENERATE AI SUMMARY FOR PROTOCOL
+// Creates a concise overview of the entire protocol
+// ============================================
+router.post('/:id/generate-summary', authenticateToken, async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    console.log(`[Generate Protocol Summary] Generating summary for protocol ${id}`);
+
+    // Get the protocol
+    const result = await db.pool.query('SELECT * FROM protocols WHERE id = $1', [id]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Protocol not found' });
+    }
+
+    const protocol = result.rows[0];
+    const protocolContent = protocol.content || '';
+    const protocolModules = protocol.modules || [];
+
+    if (!protocolContent && (!protocolModules || protocolModules.length === 0)) {
+      return res.status(400).json({ error: 'Protocol has no content to summarize' });
+    }
+
+    // Build content for summarization
+    let contentToSummarize = '';
+
+    if (protocolContent) {
+      contentToSummarize = protocolContent;
+    }
+
+    // Also include module data if available
+    if (protocolModules && Array.isArray(protocolModules) && protocolModules.length > 0) {
+      contentToSummarize += '\n\nProtocol Modules:\n';
+      protocolModules.forEach((module, idx) => {
+        contentToSummarize += `\n## ${module.name || `Module ${idx + 1}`}\n`;
+        if (module.goal) contentToSummarize += `Goal: ${module.goal}\n`;
+        if (module.rationale) contentToSummarize += `Rationale: ${module.rationale}\n`;
+        if (module.items && Array.isArray(module.items)) {
+          module.items.forEach(item => {
+            contentToSummarize += `- ${item.name}`;
+            if (item.dosage) contentToSummarize += ` (${item.dosage})`;
+            if (item.timing) contentToSummarize += ` - ${item.timing}`;
+            contentToSummarize += '\n';
+          });
+        }
+      });
+    }
+
+    // Generate summary using Claude
+    const prompt = `You are a clinical protocol summarizer. Analyze the following health/wellness protocol and create a concise, easy-to-understand summary.
+
+Protocol Title: ${protocol.title || 'Health Protocol'}
+
+Protocol Content:
+${contentToSummarize}
+
+Create a summary that includes:
+1. **Main Focus**: What is this protocol primarily addressing? (1-2 sentences)
+2. **Key Interventions**: List the main supplements, lifestyle changes, or treatments (3-5 bullet points)
+3. **Expected Timeline**: How long is this protocol designed to run?
+4. **Key Goals**: What are the primary health outcomes this protocol aims to achieve?
+
+Keep the summary concise (150-250 words), professional, and easy for both practitioners and clients to understand. Use clear, non-technical language where possible.`;
+
+    const response = await anthropic.messages.create({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1024,
+      messages: [{ role: 'user', content: prompt }]
+    });
+
+    const summary = response.content[0].text;
+
+    // Save the summary to the protocol
+    await db.pool.query(
+      'UPDATE protocols SET ai_summary = $1, updated_at = NOW() WHERE id = $2',
+      [summary, id]
+    );
+
+    console.log('[Generate Protocol Summary] Summary generated and saved successfully');
+
+    res.json({
+      success: true,
+      summary: summary
+    });
+
+  } catch (error) {
+    console.error('[Generate Protocol Summary] Error:', error);
+    res.status(500).json({ error: 'Failed to generate protocol summary', details: error.message });
+  }
+});
+
 module.exports = router;
