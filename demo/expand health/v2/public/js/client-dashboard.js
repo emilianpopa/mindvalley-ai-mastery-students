@@ -4517,6 +4517,9 @@ async function loadProtocolReferenceData() {
 
   console.log('Loading protocol reference data for client:', currentClientId);
 
+  // Load protocol templates from API (Step 1)
+  await loadProtocolTemplatesForBuilder(token);
+
   // Load notes into the Step 2 container
   await loadNotesForProtocolBuilder(currentClientId, token);
 
@@ -4547,6 +4550,64 @@ async function loadProtocolReferenceData() {
     }
   } catch (error) {
     console.error('Error loading forms for protocol:', error);
+  }
+}
+
+// Load protocol templates from the API for the Protocol Builder (Step 1)
+async function loadProtocolTemplatesForBuilder(token) {
+  const container = document.getElementById('templateCardsContainer');
+  if (!container) {
+    console.log('Template container not found');
+    return;
+  }
+
+  container.innerHTML = '<div class="templates-loading" style="padding: 20px; text-align: center; color: #6B7280;">Loading templates...</div>';
+
+  try {
+    const response = await fetch(`${API_BASE}/api/protocols/templates?limit=50`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      const templates = data.templates || [];
+
+      if (templates.length === 0) {
+        container.innerHTML = `
+          <div class="templates-empty-state" style="padding: 24px; text-align: center; color: #6B7280;">
+            <p>No protocol templates available.</p>
+            <p style="font-size: 12px; color: #9CA3AF; margin-top: 8px;">Create templates in Protocol Templates section.</p>
+          </div>
+        `;
+        return;
+      }
+
+      // Display templates as selectable cards
+      container.innerHTML = templates.map(template => `
+        <label class="protocol-template-card">
+          <input type="checkbox" name="template" value="${template.id}" class="template-checkbox" data-template-name="${escapeHtml(template.name)}">
+          <div class="template-card-inner">
+            <div class="template-card-header">
+              <span class="template-name">${escapeHtml(template.name)}</span>
+              <div class="template-check">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+              </div>
+            </div>
+            <p class="template-desc">${template.category || 'General'} • ${template.modules_count || 0} modules • ${template.duration_weeks || 0} weeks</p>
+            <p class="template-preview-text">${escapeHtml(truncateText(template.description || '', 80))}</p>
+          </div>
+        </label>
+      `).join('');
+
+    } else {
+      console.error('Failed to load templates:', response.status);
+      container.innerHTML = '<div class="templates-error" style="padding: 24px; text-align: center; color: #EF4444;"><p>Error loading templates. Please try again.</p></div>';
+    }
+  } catch (error) {
+    console.error('Error loading protocol templates:', error);
+    container.innerHTML = '<div class="templates-error" style="padding: 24px; text-align: center; color: #EF4444;"><p>Error loading templates. Please try again.</p></div>';
   }
 }
 
@@ -9546,6 +9607,7 @@ async function generateProtocolFromPrompt() {
   // Get selected templates (only actual protocol templates, not notes or labs)
   const selectedTemplateInputs = document.querySelectorAll('input[name="template"].template-checkbox:checked');
   const templates = Array.from(selectedTemplateInputs).map(cb => cb.value);
+  const templateNames = Array.from(selectedTemplateInputs).map(cb => cb.dataset.templateName || cb.value);
 
   // Get selected notes
   const selectedNoteInputs = document.querySelectorAll('input.note-checkbox:checked');
@@ -9555,10 +9617,10 @@ async function generateProtocolFromPrompt() {
   const selectedLabInputs = document.querySelectorAll('input.lab-checkbox:checked');
   const labIds = Array.from(selectedLabInputs).map(cb => cb.value);
 
-  console.log('Generating protocol with:', { prompt, templates, noteIds, labIds });
+  console.log('Generating protocol with:', { prompt, templates, templateNames, noteIds, labIds });
 
   // Store context for later use
-  protocolGenerationContext = { prompt, templates, noteIds, labIds };
+  protocolGenerationContext = { prompt, templates, templateNames, noteIds, labIds };
 
   // Show the protocol editor view with loading state
   showProtocolEditor();
@@ -9592,7 +9654,7 @@ async function generateProtocolFromPrompt() {
 
       // Show the generated protocol in editor view
       try {
-        displayProtocolInEditor(data, templates, noteIds);
+        displayProtocolInEditor(data, templateNames, noteIds);
         console.log('[Protocol Generate] Editor displayed successfully');
       } catch (displayError) {
         console.error('[Protocol Generate] Error displaying protocol:', displayError);
@@ -10135,15 +10197,8 @@ function displayProtocolInEditor(data, templates, noteIds) {
 
   const templateEl = document.getElementById('protocolTemplate');
   if (templateEl) {
-    const templateNames = {
-      'sleep': 'Sleep Protocol',
-      'gut': 'Gut Healing Protocol',
-      'weight': 'Weight Loss Protocol',
-      'stress': 'Stress Management Protocol',
-      'energy': 'Energy Protocol',
-      'hygiene': 'Hygiene Protocol'
-    };
-    templateEl.textContent = templates.length > 0 ? templateNames[templates[0]] || templates[0] : 'Custom';
+    // templates parameter now contains template names directly
+    templateEl.textContent = templates.length > 0 ? templates[0] : 'Custom';
   }
 
   const notesEl = document.getElementById('protocolReferenceNotes');
