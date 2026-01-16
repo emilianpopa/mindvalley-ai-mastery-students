@@ -6233,15 +6233,26 @@ async function generateProtocolAISummary() {
   const summaryContainer = document.getElementById('protocolAISummaryText');
   const generateBtn = document.getElementById('generateProtocolSummaryBtn');
 
-  // Show loading state
-  if (generateBtn) {
-    generateBtn.disabled = true;
-    generateBtn.innerHTML = `
-      <svg class="animate-spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
-      </svg>
-      Generating...
+  // Show loading state with progress bar
+  if (summaryContainer) {
+    summaryContainer.innerHTML = `
+      <div style="text-align: center; padding: 20px;">
+        <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 16px;">
+          <svg class="animate-spin" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0F766E" stroke-width="2">
+            <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+          </svg>
+          <span style="color: #0F766E; font-weight: 500;">Generating AI Summary...</span>
+        </div>
+        <div class="ai-summary-progress" style="background: #E5E7EB; border-radius: 8px; height: 6px; overflow: hidden; max-width: 300px; margin: 0 auto;">
+          <div class="ai-summary-progress-fill" style="height: 100%; width: 0%; background: linear-gradient(90deg, #0F766E, #14B8A6, #0F766E); background-size: 200% 100%; border-radius: 8px; animation: progressPulse 2s ease-in-out infinite, progressGrow 8s ease-out forwards;"></div>
+        </div>
+        <p style="color: #6B7280; font-size: 13px; margin-top: 12px;">Analyzing protocol content and creating a concise overview...</p>
+      </div>
     `;
+  }
+
+  if (generateBtn) {
+    generateBtn.style.display = 'none';
   }
 
   try {
@@ -6257,7 +6268,9 @@ async function generateProtocolAISummary() {
     if (response.ok) {
       const data = await response.json();
       if (summaryContainer) {
-        summaryContainer.innerHTML = `<p style="margin: 0; font-size: 14px; line-height: 1.6; color: #134E4A; white-space: pre-wrap;">${escapeHtml(data.summary)}</p>`;
+        // Format the summary nicely
+        const formattedSummary = formatProtocolSummary(data.summary);
+        summaryContainer.innerHTML = formattedSummary;
       }
       showNotification('AI summary generated successfully!', 'success');
     } else {
@@ -6268,17 +6281,42 @@ async function generateProtocolAISummary() {
     console.error('Error generating protocol summary:', error);
     showNotification(`Error: ${error.message}`, 'error');
 
-    // Reset button
-    if (generateBtn) {
-      generateBtn.disabled = false;
-      generateBtn.innerHTML = `
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-        </svg>
-        Generate AI Summary
+    // Reset to allow retry
+    if (summaryContainer) {
+      summaryContainer.innerHTML = `
+        <div style="text-align: center; padding: 12px;">
+          <p style="margin: 0 0 12px 0; color: #DC2626; font-size: 14px;">Failed to generate summary. Please try again.</p>
+          <button onclick="generateProtocolAISummary()" id="generateProtocolSummaryBtn" style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; background: linear-gradient(135deg, #0F766E 0%, #115E59 100%); color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.2s;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+            </svg>
+            Retry Generate Summary
+          </button>
+        </div>
       `;
     }
   }
+}
+
+// Format protocol AI summary with nice styling
+function formatProtocolSummary(summary) {
+  if (!summary) return '<p style="color: #6B7280;">No summary available</p>';
+
+  // Convert markdown-like formatting to HTML
+  let html = escapeHtml(summary)
+    // Bold headers like **Main Focus:**
+    .replace(/\*\*([^*]+)\*\*/g, '<strong style="color: #0F766E;">$1</strong>')
+    // Bullet points
+    .replace(/^[-•]\s*(.+)$/gm, '<li style="margin-bottom: 6px; color: #374151;">$1</li>')
+    // Numbered lists
+    .replace(/^\d+\.\s*(.+)$/gm, '<li style="margin-bottom: 6px; color: #374151;">$1</li>')
+    // Wrap consecutive <li> items in <ul>
+    .replace(/(<li[^>]*>.*?<\/li>\n?)+/g, (match) => `<ul style="margin: 8px 0 12px 16px; padding: 0; list-style: disc;">${match}</ul>`)
+    // Paragraphs
+    .replace(/\n\n/g, '</p><p style="margin: 10px 0; color: #374151;">')
+    .replace(/\n/g, '<br>');
+
+  return `<div class="protocol-summary-formatted" style="font-size: 14px; line-height: 1.6;"><p style="margin: 0 0 10px 0; color: #374151;">${html}</p></div>`;
 }
 
 // Switch tabs in view modal

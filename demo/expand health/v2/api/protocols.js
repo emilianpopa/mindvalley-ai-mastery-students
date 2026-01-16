@@ -10,9 +10,16 @@ const db = require('../database/db');
 
 // Initialize Claude SDK for AI protocol generation
 const Anthropic = require('@anthropic-ai/sdk');
-const anthropic = new Anthropic({
-  apiKey: process.env.CLAUDE_API_KEY
-});
+const anthropicApiKey = process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY;
+let anthropic = null;
+if (anthropicApiKey) {
+  anthropic = new Anthropic({
+    apiKey: anthropicApiKey
+  });
+  console.log('[Protocols API] Claude/Anthropic configured');
+} else {
+  console.log('[Protocols API] Warning: No ANTHROPIC_API_KEY or CLAUDE_API_KEY found');
+}
 
 // Import Clinical Protocol Engine prompt generator
 const { generateClinicalProtocolPrompt, calculateAge } = require('../prompts/clinical-protocol-engine');
@@ -2517,6 +2524,11 @@ Create a summary that includes:
 4. **Key Goals**: What are the primary health outcomes this protocol aims to achieve?
 
 Keep the summary concise (150-250 words), professional, and easy for both practitioners and clients to understand. Use clear, non-technical language where possible.`;
+
+    // Check if AI is configured
+    if (!anthropic) {
+      return res.status(500).json({ error: 'AI service not configured. Please set ANTHROPIC_API_KEY environment variable.' });
+    }
 
     const response = await anthropic.messages.create({
       model: 'claude-sonnet-4-20250514',
