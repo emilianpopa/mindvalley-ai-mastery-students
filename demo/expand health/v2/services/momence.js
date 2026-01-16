@@ -336,79 +336,122 @@ class MomenceService {
 
   /**
    * Get all appointments (1-on-1 bookings) from Momence
-   * Uses Legacy API v1 /appointments/reservations endpoint
+   * Tries multiple possible endpoint names for Legacy API v1
    * @param {Object} params - Query parameters (from, to dates)
    * @returns {Array} List of appointment reservations
    */
   async getAllAppointments(params = {}) {
-    // Default to last 90 days and next 90 days if no date range specified
     const now = new Date();
     const from = params.from || new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
     const to = params.to || new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
     console.log(`[Momence API] Fetching appointments from ${from} to ${to}`);
 
-    const result = await this.request('/appointments/reservations', {}, { from, to });
+    // Try multiple possible endpoint names (Legacy API may use different naming)
+    const endpointsToTry = [
+      '/Appointments',
+      '/appointments',
+      '/AppointmentReservations',
+      '/appointments/reservations',
+      '/Reservations',
+      '/Bookings'
+    ];
 
-    // DEBUG: Log the raw response structure
-    console.log(`[Momence API] /appointments/reservations response type:`, typeof result);
-    console.log(`[Momence API] /appointments/reservations is array:`, Array.isArray(result));
-    console.log(`[Momence API] /appointments/reservations keys:`, result ? Object.keys(result) : 'null');
+    for (const endpoint of endpointsToTry) {
+      try {
+        console.log(`[Momence API] Trying endpoint: ${endpoint}`);
+        const result = await this.request(endpoint, {}, { from, to });
 
-    // Handle multiple response formats
-    let appointments = [];
-    if (Array.isArray(result)) {
-      appointments = result;
-    } else if (result && result.payload && Array.isArray(result.payload)) {
-      appointments = result.payload;
-    } else if (result && result.reservations && Array.isArray(result.reservations)) {
-      appointments = result.reservations;
-    } else if (result && result.data && Array.isArray(result.data)) {
-      appointments = result.data;
-    } else {
-      console.log(`[Momence API] /appointments/reservations unknown format:`, JSON.stringify(result).substring(0, 500));
+        console.log(`[Momence API] ${endpoint} response type:`, typeof result);
+        console.log(`[Momence API] ${endpoint} is array:`, Array.isArray(result));
+        if (result && typeof result === 'object') {
+          console.log(`[Momence API] ${endpoint} keys:`, Object.keys(result));
+        }
+
+        // Parse response
+        let appointments = this.parseArrayResponse(result, ['appointments', 'reservations', 'bookings', 'payload', 'data']);
+
+        if (appointments.length > 0) {
+          console.log(`[Momence API] ${endpoint} returned ${appointments.length} appointments`);
+          return appointments;
+        }
+      } catch (err) {
+        console.log(`[Momence API] ${endpoint} failed:`, err.message);
+      }
     }
 
-    console.log(`[Momence API] /appointments/reservations returned ${appointments.length} appointments`);
-    return appointments;
+    console.log(`[Momence API] No appointments found from any endpoint`);
+    return [];
   }
 
   /**
    * Get all sessions (class bookings) from Momence
+   * Tries multiple possible endpoint names for Legacy API v1
    * @param {Object} params - Query parameters (from, to dates)
    * @returns {Array} List of sessions
    */
   async getAllSessions(params = {}) {
-    // Default to last 90 days and next 90 days if no date range specified
     const now = new Date();
     const from = params.from || new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
     const to = params.to || new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
     console.log(`[Momence API] Fetching sessions from ${from} to ${to}`);
 
-    const result = await this.request('/sessions', {}, { from, to });
+    // Try multiple possible endpoint names
+    const endpointsToTry = [
+      '/Sessions',
+      '/sessions',
+      '/Classes',
+      '/classes',
+      '/SessionBookings',
+      '/session-bookings'
+    ];
 
-    // DEBUG: Log the raw response structure
-    console.log(`[Momence API] /sessions response type:`, typeof result);
-    console.log(`[Momence API] /sessions is array:`, Array.isArray(result));
-    console.log(`[Momence API] /sessions keys:`, result ? Object.keys(result) : 'null');
+    for (const endpoint of endpointsToTry) {
+      try {
+        console.log(`[Momence API] Trying endpoint: ${endpoint}`);
+        const result = await this.request(endpoint, {}, { from, to });
 
-    // Handle multiple response formats
-    let sessions = [];
-    if (Array.isArray(result)) {
-      sessions = result;
-    } else if (result && result.payload && Array.isArray(result.payload)) {
-      sessions = result.payload;
-    } else if (result && result.sessions && Array.isArray(result.sessions)) {
-      sessions = result.sessions;
-    } else if (result && result.data && Array.isArray(result.data)) {
-      sessions = result.data;
-    } else {
-      console.log(`[Momence API] /sessions unknown format:`, JSON.stringify(result).substring(0, 500));
+        console.log(`[Momence API] ${endpoint} response type:`, typeof result);
+        console.log(`[Momence API] ${endpoint} is array:`, Array.isArray(result));
+        if (result && typeof result === 'object') {
+          console.log(`[Momence API] ${endpoint} keys:`, Object.keys(result));
+        }
+
+        // Parse response
+        let sessions = this.parseArrayResponse(result, ['sessions', 'classes', 'bookings', 'payload', 'data']);
+
+        if (sessions.length > 0) {
+          console.log(`[Momence API] ${endpoint} returned ${sessions.length} sessions`);
+          return sessions;
+        }
+      } catch (err) {
+        console.log(`[Momence API] ${endpoint} failed:`, err.message);
+      }
     }
 
-    console.log(`[Momence API] /sessions returned ${sessions.length} sessions`);
-    return sessions;
+    console.log(`[Momence API] No sessions found from any endpoint`);
+    return [];
+  }
+
+  /**
+   * Helper to parse array response from various formats
+   */
+  parseArrayResponse(result, possibleKeys) {
+    if (Array.isArray(result)) {
+      return result;
+    }
+
+    if (result && typeof result === 'object') {
+      // Try each possible key
+      for (const key of possibleKeys) {
+        if (result[key] && Array.isArray(result[key])) {
+          return result[key];
+        }
+      }
+    }
+
+    return [];
   }
 
   /**
