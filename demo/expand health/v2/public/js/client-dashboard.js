@@ -2263,6 +2263,19 @@ function closeNewNoteModal() {
   const modal = document.getElementById('newNoteModal');
   modal.style.display = 'none';
 
+  // Clean up progress bar if present
+  const progressBar = document.getElementById('saveNoteProgress');
+  if (progressBar) progressBar.remove();
+
+  // Re-enable buttons
+  const saveBtn = document.querySelector('#newNoteModal .modal-footer .btn-primary');
+  const cancelBtn = document.querySelector('#newNoteModal .modal-footer .btn-secondary');
+  if (saveBtn) {
+    saveBtn.disabled = false;
+    saveBtn.innerHTML = 'Save Note';
+  }
+  if (cancelBtn) cancelBtn.removeAttribute('disabled');
+
   // Stop any active voice input
   if (isVoiceInputActive) toggleVoiceInput();
   if (isAIScribeActive) toggleAIScribe();

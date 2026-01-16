@@ -6768,6 +6768,88 @@
 }
 
 /* ============================================
+   SAVE NOTE PROGRESS BAR
+   ============================================ */
+
+.save-note-progress {
+  padding: 16px 24px;
+  background: linear-gradient(135deg, #F0FDFA 0%, #ECFDF5 100%);
+  border-top: 1px solid #99F6E4;
+}
+
+.save-note-progress .progress-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.save-note-progress .progress-icon {
+  font-size: 18px;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.save-note-progress .progress-text {
+  font-size: 14px;
+  font-weight: 600;
+  color: #0F766E;
+}
+
+.save-note-progress .progress-bar-container {
+  height: 6px;
+  background: #D1FAE5;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.save-note-progress .progress-bar-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #0D9488 0%, #10B981 100%);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.save-note-progress .progress-steps {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.save-note-progress .step {
+  font-size: 12px;
+  color: #9CA3AF;
+  transition: color 0.3s ease;
+}
+
+.save-note-progress .step.active {
+  color: #0F766E;
+  font-weight: 600;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(1.1); }
+}
+
+.saving-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ============================================
    SEND EMAIL BUTTON
    ============================================ */
 
