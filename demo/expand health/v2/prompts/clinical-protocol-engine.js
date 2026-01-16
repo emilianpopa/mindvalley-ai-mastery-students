@@ -62,6 +62,21 @@ ${userPrompt}
 5. NO COLD EXPOSURE in initial phases (no cold plunge, cryo, ice baths in first 8 weeks)
 6. ONLY treat LAB-CONFIRMED conditions - don't assume infections or pathogens without test confirmation
 
+## LAB-DRIVEN PROTOCOL DESIGN (CRITICAL)
+If lab results are provided above, you MUST:
+1. EXPLICITLY ADDRESS each abnormal marker - if a value is flagged as HIGH or LOW, include an intervention targeting it
+2. In the rationale field, REFERENCE the specific lab value (e.g., "Low testosterone at 157 ng/dL warrants...")
+3. Prioritize interventions for the MOST clinically significant abnormalities first
+4. Include relevant lab markers in the retest_schedule
+5. If no labs are provided, generate a GENERAL wellness protocol and recommend comprehensive lab testing
+
+Examples of lab-driven interventions:
+- Low testosterone → Consider zinc, ashwagandha, sleep optimization, TRT evaluation
+- Elevated inflammatory markers (MPO, hs-CRP) → Anti-inflammatory protocols, omega-3s, lifestyle interventions
+- Elevated glucose/HbA1c → Blood sugar management, berberine, chromium, dietary changes
+- Low vitamin D → Specific vitamin D3/K2 dosing based on current level
+- Elevated cholesterol/ox-LDL → Bergamot, omega-3s, lifestyle, consider statins if severe
+
 ## REQUIRED JSON OUTPUT
 
 Return ONLY valid JSON with this EXACT structure (no markdown, no code blocks):
