@@ -11830,25 +11830,51 @@ async function openLabPreview(labId) {
   docContainer.innerHTML = '<div class="ref-loading">Loading document...</div>';
 
   if (lab.file_url) {
-    const fileExt = lab.file_url.split('.').pop().toLowerCase();
-    if (fileExt === 'pdf') {
-      // Use PDF.js to render
-      docContainer.innerHTML = `<canvas id="labPdfCanvas"></canvas>`;
+    // Determine if it's a PDF based on file extension, mime type, or API endpoint
+    const isPdf = lab.file_mime_type === 'application/pdf' ||
+                  lab.original_filename?.toLowerCase().endsWith('.pdf') ||
+                  lab.file_url.includes('/api/labs/') ||
+                  lab.file_url.toLowerCase().endsWith('.pdf');
+
+    if (isPdf) {
+      // Use PDF.js to render all pages
+      docContainer.innerHTML = `<div id="labPdfPagesContainer" class="pdf-pages-container"></div>`;
       try {
-        const pdf = await pdfjsLib.getDocument(lab.file_url).promise;
-        const page = await pdf.getPage(1);
-        const scale = 1.5;
-        const viewport = page.getViewport({ scale });
-        const canvas = document.getElementById('labPdfCanvas');
-        const context = canvas.getContext('2d');
-        canvas.height = viewport.height;
-        canvas.width = viewport.width;
-        await page.render({ canvasContext: context, viewport }).promise;
+        const pdfUrl = lab.file_url.startsWith('/') ? `${API_BASE}${lab.file_url}` : lab.file_url;
+        const pdf = await pdfjsLib.getDocument(pdfUrl).promise;
+        const pagesContainer = document.getElementById('labPdfPagesContainer');
+        pagesContainer.innerHTML = '';
+
+        // Render all pages
+        const numPages = pdf.numPages;
+        for (let pageNum = 1; pageNum <= numPages; pageNum++) {
+          const page = await pdf.getPage(pageNum);
+          const scale = 1.2;
+          const viewport = page.getViewport({ scale });
+
+          const pageDiv = document.createElement('div');
+          pageDiv.className = 'pdf-page';
+          pageDiv.innerHTML = `<div class="page-number">Page ${pageNum} of ${numPages}</div>`;
+
+          const canvas = document.createElement('canvas');
+          canvas.className = 'pdf-page-canvas';
+          const context = canvas.getContext('2d');
+          canvas.height = viewport.height;
+          canvas.width = viewport.width;
+
+          pageDiv.appendChild(canvas);
+          pagesContainer.appendChild(pageDiv);
+
+          await page.render({ canvasContext: context, viewport }).promise;
+        }
       } catch (e) {
-        docContainer.innerHTML = `<p style="padding: 20px; color: #666;">Could not load PDF preview</p>`;
+        console.error('Error loading PDF:', e);
+        docContainer.innerHTML = `<p style="padding: 20px; color: #666;">Could not load PDF preview. Error: ${e.message}</p>`;
       }
     } else {
-      docContainer.innerHTML = `<img src="${lab.file_url}" alt="Lab Result" style="max-width: 100%;">`;
+      // For images
+      const imgUrl = lab.file_url.startsWith('/') ? `${API_BASE}${lab.file_url}` : lab.file_url;
+      docContainer.innerHTML = `<img src="${imgUrl}" alt="Lab Result" style="max-width: 100%;">`;
     }
   } else {
     docContainer.innerHTML = `<p style="padding: 20px; color: #666;">No document available</p>`;
