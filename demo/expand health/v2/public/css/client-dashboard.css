@@ -6044,6 +6044,27 @@
   opacity: 1;
 }
 
+/* Lab card styles - match note card styling */
+.protocol-lab-card .lab-checkbox {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.protocol-lab-card .lab-checkbox:checked + .template-card-inner {
+  border-color: #0F766E;
+  background: #F0FDFA;
+}
+
+.protocol-lab-card .lab-checkbox:checked + .template-card-inner .template-check {
+  background: #0F766E;
+  border-color: #0F766E;
+}
+
+.protocol-lab-card .lab-checkbox:checked + .template-card-inner .template-check svg {
+  opacity: 1;
+}
+
 .note-card-title {
   font-size: 14px;
   font-weight: 600;

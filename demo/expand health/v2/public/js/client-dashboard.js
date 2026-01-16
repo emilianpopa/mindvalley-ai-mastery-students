@@ -4700,7 +4700,7 @@ async function loadLabsForProtocolBuilder(currentClientId, token) {
       // Display labs as selectable cards matching the template card style
       container.innerHTML = labs.map(lab => `
         <label class="protocol-template-card protocol-lab-card">
-          <input type="checkbox" name="lab" value="${lab.id}" class="lab-checkbox" checked>
+          <input type="checkbox" name="lab" value="${lab.id}" class="lab-checkbox">
           <div class="template-card-inner">
             <div class="template-card-header">
               <span class="template-name">${lab.title || lab.file_name || 'Lab Result'}</span>
