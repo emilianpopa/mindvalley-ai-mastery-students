@@ -1,33 +1,41 @@
 /**
  * Momence Integration Service
  *
- * Handles Legacy API v1 authentication with Momence platform.
- * Uses hostId and token as query parameters.
- * Legacy API Base: https://momence.com/_api/primary/api/v1
+ * Supports two API versions:
  *
- * Available endpoints (discovered):
- * - GET /Events - List events
- * - GET /Videos - List on-demand videos
- * - GET /Customers?page=X&pageSize=Y - List customers with pagination
+ * 1. Legacy API v1 (hostId + token authentication):
+ *    Base: https://momence.com/_api/primary/api/v1
+ *    Endpoints: /Events, /Videos, /Customers (pagination)
+ *    Auth: Query params hostId and token
+ *
+ * 2. V2 API (OAuth2 Bearer token authentication):
+ *    Base: https://api.momence.com/api/v2
+ *    Endpoints: /host/appointments/reservations, /host/sessions, etc.
+ *    Auth: Bearer token in Authorization header
+ *    Requires OAuth2 setup in Momence dashboard
  */
 
-const MOMENCE_API_BASE = 'https://momence.com/_api/primary/api/v1';
+const MOMENCE_LEGACY_API_BASE = 'https://momence.com/_api/primary/api/v1';
+const MOMENCE_V2_API_BASE = 'https://api.momence.com/api/v2';
 
 class MomenceService {
   constructor(integration) {
     this.integration = integration;
     this.hostId = integration?.platform_host_id;
     this.token = integration?.access_token;
+    // V2 API credentials (OAuth2)
+    this.v2AccessToken = integration?.v2_access_token;
+    this.v2RefreshToken = integration?.v2_refresh_token;
   }
 
   /**
-   * Build URL with query parameters
+   * Build URL with query parameters for Legacy API
    * @param {string} endpoint - API endpoint path
    * @param {Object} queryParams - Query parameters
    * @returns {string} Full URL
    */
   buildUrl(endpoint, queryParams = {}) {
-    const url = new URL(`${MOMENCE_API_BASE}${endpoint}`);
+    const url = new URL(`${MOMENCE_LEGACY_API_BASE}${endpoint}`);
 
     for (const [key, value] of Object.entries(queryParams)) {
       if (value !== undefined && value !== null) {
@@ -39,8 +47,26 @@ class MomenceService {
   }
 
   /**
-   * Make authenticated API request
-   * Tries Bearer token first, falls back to query params for Legacy API
+   * Build URL for V2 API
+   * @param {string} endpoint - API endpoint path
+   * @param {Object} queryParams - Query parameters
+   * @returns {string} Full URL
+   */
+  buildV2Url(endpoint, queryParams = {}) {
+    const url = new URL(`${MOMENCE_V2_API_BASE}${endpoint}`);
+
+    for (const [key, value] of Object.entries(queryParams)) {
+      if (value !== undefined && value !== null) {
+        url.searchParams.set(key, value);
+      }
+    }
+
+    return url.toString();
+  }
+
+  /**
+   * Make authenticated API request to Legacy API v1
+   * Uses hostId and token as query parameters
    * @param {string} endpoint - API endpoint path
    * @param {Object} options - Fetch options
    * @param {Object} queryParams - Query parameters
@@ -71,6 +97,50 @@ class MomenceService {
     }
 
     return response.json();
+  }
+
+  /**
+   * Make authenticated API request to V2 API
+   * Uses Bearer token in Authorization header
+   * @param {string} endpoint - API endpoint path
+   * @param {Object} options - Fetch options
+   * @param {Object} queryParams - Query parameters
+   * @returns {Object} API response
+   */
+  async requestV2(endpoint, options = {}, queryParams = {}) {
+    if (!this.v2AccessToken) {
+      throw new Error('V2 API requires OAuth2 access token. Please configure V2 credentials in integration settings.');
+    }
+
+    const url = this.buildV2Url(endpoint, queryParams);
+
+    const headers = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${this.v2AccessToken}`,
+      ...options.headers
+    };
+
+    console.log(`[Momence V2 API] Requesting ${endpoint}`);
+
+    const response = await fetch(url, {
+      ...options,
+      headers
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      console.log(`[Momence V2 API] Error:`, error);
+      throw new Error(`Momence V2 API error: ${error.message || error.error || response.statusText}`);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Check if V2 API is available (has credentials)
+   */
+  hasV2Credentials() {
+    return !!this.v2AccessToken;
   }
 
   // ============================================
@@ -336,7 +406,7 @@ class MomenceService {
 
   /**
    * Get all appointments (1-on-1 bookings) from Momence
-   * Tries multiple possible endpoint names and parameter combinations for Legacy API v1
+   * Tries V2 API first if credentials available, then falls back to Legacy API v1
    * @param {Object} params - Query parameters (from, to dates)
    * @returns {Array} List of appointment reservations
    */
@@ -348,7 +418,27 @@ class MomenceService {
 
     console.log(`[Momence API] Fetching appointments from ${from} to ${to}`);
 
-    // Try multiple endpoint + parameter combinations
+    // Try V2 API first if we have credentials
+    if (this.hasV2Credentials()) {
+      console.log(`[Momence API] Trying V2 API for appointments...`);
+      try {
+        const result = await this.requestV2('/host/appointments/reservations', {}, { from, to });
+        console.log(`[Momence V2 API] Response type:`, typeof result);
+        console.log(`[Momence V2 API] Is array:`, Array.isArray(result));
+
+        let appointments = this.parseArrayResponse(result, ['reservations', 'appointments', 'data', 'payload']);
+        if (appointments.length > 0) {
+          console.log(`[Momence V2 API] Found ${appointments.length} appointments`);
+          return appointments;
+        }
+      } catch (v2Err) {
+        console.log(`[Momence V2 API] Appointments endpoint failed:`, v2Err.message);
+      }
+    } else {
+      console.log(`[Momence API] No V2 credentials available, using Legacy API`);
+    }
+
+    // Fallback to Legacy API v1 - try multiple endpoint + parameter combinations
     const endpointsToTry = [
       { path: '/Appointments', params: { from, to } },
       { path: '/Appointments', params: { startDate: from, endDate: to } },
@@ -368,42 +458,44 @@ class MomenceService {
 
     for (const { path, params: queryParams } of endpointsToTry) {
       try {
-        console.log(`[Momence API] Trying endpoint: ${path} with params:`, queryParams);
+        console.log(`[Momence Legacy API] Trying endpoint: ${path} with params:`, queryParams);
         const result = await this.request(path, {}, queryParams);
 
-        console.log(`[Momence API] ${path} response type:`, typeof result);
-        console.log(`[Momence API] ${path} is array:`, Array.isArray(result));
+        console.log(`[Momence Legacy API] ${path} response type:`, typeof result);
+        console.log(`[Momence Legacy API] ${path} is array:`, Array.isArray(result));
         if (result && typeof result === 'object') {
-          console.log(`[Momence API] ${path} keys:`, Object.keys(result));
+          console.log(`[Momence Legacy API] ${path} keys:`, Object.keys(result));
           // Log first 500 chars of response to see structure
-          console.log(`[Momence API] ${path} sample:`, JSON.stringify(result).substring(0, 500));
+          console.log(`[Momence Legacy API] ${path} sample:`, JSON.stringify(result).substring(0, 500));
         }
 
         // Parse response
         let appointments = this.parseArrayResponse(result, ['appointments', 'reservations', 'bookings', 'payload', 'data', 'schedule', 'items']);
 
         if (appointments.length > 0) {
-          console.log(`[Momence API] ${path} returned ${appointments.length} appointments`);
+          console.log(`[Momence Legacy API] ${path} returned ${appointments.length} appointments`);
           // Log first appointment structure
           if (appointments[0]) {
-            console.log(`[Momence API] First appointment keys:`, Object.keys(appointments[0]));
+            console.log(`[Momence Legacy API] First appointment keys:`, Object.keys(appointments[0]));
           }
           return appointments;
         } else {
-          console.log(`[Momence API] ${path} returned 0 appointments`);
+          console.log(`[Momence Legacy API] ${path} returned 0 appointments`);
         }
       } catch (err) {
-        console.log(`[Momence API] ${path} failed:`, err.message);
+        console.log(`[Momence Legacy API] ${path} failed:`, err.message);
       }
     }
 
     console.log(`[Momence API] No appointments found from any endpoint`);
+    console.log(`[Momence API] NOTE: Appointments may require V2 API with OAuth2 credentials.`);
+    console.log(`[Momence API] Set up V2 API at: https://momence.com/dashboard/profile?host-redirect=public-api-clients`);
     return [];
   }
 
   /**
    * Get all sessions (class bookings) from Momence
-   * Tries multiple possible endpoint names for Legacy API v1
+   * Tries V2 API first if credentials available, then falls back to Legacy API v1
    * @param {Object} params - Query parameters (from, to dates)
    * @returns {Array} List of sessions
    */
@@ -414,7 +506,25 @@ class MomenceService {
 
     console.log(`[Momence API] Fetching sessions from ${from} to ${to}`);
 
-    // Try multiple possible endpoint names
+    // Try V2 API first if we have credentials
+    if (this.hasV2Credentials()) {
+      console.log(`[Momence API] Trying V2 API for sessions...`);
+      try {
+        // V2 API endpoint for sessions
+        const result = await this.requestV2('/host/sessions', {}, { from, to });
+        console.log(`[Momence V2 API] Sessions response type:`, typeof result);
+
+        let sessions = this.parseArrayResponse(result, ['sessions', 'data', 'payload']);
+        if (sessions.length > 0) {
+          console.log(`[Momence V2 API] Found ${sessions.length} sessions`);
+          return sessions;
+        }
+      } catch (v2Err) {
+        console.log(`[Momence V2 API] Sessions endpoint failed:`, v2Err.message);
+      }
+    }
+
+    // Fallback to Legacy API v1
     const endpointsToTry = [
       '/Sessions',
       '/sessions',
@@ -426,24 +536,24 @@ class MomenceService {
 
     for (const endpoint of endpointsToTry) {
       try {
-        console.log(`[Momence API] Trying endpoint: ${endpoint}`);
+        console.log(`[Momence Legacy API] Trying endpoint: ${endpoint}`);
         const result = await this.request(endpoint, {}, { from, to });
 
-        console.log(`[Momence API] ${endpoint} response type:`, typeof result);
-        console.log(`[Momence API] ${endpoint} is array:`, Array.isArray(result));
+        console.log(`[Momence Legacy API] ${endpoint} response type:`, typeof result);
+        console.log(`[Momence Legacy API] ${endpoint} is array:`, Array.isArray(result));
         if (result && typeof result === 'object') {
-          console.log(`[Momence API] ${endpoint} keys:`, Object.keys(result));
+          console.log(`[Momence Legacy API] ${endpoint} keys:`, Object.keys(result));
         }
 
         // Parse response
         let sessions = this.parseArrayResponse(result, ['sessions', 'classes', 'bookings', 'payload', 'data']);
 
         if (sessions.length > 0) {
-          console.log(`[Momence API] ${endpoint} returned ${sessions.length} sessions`);
+          console.log(`[Momence Legacy API] ${endpoint} returned ${sessions.length} sessions`);
           return sessions;
         }
       } catch (err) {
-        console.log(`[Momence API] ${endpoint} failed:`, err.message);
+        console.log(`[Momence Legacy API] ${endpoint} failed:`, err.message);
       }
     }
 
@@ -591,5 +701,6 @@ module.exports = {
   mapMomenceMemberToClient,
   mapClientToMomenceMember,
   mapMomenceEventToAppointment,
-  MOMENCE_API_BASE
+  MOMENCE_LEGACY_API_BASE,
+  MOMENCE_V2_API_BASE
 };
