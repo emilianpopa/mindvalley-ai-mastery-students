@@ -6,6 +6,23 @@ const pool = db.pool;  // For backwards compatibility
 const router = express.Router();
 
 // ============================================
+// DEBUG: List all notes to see their types (temporary)
+// ============================================
+router.get('/debug-notes', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT id, note_type, is_consultation, LEFT(content, 100) as content_preview
+      FROM notes
+      ORDER BY id DESC
+      LIMIT 20
+    `);
+    res.json(result.rows);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ============================================
 // FIX MISCLASSIFIED NOTES (One-time migration - no auth required)
 // Updates notes that contain consultation content but are marked as quick_note
 // ============================================
