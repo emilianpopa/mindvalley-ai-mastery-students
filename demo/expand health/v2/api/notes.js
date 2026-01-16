@@ -479,6 +479,99 @@ Keep each bullet point brief and focused on the key information.`;
 });
 
 // ============================================
+// REGENERATE AI SUMMARY FOR EXISTING NOTE
+// ============================================
+router.post('/:noteId/regenerate-summary', async (req, res) => {
+  try {
+    const { noteId } = req.params;
+
+    // Get the note
+    const noteResult = await pool.query('SELECT * FROM notes WHERE id = $1', [noteId]);
+    if (noteResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Note not found' });
+    }
+
+    const note = noteResult.rows[0];
+    let content = note.content;
+
+    // Remove existing AI summary section if present
+    const summaryIndex = content.indexOf('\n\n---\n**AI Summary:**');
+    if (summaryIndex !== -1) {
+      content = content.substring(0, summaryIndex);
+    }
+
+    if (!genAI && !anthropic) {
+      return res.status(500).json({ error: 'AI services not configured' });
+    }
+
+    const isConsultation = note.is_consultation || note.note_type === 'consultation';
+
+    const prompt = isConsultation
+      ? `You are a medical note summarizer. Analyze the following consultation note and extract the key points in a concise, structured format.
+
+Consultation Note:
+${content}
+
+Create a summary with:
+1. Main reason for visit/consultation
+2. Key findings or observations (2-4 bullet points)
+3. Any recommendations or next steps mentioned
+
+Keep the summary brief and clinically relevant. Use bullet points for clarity.`
+      : `Summarize the following note in 2-3 concise bullet points:
+
+${content}
+
+Keep each bullet point brief and focused on the key information.`;
+
+    let summary = '';
+
+    // Try Gemini first, fall back to Claude
+    if (genAI) {
+      try {
+        const result = await genAI.models.generateContent({
+          model: 'gemini-2.0-flash',
+          contents: prompt
+        });
+        summary = result.text || '';
+      } catch (geminiError) {
+        console.error('[Notes AI] Gemini failed:', geminiError.message);
+        if (anthropic) {
+          const claudeResult = await anthropic.messages.create({
+            model: 'claude-sonnet-4-20250514',
+            max_tokens: 1024,
+            messages: [{ role: 'user', content: prompt }]
+          });
+          summary = claudeResult.content[0].text || '';
+        } else {
+          throw geminiError;
+        }
+      }
+    } else if (anthropic) {
+      const claudeResult = await anthropic.messages.create({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1024,
+        messages: [{ role: 'user', content: prompt }]
+      });
+      summary = claudeResult.content[0].text || '';
+    }
+
+    // Update the note with new summary
+    const newContent = content + `\n\n---\n**AI Summary:**\n${summary}`;
+    await pool.query('UPDATE notes SET content = $1 WHERE id = $2', [newContent, noteId]);
+
+    res.json({
+      message: 'AI summary regenerated successfully',
+      summary: summary
+    });
+
+  } catch (error) {
+    console.error('[Notes AI] Error regenerating summary:', error);
+    res.status(500).json({ error: 'Failed to regenerate AI summary', details: error.message });
+  }
+});
+
+// ============================================
 // GET NOTES SUMMARY FOR PROTOCOL GENERATION
 // Returns all client notes in a format suitable for AI processing
 // ============================================
