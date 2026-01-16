@@ -12625,7 +12625,12 @@ async function openLabPreview(labId) {
   // Set lab info
   if (titleEl) titleEl.textContent = lab.file_name || lab.title || 'Lab Result';
   if (metaEl) metaEl.textContent = `${lab.lab_type || 'Lab'} | ${formatDate(lab.test_date || lab.uploaded_at)}`;
-  if (notesEl) notesEl.textContent = lab.notes || 'No notes to show';
+
+  // Load notes from the lab_notes table
+  if (notesEl) {
+    notesEl.textContent = 'Loading notes...';
+    loadLabPreviewNotes(lab.id, notesEl);
+  }
 
   // Handle AI summary display and generate button
   if (summaryEl) {
@@ -12832,13 +12837,83 @@ async function generateLabAISummary() {
   }
 }
 
-function saveLabNote() {
-  const noteInput = document.getElementById('labPreviewNotesInput');
+async function saveLabNote() {
+  const noteInput = document.getElementById('labPreviewNotesInput') || document.getElementById('existingLabPreviewNotesInput');
   const note = noteInput?.value?.trim();
-  if (note && currentLabPreview) {
-    showNotification('Note saved to lab result', 'success');
-    document.getElementById('labPreviewNotes').textContent = note;
-    noteInput.value = '';
+
+  if (!note) {
+    showNotification('Please enter a note', 'warning');
+    return;
+  }
+
+  if (!currentLabPreview) {
+    showNotification('No lab selected', 'error');
+    return;
+  }
+
+  try {
+    const token = localStorage.getItem('auth_token');
+    const response = await fetch(`${API_BASE}/api/labs/${currentLabPreview.id}/notes`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ content: note })
+    });
+
+    if (response.ok) {
+      showNotification('Note saved to lab result', 'success');
+      const notesDisplay = document.getElementById('labPreviewNotes') || document.getElementById('existingLabPreviewNotes');
+      if (notesDisplay) {
+        // Append new note or replace "No notes to show"
+        const currentText = notesDisplay.textContent;
+        if (currentText === 'No notes to show' || currentText === 'No notes yet') {
+          notesDisplay.textContent = note;
+        } else {
+          notesDisplay.textContent = currentText + '\n\n' + note;
+        }
+      }
+      noteInput.value = '';
+    } else {
+      const errorData = await response.json();
+      showNotification(errorData.error || 'Failed to save note', 'error');
+    }
+  } catch (error) {
+    console.error('Error saving lab note:', error);
+    showNotification('Failed to save note', 'error');
+  }
+}
+
+// Load notes for lab preview panel
+async function loadLabPreviewNotes(labId, notesEl) {
+  try {
+    const token = localStorage.getItem('auth_token');
+    const response = await fetch(`${API_BASE}/api/labs/${labId}/notes`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      const notes = data.notes || [];
+
+      if (notes.length === 0) {
+        notesEl.textContent = 'No notes to show';
+      } else {
+        // Display all notes with author and date
+        notesEl.innerHTML = notes.map(note => `
+          <div class="lab-note-item" style="margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #E5E7EB;">
+            <p style="margin: 0; font-size: 14px; color: #1F2937;">${escapeHtml(note.content)}</p>
+            <p style="margin: 4px 0 0 0; font-size: 12px; color: #6B7280;">${note.author_name || 'Unknown'} • ${formatDate(note.created_at)}</p>
+          </div>
+        `).join('');
+      }
+    } else {
+      notesEl.textContent = 'No notes to show';
+    }
+  } catch (error) {
+    console.error('Error loading lab notes:', error);
+    notesEl.textContent = 'No notes to show';
   }
 }
 
