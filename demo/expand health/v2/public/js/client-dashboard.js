@@ -11838,10 +11838,27 @@ async function openLabPreview(labId) {
 
     if (isPdf) {
       // Use PDF.js to render all pages
-      docContainer.innerHTML = `<div id="labPdfPagesContainer" class="pdf-pages-container"></div>`;
+      docContainer.innerHTML = `<div id="labPdfPagesContainer" class="pdf-pages-container"><div class="ref-loading">Loading PDF...</div></div>`;
       try {
         const pdfUrl = lab.file_url.startsWith('/') ? `${API_BASE}${lab.file_url}` : lab.file_url;
-        const pdf = await pdfjsLib.getDocument(pdfUrl).promise;
+
+        // Fetch PDF with auth headers for API endpoints
+        let pdfData;
+        if (lab.file_url.startsWith('/api/')) {
+          const token = localStorage.getItem('auth_token');
+          const response = await fetch(pdfUrl, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          if (!response.ok) {
+            throw new Error(`Failed to fetch PDF: ${response.status}`);
+          }
+          const arrayBuffer = await response.arrayBuffer();
+          pdfData = { data: arrayBuffer };
+        } else {
+          pdfData = pdfUrl;
+        }
+
+        const pdf = await pdfjsLib.getDocument(pdfData).promise;
         const pagesContainer = document.getElementById('labPdfPagesContainer');
         pagesContainer.innerHTML = '';
 
