@@ -706,7 +706,11 @@ router.get('/:id/debug/momence-endpoints', async (req, res, next) => {
       '/classes',
       '/Videos',
       '/Schedule',
-      '/schedule'
+      '/schedule',
+      '/AppointmentTypes',
+      '/appointment-types',
+      '/Services',
+      '/services'
     ];
 
     for (const endpoint of endpointsToTest) {
@@ -725,7 +729,9 @@ router.get('/:id/debug/momence-endpoints', async (req, res, next) => {
           isArray: Array.isArray(result),
           keys: result && typeof result === 'object' ? Object.keys(result) : null,
           length: Array.isArray(result) ? result.length : (result?.payload?.length || result?.data?.length || null),
-          sample: JSON.stringify(result).substring(0, 300)
+          sample: JSON.stringify(result).substring(0, 500),
+          // If it's an array with items, show first item structure
+          firstItemKeys: Array.isArray(result) && result.length > 0 ? Object.keys(result[0]) : null
         };
       } catch (err) {
         results[endpoint] = {
@@ -740,9 +746,11 @@ router.get('/:id/debug/momence-endpoints', async (req, res, next) => {
         id: integration.id,
         platform: integration.platform,
         hostId: integration.platform_host_id,
-        status: integration.status
+        status: integration.status,
+        hasV2Credentials: !!integration.v2_access_token
       },
-      endpoints: results
+      endpoints: results,
+      note: 'Appointments require V2 API with OAuth2. Set up at: https://momence.com/dashboard/profile?host-redirect=public-api-clients'
     });
 
   } catch (error) {
