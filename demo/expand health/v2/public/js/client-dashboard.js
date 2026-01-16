@@ -12015,6 +12015,7 @@ async function submitAddModule() {
 
 let refPanelLabData = [];
 let refPanelProtocolsData = [];
+let refPanelProtocolData = []; // For existing protocol editor
 let refPanelNotesData = [];
 let refPanelFormsData = [];
 
@@ -12409,10 +12410,17 @@ function filterRefForms() {
 // View reference items
 function viewRefProtocol(protocolId) {
   // Open protocol in the protocol view modal
-  const protocol = refPanelProtocolsData.find(p => p.id === protocolId);
+  // Check both data sources (protocol builder uses refPanelProtocolsData, existing editor uses refPanelProtocolData)
+  let protocol = refPanelProtocolsData?.find(p => p.id === protocolId);
+  if (!protocol && typeof refPanelProtocolData !== 'undefined') {
+    protocol = refPanelProtocolData?.find(p => p.id === protocolId);
+  }
   if (protocol) {
     // Use the existing showProtocolViewModal function
     showProtocolViewModal(protocol);
+  } else {
+    console.error('Protocol not found:', protocolId);
+    showNotification('Could not load protocol', 'error');
   }
 }
 
