@@ -26,7 +26,13 @@ const { generateClinicalProtocolPrompt, calculateAge } = require('../prompts/cli
 
 // Initialize Gemini SDK for Knowledge Base queries (using new File Search API)
 const { GoogleGenAI } = require('@google/genai');
-const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+let genAI = null;
+if (process.env.GEMINI_API_KEY) {
+  genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+  console.log('[Protocols API] Gemini configured');
+} else {
+  console.log('[Protocols API] Warning: No GEMINI_API_KEY found');
+}
 
 // Helper function to query Knowledge Base using File Search API
 // This replaces the deprecated Semantic Retrieval (Corpus) API
@@ -2536,13 +2542,19 @@ Keep the summary concise (150-250 words), professional, and easy for both practi
         messages: [{ role: 'user', content: prompt }]
       });
       summary = response.content[0].text;
-    } else if (process.env.GEMINI_API_KEY) {
+    } else if (genAI) {
       console.log('[Generate Protocol Summary] Using Gemini (Claude not configured)');
-      const result = await genAI.models.generateContent({
-        model: 'gemini-2.0-flash',
-        contents: prompt
-      });
-      summary = result.text || '';
+      try {
+        const result = await genAI.models.generateContent({
+          model: 'gemini-2.0-flash',
+          contents: prompt
+        });
+        summary = result.text || '';
+        console.log('[Generate Protocol Summary] Gemini response received, summary length:', summary.length);
+      } catch (geminiError) {
+        console.error('[Generate Protocol Summary] Gemini error:', geminiError.message);
+        throw geminiError;
+      }
     } else {
       return res.status(500).json({ error: 'AI service not configured. Please set ANTHROPIC_API_KEY or GEMINI_API_KEY environment variable.' });
     }
