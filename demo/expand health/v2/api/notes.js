@@ -4,6 +4,77 @@ const db = require('../database/db');
 const pool = db.pool;  // For backwards compatibility
 
 const router = express.Router();
+
+// ============================================
+// FIX MISCLASSIFIED NOTES (One-time migration - no auth required)
+// Updates notes that contain consultation content but are marked as quick_note
+// ============================================
+router.post('/fix-misclassified', async (req, res) => {
+  try {
+    // Find notes that look like consultations but are marked as quick_note
+    // Look for keywords that indicate consultation content
+    const consultationKeywords = [
+      'consultation',
+      'beginning the consultation',
+      'consultation now',
+      'follow-up',
+      'follow up session',
+      'appointment',
+      'session notes',
+      'patient presented',
+      'client presented'
+    ];
+
+    // Build a query to find misclassified notes
+    const keywordConditions = consultationKeywords
+      .map((_, i) => `LOWER(content) LIKE $${i + 1}`)
+      .join(' OR ');
+
+    const findQuery = `
+      SELECT id, content, note_type, is_consultation
+      FROM notes
+      WHERE note_type = 'quick_note'
+        AND (is_consultation = false OR is_consultation IS NULL)
+        AND (${keywordConditions})
+    `;
+
+    const keywordParams = consultationKeywords.map(k => `%${k.toLowerCase()}%`);
+    const findResult = await pool.query(findQuery, keywordParams);
+
+    if (findResult.rows.length === 0) {
+      return res.json({
+        message: 'No misclassified notes found',
+        updated: 0
+      });
+    }
+
+    // Update these notes to be consultations
+    const noteIds = findResult.rows.map(n => n.id);
+    const updateQuery = `
+      UPDATE notes
+      SET is_consultation = true,
+          note_type = 'consultation'
+      WHERE id = ANY($1)
+      RETURNING id
+    `;
+
+    const updateResult = await pool.query(updateQuery, [noteIds]);
+
+    console.log(`[Notes Migration] Fixed ${updateResult.rows.length} misclassified notes`);
+
+    res.json({
+      message: `Successfully updated ${updateResult.rows.length} misclassified notes`,
+      updated: updateResult.rows.length,
+      noteIds: updateResult.rows.map(n => n.id)
+    });
+
+  } catch (error) {
+    console.error('Error fixing misclassified notes:', error);
+    res.status(500).json({ error: 'Failed to fix misclassified notes', details: error.message });
+  }
+});
+
+// Apply auth to all other routes
 router.use(authenticateToken);
 
 // ============================================
@@ -360,75 +431,6 @@ router.get('/client/:clientId/summary', async (req, res) => {
   } catch (error) {
     console.error('Error fetching notes summary:', error);
     res.status(500).json({ error: 'Failed to fetch notes summary' });
-  }
-});
-
-// ============================================
-// FIX MISCLASSIFIED NOTES (One-time migration)
-// Updates notes that contain consultation content but are marked as quick_note
-// ============================================
-router.post('/fix-misclassified', async (req, res) => {
-  try {
-    // Find notes that look like consultations but are marked as quick_note
-    // Look for keywords that indicate consultation content
-    const consultationKeywords = [
-      'consultation',
-      'beginning the consultation',
-      'consultation now',
-      'follow-up',
-      'follow up session',
-      'appointment',
-      'session notes',
-      'patient presented',
-      'client presented'
-    ];
-
-    // Build a query to find misclassified notes
-    const keywordConditions = consultationKeywords
-      .map((_, i) => `LOWER(content) LIKE $${i + 1}`)
-      .join(' OR ');
-
-    const findQuery = `
-      SELECT id, content, note_type, is_consultation
-      FROM notes
-      WHERE note_type = 'quick_note'
-        AND (is_consultation = false OR is_consultation IS NULL)
-        AND (${keywordConditions})
-    `;
-
-    const keywordParams = consultationKeywords.map(k => `%${k.toLowerCase()}%`);
-    const findResult = await pool.query(findQuery, keywordParams);
-
-    if (findResult.rows.length === 0) {
-      return res.json({
-        message: 'No misclassified notes found',
-        updated: 0
-      });
-    }
-
-    // Update these notes to be consultations
-    const noteIds = findResult.rows.map(n => n.id);
-    const updateQuery = `
-      UPDATE notes
-      SET is_consultation = true,
-          note_type = 'consultation'
-      WHERE id = ANY($1)
-      RETURNING id
-    `;
-
-    const updateResult = await pool.query(updateQuery, [noteIds]);
-
-    console.log(`[Notes Migration] Fixed ${updateResult.rows.length} misclassified notes`);
-
-    res.json({
-      message: `Successfully updated ${updateResult.rows.length} misclassified notes`,
-      updated: updateResult.rows.length,
-      noteIds: updateResult.rows.map(n => n.id)
-    });
-
-  } catch (error) {
-    console.error('Error fixing misclassified notes:', error);
-    res.status(500).json({ error: 'Failed to fix misclassified notes', details: error.message });
   }
 });
 
