@@ -1783,16 +1783,16 @@
       </div>
 
       <!-- Lab Preview Panel (shown when lab is selected) -->
-      <div class="lab-preview-panel" id="labPreviewPanel" style="display: none;">
-        <div class="lab-preview-header">
-          <button class="lab-preview-close" onclick="closeLabPreview()">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="18" y1="6" x2="6" y2="18"/>
-              <line x1="6" y1="6" x2="18" y2="18"/>
-            </svg>
-          </button>
-        </div>
+      <div class="lab-preview-panel" id="labPreviewPanel" style="display: none;" onclick="if(event.target === this) closeLabPreview()">
         <div class="lab-preview-content">
+          <div class="lab-preview-header">
+            <button class="lab-preview-close" onclick="closeLabPreview()">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"/>
+                <line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          </div>
           <div class="lab-preview-document" id="labPreviewDocument">
             <!-- Lab PDF/image will be rendered here -->
           </div>
