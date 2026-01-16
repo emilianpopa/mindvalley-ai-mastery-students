@@ -12447,7 +12447,6 @@ function filterRefForms() {
 
 // View reference items
 function viewRefProtocol(protocolId) {
-  alert('viewRefProtocol called with ID: ' + protocolId);
   console.log('[viewRefProtocol] Called with protocolId:', protocolId, 'type:', typeof protocolId);
   console.log('[viewRefProtocol] refPanelProtocolsData length:', refPanelProtocolsData?.length);
   console.log('[viewRefProtocol] refPanelProtocolData length:', refPanelProtocolData?.length);
@@ -12464,10 +12463,18 @@ function viewRefProtocol(protocolId) {
 
   if (protocol) {
     // Use the existing showProtocolViewModal function
-    showProtocolViewModal(protocol);
+    try {
+      console.log('[viewRefProtocol] Calling showProtocolViewModal...');
+      showProtocolViewModal(protocol);
+      console.log('[viewRefProtocol] showProtocolViewModal completed');
+    } catch (err) {
+      console.error('[viewRefProtocol] Error in showProtocolViewModal:', err);
+      alert('Error showing protocol: ' + err.message);
+    }
   } else {
     console.error('[viewRefProtocol] Protocol not found:', protocolId);
     console.log('[viewRefProtocol] Available protocols IDs:', refPanelProtocolsData?.map(p => p.id), refPanelProtocolData?.map(p => p.id));
+    alert('Protocol not found. IDs available: ' + JSON.stringify(refPanelProtocolsData?.map(p => p.id)));
     showNotification('Could not load protocol', 'error');
   }
 }
