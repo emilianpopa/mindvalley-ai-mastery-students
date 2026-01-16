@@ -3204,15 +3204,36 @@ function renderNoteCard(note) {
       const summaryText = match[1].trim();
       mainContent = content.replace(match[0], '').replace(/---\s*$/, '').trim();
 
-      // Format bullet points
-      const bulletPoints = summaryText.split(/\n/).filter(line => line.trim().startsWith('•') || line.trim().startsWith('-') || line.trim().startsWith('*'));
-      if (bulletPoints.length > 0) {
+      // Extract key points from the summary (bullet points or first few meaningful lines)
+      const lines = summaryText.split(/\n/).filter(line => line.trim());
+      const keyPoints = [];
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        // Skip headers (lines starting with #)
+        if (trimmed.startsWith('#')) continue;
+        // Skip empty lines after cleaning
+        if (!trimmed) continue;
+
+        // Clean up the line - remove bullet markers, bold markers
+        let cleaned = trimmed
+          .replace(/^[•\-\*]\s*/, '')  // Remove bullet markers
+          .replace(/^\d+\.\s*/, '')    // Remove numbered list markers
+          .replace(/\*\*(.+?)\*\*/g, '$1')  // Remove bold markers
+          .trim();
+
+        if (cleaned && cleaned.length > 10) {
+          keyPoints.push(cleaned);
+          if (keyPoints.length >= 3) break;
+        }
+      }
+
+      if (keyPoints.length > 0) {
         aiSummaryHtml = `
           <div class="note-card-ai-summary">
             <div class="ai-summary-label-small">✨ AI Summary</div>
             <ul class="ai-summary-bullets">
-              ${bulletPoints.slice(0, 3).map(point => `<li>${escapeHtml(point.replace(/^[•\-\*]\s*/, '').trim())}</li>`).join('')}
-              ${bulletPoints.length > 3 ? `<li class="more-items">+${bulletPoints.length - 3} more...</li>` : ''}
+              ${keyPoints.map(point => `<li>${escapeHtml(point.length > 80 ? point.substring(0, 80) + '...' : point)}</li>`).join('')}
             </ul>
           </div>
         `;
@@ -3338,6 +3359,13 @@ function viewNoteDetail(noteId) {
 
         <div class="note-detail-footer">
           <button class="btn-secondary" onclick="closeNoteDetailModal()">Close</button>
+          <button class="btn-primary" onclick="editNoteFromModal(${note.id})">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+            </svg>
+            Edit Note
+          </button>
           <button class="btn-danger" onclick="deleteClientNote(${note.id}); closeNoteDetailModal();">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <polyline points="3 6 5 6 21 6"/>
@@ -3444,6 +3472,129 @@ function closeNoteDetailModal(event) {
   if (modal) {
     modal.remove();
     document.body.style.overflow = '';
+  }
+}
+
+// Edit note from modal - opens an edit modal
+async function editNoteFromModal(noteId) {
+  const note = clientNotes.find(n => n.id === noteId);
+  if (!note) {
+    alert('Note not found');
+    return;
+  }
+
+  // Close the view modal
+  closeNoteDetailModal();
+
+  // Extract content without AI summary
+  let content = note.content || '';
+  const aiSummaryPatterns = [
+    /---\s*\n\*\*AI Summary:\*\*\n?([\s\S]*?)$/i,
+    /\*\*AI Summary:\*\*\n?([\s\S]*?)$/i,
+    /✨?\s*AI Summary:?\s*\n?([\s\S]*?)$/i
+  ];
+
+  for (const pattern of aiSummaryPatterns) {
+    const match = content.match(pattern);
+    if (match) {
+      content = content.replace(match[0], '').replace(/---\s*$/, '').trim();
+      break;
+    }
+  }
+
+  const noteType = note.is_consultation ? 'Consultation' :
+                   note.note_type === 'quick_note' ? 'Quick Note' :
+                   note.note_type ? note.note_type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'Note';
+
+  const modalHtml = `
+    <div id="editNoteModal" class="modal-overlay" onclick="closeEditNoteModal(event)">
+      <div class="modal-content edit-note-modal" onclick="event.stopPropagation()">
+        <div class="modal-header">
+          <h2>Edit Note</h2>
+          <span class="note-type-badge ${note.is_consultation ? 'consultation' : note.note_type}">${noteType}</span>
+          <button class="modal-close" onclick="closeEditNoteModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+          <textarea id="editNoteContent" class="edit-note-textarea" placeholder="Note content...">${escapeHtml(content)}</textarea>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary" onclick="closeEditNoteModal()">Cancel</button>
+          <button class="btn-primary" onclick="saveEditedNote(${noteId})">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+              <polyline points="17 21 17 13 7 13 7 21"/>
+              <polyline points="7 3 7 8 15 8"/>
+            </svg>
+            Save Changes
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.body.insertAdjacentHTML('beforeend', modalHtml);
+  document.body.style.overflow = 'hidden';
+
+  // Focus the textarea
+  document.getElementById('editNoteContent').focus();
+}
+
+// Close edit note modal
+function closeEditNoteModal(event) {
+  if (event && event.target !== event.currentTarget) return;
+
+  const modal = document.getElementById('editNoteModal');
+  if (modal) {
+    modal.remove();
+    document.body.style.overflow = '';
+  }
+}
+
+// Save edited note
+async function saveEditedNote(noteId) {
+  const content = document.getElementById('editNoteContent').value.trim();
+
+  if (!content) {
+    alert('Note content cannot be empty');
+    return;
+  }
+
+  try {
+    const token = localStorage.getItem('auth_token');
+    const response = await fetch(`${API_BASE}/api/notes/${noteId}`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ content })
+    });
+
+    if (response.ok) {
+      const updatedNote = await response.json();
+
+      // Update in local array
+      const noteIndex = clientNotes.findIndex(n => n.id === noteId);
+      if (noteIndex !== -1) {
+        clientNotes[noteIndex].content = content;
+      }
+
+      closeEditNoteModal();
+      renderNotesTab();
+
+      // Also refresh quick notes if panel is open
+      if (document.getElementById('rightPanel')?.style.display !== 'none') {
+        loadQuickNotes();
+      }
+
+      alert('Note updated successfully');
+    } else {
+      const error = await response.json();
+      alert('Failed to update note: ' + (error.message || 'Unknown error'));
+    }
+  } catch (error) {
+    console.error('Error updating note:', error);
+    alert('Failed to update note');
   }
 }
 
