@@ -12189,27 +12189,45 @@ async function openLabPreview(labId) {
   if (!lab) return;
 
   currentLabPreview = lab;
-  const panel = document.getElementById('labPreviewPanel');
+
+  // Check for both panel contexts (protocol builder and existing protocol editor)
+  let panel = document.getElementById('labPreviewPanel');
+  let prefix = '';
+
+  // If not found, try the existing protocol editor panel
+  if (!panel || panel.style.display === 'none' && document.getElementById('existingLabPreviewPanel')) {
+    panel = document.getElementById('existingLabPreviewPanel');
+    prefix = 'existing';
+  }
+
   if (!panel) return;
 
+  // Get elements with appropriate prefix
+  const titleEl = document.getElementById(prefix ? 'existingLabPreviewTitle' : 'labPreviewTitle');
+  const metaEl = document.getElementById(prefix ? 'existingLabPreviewMeta' : 'labPreviewMeta');
+  const notesEl = document.getElementById(prefix ? 'existingLabPreviewNotes' : 'labPreviewNotes');
+  const summaryEl = document.getElementById(prefix ? 'existingLabPreviewSummary' : 'labPreviewSummary');
+  const generateBtn = document.getElementById(prefix ? 'existingGenerateLabSummaryBtn' : 'generateLabSummaryBtn');
+  const docContainer = document.getElementById(prefix ? 'existingLabPreviewDocument' : 'labPreviewDocument');
+
   // Set lab info
-  document.getElementById('labPreviewTitle').textContent = lab.file_name || lab.title || 'Lab Result';
-  document.getElementById('labPreviewMeta').textContent = `${lab.lab_type || 'Lab'} | ${formatDate(lab.test_date || lab.uploaded_at)}`;
-  document.getElementById('labPreviewNotes').textContent = lab.notes || 'No notes to show';
+  if (titleEl) titleEl.textContent = lab.file_name || lab.title || 'Lab Result';
+  if (metaEl) metaEl.textContent = `${lab.lab_type || 'Lab'} | ${formatDate(lab.test_date || lab.uploaded_at)}`;
+  if (notesEl) notesEl.textContent = lab.notes || 'No notes to show';
 
   // Handle AI summary display and generate button
-  const summaryEl = document.getElementById('labPreviewSummary');
-  const generateBtn = document.getElementById('generateLabSummaryBtn');
-  if (lab.ai_summary) {
-    summaryEl.textContent = lab.ai_summary;
-    if (generateBtn) generateBtn.style.display = 'none';
-  } else {
-    summaryEl.textContent = 'No AI summary available.';
-    if (generateBtn) generateBtn.style.display = 'flex';
+  if (summaryEl) {
+    if (lab.ai_summary) {
+      summaryEl.textContent = lab.ai_summary;
+      if (generateBtn) generateBtn.style.display = 'none';
+    } else {
+      summaryEl.textContent = 'No AI summary available.';
+      if (generateBtn) generateBtn.style.display = 'flex';
+    }
   }
 
   // Render the lab document (PDF or image)
-  const docContainer = document.getElementById('labPreviewDocument');
+  if (!docContainer) return;
   docContainer.innerHTML = '<div class="ref-loading">Loading document...</div>';
 
   if (lab.file_url) {
@@ -12220,8 +12238,9 @@ async function openLabPreview(labId) {
                   lab.file_url.toLowerCase().endsWith('.pdf');
 
     if (isPdf) {
-      // Use PDF.js to render all pages
-      docContainer.innerHTML = `<div id="labPdfPagesContainer" class="pdf-pages-container"><div class="ref-loading">Loading PDF...</div></div>`;
+      // Use PDF.js to render all pages - use unique ID for the container
+      const pdfContainerId = prefix ? 'existingLabPdfPagesContainer' : 'labPdfPagesContainer';
+      docContainer.innerHTML = `<div id="${pdfContainerId}" class="pdf-pages-container"><div class="ref-loading">Loading PDF...</div></div>`;
       try {
         const pdfUrl = lab.file_url.startsWith('/') ? `${API_BASE}${lab.file_url}` : lab.file_url;
 
@@ -12243,7 +12262,7 @@ async function openLabPreview(labId) {
         }
 
         const pdf = await pdfjsLib.getDocument(pdfData).promise;
-        const pagesContainer = document.getElementById('labPdfPagesContainer');
+        const pagesContainer = document.getElementById(pdfContainerId);
         pagesContainer.innerHTML = '';
 
         // Render all pages
@@ -12285,8 +12304,11 @@ async function openLabPreview(labId) {
 }
 
 function closeLabPreview() {
-  const panel = document.getElementById('labPreviewPanel');
-  if (panel) panel.style.display = 'none';
+  // Close both panels (whichever is visible)
+  const panel1 = document.getElementById('labPreviewPanel');
+  const panel2 = document.getElementById('existingLabPreviewPanel');
+  if (panel1) panel1.style.display = 'none';
+  if (panel2) panel2.style.display = 'none';
   currentLabPreview = null;
 }
 
@@ -12297,8 +12319,12 @@ async function generateLabAISummary() {
     return;
   }
 
-  const summaryEl = document.getElementById('labPreviewSummary');
-  const generateBtn = document.getElementById('generateLabSummaryBtn');
+  // Check which panel is active and get the correct elements
+  const existingPanel = document.getElementById('existingLabPreviewPanel');
+  const isExisting = existingPanel && existingPanel.style.display !== 'none';
+
+  const summaryEl = document.getElementById(isExisting ? 'existingLabPreviewSummary' : 'labPreviewSummary');
+  const generateBtn = document.getElementById(isExisting ? 'existingGenerateLabSummaryBtn' : 'generateLabSummaryBtn');
 
   // Show loading state
   if (generateBtn) {
@@ -12310,7 +12336,7 @@ async function generateLabAISummary() {
       Generating...
     `;
   }
-  summaryEl.textContent = 'Generating AI summary...';
+  if (summaryEl) summaryEl.textContent = 'Generating AI summary...';
 
   try {
     const token = localStorage.getItem('auth_token');
@@ -12324,7 +12350,7 @@ async function generateLabAISummary() {
 
     if (response.ok) {
       const data = await response.json();
-      summaryEl.textContent = data.summary || 'Summary generated successfully.';
+      if (summaryEl) summaryEl.textContent = data.summary || 'Summary generated successfully.';
       currentLabPreview.ai_summary = data.summary;
       if (generateBtn) generateBtn.style.display = 'none';
       showNotification('AI summary generated successfully!', 'success');
@@ -12340,7 +12366,7 @@ async function generateLabAISummary() {
     }
   } catch (error) {
     console.error('Error generating lab summary:', error);
-    summaryEl.textContent = 'Failed to generate summary. Please try again.';
+    if (summaryEl) summaryEl.textContent = 'Failed to generate summary. Please try again.';
     showNotification(`Error: ${error.message}`, 'error');
 
     // Reset button
