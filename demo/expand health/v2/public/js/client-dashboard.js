@@ -6391,7 +6391,152 @@ function openProtocolEditorForExisting(protocol, modules) {
 
     <!-- Main Content -->
     <div class="protocol-editor-layout" style="display: flex; flex: 1; overflow: hidden;">
-      <!-- Left Sidebar -->
+      <!-- Left Reference Panel with Tabs -->
+      <div class="protocol-reference-panel" id="existingProtocolReferencePanel">
+        <!-- Reference Panel Tabs -->
+        <div class="reference-panel-tabs">
+          <button class="ref-tab active" data-ref-tab="ask-ai" onclick="switchRefTab('ask-ai', 'existing')">Ask AI</button>
+          <button class="ref-tab" data-ref-tab="prev-protocols" onclick="switchRefTab('prev-protocols', 'existing')">Previous Protocols</button>
+          <button class="ref-tab" data-ref-tab="lab-results" onclick="switchRefTab('lab-results', 'existing')">Lab Results</button>
+          <button class="ref-tab" data-ref-tab="notes" onclick="switchRefTab('notes', 'existing')">Notes</button>
+          <button class="ref-tab" data-ref-tab="forms" onclick="switchRefTab('forms', 'existing')">Forms</button>
+          <button class="ref-panel-collapse" onclick="toggleExistingReferencePanel()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="15 18 9 12 15 6"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Tab Content: Ask AI -->
+        <div class="ref-tab-content active" id="existingRefTab-ask-ai">
+          <div class="ref-panel-search">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"/>
+              <path d="M21 21l-4.35-4.35"/>
+            </svg>
+            <input type="text" placeholder="Ask a question about this client..." id="existingRefAskAIInput" onkeypress="handleRefAIQuestion(event)">
+          </div>
+          <div class="ref-panel-list" id="existingRefAskAIContent">
+            <div class="ref-ai-suggestions">
+              <p class="ref-section-label">Suggested Questions</p>
+              <button class="ref-ai-suggestion" onclick="askRefAIQuestion('What supplements might conflict with their medications?')">
+                What supplements might conflict with their medications?
+              </button>
+              <button class="ref-ai-suggestion" onclick="askRefAIQuestion('Are there any contraindications based on their medical history?')">
+                Are there any contraindications based on their medical history?
+              </button>
+              <button class="ref-ai-suggestion" onclick="askRefAIQuestion('What dosage adjustments should I consider?')">
+                What dosage adjustments should I consider?
+              </button>
+              <button class="ref-ai-suggestion" onclick="askRefAIQuestion('What are the key findings from their recent labs?')">
+                What are the key findings from their recent labs?
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab Content: Previous Protocols -->
+        <div class="ref-tab-content" id="existingRefTab-prev-protocols">
+          <div class="ref-panel-search">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"/>
+              <path d="M21 21l-4.35-4.35"/>
+            </svg>
+            <input type="text" placeholder="Search Protocols or Keywords" id="existingRefProtocolSearch" onkeyup="filterRefProtocols('existing')">
+          </div>
+          <div class="ref-panel-list" id="existingRefProtocolsList">
+            <div class="ref-loading">Loading protocols...</div>
+          </div>
+        </div>
+
+        <!-- Tab Content: Lab Results -->
+        <div class="ref-tab-content" id="existingRefTab-lab-results">
+          <div class="ref-panel-search">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"/>
+              <path d="M21 21l-4.35-4.35"/>
+            </svg>
+            <input type="text" placeholder="Search Lab Results or Tags" id="existingRefLabSearch" onkeyup="filterRefLabs('existing')">
+          </div>
+          <div class="ref-panel-list" id="existingRefLabResultsList">
+            <div class="ref-loading">Loading lab results...</div>
+          </div>
+        </div>
+
+        <!-- Tab Content: Notes -->
+        <div class="ref-tab-content" id="existingRefTab-notes">
+          <div class="ref-panel-search">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"/>
+              <path d="M21 21l-4.35-4.35"/>
+            </svg>
+            <input type="text" placeholder="Search Notes" id="existingRefNotesSearch" onkeyup="filterRefNotes('existing')">
+          </div>
+          <div class="ref-panel-list" id="existingRefNotesList">
+            <div class="ref-loading">Loading notes...</div>
+          </div>
+        </div>
+
+        <!-- Tab Content: Forms -->
+        <div class="ref-tab-content" id="existingRefTab-forms">
+          <div class="ref-panel-search">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"/>
+              <path d="M21 21l-4.35-4.35"/>
+            </svg>
+            <input type="text" placeholder="Search Forms" id="existingRefFormsSearch" onkeyup="filterRefForms('existing')">
+          </div>
+          <div class="ref-panel-list" id="existingRefFormsList">
+            <div class="ref-loading">Loading forms...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Lab Preview Panel (shown when lab is selected) -->
+      <div class="lab-preview-panel" id="existingLabPreviewPanel" style="display: none;" onclick="if(event.target === this) closeLabPreview()">
+        <div class="lab-preview-content">
+          <div class="lab-preview-header">
+            <button class="lab-preview-close" onclick="closeLabPreview()">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"/>
+                <line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          </div>
+          <div class="lab-preview-document" id="existingLabPreviewDocument">
+            <!-- Lab PDF/image will be rendered here -->
+          </div>
+          <div class="lab-preview-sidebar">
+            <h3 id="existingLabPreviewTitle">Lab Title</h3>
+            <p class="lab-preview-meta" id="existingLabPreviewMeta">Type | Date</p>
+            <div class="lab-preview-section">
+              <h4>Summary</h4>
+              <div id="existingLabPreviewSummaryContainer">
+                <p id="existingLabPreviewSummary">AI summary will appear here...</p>
+                <button id="existingGenerateLabSummaryBtn" class="generate-summary-btn" onclick="generateLabAISummary()" style="display: none;">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                  </svg>
+                  Generate AI Summary
+                </button>
+              </div>
+            </div>
+            <div class="lab-preview-section">
+              <h4>Notes</h4>
+              <p id="existingLabPreviewNotes">No notes to show</p>
+              <textarea id="existingLabPreviewNotesInput" placeholder="Enter your notes" rows="4"></textarea>
+              <button class="lab-preview-note-btn" onclick="saveLabNote()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="22" y1="2" x2="11" y2="13"/>
+                  <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Left Sidebar with module icons -->
       <div class="protocol-editor-sidebar">
         ${modules.map((m, i) => `
           <button class="sidebar-icon ${i === 0 ? 'active' : ''}" title="${escapeHtml(m.name)}" onclick="scrollToProtocolSection(${i})">
@@ -6484,6 +6629,187 @@ function openProtocolEditorForExisting(protocol, modules) {
 
   document.body.appendChild(editorView);
   document.body.style.overflow = 'hidden';
+
+  // Load reference panel data for the existing protocol editor
+  loadReferencePanelDataForExisting();
+}
+
+// Toggle the existing protocol editor reference panel
+function toggleExistingReferencePanel() {
+  const panel = document.getElementById('existingProtocolReferencePanel');
+  if (!panel) return;
+
+  panel.classList.toggle('collapsed');
+  const collapseBtn = panel.querySelector('.ref-panel-collapse svg');
+  if (collapseBtn) {
+    if (panel.classList.contains('collapsed')) {
+      collapseBtn.innerHTML = '<polyline points="9 18 15 12 9 6"/>';
+    } else {
+      collapseBtn.innerHTML = '<polyline points="15 18 9 12 15 6"/>';
+    }
+  }
+}
+
+// Load reference panel data for the existing protocol editor
+async function loadReferencePanelDataForExisting() {
+  if (!currentClient) return;
+
+  const clientId = currentClient.id;
+  const token = localStorage.getItem('auth_token');
+
+  try {
+    // Load protocols
+    const protocolsRes = await fetch(`${API_BASE}/api/protocols/client/${clientId}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (protocolsRes.ok) {
+      const data = await protocolsRes.json();
+      refPanelProtocolData = data.protocols || [];
+      renderExistingRefProtocols();
+    }
+
+    // Load labs
+    const labsRes = await fetch(`${API_BASE}/api/labs/client/${clientId}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (labsRes.ok) {
+      const data = await labsRes.json();
+      refPanelLabData = data.labs || [];
+      renderExistingRefLabs();
+    }
+
+    // Load notes
+    const notesRes = await fetch(`${API_BASE}/api/notes/client/${clientId}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (notesRes.ok) {
+      const data = await notesRes.json();
+      refPanelNotesData = data.notes || [];
+      renderExistingRefNotes();
+    }
+
+    // Load forms
+    const formsRes = await fetch(`${API_BASE}/api/forms/client/${clientId}/submissions`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (formsRes.ok) {
+      const data = await formsRes.json();
+      refPanelFormsData = data.submissions || [];
+      renderExistingRefForms();
+    }
+  } catch (error) {
+    console.error('Error loading reference panel data:', error);
+  }
+}
+
+// Render protocols for existing editor reference panel
+function renderExistingRefProtocols() {
+  const container = document.getElementById('existingRefProtocolsList');
+  if (!container) return;
+
+  if (!refPanelProtocolData || refPanelProtocolData.length === 0) {
+    container.innerHTML = '<p class="ref-empty">No previous protocols found.</p>';
+    return;
+  }
+
+  container.innerHTML = refPanelProtocolData.map(protocol => `
+    <div class="ref-item" onclick="viewRefProtocol(${protocol.id})">
+      <div class="ref-item-icon">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+        </svg>
+      </div>
+      <div class="ref-item-content">
+        <span class="ref-item-title">${escapeHtml(protocol.title || 'Untitled Protocol')}</span>
+        <span class="ref-item-meta">${formatDate(protocol.created_at)}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+// Render labs for existing editor reference panel
+function renderExistingRefLabs() {
+  const container = document.getElementById('existingRefLabResultsList');
+  if (!container) return;
+
+  if (!refPanelLabData || refPanelLabData.length === 0) {
+    container.innerHTML = '<p class="ref-empty">No lab results found.</p>';
+    return;
+  }
+
+  container.innerHTML = refPanelLabData.map(lab => `
+    <div class="ref-item ref-lab-item" onclick="openLabPreview(${lab.id})">
+      <div class="ref-item-icon">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <line x1="16" y1="13" x2="8" y2="13"/>
+          <line x1="16" y1="17" x2="8" y2="17"/>
+          <line x1="10" y1="9" x2="8" y2="9"/>
+        </svg>
+      </div>
+      <div class="ref-item-content">
+        <span class="ref-item-title">${escapeHtml(lab.file_name || lab.title || 'Lab Result')}</span>
+        <span class="ref-item-meta">${lab.lab_type || 'Lab'} | ${formatDate(lab.test_date || lab.uploaded_at)}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+// Render notes for existing editor reference panel
+function renderExistingRefNotes() {
+  const container = document.getElementById('existingRefNotesList');
+  if (!container) return;
+
+  if (!refPanelNotesData || refPanelNotesData.length === 0) {
+    container.innerHTML = '<p class="ref-empty">No notes found.</p>';
+    return;
+  }
+
+  container.innerHTML = refPanelNotesData.map(note => `
+    <div class="ref-item" onclick="viewRefNote(${note.id})">
+      <div class="ref-item-icon">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <line x1="16" y1="13" x2="8" y2="13"/>
+          <line x1="16" y1="17" x2="8" y2="17"/>
+        </svg>
+      </div>
+      <div class="ref-item-content">
+        <span class="ref-item-title">${escapeHtml((note.content || '').substring(0, 50))}${(note.content || '').length > 50 ? '...' : ''}</span>
+        <span class="ref-item-meta">${note.note_type || 'Note'} | ${formatDate(note.created_at)}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+// Render forms for existing editor reference panel
+function renderExistingRefForms() {
+  const container = document.getElementById('existingRefFormsList');
+  if (!container) return;
+
+  if (!refPanelFormsData || refPanelFormsData.length === 0) {
+    container.innerHTML = '<p class="ref-empty">No form submissions found.</p>';
+    return;
+  }
+
+  container.innerHTML = refPanelFormsData.map(form => `
+    <div class="ref-item" onclick="viewRefForm(${form.id})">
+      <div class="ref-item-icon">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 11H3v10h6V11z"/>
+          <path d="M21 3h-6v18h6V3z"/>
+          <path d="M15 11H9v10h6V11z"/>
+        </svg>
+      </div>
+      <div class="ref-item-content">
+        <span class="ref-item-title">${escapeHtml(form.form_name || form.template_name || 'Form Submission')}</span>
+        <span class="ref-item-meta">${formatDate(form.submitted_at || form.created_at)}</span>
+      </div>
+    </div>
+  `).join('');
 }
 
 // Render existing protocol sections
@@ -11437,16 +11763,35 @@ let refPanelNotesData = [];
 let refPanelFormsData = [];
 
 // Switch reference panel tab
-function switchRefTab(tabId) {
-  // Update tab buttons
-  document.querySelectorAll('.ref-tab').forEach(tab => {
-    tab.classList.toggle('active', tab.dataset.refTab === tabId);
-  });
+function switchRefTab(tabId, context = '') {
+  // Determine the prefix for element IDs based on context
+  const prefix = context === 'existing' ? 'existing' : '';
+  const tabContentPrefix = prefix ? `${prefix}RefTab-` : 'refTab-';
 
-  // Update tab content
-  document.querySelectorAll('.ref-tab-content').forEach(content => {
-    content.classList.toggle('active', content.id === `refTab-${tabId}`);
-  });
+  // Get the container based on context
+  const panelId = context === 'existing' ? 'existingProtocolReferencePanel' : 'protocolReferencePanel';
+  const panel = document.getElementById(panelId);
+
+  if (panel) {
+    // Update tab buttons within the specific panel
+    panel.querySelectorAll('.ref-tab').forEach(tab => {
+      tab.classList.toggle('active', tab.dataset.refTab === tabId);
+    });
+
+    // Update tab content within the specific panel
+    panel.querySelectorAll('.ref-tab-content').forEach(content => {
+      const expectedId = tabContentPrefix + tabId;
+      content.classList.toggle('active', content.id === expectedId);
+    });
+  } else {
+    // Fallback to global selection for backwards compatibility
+    document.querySelectorAll('.ref-tab').forEach(tab => {
+      tab.classList.toggle('active', tab.dataset.refTab === tabId);
+    });
+    document.querySelectorAll('.ref-tab-content').forEach(content => {
+      content.classList.toggle('active', content.id === `refTab-${tabId}`);
+    });
+  }
 
   // Load data for the tab if needed
   loadRefTabData(tabId);
@@ -12299,7 +12644,13 @@ window.submitAddModule = submitAddModule;
 // Reference panel functions
 window.switchRefTab = switchRefTab;
 window.toggleReferencePanel = toggleReferencePanel;
+window.toggleExistingReferencePanel = toggleExistingReferencePanel;
 window.loadReferencePanelData = loadReferencePanelData;
+window.loadReferencePanelDataForExisting = loadReferencePanelDataForExisting;
+window.renderExistingRefProtocols = renderExistingRefProtocols;
+window.renderExistingRefLabs = renderExistingRefLabs;
+window.renderExistingRefNotes = renderExistingRefNotes;
+window.renderExistingRefForms = renderExistingRefForms;
 window.filterRefProtocols = filterRefProtocols;
 window.filterRefLabs = filterRefLabs;
 window.filterRefNotes = filterRefNotes;
