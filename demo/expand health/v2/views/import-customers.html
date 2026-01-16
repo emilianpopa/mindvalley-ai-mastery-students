@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Import Customers - ExpandHealth</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+  <!-- Header -->
+  <header class="bg-white border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center h-16">
+        <div class="flex items-center gap-4">
+          <a href="/customers" class="text-gray-500 hover:text-gray-700">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            </svg>
+          </a>
+          <h1 class="text-xl font-semibold text-gray-900">Import Customers from Momence</h1>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-4xl mx-auto py-8 px-4">
+    <!-- Instructions -->
+    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+      <h3 class="font-medium text-blue-900 mb-2">How to import customers from Momence:</h3>
+      <ol class="list-decimal list-inside text-sm text-blue-800 space-y-1">
+        <li>Export your appointments from Momence (Appointments > Export)</li>
+        <li>Upload the CSV file below</li>
+        <li>Preview the import to see which customers will be added</li>
+        <li>Click "Run Import" to add the new customers</li>
+      </ol>
+    </div>
+
+    <!-- Upload Form -->
+    <div class="bg-white shadow rounded-lg p-6 mb-6">
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-700 mb-2">
+          Upload Momence Appointments CSV
+        </label>
+        <input
+          type="file"
+          id="csvFile"
+          accept=".csv"
+          class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer"
+        />
+      </div>
+
+      <div id="fileInfo" class="hidden mb-4 p-3 bg-gray-50 rounded-lg">
+        <p class="text-sm text-gray-600">
+          File loaded: <span id="fileName" class="font-medium"></span>
+          (<span id="rowCount" class="font-medium"></span> rows)
+        </p>
+      </div>
+
+      <div class="flex items-center gap-4">
+        <label class="flex items-center">
+          <input type="checkbox" id="dryRun" checked class="h-4 w-4 text-emerald-600 rounded border-gray-300">
+          <span class="ml-2 text-sm text-gray-700">Preview only (dry run)</span>
+        </label>
+      </div>
+
+      <div class="mt-4 flex gap-3">
+        <button
+          id="importBtn"
+          disabled
+          class="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+        >
+          Preview Import
+        </button>
+        <button
+          id="clearBtn"
+          class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 font-medium"
+        >
+          Clear
+        </button>
+      </div>
+    </div>
+
+    <!-- Loading -->
+    <div id="loading" class="hidden">
+      <div class="flex items-center justify-center py-8">
+        <svg class="animate-spin h-8 w-8 text-emerald-600" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <span class="ml-3 text-gray-600">Processing...</span>
+      </div>
+    </div>
+
+    <!-- Error -->
+    <div id="error" class="hidden bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+      <p class="text-red-800" id="errorMessage"></p>
+    </div>
+
+    <!-- Results -->
+    <div id="results" class="hidden">
+      <div class="bg-white shadow rounded-lg p-6">
+        <h2 class="text-lg font-semibold mb-4" id="resultsTitle">Import Results</h2>
+
+        <!-- Stats Grid -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <div class="bg-gray-50 p-4 rounded-lg">
+            <p class="text-sm text-gray-500">Total in CSV</p>
+            <p class="text-2xl font-bold" id="statTotal">0</p>
+          </div>
+          <div class="bg-blue-50 p-4 rounded-lg">
+            <p class="text-sm text-gray-500">Unique Customers</p>
+            <p class="text-2xl font-bold text-blue-600" id="statUnique">0</p>
+          </div>
+          <div class="bg-emerald-50 p-4 rounded-lg">
+            <p class="text-sm text-gray-500" id="newLabel">New Customers</p>
+            <p class="text-2xl font-bold text-emerald-600" id="statNew">0</p>
+          </div>
+          <div class="bg-yellow-50 p-4 rounded-lg">
+            <p class="text-sm text-gray-500">Already Exist</p>
+            <p class="text-2xl font-bold text-yellow-600" id="statExisting">0</p>
+          </div>
+        </div>
+
+        <!-- New Customers Preview -->
+        <div id="newCustomersPreview" class="mb-6">
+          <h3 class="font-medium text-gray-900 mb-3">New Customers to Import</h3>
+          <div class="max-h-64 overflow-y-auto border border-gray-200 rounded-lg">
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-50 sticky top-0">
+                <tr>
+                  <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                  <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+                </tr>
+              </thead>
+              <tbody id="newCustomersTable" class="bg-white divide-y divide-gray-200">
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Existing Customers -->
+        <div id="existingCustomersPreview" class="mb-6">
+          <h3 class="font-medium text-gray-900 mb-3">Already in System (will be skipped)</h3>
+          <div class="flex flex-wrap gap-2" id="existingCustomersList">
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div id="actionButtons" class="flex gap-3">
+          <button
+            id="runImportBtn"
+            class="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 font-medium"
+          >
+            Run Import
+          </button>
+          <a href="/customers" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 font-medium">
+            Go to Customers
+          </a>
+        </div>
+
+        <!-- Success Message -->
+        <div id="successMessage" class="hidden mt-4 p-4 bg-emerald-50 border border-emerald-200 rounded-lg">
+          <p class="text-emerald-800 font-medium">
+            Successfully imported <span id="importedCount">0</span> customers!
+          </p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    let csvData = null;
+    const API_BASE = '';
+
+    // Get auth token from cookie or localStorage
+    function getAuthToken() {
+      // Try localStorage first
+      const token = localStorage.getItem('token');
+      if (token) return token;
+
+      // Try cookie
+      const cookies = document.cookie.split(';');
+      for (const cookie of cookies) {
+        const [name, value] = cookie.trim().split('=');
+        if (name === 'token') return value;
+      }
+      return null;
+    }
+
+    // File upload handler
+    document.getElementById('csvFile').addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        csvData = event.target.result;
+        const lines = csvData.trim().split('\n');
+
+        document.getElementById('fileName').textContent = file.name;
+        document.getElementById('rowCount').textContent = lines.length - 1;
+        document.getElementById('fileInfo').classList.remove('hidden');
+        document.getElementById('importBtn').disabled = false;
+        document.getElementById('results').classList.add('hidden');
+        document.getElementById('error').classList.add('hidden');
+      };
+      reader.readAsText(file);
+    });
+
+    // Clear button
+    document.getElementById('clearBtn').addEventListener('click', () => {
+      csvData = null;
+      document.getElementById('csvFile').value = '';
+      document.getElementById('fileInfo').classList.add('hidden');
+      document.getElementById('importBtn').disabled = true;
+      document.getElementById('results').classList.add('hidden');
+      document.getElementById('error').classList.add('hidden');
+    });
+
+    // Import button
+    document.getElementById('importBtn').addEventListener('click', () => runImport(true));
+    document.getElementById('runImportBtn').addEventListener('click', () => runImport(false));
+
+    // Update button text based on dry run checkbox
+    document.getElementById('dryRun').addEventListener('change', (e) => {
+      document.getElementById('importBtn').textContent = e.target.checked ? 'Preview Import' : 'Run Import';
+    });
+
+    async function runImport(dryRun) {
+      if (!csvData) return;
+
+      document.getElementById('loading').classList.remove('hidden');
+      document.getElementById('results').classList.add('hidden');
+      document.getElementById('error').classList.add('hidden');
+
+      try {
+        const token = getAuthToken();
+        const headers = {
+          'Content-Type': 'application/json'
+        };
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+
+        const response = await fetch(`${API_BASE}/api/clients/import/momence`, {
+          method: 'POST',
+          headers,
+          credentials: 'include',
+          body: JSON.stringify({ csvData, dryRun })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Import failed');
+        }
+
+        displayResults(data);
+
+      } catch (err) {
+        document.getElementById('errorMessage').textContent = err.message;
+        document.getElementById('error').classList.remove('hidden');
+      } finally {
+        document.getElementById('loading').classList.add('hidden');
+      }
+    }
+
+    function displayResults(data) {
+      document.getElementById('results').classList.remove('hidden');
+
+      // Update title
+      document.getElementById('resultsTitle').textContent = data.dryRun ? 'Preview Results' : 'Import Complete';
+
+      // Update stats
+      document.getElementById('statTotal').textContent = data.totalInCSV;
+      document.getElementById('statUnique').textContent = data.uniqueCustomers;
+      document.getElementById('statNew').textContent = data.dryRun ? data.newCustomers : data.imported;
+      document.getElementById('statExisting').textContent = data.existingCustomers;
+      document.getElementById('newLabel').textContent = data.dryRun ? 'New Customers' : 'Imported';
+
+      // New customers table
+      const tbody = document.getElementById('newCustomersTable');
+      tbody.innerHTML = '';
+      const customers = data.preview?.newCustomers || [];
+      if (customers.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="2" class="px-4 py-3 text-sm text-gray-500 text-center">No new customers to import</td></tr>';
+      } else {
+        customers.forEach(c => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td class="px-4 py-2 text-sm text-gray-900">${c.firstName} ${c.lastName}</td>
+            <td class="px-4 py-2 text-sm text-gray-500">${c.email}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+        if (data.newCustomers > 20) {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `<td colspan="2" class="px-4 py-2 text-sm text-gray-400 text-center">... and ${data.newCustomers - 20} more</td>`;
+          tbody.appendChild(tr);
+        }
+      }
+
+      // Existing customers
+      const existingList = document.getElementById('existingCustomersList');
+      existingList.innerHTML = '';
+      const existing = data.preview?.existingCustomers || [];
+      if (existing.length === 0) {
+        existingList.innerHTML = '<span class="text-sm text-gray-500">None</span>';
+      } else {
+        existing.forEach(email => {
+          const span = document.createElement('span');
+          span.className = 'px-2 py-1 bg-yellow-100 text-yellow-800 rounded text-sm';
+          span.textContent = email;
+          existingList.appendChild(span);
+        });
+        if (data.existingCustomers > 10) {
+          const span = document.createElement('span');
+          span.className = 'px-2 py-1 bg-gray-100 text-gray-600 rounded text-sm';
+          span.textContent = `+${data.existingCustomers - 10} more`;
+          existingList.appendChild(span);
+        }
+      }
+
+      // Show/hide action buttons based on dry run
+      if (data.dryRun) {
+        document.getElementById('actionButtons').classList.remove('hidden');
+        document.getElementById('runImportBtn').classList.remove('hidden');
+        document.getElementById('successMessage').classList.add('hidden');
+      } else {
+        document.getElementById('runImportBtn').classList.add('hidden');
+        document.getElementById('successMessage').classList.remove('hidden');
+        document.getElementById('importedCount').textContent = data.imported;
+      }
+    }
+  </script>
+</body>
+</html>

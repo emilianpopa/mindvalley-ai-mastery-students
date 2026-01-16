@@ -178,6 +178,10 @@ app.get('/customers', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'customers.html'));
 });
 
+app.get('/customers/import', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'import-customers.html'));
+});
+
 app.get('/customers/:id', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'customer-profile.html'));
 });
