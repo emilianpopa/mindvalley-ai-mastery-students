@@ -3688,6 +3688,11 @@
         const endDate = endOfWeek.toISOString();
 
         const data = await apiRequest(`/api/appointments/calendar?start=${startDate}&end=${endDate}`);
+        console.log('Appointments data from API:', data);
+        if (data && data.length > 0) {
+          console.log('First appointment extendedProps:', data[0].extendedProps);
+          console.log('Payment statuses:', data.slice(0, 5).map(a => a.extendedProps?.paymentStatus));
+        }
 
         // API returns array directly, not wrapped in { events: [...] }
         if (data && Array.isArray(data)) {
@@ -3746,6 +3751,11 @@
         const isPaid = paymentStatus === 'paid' || apt.extendedProps?.status === 'completed';
         // Unpaid = explicitly unpaid OR no payment status (NULL)
         const isUnpaid = paymentStatus === 'unpaid' || paymentStatus === 'pending' || (!paymentStatus && !isPaid);
+
+        // Debug first few appointments
+        if (appointments.indexOf(apt) < 3) {
+          console.log(`Appointment ${apt.id}: paymentStatus="${paymentStatus}", isPaid=${isPaid}, status="${apt.extendedProps?.status}"`);
+        }
         const status = apt.extendedProps?.status || 'confirmed';
         // Check if this is a time block
         const isTimeBlock = apt.extendedProps?.isTimeBlock === true;
