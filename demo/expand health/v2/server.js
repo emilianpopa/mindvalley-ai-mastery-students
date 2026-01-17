@@ -619,4 +619,4 @@ process.on('SIGINT', () => {
   console.log('\nSIGINT received, shutting down gracefully...');
   process.exit(0);
 });
-// Trigger redeploy Thu, Jan 16, 2026  5:45:00 PM - import page
+// Trigger redeploy Fri, Jan 17, 2026 - bold appointment colors
