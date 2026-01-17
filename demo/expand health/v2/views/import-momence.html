@@ -220,6 +220,36 @@
           </div>
         </div>
       </div>
+
+      <!-- Sync Payment Status Section -->
+      <div class="bg-white shadow rounded-lg p-6 mt-6">
+        <h2 class="text-lg font-semibold mb-2">Sync Payment Status</h2>
+        <p class="text-sm text-gray-600 mb-4">If you already imported appointments but they show incorrect payment status (all red or all green), use this to update the payment status from your Momence CSV.</p>
+
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            Upload Momence Appointments CSV (same file used for import)
+          </label>
+          <input
+            type="file"
+            id="csvFileSync"
+            accept=".csv"
+            class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100 cursor-pointer"
+          />
+        </div>
+
+        <button
+          id="syncPaymentBtn"
+          disabled
+          class="px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+        >
+          Sync Payment Status
+        </button>
+
+        <div id="syncResults" class="hidden mt-4 p-4 bg-orange-50 border border-orange-200 rounded-lg">
+          <p class="text-orange-800 font-medium" id="syncResultsText"></p>
+        </div>
+      </div>
     </div>
 
     <!-- Loading -->
@@ -438,6 +468,64 @@
         hideLoading();
       }
     }
+
+    // ==================== SYNC PAYMENT STATUS ====================
+    let syncCsvData = null;
+
+    document.getElementById('csvFileSync').addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      syncCsvData = await file.text();
+      document.getElementById('syncPaymentBtn').disabled = false;
+    });
+
+    document.getElementById('syncPaymentBtn').addEventListener('click', async () => {
+      if (!syncCsvData) return;
+
+      showLoading();
+      try {
+        // First do a dry run
+        const dryRunResp = await fetch('/api/appointments/sync-payment-status', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+          },
+          body: JSON.stringify({ csvData: syncCsvData, dryRun: true })
+        });
+
+        if (!dryRunResp.ok) throw new Error('Failed to sync payment status');
+        const dryRunData = await dryRunResp.json();
+
+        if (dryRunData.toUpdate === 0) {
+          document.getElementById('syncResults').classList.remove('hidden');
+          document.getElementById('syncResultsText').textContent = `No matching appointments found to update. ${dryRunData.notFound} appointments in CSV not found in database.`;
+          return;
+        }
+
+        // Now do the actual sync
+        const resp = await fetch('/api/appointments/sync-payment-status', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+          },
+          body: JSON.stringify({ csvData: syncCsvData, dryRun: false })
+        });
+
+        if (!resp.ok) throw new Error('Failed to sync payment status');
+        const data = await resp.json();
+
+        document.getElementById('syncResults').classList.remove('hidden');
+        document.getElementById('syncResultsText').textContent = `Updated payment status for ${data.updated} appointments! Refresh the calendar to see the changes.`;
+
+      } catch (err) {
+        showError(err.message);
+      } finally {
+        hideLoading();
+      }
+    });
 
     // ==================== HELPERS ====================
     function showLoading() {

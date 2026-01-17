@@ -863,6 +863,10 @@ router.post('/import/momence', async (req, res, next) => {
       }
     }
 
+    // Count paid vs unpaid for debugging
+    const paidCount = appointments.filter(a => a.paid).length;
+    const unpaidCount = appointments.filter(a => !a.paid).length;
+
     res.json({
       dryRun,
       totalInCSV: lines.length - 1,
@@ -875,7 +879,15 @@ router.post('/import/momence', async (req, res, next) => {
       dateRange: minDate && maxDate ? {
         from: minDate.toLocaleDateString(),
         to: maxDate.toLocaleDateString()
-      } : null
+      } : null,
+      // Debug info for payment status
+      paymentStats: {
+        paidColumnFound: paidIdx >= 0,
+        paidColumnName: paidIdx >= 0 ? header[paidIdx] : null,
+        paidCount,
+        unpaidCount,
+        headers: header
+      }
     });
 
   } catch (error) {
