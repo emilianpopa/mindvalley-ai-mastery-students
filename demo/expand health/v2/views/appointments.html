@@ -3818,7 +3818,8 @@
         const serviceName = apt.extendedProps?.serviceName || apt.title || 'Appointment';
         const staffName = apt.extendedProps?.staffName || '';
         const locationType = apt.extendedProps?.locationType || 'in_person';
-        const price = apt.extendedProps?.price || 0;
+        const priceVal = apt.extendedProps?.price;
+        const price = (priceVal !== null && priceVal !== undefined && !isNaN(Number(priceVal))) ? Number(priceVal) : 0;
 
         // Payment status text and class
         const paymentStatusText = isPaid ? 'Paid' : 'Not paid';
@@ -4310,8 +4311,10 @@
 
       // Payment tags
       const paymentTagsEl = document.getElementById('panelPaymentTags');
-      const price = parseFloat(apt.extendedProps?.price) || 0;
-      const credits = parseInt(apt.extendedProps?.credits) || 0;
+      const priceRaw = apt.extendedProps?.price;
+      const price = (priceRaw !== null && priceRaw !== undefined && !isNaN(Number(priceRaw))) ? Number(priceRaw) : 0;
+      const creditsRaw = apt.extendedProps?.credits;
+      const credits = (creditsRaw !== null && creditsRaw !== undefined && !isNaN(Number(creditsRaw))) ? Number(creditsRaw) : 0;
       let tagsHtml = '';
 
       if (price > 0) {
