@@ -2848,30 +2848,16 @@
       cursor: not-allowed;
     }
 
-    /* Appointment Block Styles - Momence-style bold colors */
+    /* Appointment Block Styles - Momence-style green with indicator */
     .appointment-block {
       position: relative;
-      transition: transform 0.1s, box-shadow 0.1s;
+      transition: filter 0.1s, box-shadow 0.1s;
+      background: #4ade80 !important;
     }
 
     .appointment-block:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1) !important;
-    }
-
-    .appointment-block.paid {
-      background: #bbf7d0 !important;
-      border-left: 4px solid #22c55e !important;
-    }
-
-    .appointment-block.unpaid {
-      background: #fecaca !important;
-      border-left: 4px solid #ef4444 !important;
-    }
-
-    .appointment-block.confirmed {
-      background: #e9d5ff !important;
-      border-left: 4px solid #a855f7 !important;
+      filter: brightness(0.95);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
     }
 
     /* Hover Tooltip - Momence-style */
@@ -2921,7 +2907,7 @@
     }
 
     .apt-tooltip-status-dot.confirmed {
-      background: #a855f7;
+      background: #eab308;
     }
 
     .apt-tooltip-status-text {
@@ -3705,21 +3691,19 @@
         const isUnpaid = apt.extendedProps?.paymentStatus === 'unpaid' || apt.extendedProps?.paymentStatus === 'pending';
         const status = apt.extendedProps?.status || 'confirmed';
 
-        // Color based on payment status (Momence-style: bold colors)
-        // Green = paid, Red = unpaid, Purple = confirmed/pending
-        let bgColor, borderColor, textColor;
+        // Momence-style: Green background for all appointments
+        // Small colored square indicator for payment status
+        // Green square = paid, Red square = unpaid, Yellow/Orange square = confirmed/pending
+        let indicatorColor;
         if (isPaid) {
-          // Vibrant green for paid
-          bgColor = '#bbf7d0'; borderColor = '#22c55e'; textColor = '#15803d';
+          indicatorColor = '#22c55e'; // Green
         } else if (isUnpaid) {
-          // Vibrant red for unpaid
-          bgColor = '#fecaca'; borderColor = '#ef4444'; textColor = '#b91c1c';
+          indicatorColor = '#ef4444'; // Red
         } else {
-          // Vibrant purple for confirmed
-          bgColor = '#e9d5ff'; borderColor = '#a855f7'; textColor = '#7c3aed';
+          indicatorColor = '#eab308'; // Yellow/amber for confirmed
         }
 
-        // Create appointment block
+        // Create appointment block - Momence green style
         const block = document.createElement('div');
         block.className = `appointment-block ${isPaid ? 'paid' : isUnpaid ? 'unpaid' : 'confirmed'}`;
         block.style.cssText = `
@@ -3728,16 +3712,16 @@
           left: 2px;
           right: 2px;
           height: ${Math.max(durationHours * slotHeight - 4, 24)}px;
-          background: ${bgColor};
-          border-left: 4px solid ${borderColor};
+          background: #4ade80;
           border-radius: 4px;
-          padding: 4px 8px;
+          padding: 4px 6px 4px 8px;
           font-size: 0.75rem;
           overflow: visible;
           cursor: pointer;
           z-index: 100;
           box-sizing: border-box;
-          box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+          display: flex;
+          gap: 6px;
         `;
 
         // Format times
@@ -3758,9 +3742,14 @@
         const statusClass = isPaid ? 'paid' : isUnpaid ? 'unpaid' : 'confirmed';
 
         block.innerHTML = `
-          <div style="font-weight: 600; color: ${textColor}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${serviceName}</div>
-          <div style="color: ${textColor}; font-size: 0.6875rem; opacity: 0.85;">${timeStr}</div>
-          <div style="color: ${textColor}; font-size: 0.6875rem; opacity: 0.75; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${clientName}</div>
+          <!-- Payment status indicator square -->
+          <div style="width: 10px; height: 10px; min-width: 10px; background: ${indicatorColor}; border-radius: 2px; margin-top: 2px;"></div>
+          <!-- Appointment content -->
+          <div style="flex: 1; min-width: 0; overflow: hidden;">
+            <div style="font-weight: 600; color: #166534; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${serviceName}</div>
+            <div style="color: #166534; font-size: 0.6875rem; opacity: 0.9;">${clientName}</div>
+            <div style="color: #166534; font-size: 0.6875rem; opacity: 0.8;">${timeStr}</div>
+          </div>
 
           <!-- Hover Tooltip - Momence style -->
           <div class="apt-tooltip">
