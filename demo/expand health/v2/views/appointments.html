@@ -2847,6 +2847,108 @@
       border-color: var(--gray-300);
       cursor: not-allowed;
     }
+
+    /* Appointment Block Styles */
+    .appointment-block {
+      position: relative;
+    }
+
+    .appointment-block.paid {
+      background: #dcfce7 !important;
+      border-left-color: #16a34a !important;
+    }
+
+    .appointment-block.unpaid {
+      background: #fef2f2 !important;
+      border-left-color: #dc2626 !important;
+    }
+
+    .appointment-block.confirmed {
+      background: #f3e8ff !important;
+      border-left-color: #9333ea !important;
+    }
+
+    /* Hover Tooltip */
+    .apt-tooltip {
+      display: none;
+      position: absolute;
+      left: calc(100% + 8px);
+      top: 0;
+      min-width: 280px;
+      background: white;
+      border: 1px solid var(--gray-200);
+      border-radius: 8px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+      padding: 12px;
+      z-index: 1000;
+      font-size: 0.8125rem;
+    }
+
+    .appointment-block:hover .apt-tooltip {
+      display: block;
+    }
+
+    .apt-tooltip-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--gray-100);
+    }
+
+    .apt-tooltip-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 0.6875rem;
+      font-weight: 600;
+    }
+
+    .apt-tooltip-status.paid {
+      background: #dcfce7;
+      color: #16a34a;
+    }
+
+    .apt-tooltip-status.unpaid {
+      background: #fef2f2;
+      color: #dc2626;
+    }
+
+    .apt-tooltip-title {
+      font-weight: 600;
+      color: var(--gray-900);
+      font-size: 0.875rem;
+    }
+
+    .apt-tooltip-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      margin-bottom: 6px;
+      color: var(--gray-600);
+    }
+
+    .apt-tooltip-row svg {
+      width: 14px;
+      height: 14px;
+      flex-shrink: 0;
+      margin-top: 2px;
+      color: var(--gray-400);
+    }
+
+    .apt-tooltip-row-content {
+      flex: 1;
+    }
+
+    .apt-tooltip-label {
+      font-size: 0.6875rem;
+      color: var(--gray-400);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
   </style>
 </head>
 <body>
@@ -3532,17 +3634,32 @@
 
         if (!targetSlot) return;
 
+        // Determine payment/status for color coding
+        const isPaid = apt.extendedProps?.paymentStatus === 'paid' || apt.extendedProps?.status === 'completed';
+        const isUnpaid = apt.extendedProps?.paymentStatus === 'unpaid' || apt.extendedProps?.paymentStatus === 'pending';
+        const status = apt.extendedProps?.status || 'confirmed';
+
+        // Color based on payment status (like Momence: green=paid, red=unpaid, purple=confirmed)
+        let bgColor, borderColor, textColor;
+        if (isPaid) {
+          bgColor = '#dcfce7'; borderColor = '#16a34a'; textColor = '#166534';
+        } else if (isUnpaid) {
+          bgColor = '#fef2f2'; borderColor = '#dc2626'; textColor = '#991b1b';
+        } else {
+          bgColor = '#f3e8ff'; borderColor = '#9333ea'; textColor = '#6b21a8';
+        }
+
         // Create appointment block
         const block = document.createElement('div');
-        block.className = 'appointment-block';
+        block.className = `appointment-block ${isPaid ? 'paid' : isUnpaid ? 'unpaid' : 'confirmed'}`;
         block.style.cssText = `
           position: absolute;
           top: ${(startMinutes / 60) * slotHeight}px;
           left: 2px;
           right: 2px;
           height: ${Math.max(durationHours * slotHeight - 4, 24)}px;
-          background: var(--purple-100);
-          border-left: 3px solid var(--purple-600);
+          background: ${bgColor};
+          border-left: 3px solid ${borderColor};
           border-radius: 4px;
           padding: 4px 8px;
           font-size: 0.75rem;
@@ -3552,16 +3669,77 @@
           box-sizing: border-box;
         `;
 
-        // Format time
+        // Format times
         const timeStr = start.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+        const endTimeStr = end.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+        const timeRange = `${timeStr} - ${endTimeStr}`;
 
-        // Get client name from extendedProps
-        const clientName = apt.extendedProps?.clientName;
+        // Get details from extendedProps
+        const clientName = apt.extendedProps?.clientName || 'No client';
+        const serviceName = apt.extendedProps?.serviceName || apt.title || 'Appointment';
+        const staffName = apt.extendedProps?.staffName || '';
+        const locationType = apt.extendedProps?.locationType || 'in_person';
+        const price = apt.extendedProps?.price || 0;
+
+        // Payment status text
+        const paymentStatusText = isPaid ? 'Paid' : 'Not paid';
+        const paymentStatusClass = isPaid ? 'paid' : 'unpaid';
 
         block.innerHTML = `
-          <div style="font-weight: 600; color: var(--purple-800); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${apt.title || 'Appointment'}</div>
-          <div style="color: var(--purple-600); font-size: 0.6875rem;">${timeStr}</div>
-          ${clientName ? `<div style="color: var(--gray-600); font-size: 0.6875rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${clientName}</div>` : ''}
+          <div style="font-weight: 600; color: ${textColor}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${serviceName}</div>
+          <div style="color: ${textColor}; font-size: 0.6875rem; opacity: 0.8;">${timeStr}</div>
+          <div style="color: var(--gray-600); font-size: 0.6875rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${clientName}</div>
+
+          <!-- Hover Tooltip -->
+          <div class="apt-tooltip">
+            <div class="apt-tooltip-header">
+              <span class="apt-tooltip-status ${paymentStatusClass}">
+                <span style="width: 6px; height: 6px; border-radius: 50%; background: currentColor;"></span>
+                ${paymentStatusText}
+              </span>
+            </div>
+
+            <div class="apt-tooltip-title" style="margin-bottom: 12px;">${serviceName}</div>
+
+            <div class="apt-tooltip-row">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+              <div class="apt-tooltip-row-content">
+                <div>${clientName}</div>
+              </div>
+            </div>
+
+            <div class="apt-tooltip-row">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              <div class="apt-tooltip-row-content">
+                <div>${timeRange}</div>
+              </div>
+            </div>
+
+            ${staffName ? `
+            <div class="apt-tooltip-row">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+              <div class="apt-tooltip-row-content">
+                <div>${staffName}</div>
+              </div>
+            </div>
+            ` : ''}
+
+            <div class="apt-tooltip-row">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+              <div class="apt-tooltip-row-content">
+                <div>${locationType === 'in_person' ? 'In Person' : locationType === 'virtual' ? 'Virtual' : locationType}</div>
+              </div>
+            </div>
+
+            ${price > 0 ? `
+            <div class="apt-tooltip-row">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              <div class="apt-tooltip-row-content">
+                <div>$${price.toFixed(2)}</div>
+              </div>
+            </div>
+            ` : ''}
+          </div>
         `;
 
         block.addEventListener('click', (e) => {
