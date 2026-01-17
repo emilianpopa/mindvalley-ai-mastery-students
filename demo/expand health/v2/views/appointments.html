@@ -2858,11 +2858,18 @@
       cursor: not-allowed;
     }
 
-    /* Appointment Block Styles - Momence-style green with indicator */
+    /* Appointment Block Styles - Color based on payment status */
     .appointment-block {
       position: relative;
       transition: filter 0.1s, box-shadow 0.1s;
+    }
+
+    .appointment-block.paid {
       background: #4ade80 !important;
+    }
+
+    .appointment-block.unpaid {
+      background: #ef4444 !important;
     }
 
     .appointment-block:hover {
@@ -3725,7 +3732,7 @@
 
         // Create appointment block
         const block = document.createElement('div');
-        block.className = `appointment-block ${isPaid ? 'paid' : isUnpaid ? 'unpaid' : 'confirmed'}`;
+        block.className = `appointment-block ${isPaid ? 'paid' : 'unpaid'}`;
         block.style.cssText = `
           position: absolute;
           top: ${(startMinutes / 60) * slotHeight}px;
