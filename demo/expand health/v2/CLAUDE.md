@@ -204,3 +204,215 @@ Or use the deploy script:
 - HTML files in `/views` are served statically
 - Client-side JS files in `/public/js/` handle interactivity
 - The platform is multi-tenant; always check `tenant_id` in queries
+
+---
+
+## Protocol & Engagement Plan System
+
+### Clinical Protocol Engine
+Located in `/prompts/clinical-protocol-engine.js`
+
+Generates AI-powered clinical protocols with:
+- Core protocol (Weeks 1-2 foundation)
+- Phased expansion (progressive interventions)
+- Clinic treatments/modalities
+- Safety constraints and contraindications
+- Retest schedules
+
+**Output Structure:**
+```json
+{
+  "title": "Protocol title",
+  "summary": "Clinical summary",
+  "core_protocol": {
+    "phase_name": "Core Protocol - Weeks 1-2",
+    "items": [{ "name", "category", "dosage", "timing", "rationale", "contraindications" }],
+    "safety_gates": []
+  },
+  "phased_expansion": [
+    { "phase_name", "start_week", "items", "safety_gates", "readiness_criteria" }
+  ],
+  "clinic_treatments": {
+    "phase": "Available after Week 4",
+    "available_modalities": [{ "name", "indication", "contraindications", "protocol" }]
+  },
+  "retest_schedule": [{ "test", "timing", "purpose" }],
+  "safety_summary": { "absolute_contraindications", "monitoring_requirements", "warning_signs" }
+}
+```
+
+### Engagement Plan Alignment System
+Located in `/prompts/engagement-plan-alignment.js`
+
+**Purpose:** Ensures engagement plans are 100% aligned with source protocols.
+
+**Key Rule:** The protocol is the SOURCE OF TRUTH. Engagement plans must include every supplement, treatment, and modality from the protocol - nothing more, nothing less.
+
+**Functions:**
+- `extractProtocolElements(protocol)` - Extracts supplements, clinic treatments, lifestyle protocols, retest schedule, safety constraints
+- `generateAlignedEngagementPlanPrompt(options)` - Creates AI prompt with strict alignment rules
+- `validateEngagementPlanAlignment(plan, elements)` - Validates coverage percentages
+- `autoFixEngagementPlan(plan, validation, elements)` - Programmatically adds missing items
+- `generateRegenerationPrompt(plan, validation, elements)` - Creates fix prompt for AI retry
+
+**Engagement Plan Output Structure:**
+```json
+{
+  "title": "Engagement Plan for [Client]",
+  "protocol_coverage_checklist": {
+    "supplements": [{ "name", "status", "weeks" }],
+    "clinic_treatments": [{ "name", "status", "available_from", "condition" }],
+    "lifestyle_protocols": [{ "name", "status", "weeks" }],
+    "retests": [{ "name", "timing", "action" }]
+  },
+  "weekly_plan": [
+    {
+      "week": 1,
+      "phase": "Core Protocol",
+      "supplements_this_week": [{ "name", "timing", "notes" }],
+      "clinic_treatments_this_week": [],
+      "lifestyle_actions": [],
+      "monitoring_checklist": [],
+      "safety_reminders": [],
+      "progress_goal": ""
+    }
+  ],
+  "testing_schedule": [{ "test", "week", "action_sequence" }],
+  "safety_rules": { "absolute_avoid", "conditional_rules", "monitoring_requirements", "warning_signs" },
+  "alignment_self_check": { "all_supplements_included": true, ... }
+}
+```
+
+**Generation Flow (in `/api/protocols.js`):**
+1. Extract protocol elements from source
+2. Generate engagement plan using aligned prompt
+3. Validate alignment (check all items covered)
+4. If validation fails: Regeneration loop (up to 2 attempts)
+5. If still not aligned: Auto-fix fallback
+6. Save to `engagement_plans` table
+
+### Database Tables
+
+**engagement_plans:**
+```sql
+- id, client_id, source_protocol_id
+- title, plan_data (JSONB), validation_data (JSONB)
+- created_by, created_at, updated_at
+```
+
+### API Endpoints
+
+**Protocols:**
+- `POST /api/protocols/:id/generate-engagement-plan` - Generate aligned engagement plan
+- `GET /api/protocols/:id/compare-alignment` - Check protocol vs engagement plan alignment
+- `GET /api/protocols/engagement-plans/:id/compare-alignment` - Check alignment for standalone engagement plan
+- `POST /api/protocols/edit-engagement-phase` - AI-powered phase editing
+
+**Engagement Plans:**
+- `GET /api/protocols/engagement-plans/client/:clientId` - List client's engagement plans
+- `GET /api/protocols/engagement-plans/:id` - Get single engagement plan
+- `PUT /api/protocols/engagement-plans/:id` - Update engagement plan
+- `DELETE /api/protocols/engagement-plans/:id` - Delete engagement plan
+
+---
+
+## Appointment System
+
+### Momence Integration
+Syncs appointments from Momence booking platform.
+
+**Sync Features:**
+- Pull appointments with client and service mapping
+- Payment status sync (paid/unpaid tags)
+- Automatic client matching by email
+
+**Appointment Detail Panel** (`/views/appointments.html`):
+- Client info with email display
+- Payment status tags (Paid/Unpaid)
+- Timing tab (date, time, duration, timezone)
+- Note tab with save functionality
+- Integration with Momence event data
+
+### API Endpoints
+- `POST /api/integrations/:id/sync/appointments` - Sync appointments from Momence
+- `POST /api/appointments/:id/sync-payment` - Sync payment status for single appointment
+- `PUT /api/appointments/:id/note` - Save appointment note
+
+---
+
+## Client Dashboard
+
+Located in `/public/js/client-dashboard.js`
+
+### Tabs
+- Overview (AI chat, client summary)
+- Labs (lab results management)
+- Protocols (clinical protocols)
+- Engagement Plans (client-facing delivery plans)
+- Notes (clinical notes)
+- Forms (intake forms, questionnaires)
+- Settings
+
+### Key Features
+
+**Protocol Cards:**
+- Generate Protocol (AI-powered)
+- Generate Engagement Plan
+- View/Edit/Delete
+- Print/Export PDF
+- Check Alignment
+
+**Engagement Plan Cards:**
+- View/Edit/Delete
+- Save as PDF (with dropdown for format options)
+- Check Alignment (validates against source protocol)
+- Print
+
+**Save Dropdown Pattern:**
+Used for both Protocols and Engagement Plans:
+```html
+<div class="save-dropdown">
+  <button class="card-menu-item save-dropdown-trigger">Save</button>
+  <div class="save-dropdown-menu">
+    <button onclick="saveAsPdf(id)">Save as PDF</button>
+    <button onclick="saveAsDoc(id)">Save as Word</button>
+  </div>
+</div>
+```
+
+---
+
+## Deployment
+
+### Git Branches
+- `main` - Development branch
+- `staging` - Production deployment (Railway watches this)
+
+### Deploy to Production
+```bash
+git push expandhealthai main:staging
+```
+
+### Railway Configuration (`railway.toml`)
+```toml
+[build]
+builder = "NIXPACKS"
+
+[deploy]
+startCommand = "node server.js"
+healthcheckPath = "/api/health"
+healthcheckTimeout = 300
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10
+```
+
+---
+
+## Recent Changes Log
+
+### January 2026
+- **Engagement Plan Alignment System** - Strict protocol alignment with regeneration loop and auto-fix
+- **Engagement Plan Compare Alignment Endpoint** - `/api/protocols/engagement-plans/:id/compare-alignment`
+- **Appointment Panel Enhancement** - Client email, payment tags, timing/note tabs
+- **Save Dropdown for Engagement Plans** - Matches protocol save dropdown pattern
+- **Health Check Timeout** - Increased to 300 seconds for Railway deployments
