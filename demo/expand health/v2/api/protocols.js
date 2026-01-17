@@ -710,28 +710,59 @@ router.get('/engagement-plans/:id/compare-alignment', authenticateToken, async (
       if (protocolResult.rows.length > 0) {
         protocol = protocolResult.rows[0];
 
-        // Extract protocol data
-        let protocolData = protocol.modules;
-        if (typeof protocolData === 'string') {
+        // Extract protocol data - PRIORITY: ai_recommendations (where AI protocols are stored)
+        let protocolData = null;
+
+        // First try ai_recommendations (where AI-generated protocols are stored)
+        if (protocol.ai_recommendations) {
           try {
-            protocolData = JSON.parse(protocolData);
+            const aiRec = typeof protocol.ai_recommendations === 'string'
+              ? JSON.parse(protocol.ai_recommendations)
+              : protocol.ai_recommendations;
+
+            // Check if it has protocol structure (not just an engagement plan)
+            if (aiRec.core_protocol || aiRec.phased_expansion || aiRec.clinic_treatments || aiRec.retest_schedule) {
+              protocolData = aiRec;
+              console.log('[Compare Alignment] Using ai_recommendations for protocol extraction');
+            }
+          } catch (e) {
+            console.log('[Compare Alignment] Could not parse ai_recommendations:', e.message);
+          }
+        }
+
+        // Fallback to modules
+        if (!protocolData && protocol.modules) {
+          try {
+            protocolData = typeof protocol.modules === 'string'
+              ? JSON.parse(protocol.modules)
+              : protocol.modules;
+            if (protocolData && (Array.isArray(protocolData) ? protocolData.length > 0 : true)) {
+              console.log('[Compare Alignment] Using modules for protocol extraction');
+            } else {
+              protocolData = null;
+            }
           } catch (e) {
             protocolData = null;
           }
         }
 
-        // Try content if modules is empty
-        if (!protocolData || (Array.isArray(protocolData) && protocolData.length === 0)) {
-          if (protocol.content) {
-            try {
-              protocolData = JSON.parse(protocol.content);
-            } catch (e) {
-              protocolData = { content: protocol.content };
-            }
+        // Fallback to content
+        if (!protocolData && protocol.content) {
+          try {
+            protocolData = JSON.parse(protocol.content);
+            console.log('[Compare Alignment] Using content for protocol extraction');
+          } catch (e) {
+            protocolData = { content: protocol.content };
           }
         }
 
         protocolElements = extractProtocolElements(protocolData || {});
+        console.log('[Compare Alignment] Extracted elements:', {
+          supplements: protocolElements.supplements.length,
+          clinic_treatments: protocolElements.clinic_treatments.length,
+          lifestyle_protocols: protocolElements.lifestyle_protocols.length,
+          retest_schedule: protocolElements.retest_schedule.length
+        });
       }
     }
 
@@ -2775,31 +2806,60 @@ router.get('/:id/compare-alignment', authenticateToken, async (req, res, next) =
       });
     }
 
-    // Extract protocol elements
-    let protocolData = protocol.modules;
-    if (typeof protocolData === 'string') {
+    // Extract protocol elements - PRIORITY: ai_recommendations (where AI protocols are stored)
+    let protocolData = null;
+
+    // First try ai_recommendations (where AI-generated protocols are stored)
+    if (protocol.ai_recommendations) {
       try {
-        protocolData = JSON.parse(protocolData);
+        const aiRec = typeof protocol.ai_recommendations === 'string'
+          ? JSON.parse(protocol.ai_recommendations)
+          : protocol.ai_recommendations;
+
+        // Check if it has protocol structure (not just an engagement plan)
+        if (aiRec.core_protocol || aiRec.phased_expansion || aiRec.clinic_treatments || aiRec.retest_schedule) {
+          protocolData = aiRec;
+          console.log('[Compare Alignment Legacy] Using ai_recommendations for protocol extraction');
+        }
+      } catch (e) {
+        console.log('[Compare Alignment Legacy] Could not parse ai_recommendations:', e.message);
+      }
+    }
+
+    // Fallback to modules
+    if (!protocolData && protocol.modules) {
+      try {
+        protocolData = typeof protocol.modules === 'string'
+          ? JSON.parse(protocol.modules)
+          : protocol.modules;
+        if (protocolData && (Array.isArray(protocolData) ? protocolData.length > 0 : true)) {
+          console.log('[Compare Alignment Legacy] Using modules for protocol extraction');
+        } else {
+          protocolData = null;
+        }
       } catch (e) {
         protocolData = null;
       }
     }
 
-    // Also try to extract from content if modules is empty
-    if (!protocolData || (Array.isArray(protocolData) && protocolData.length === 0)) {
-      // Try parsing as structured protocol
-      if (protocol.content) {
-        try {
-          protocolData = JSON.parse(protocol.content);
-        } catch (e) {
-          // Content is probably markdown, not JSON
-          protocolData = { content: protocol.content };
-        }
+    // Fallback to content
+    if (!protocolData && protocol.content) {
+      try {
+        protocolData = JSON.parse(protocol.content);
+        console.log('[Compare Alignment Legacy] Using content for protocol extraction');
+      } catch (e) {
+        protocolData = { content: protocol.content };
       }
     }
 
     // Extract elements from protocol
     const protocolElements = extractProtocolElements(protocolData || {});
+    console.log('[Compare Alignment Legacy] Extracted elements:', {
+      supplements: protocolElements.supplements.length,
+      clinic_treatments: protocolElements.clinic_treatments.length,
+      lifestyle_protocols: protocolElements.lifestyle_protocols.length,
+      retest_schedule: protocolElements.retest_schedule.length
+    });
 
     // Validate alignment
     const alignmentResult = validateEngagementPlanAlignment(engagementPlan, protocolElements);
