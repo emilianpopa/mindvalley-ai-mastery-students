@@ -2860,12 +2860,12 @@
       box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
     }
 
-    /* Hover Tooltip - Momence-style */
+    /* Hover Tooltip - Momence-style (appears ABOVE the appointment) */
     .apt-tooltip {
       display: none;
       position: absolute;
       left: 0;
-      top: calc(100% + 4px);
+      bottom: calc(100% + 4px);
       min-width: 240px;
       max-width: 280px;
       background: white;
@@ -2874,7 +2874,7 @@
       padding: 0;
       z-index: 1000;
       font-size: 0.8125rem;
-      overflow: hidden;
+      overflow: visible;
     }
 
     .appointment-block:hover .apt-tooltip {
@@ -3661,8 +3661,12 @@
       const grid = document.getElementById('calendarGrid');
 
       appointments.forEach(apt => {
-        const start = new Date(apt.start);
-        const end = new Date(apt.end);
+        // Parse times - treat database times as local times (not UTC)
+        // Remove 'Z' suffix if present to prevent UTC conversion
+        const startStr = apt.start.replace('Z', '').replace('+00:00', '');
+        const endStr = apt.end.replace('Z', '').replace('+00:00', '');
+        const start = new Date(startStr);
+        const end = new Date(endStr);
 
         // Calculate which day column (0-6) using local dates to avoid timezone issues
         const startLocal = new Date(start.getFullYear(), start.getMonth(), start.getDate());
