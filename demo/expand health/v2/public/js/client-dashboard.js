@@ -9366,11 +9366,29 @@ async function openEngagementPlanEditor(protocolId) {
       return;
     }
 
-    // Validate that we have the expected structure
-    if (!planData.phases || !Array.isArray(planData.phases)) {
-      console.error('[Engagement Plan] Invalid plan structure - missing phases array');
+    // Validate that we have the expected structure (support both old 'phases' and new 'weekly_plan' structures)
+    const hasPhases = planData.phases && Array.isArray(planData.phases);
+    const hasWeeklyPlan = planData.weekly_plan && Array.isArray(planData.weekly_plan);
+
+    if (!hasPhases && !hasWeeklyPlan) {
+      console.error('[Engagement Plan] Invalid plan structure - missing phases or weekly_plan array');
       showNotification('Invalid engagement plan structure. Please regenerate the plan.', 'error');
       return;
+    }
+
+    // Convert weekly_plan to phases format if needed for backward compatibility
+    if (!hasPhases && hasWeeklyPlan) {
+      planData.phases = planData.weekly_plan.map(week => ({
+        name: week.phase || `Week ${week.week}`,
+        week: week.week,
+        items: [
+          ...(week.supplements_this_week || []).map(s => `Take ${s.name}${s.timing ? ` (${s.timing})` : ''}`),
+          ...(week.clinic_treatments_this_week || []).map(t => t.name || t),
+          ...(week.lifestyle_actions || [])
+        ],
+        safety_reminders: week.safety_reminders || [],
+        progress_goal: week.progress_goal || ''
+      }));
     }
 
     currentEngagementPlanData = planData;
