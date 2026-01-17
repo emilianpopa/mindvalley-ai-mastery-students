@@ -813,8 +813,8 @@ router.post('/import/momence', async (req, res, next) => {
       for (const serviceName of newServices) {
         try {
           const result = await db.query(
-            `INSERT INTO service_types (tenant_id, name, duration_minutes, price, status, created_at)
-             VALUES ($1, $2, $3, 0, 'active', NOW()) RETURNING id`,
+            `INSERT INTO service_types (tenant_id, name, duration_minutes, price, is_active, created_at)
+             VALUES ($1, $2, $3, 0, true, NOW()) RETURNING id`,
             [tenantId, serviceName, getServiceDuration(serviceName)]
           );
           servicesByName.set(serviceName.toLowerCase().trim(), result.rows[0].id);
@@ -833,16 +833,18 @@ router.post('/import/momence', async (req, res, next) => {
           }
 
           await db.query(
-            `INSERT INTO appointments (tenant_id, client_id, service_type_id, staff_id, start_time, end_time, status, notes, created_at)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())`,
+            `INSERT INTO appointments (tenant_id, client_id, service_type_id, staff_id, title, start_time, end_time, status, booking_source, notes, created_at)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW())`,
             [
               tenantId,
               appt.clientId,
               serviceId,
               defaultStaffId,
+              appt.serviceName, // title
               appt.startTime,
               appt.endTime,
               'confirmed',
+              'momence', // booking_source
               `Imported from Momence. Location: ${appt.location || 'N/A'}. Paid: ${appt.paid ? 'Yes' : 'No'}`
             ]
           );
