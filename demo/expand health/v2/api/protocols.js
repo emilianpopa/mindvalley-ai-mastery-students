@@ -2467,7 +2467,9 @@ Return ONLY valid JSON.`;
     // ========================================
     // VALIDATION & REGENERATION LOOP - Ensure engagement plan covers all protocol items
     // ========================================
-    if (protocolElements.supplements.length > 0 || protocolElements.clinic_treatments.length > 0) {
+    const hasProtocolElements = (protocolElements?.supplements?.length > 0) || (protocolElements?.clinic_treatments?.length > 0);
+
+    if (hasProtocolElements) {
       console.log('[Engagement Plan] Validating alignment with protocol...');
 
       let validationResult = validateEngagementPlanAlignment(engagementPlan, protocolElements);
@@ -2475,16 +2477,16 @@ Return ONLY valid JSON.`;
       const maxRegenerationAttempts = 2;
 
       console.log('[Engagement Plan] Initial validation result:', {
-        isAligned: validationResult.isAligned,
-        overallCoverage: validationResult.overallCoverage + '%',
-        missingSupplements: validationResult.missingSupplements.length,
-        missingClinicTreatments: validationResult.missingClinicTreatments.length,
-        missingLifestyleProtocols: validationResult.missingLifestyleProtocols?.length || 0,
-        missingRetests: validationResult.missingRetests.length
+        isAligned: validationResult?.isAligned,
+        overallCoverage: (validationResult?.overallCoverage || 0) + '%',
+        missingSupplements: validationResult?.missingSupplements?.length || 0,
+        missingClinicTreatments: validationResult?.missingClinicTreatments?.length || 0,
+        missingLifestyleProtocols: validationResult?.missingLifestyleProtocols?.length || 0,
+        missingRetests: validationResult?.missingRetests?.length || 0
       });
 
       // Regeneration loop - try to get AI to fix missing items
-      while (!validationResult.isAligned && regenerationAttempts < maxRegenerationAttempts) {
+      while (!validationResult?.isAligned && regenerationAttempts < maxRegenerationAttempts) {
         regenerationAttempts++;
         console.log(`[Engagement Plan] Alignment failed. Regeneration attempt ${regenerationAttempts}/${maxRegenerationAttempts}...`);
 
@@ -2511,8 +2513,8 @@ Return ONLY valid JSON.`;
             // Re-validate
             validationResult = validateEngagementPlanAlignment(engagementPlan, protocolElements);
             console.log(`[Engagement Plan] Post-regeneration validation:`, {
-              isAligned: validationResult.isAligned,
-              overallCoverage: validationResult.overallCoverage + '%'
+              isAligned: validationResult?.isAligned,
+              overallCoverage: (validationResult?.overallCoverage || 0) + '%'
             });
           }
         } catch (regenError) {
@@ -2522,32 +2524,32 @@ Return ONLY valid JSON.`;
       }
 
       // Final fallback: Auto-fix if still not fully aligned after regeneration attempts
-      if (!validationResult.isAligned) {
+      if (!validationResult?.isAligned) {
         console.log('[Engagement Plan] Regeneration did not achieve full coverage. Applying auto-fix...');
         engagementPlan = autoFixEngagementPlan(engagementPlan, validationResult, protocolElements);
         console.log('[Engagement Plan] Auto-fix complete. Added missing items.');
 
         // Add validation metadata to the plan
         engagementPlan._validation = {
-          originalCoverage: validationResult.overallCoverage,
+          originalCoverage: validationResult?.overallCoverage || 0,
           regenerationAttempts: regenerationAttempts,
           autoFixed: true,
           fixedAt: new Date().toISOString(),
           itemsAdded: {
-            supplements: validationResult.missingSupplements,
-            clinic_treatments: validationResult.missingClinicTreatments,
-            lifestyle_protocols: validationResult.missingLifestyleProtocols || [],
-            retests: validationResult.missingRetests
+            supplements: validationResult?.missingSupplements || [],
+            clinic_treatments: validationResult?.missingClinicTreatments || [],
+            lifestyle_protocols: validationResult?.missingLifestyleProtocols || [],
+            retests: validationResult?.missingRetests || []
           }
         };
       } else {
         engagementPlan._validation = {
-          originalCoverage: validationResult.overallCoverage,
+          originalCoverage: validationResult?.overallCoverage || 100,
           regenerationAttempts: regenerationAttempts,
           autoFixed: false,
           validatedAt: new Date().toISOString()
         };
-        console.log(`[Engagement Plan] Validation passed - ${validationResult.overallCoverage}% protocol coverage${regenerationAttempts > 0 ? ` (after ${regenerationAttempts} regeneration(s))` : ''}`);
+        console.log(`[Engagement Plan] Validation passed - ${validationResult?.overallCoverage || 100}% protocol coverage${regenerationAttempts > 0 ? ` (after ${regenerationAttempts} regeneration(s))` : ''}`);
       }
     }
 
