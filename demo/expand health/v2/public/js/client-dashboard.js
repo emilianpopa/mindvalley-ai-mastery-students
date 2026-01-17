@@ -8866,7 +8866,7 @@ function displayEngagementPlans(plans) {
             Print
           </button>
           <div class="card-menu-divider"></div>
-          <button class="card-menu-item" onclick="checkAlignmentForProtocol(${plan.source_protocol_id || plan.id}); closeAllCardMenus();">
+          <button class="card-menu-item" onclick="checkAlignmentForEngagement(${viewId}, ${isNewTable}, ${plan.source_protocol_id || 'null'}); closeAllCardMenus();">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
             Check Alignment
           </button>
@@ -8888,7 +8888,44 @@ function displayEngagementPlans(plans) {
   `}).join('');
 }
 
-// Check alignment between protocol and engagement plan
+// Check alignment for engagement plan (supports both new table and legacy)
+async function checkAlignmentForEngagement(engagementId, isNewTable, sourceProtocolId) {
+  const token = localStorage.getItem('auth_token');
+
+  // Show loading modal
+  showAlignmentModal({ loading: true });
+
+  try {
+    let url;
+    if (isNewTable) {
+      // Use engagement plan specific endpoint
+      url = `${API_BASE}/api/protocols/engagement-plans/${engagementId}/compare-alignment`;
+    } else if (sourceProtocolId && sourceProtocolId !== 'null') {
+      // Legacy: use protocol-based alignment
+      url = `${API_BASE}/api/protocols/${sourceProtocolId}/compare-alignment`;
+    } else {
+      // No source protocol - use engagement plan endpoint
+      url = `${API_BASE}/api/protocols/engagement-plans/${engagementId}/compare-alignment`;
+    }
+
+    const response = await fetch(url, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      showAlignmentModal({ loading: false, data, protocolId: sourceProtocolId });
+    } else {
+      const error = await response.json();
+      showAlignmentModal({ loading: false, error: error.error || 'Failed to check alignment' });
+    }
+  } catch (error) {
+    console.error('Error checking alignment:', error);
+    showAlignmentModal({ loading: false, error: error.message });
+  }
+}
+
+// Check alignment between protocol and engagement plan (legacy function)
 async function checkAlignmentForProtocol(protocolId) {
   const token = localStorage.getItem('auth_token');
 
@@ -14173,6 +14210,7 @@ window.displayEngagementPlans = displayEngagementPlans;
 window.viewEngagementPlan = viewEngagementPlan;
 window.editEngagementPlan = editEngagementPlan;
 window.checkAlignmentForProtocol = checkAlignmentForProtocol;
+window.checkAlignmentForEngagement = checkAlignmentForEngagement;
 window.showAlignmentModal = showAlignmentModal;
 window.closeAlignmentModal = closeAlignmentModal;
 window.regenerateEngagementPlanFromAlignment = regenerateEngagementPlanFromAlignment;

@@ -680,6 +680,111 @@ router.delete('/engagement-plans/:id', authenticateToken, async (req, res, next)
   }
 });
 
+// Compare engagement plan alignment (for plans in engagement_plans table)
+router.get('/engagement-plans/:id/compare-alignment', authenticateToken, async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    console.log('[Compare Alignment] Checking engagement plan:', id);
+
+    // Get the engagement plan from the new table
+    const epResult = await db.query(
+      'SELECT * FROM engagement_plans WHERE id = $1',
+      [id]
+    );
+
+    if (epResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Engagement plan not found' });
+    }
+
+    const engagementPlanRow = epResult.rows[0];
+    const engagementPlan = engagementPlanRow.plan_data;
+    const sourceProtocolId = engagementPlanRow.source_protocol_id;
+
+    // If there's a source protocol, get it for comparison
+    let protocol = null;
+    let protocolElements = { supplements: [], clinic_treatments: [], lifestyle_protocols: [], retest_schedule: [], safety_constraints: [] };
+
+    if (sourceProtocolId) {
+      const protocolResult = await db.query('SELECT * FROM protocols WHERE id = $1', [sourceProtocolId]);
+      if (protocolResult.rows.length > 0) {
+        protocol = protocolResult.rows[0];
+
+        // Extract protocol data
+        let protocolData = protocol.modules;
+        if (typeof protocolData === 'string') {
+          try {
+            protocolData = JSON.parse(protocolData);
+          } catch (e) {
+            protocolData = null;
+          }
+        }
+
+        // Try content if modules is empty
+        if (!protocolData || (Array.isArray(protocolData) && protocolData.length === 0)) {
+          if (protocol.content) {
+            try {
+              protocolData = JSON.parse(protocol.content);
+            } catch (e) {
+              protocolData = { content: protocol.content };
+            }
+          }
+        }
+
+        protocolElements = extractProtocolElements(protocolData || {});
+      }
+    }
+
+    // Validate alignment
+    const alignmentResult = validateEngagementPlanAlignment(engagementPlan, protocolElements);
+
+    // Find extra items (items in engagement plan but not in protocol)
+    const extraItems = findExtraItems(engagementPlan, protocolElements);
+
+    res.json({
+      hasEngagementPlan: true,
+      engagementSource: 'engagement_plans_table',
+      protocolTitle: protocol ? protocol.title : engagementPlanRow.title || 'Engagement Plan',
+      sourceProtocolId: sourceProtocolId,
+
+      // Protocol elements (source of truth)
+      protocolElements: {
+        supplements: protocolElements.supplements.map(s => s.name),
+        clinic_treatments: protocolElements.clinic_treatments.map(t => t.name),
+        lifestyle_protocols: protocolElements.lifestyle_protocols.map(l => l.name),
+        retest_schedule: protocolElements.retest_schedule.map(r => r.name),
+        safety_constraints: protocolElements.safety_constraints.length
+      },
+
+      // Alignment validation
+      alignment: {
+        isAligned: sourceProtocolId ? (alignmentResult.isAligned && extraItems.length === 0) : true,
+        overallCoverage: alignmentResult.overallCoverage,
+        coveragePercentage: alignmentResult.coveragePercentage,
+
+        // Items in protocol but missing from engagement plan
+        missingFromEngagementPlan: {
+          supplements: alignmentResult.missingSupplements,
+          clinic_treatments: alignmentResult.missingClinicTreatments,
+          lifestyle_protocols: alignmentResult.missingLifestyleProtocols,
+          retest_schedule: alignmentResult.missingRetests
+        },
+
+        // Items in engagement plan but NOT in protocol
+        extraInEngagementPlan: extraItems
+      },
+
+      // Summary
+      summary: sourceProtocolId
+        ? generateAlignmentSummary(alignmentResult, extraItems, protocol?.title || 'Protocol')
+        : 'This engagement plan was created independently without a source protocol.'
+    });
+
+  } catch (error) {
+    console.error('[Compare Alignment] Error:', error);
+    next(error);
+  }
+});
+
 // ========================================
 // SINGLE PROTOCOL ROUTES (/:id patterns)
 // ========================================
