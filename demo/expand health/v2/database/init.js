@@ -485,6 +485,33 @@ async function initLabNotes() {
 }
 
 /**
+ * Initialize time block support for appointments
+ */
+async function initTimeBlocks() {
+  const addColumnSQL = `
+    ALTER TABLE appointments
+    ADD COLUMN IF NOT EXISTS is_time_block BOOLEAN DEFAULT false;
+  `;
+
+  const createIndexSQL = `
+    CREATE INDEX IF NOT EXISTS idx_appointments_is_time_block ON appointments(is_time_block);
+  `;
+
+  try {
+    await db.query(addColumnSQL);
+    await db.query(createIndexSQL);
+    console.log('✅ Time block support ready');
+  } catch (error) {
+    if (error.code === '42701') {
+      // Column already exists
+      console.log('✅ Time block column already exists');
+    } else {
+      throw error;
+    }
+  }
+}
+
+/**
  * Run all database initializations
  */
 async function initDatabase() {
@@ -518,6 +545,9 @@ async function initDatabase() {
     // Initialize staff tasks table
     await initStaffTasks();
 
+    // Initialize time block support
+    await initTimeBlocks();
+
     console.log('✅ Database initialization complete\n');
     return true;
   } catch (error) {
@@ -535,5 +565,6 @@ module.exports = {
   initMessages,
   initStaffTasks,
   initProtocolsAISummary,
-  initLabNotes
+  initLabNotes,
+  initTimeBlocks
 };

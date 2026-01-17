@@ -132,6 +132,7 @@ router.get('/calendar', async (req, res, next) => {
         a.price as appointment_price,
         a.checked_in_at,
         a.payment_status,
+        a.is_time_block,
         c.first_name || ' ' || c.last_name as client_name,
         c.email as client_email,
         s.first_name || ' ' || s.last_name as staff_name,
@@ -179,7 +180,8 @@ router.get('/calendar', async (req, res, next) => {
         serviceName: apt.service_name,
         locationType: apt.location_type,
         price: apt.appointment_price || apt.service_price || 0,
-        checkedInAt: apt.checked_in_at
+        checkedInAt: apt.checked_in_at,
+        isTimeBlock: apt.is_time_block || false
       }
     }));
 
@@ -746,9 +748,11 @@ router.post('/import/momence', async (req, res, next) => {
     const cancelledIdx = header.findIndex(h => h.includes('cancel'));
     const paidIdx = header.findIndex(h => h.includes('paid'));
     const durationIdx = header.findIndex(h => h.includes('duration') || h.includes('length'));
+    // Look for time block/type column
+    const typeIdx = header.findIndex(h => h.includes('type') || h.includes('booking type'));
 
-    if (dateIdx === -1 || serviceIdx === -1 || customerIdx === -1) {
-      return res.status(400).json({ error: 'CSV must have date, service, and customer columns' });
+    if (dateIdx === -1 || serviceIdx === -1) {
+      return res.status(400).json({ error: 'CSV must have date and service columns' });
     }
 
     // Get existing clients and services
@@ -772,16 +776,17 @@ router.post('/import/momence', async (req, res, next) => {
 
     // Parse rows
     const appointments = [];
+    let timeBlocksFound = 0;
     for (let i = 1; i < lines.length; i++) {
       const values = parseCSVLine(lines[i]);
-      if (values.length < Math.max(dateIdx, serviceIdx, customerIdx) + 1) continue;
+      if (values.length < Math.max(dateIdx, serviceIdx) + 1) continue;
 
       const dateStr = values[dateIdx];
       const serviceName = values[serviceIdx]?.trim();
-      const customerField = values[customerIdx];
+      const customerField = customerIdx >= 0 ? values[customerIdx] : '';
       const cancelled = cancelledIdx >= 0 && values[cancelledIdx]?.toLowerCase() === 'yes';
 
-      if (!dateStr || !serviceName || !customerField || cancelled) {
+      if (!dateStr || !serviceName || cancelled) {
         skipped++;
         continue;
       }
@@ -789,9 +794,30 @@ router.post('/import/momence', async (req, res, next) => {
       const startTime = parseMomenceDate(dateStr);
       if (!startTime) { skipped++; continue; }
 
+      // Check if this is a time block:
+      // - Type column says "time block" or "timeblock"
+      // - Customer field is empty or says "Time block" or similar
+      // - No customer email found
+      const typeValue = typeIdx >= 0 ? values[typeIdx]?.toLowerCase().trim() : '';
+      const isTimeBlock =
+        typeValue.includes('time block') ||
+        typeValue.includes('timeblock') ||
+        !customerField?.trim() ||
+        customerField.toLowerCase().includes('time block') ||
+        customerField.toLowerCase().includes('blocked');
+
       const email = parseCustomerEmail(customerField);
       const clientId = email ? clientsByEmail.get(email) : null;
-      if (!clientId) { skipped++; continue; }
+
+      // Skip regular appointments without a matching client, but allow time blocks
+      if (!clientId && !isTimeBlock) {
+        skipped++;
+        continue;
+      }
+
+      if (isTimeBlock) {
+        timeBlocksFound++;
+      }
 
       servicesFound.add(serviceName);
 
@@ -833,7 +859,8 @@ router.post('/import/momence', async (req, res, next) => {
         duration,
         practitioner: practitionerIdx >= 0 ? values[practitionerIdx] : null,
         location: locationIdx >= 0 ? values[locationIdx] : null,
-        paid: isPaid
+        paid: isPaid,
+        isTimeBlock
       });
       toImport++;
     }
@@ -863,19 +890,20 @@ router.post('/import/momence', async (req, res, next) => {
           }
 
           await db.query(
-            `INSERT INTO appointments (tenant_id, client_id, service_type_id, staff_id, title, start_time, end_time, status, payment_status, booking_source, created_at)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW())`,
+            `INSERT INTO appointments (tenant_id, client_id, service_type_id, staff_id, title, start_time, end_time, status, payment_status, booking_source, is_time_block, created_at)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW())`,
             [
               tenantId,
-              appt.clientId,
-              serviceId,
+              appt.clientId || null, // null for time blocks
+              appt.isTimeBlock ? null : serviceId, // no service for time blocks
               defaultStaffId,
               appt.serviceName, // title
               appt.startTime,
               appt.endTime,
-              'confirmed',
-              appt.paid ? 'paid' : 'unpaid', // payment_status from Momence
-              'momence' // booking_source
+              appt.isTimeBlock ? 'scheduled' : 'confirmed',
+              appt.isTimeBlock ? null : (appt.paid ? 'paid' : 'unpaid'), // no payment status for time blocks
+              'momence', // booking_source
+              appt.isTimeBlock // is_time_block
             ]
           );
           imported++;
@@ -886,8 +914,9 @@ router.post('/import/momence', async (req, res, next) => {
     }
 
     // Count paid vs unpaid for debugging
-    const paidCount = appointments.filter(a => a.paid).length;
-    const unpaidCount = appointments.filter(a => !a.paid).length;
+    const paidCount = appointments.filter(a => a.paid && !a.isTimeBlock).length;
+    const unpaidCount = appointments.filter(a => !a.paid && !a.isTimeBlock).length;
+    const timeBlockCount = appointments.filter(a => a.isTimeBlock).length;
 
     res.json({
       dryRun,
@@ -895,6 +924,7 @@ router.post('/import/momence', async (req, res, next) => {
       toImport,
       imported: dryRun ? 0 : imported,
       skipped,
+      timeBlocks: timeBlockCount,
       errors: errors.slice(0, 10),
       services: Array.from(servicesFound),
       newServices,

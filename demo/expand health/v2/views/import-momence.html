@@ -176,7 +176,7 @@
       <!-- Results -->
       <div id="resultsAppointments" class="hidden bg-white shadow rounded-lg p-6">
         <h2 class="text-lg font-semibold mb-4" id="resultsTitleAppointments">Results</h2>
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
           <div class="bg-gray-50 p-4 rounded-lg text-center">
             <p class="text-sm text-gray-500">Rows in CSV</p>
             <p class="text-2xl font-bold" id="statTotalAppointments">0</p>
@@ -184,6 +184,10 @@
           <div class="bg-purple-50 p-4 rounded-lg text-center">
             <p class="text-sm text-gray-500" id="newLabelAppointments">To Import</p>
             <p class="text-2xl font-bold text-purple-600" id="statNewAppointments">0</p>
+          </div>
+          <div class="bg-gray-100 p-4 rounded-lg text-center">
+            <p class="text-sm text-gray-500">Time Blocks</p>
+            <p class="text-2xl font-bold text-gray-600" id="statTimeBlocks">0</p>
           </div>
           <div class="bg-yellow-50 p-4 rounded-lg text-center">
             <p class="text-sm text-gray-500">Skipped</p>
@@ -433,6 +437,7 @@
         document.getElementById('resultsTitleAppointments').textContent = dryRun ? 'Preview Results' : 'Import Complete';
         document.getElementById('statTotalAppointments').textContent = data.totalInCSV;
         document.getElementById('statNewAppointments').textContent = dryRun ? data.toImport : data.imported;
+        document.getElementById('statTimeBlocks').textContent = data.timeBlocks || 0;
         document.getElementById('statSkippedAppointments').textContent = data.skipped || 0;
         document.getElementById('statErrorsAppointments').textContent = data.errors?.length || 0;
         document.getElementById('newLabelAppointments').textContent = dryRun ? 'To Import' : 'Imported';

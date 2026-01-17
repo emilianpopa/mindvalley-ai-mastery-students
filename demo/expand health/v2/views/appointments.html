@@ -2872,6 +2872,19 @@
       background: #ef4444 !important;
     }
 
+    /* Time block styling - gray like Momence */
+    .appointment-block.time-block {
+      background: #6b7280 !important;
+      color: white !important;
+    }
+
+    .appointment-block.time-block .apt-title,
+    .appointment-block.time-block .apt-time,
+    .appointment-block.time-block .apt-client,
+    .appointment-block.time-block .apt-practitioner {
+      color: white !important;
+    }
+
     .appointment-block:hover {
       filter: brightness(0.95);
       box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
@@ -3714,11 +3727,18 @@
         // Unpaid = explicitly unpaid OR no payment status (NULL)
         const isUnpaid = paymentStatus === 'unpaid' || paymentStatus === 'pending' || (!paymentStatus && !isPaid);
         const status = apt.extendedProps?.status || 'confirmed';
+        // Check if this is a time block
+        const isTimeBlock = apt.extendedProps?.isTimeBlock === true;
 
-        // Momence-style: Color based on payment status
-        // Green = paid, Red = unpaid/unknown
+        // Momence-style: Color based on payment status (or gray for time blocks)
+        // Green = paid, Red = unpaid/unknown, Gray = time block
         let bgColor, textColor, indicatorColor;
-        if (isPaid) {
+        if (isTimeBlock) {
+          // GRAY background for time blocks
+          bgColor = '#6b7280';
+          textColor = '#ffffff';
+          indicatorColor = '#6b7280';
+        } else if (isPaid) {
           // GREEN background for paid
           bgColor = '#4ade80';
           textColor = '#166534';
@@ -3732,7 +3752,13 @@
 
         // Create appointment block
         const block = document.createElement('div');
-        block.className = `appointment-block ${isPaid ? 'paid' : 'unpaid'}`;
+        let blockClass = 'appointment-block';
+        if (isTimeBlock) {
+          blockClass += ' time-block';
+        } else {
+          blockClass += isPaid ? ' paid' : ' unpaid';
+        }
+        block.className = blockClass;
         block.style.cssText = `
           position: absolute;
           top: ${(startMinutes / 60) * slotHeight}px;
