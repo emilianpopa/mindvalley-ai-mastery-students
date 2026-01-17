@@ -795,18 +795,32 @@ router.post('/import/momence', async (req, res, next) => {
       if (!startTime) { skipped++; continue; }
 
       // Check if this is a time block:
-      // - Type column says "time block" or "timeblock"
-      // - Customer field is empty or says "Time block" or similar
-      // - No customer email found
+      // Momence time blocks typically:
+      // - Have "Time block" or "Timeblock" in the Type/Booking Type column
+      // - Have empty customer field OR customer field without an email (no parentheses)
+      // - May have text like "time block", "blocked", or just a name without email
       const typeValue = typeIdx >= 0 ? values[typeIdx]?.toLowerCase().trim() : '';
+      const customerLower = customerField?.toLowerCase().trim() || '';
+
+      // Parse email from customer field - returns null if no email pattern found
+      const email = parseCustomerEmail(customerField);
+
+      // Time block detection:
+      // 1. Type column explicitly says "time block"
+      // 2. Customer field is empty
+      // 3. Customer field contains "time block" or "blocked"
+      // 4. Customer field has NO email (no parentheses pattern like "Name (email@example.com)")
+      const hasNoEmail = !email && customerField?.trim();
       const isTimeBlock =
         typeValue.includes('time block') ||
         typeValue.includes('timeblock') ||
+        typeValue === 'block' ||
         !customerField?.trim() ||
-        customerField.toLowerCase().includes('time block') ||
-        customerField.toLowerCase().includes('blocked');
+        customerLower.includes('time block') ||
+        customerLower.includes('timeblock') ||
+        customerLower.includes('blocked') ||
+        hasNoEmail; // Customer field has text but no email = likely a time block
 
-      const email = parseCustomerEmail(customerField);
       const clientId = email ? clientsByEmail.get(email) : null;
 
       // Skip regular appointments without a matching client, but allow time blocks
@@ -860,7 +874,8 @@ router.post('/import/momence', async (req, res, next) => {
         practitioner: practitionerIdx >= 0 ? values[practitionerIdx] : null,
         location: locationIdx >= 0 ? values[locationIdx] : null,
         paid: isPaid,
-        isTimeBlock
+        isTimeBlock,
+        customerField // Store for debugging
       });
       toImport++;
     }
@@ -918,6 +933,12 @@ router.post('/import/momence', async (req, res, next) => {
     const unpaidCount = appointments.filter(a => !a.paid && !a.isTimeBlock).length;
     const timeBlockCount = appointments.filter(a => a.isTimeBlock).length;
 
+    // Sample time blocks for debugging
+    const timeBlockSamples = appointments
+      .filter(a => a.isTimeBlock)
+      .slice(0, 5)
+      .map(a => ({ title: a.serviceName, customerField: a.customerField }));
+
     res.json({
       dryRun,
       totalInCSV: lines.length - 1,
@@ -932,12 +953,20 @@ router.post('/import/momence', async (req, res, next) => {
         from: minDate.toLocaleDateString(),
         to: maxDate.toLocaleDateString()
       } : null,
-      // Debug info for payment status
-      paymentStats: {
-        paidColumnFound: paidIdx >= 0,
-        paidColumnName: paidIdx >= 0 ? header[paidIdx] : null,
-        paidCount,
-        unpaidCount,
+      // Debug info
+      debug: {
+        paymentStats: {
+          paidColumnFound: paidIdx >= 0,
+          paidColumnName: paidIdx >= 0 ? header[paidIdx] : null,
+          paidCount,
+          unpaidCount
+        },
+        timeBlockStats: {
+          typeColumnFound: typeIdx >= 0,
+          typeColumnName: typeIdx >= 0 ? header[typeIdx] : null,
+          count: timeBlockCount,
+          samples: timeBlockSamples
+        },
         headers: header
       }
     });
