@@ -833,8 +833,8 @@ router.post('/import/momence', async (req, res, next) => {
           }
 
           await db.query(
-            `INSERT INTO appointments (tenant_id, client_id, service_type_id, staff_id, title, start_time, end_time, status, booking_source, notes, created_at)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW())`,
+            `INSERT INTO appointments (tenant_id, client_id, service_type_id, staff_id, title, start_time, end_time, status, booking_source, created_at)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())`,
             [
               tenantId,
               appt.clientId,
@@ -844,8 +844,7 @@ router.post('/import/momence', async (req, res, next) => {
               appt.startTime,
               appt.endTime,
               'confirmed',
-              'momence', // booking_source
-              `Imported from Momence. Location: ${appt.location || 'N/A'}. Paid: ${appt.paid ? 'Yes' : 'No'}`
+              'momence' // booking_source
             ]
           );
           imported++;
