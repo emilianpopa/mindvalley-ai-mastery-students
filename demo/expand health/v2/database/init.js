@@ -512,6 +512,94 @@ async function initTimeBlocks() {
 }
 
 /**
+ * Initialize engagement_plans table (separate from protocols)
+ */
+async function initEngagementPlans() {
+  const createTableSQL = `
+    CREATE TABLE IF NOT EXISTS engagement_plans (
+      id SERIAL PRIMARY KEY,
+      client_id INTEGER NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+      source_protocol_id INTEGER REFERENCES protocols(id) ON DELETE SET NULL,
+      title VARCHAR(255) NOT NULL,
+      status VARCHAR(20) DEFAULT 'active' CHECK (status IN ('draft', 'active', 'completed', 'archived')),
+      plan_data JSONB NOT NULL DEFAULT '{}'::jsonb,
+      validation_data JSONB DEFAULT '{}'::jsonb,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      created_by INTEGER REFERENCES users(id)
+    );
+  `;
+
+  const createIndexesSQL = `
+    CREATE INDEX IF NOT EXISTS idx_engagement_plans_client ON engagement_plans(client_id);
+    CREATE INDEX IF NOT EXISTS idx_engagement_plans_source_protocol ON engagement_plans(source_protocol_id);
+    CREATE INDEX IF NOT EXISTS idx_engagement_plans_status ON engagement_plans(status);
+  `;
+
+  try {
+    await db.query(createTableSQL);
+    await db.query(createIndexesSQL);
+    console.log('✓ engagement_plans table initialized');
+  } catch (error) {
+    console.error('Error initializing engagement_plans table:', error.message);
+  }
+}
+
+/**
+ * Migrate existing engagement plans from protocols.ai_recommendations to engagement_plans table
+ */
+async function migrateEngagementPlans() {
+  try {
+    // Check if there are protocols with engagement plan data in ai_recommendations
+    const checkResult = await db.query(`
+      SELECT id, client_id, title, ai_recommendations, created_by, created_at
+      FROM protocols
+      WHERE ai_recommendations IS NOT NULL
+        AND ai_recommendations != ''
+        AND ai_recommendations::text LIKE '%"phases"%'
+        AND NOT EXISTS (
+          SELECT 1 FROM engagement_plans ep WHERE ep.source_protocol_id = protocols.id
+        )
+    `);
+
+    if (checkResult.rows.length === 0) {
+      console.log('✓ No engagement plans to migrate');
+      return;
+    }
+
+    console.log(`  Migrating ${checkResult.rows.length} engagement plans from protocols...`);
+
+    for (const row of checkResult.rows) {
+      try {
+        let planData = row.ai_recommendations;
+        if (typeof planData === 'string') {
+          planData = JSON.parse(planData);
+        }
+
+        // Only migrate if it looks like an engagement plan (has phases)
+        if (planData && planData.phases) {
+          const title = planData.title || `${row.title} - Engagement Plan`;
+
+          await db.query(`
+            INSERT INTO engagement_plans (client_id, source_protocol_id, title, plan_data, created_by, created_at)
+            VALUES ($1, $2, $3, $4, $5, $6)
+            ON CONFLICT DO NOTHING
+          `, [row.client_id, row.id, title, JSON.stringify(planData), row.created_by, row.created_at]);
+
+          console.log(`    Migrated engagement plan for protocol ${row.id}`);
+        }
+      } catch (parseError) {
+        console.log(`    Skipping protocol ${row.id} - not valid engagement plan JSON`);
+      }
+    }
+
+    console.log('✓ Engagement plan migration complete');
+  } catch (error) {
+    console.error('Error migrating engagement plans:', error.message);
+  }
+}
+
+/**
  * Run all database initializations
  */
 async function initDatabase() {
@@ -523,6 +611,12 @@ async function initDatabase() {
 
     // Initialize lab_notes table
     await initLabNotes();
+
+    // Initialize engagement_plans table (separate from protocols)
+    await initEngagementPlans();
+
+    // Migrate existing engagement plans from protocols to new table
+    await migrateEngagementPlans();
 
     // Initialize audit logs table
     await initAuditLogs();
@@ -566,5 +660,7 @@ module.exports = {
   initStaffTasks,
   initProtocolsAISummary,
   initLabNotes,
-  initTimeBlocks
+  initTimeBlocks,
+  initEngagementPlans,
+  migrateEngagementPlans
 };

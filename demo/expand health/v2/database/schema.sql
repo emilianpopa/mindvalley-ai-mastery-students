@@ -153,6 +153,24 @@ CREATE TABLE protocol_modules (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Engagement Plans - separate from protocols so they persist independently
+CREATE TABLE engagement_plans (
+  id SERIAL PRIMARY KEY,
+  client_id INTEGER NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+  source_protocol_id INTEGER REFERENCES protocols(id) ON DELETE SET NULL,
+  title VARCHAR(255) NOT NULL,
+  status VARCHAR(20) DEFAULT 'active' CHECK (status IN ('draft', 'active', 'completed', 'archived')),
+  plan_data JSONB NOT NULL DEFAULT '{}'::jsonb,
+  validation_data JSONB DEFAULT '{}'::jsonb,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  created_by INTEGER REFERENCES users(id)
+);
+
+CREATE INDEX idx_engagement_plans_client ON engagement_plans(client_id);
+CREATE INDEX idx_engagement_plans_source_protocol ON engagement_plans(source_protocol_id);
+CREATE INDEX idx_engagement_plans_status ON engagement_plans(status);
+
 -- ============================================
 -- KNOWLEDGE BASE
 -- ============================================

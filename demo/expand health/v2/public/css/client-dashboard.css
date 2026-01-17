@@ -4305,6 +4305,40 @@
   color: #9CA3AF;
 }
 
+/* Engagement plan editor editable styles */
+.phase-title-text[contenteditable="true"],
+.phase-progress-goal[contenteditable="true"],
+.engagement-phase-section li[contenteditable="true"],
+.section-goal[contenteditable="true"],
+#engagementPlanTitle[contenteditable="true"],
+#engagementPlanSummary[contenteditable="true"] {
+  cursor: text;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: background-color 0.2s, box-shadow 0.2s;
+  outline: none;
+  min-width: 50px;
+}
+
+.phase-title-text[contenteditable="true"]:hover,
+.phase-progress-goal[contenteditable="true"]:hover,
+.engagement-phase-section li[contenteditable="true"]:hover,
+.section-goal[contenteditable="true"]:hover,
+#engagementPlanTitle[contenteditable="true"]:hover,
+#engagementPlanSummary[contenteditable="true"]:hover {
+  background-color: rgba(15, 118, 110, 0.08);
+}
+
+.phase-title-text[contenteditable="true"]:focus,
+.phase-progress-goal[contenteditable="true"]:focus,
+.engagement-phase-section li[contenteditable="true"]:focus,
+.section-goal[contenteditable="true"]:focus,
+#engagementPlanTitle[contenteditable="true"]:focus,
+#engagementPlanSummary[contenteditable="true"]:focus {
+  background-color: #fff;
+  box-shadow: 0 0 0 2px rgba(15, 118, 110, 0.3);
+}
+
 /* Section goal styling */
 .section-goal {
   color: #6B7280;
@@ -7235,4 +7269,67 @@
   color: #64748B;
   font-size: 11px;
   font-style: italic;
+}
+
+/* ============================================
+   Save Dropdown Styles (Engagement Plan Editor)
+   ============================================ */
+.save-dropdown-container {
+  position: relative;
+  display: inline-block;
+}
+
+.save-dropdown-trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.save-dropdown-menu {
+  display: none;
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  background: white;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  min-width: 200px;
+  z-index: 1000;
+  overflow: hidden;
+}
+
+.save-dropdown-menu.show {
+  display: block;
+}
+
+.save-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 16px;
+  background: none;
+  border: none;
+  text-align: left;
+  font-size: 14px;
+  color: #374151;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.save-dropdown-item:hover {
+  background: #F3F4F6;
+}
+
+.save-dropdown-item svg {
+  color: #6B7280;
+  flex-shrink: 0;
+}
+
+.save-dropdown-divider {
+  height: 1px;
+  background: #E5E7EB;
+  margin: 4px 0;
 }
