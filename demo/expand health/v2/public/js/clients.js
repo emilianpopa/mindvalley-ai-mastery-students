@@ -58,10 +58,19 @@ async function fetchClients() {
     const data = await response.json();
     displayClients(data.clients);
     updatePagination(data.pagination);
+    updateTotalCount(data.pagination.total);
 
   } catch (error) {
     console.error('Error fetching clients:', error);
     showError('Failed to load clients. Please try again.');
+  }
+}
+
+// Update total clients count display
+function updateTotalCount(total) {
+  const countEl = document.getElementById('totalClientsCount');
+  if (countEl) {
+    countEl.textContent = total.toLocaleString();
   }
 }
 

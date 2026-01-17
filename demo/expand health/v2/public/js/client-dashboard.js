@@ -435,19 +435,42 @@ function closeEngagementProgressModal() {
   document.body.style.overflow = '';
 }
 
-// Delete engagement plan (engagement plans are protocols with ai_recommendations)
-async function deleteEngagementPlan(planId) {
-  if (!confirm('Are you sure you want to delete this engagement plan? This action cannot be undone.')) {
+// Delete engagement plan - handles both new table and legacy storage
+// isLegacy: true = stored in protocols.ai_recommendations, false = stored in engagement_plans table
+async function deleteEngagementPlan(planId, isLegacy = false) {
+  const confirmMessage = isLegacy
+    ? 'Are you sure you want to delete this engagement plan?\n\nNote: This will clear the engagement plan data from the protocol. The protocol itself will NOT be deleted.'
+    : 'Are you sure you want to delete this engagement plan?\n\nNote: The source protocol will NOT be deleted.';
+
+  if (!confirm(confirmMessage)) {
     return;
   }
 
   const token = localStorage.getItem('auth_token');
   try {
-    // Engagement plans are stored as protocols, so use the protocols endpoint
-    const response = await fetch(`${API_BASE}/api/protocols/${planId}`, {
-      method: 'DELETE',
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
+    let response;
+
+    if (isLegacy) {
+      // Legacy: Clear the ai_recommendations field in the protocol
+      console.log('[Delete Engagement] Legacy mode - clearing ai_recommendations for protocol:', planId);
+      response = await fetch(`${API_BASE}/api/protocols/${planId}/engagement-plan`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          engagement_plan: null  // Clear the engagement plan
+        })
+      });
+    } else {
+      // New table: Delete from engagement_plans table
+      console.log('[Delete Engagement] New table mode - deleting engagement plan:', planId);
+      response = await fetch(`${API_BASE}/api/protocols/engagement-plans/${planId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+    }
 
     if (response.ok) {
       showNotification('Engagement plan deleted successfully', 'success');
@@ -2239,6 +2262,67 @@ function escapeHtml(text) {
   const div = document.createElement('div');
   div.textContent = text;
   return div.innerHTML;
+}
+
+// Format markdown text to HTML for display
+function formatMarkdownToHtml(text) {
+  if (!text) return '';
+
+  // Escape HTML first to prevent XSS
+  let html = escapeHtml(text);
+
+  // Convert markdown headers
+  html = html.replace(/^### (.+)$/gm, '<h4 style="font-size: 14px; font-weight: 600; color: #0F766E; margin: 16px 0 8px 0;">$1</h4>');
+  html = html.replace(/^## (.+)$/gm, '<h3 style="font-size: 15px; font-weight: 600; color: #0F766E; margin: 20px 0 10px 0; padding-bottom: 6px; border-bottom: 1px solid #99F6E4;">$1</h3>');
+  html = html.replace(/^# (.+)$/gm, '<h2 style="font-size: 16px; font-weight: 700; color: #0F766E; margin: 24px 0 12px 0;">$1</h2>');
+
+  // Convert bold (**text** or __text__)
+  html = html.replace(/\*\*(.+?)\*\*/g, '<strong style="color: #115E59;">$1</strong>');
+  html = html.replace(/__(.+?)__/g, '<strong style="color: #115E59;">$1</strong>');
+
+  // Convert italic (*text* or _text_) - be careful not to match bold
+  html = html.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em>$1</em>');
+
+  // Process lines for bullet points
+  const lines = html.split('\n');
+  let inList = false;
+  let result = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const bulletMatch = line.match(/^[\s]*[-*•]\s+(.+)$/);
+
+    if (bulletMatch) {
+      if (!inList) {
+        result.push('<ul style="margin: 8px 0 8px 0; padding-left: 20px; list-style-type: disc;">');
+        inList = true;
+      }
+      result.push(`<li style="margin-bottom: 6px; color: #134E4A;">${bulletMatch[1]}</li>`);
+    } else {
+      if (inList) {
+        result.push('</ul>');
+        inList = false;
+      }
+      const trimmed = line.trim();
+      if (trimmed && !trimmed.startsWith('<h')) {
+        result.push(`<p style="margin: 8px 0;">${trimmed}</p>`);
+      } else if (trimmed) {
+        result.push(trimmed);
+      }
+    }
+  }
+
+  if (inList) {
+    result.push('</ul>');
+  }
+
+  // Join and clean up empty paragraphs
+  html = result.join('\n').replace(/<p style="[^"]*"><\/p>/g, '');
+
+  // Convert horizontal rules
+  html = html.replace(/^---$/gm, '<hr style="margin: 16px 0; border: none; border-top: 1px solid #99F6E4;">');
+
+  return html;
 }
 
 // Legacy function (now redirects to openUploadLabModal)
@@ -5239,6 +5323,64 @@ function switchEditorTab(tabName) {
   }
 }
 
+// Engagement plan progress animation variables
+let engagementProgressInterval = null;
+let engagementProgressValue = 5;
+
+// Start the engagement plan progress animation (simulates progress during API call)
+function startEngagementProgressAnimation() {
+  engagementProgressValue = 5;
+  const stages = [
+    { percent: 10, status: 'Connecting to AI service...', subtext: 'Initializing' },
+    { percent: 20, status: 'Querying Knowledge Base...', subtext: 'Searching clinical guidelines' },
+    { percent: 35, status: 'Analyzing protocol elements...', subtext: 'Extracting supplements and treatments' },
+    { percent: 50, status: 'Generating engagement phases...', subtext: 'Creating personalized timeline' },
+    { percent: 65, status: 'Building check-in prompts...', subtext: 'Designing communication touchpoints' },
+    { percent: 75, status: 'Finalizing plan structure...', subtext: 'Organizing phases and goals' }
+  ];
+
+  let stageIndex = 0;
+
+  engagementProgressInterval = setInterval(() => {
+    if (stageIndex < stages.length) {
+      const stage = stages[stageIndex];
+      updateEngagementProgress(stage.percent, stage.status, stage.subtext);
+      stageIndex++;
+    }
+  }, 2000); // Update every 2 seconds
+}
+
+// Stop the engagement plan progress animation
+function stopEngagementProgressAnimation() {
+  if (engagementProgressInterval) {
+    clearInterval(engagementProgressInterval);
+    engagementProgressInterval = null;
+  }
+}
+
+// Update engagement plan progress bar
+function updateEngagementProgress(percent, status, subtext) {
+  const progressBar = document.getElementById('engagementProgressBar');
+  const progressPercent = document.getElementById('engagementProgressPercent');
+  const loadingStatus = document.getElementById('engagementLoadingStatus');
+  const loadingSubtext = document.getElementById('engagementLoadingSubtext');
+
+  if (progressBar) {
+    progressBar.style.width = percent + '%';
+  }
+  if (progressPercent) {
+    progressPercent.textContent = percent + '%';
+  }
+  if (loadingStatus && status) {
+    loadingStatus.textContent = status;
+  }
+  if (loadingSubtext && subtext) {
+    loadingSubtext.textContent = subtext;
+  }
+
+  engagementProgressValue = percent;
+}
+
 // Generate engagement plan
 async function generateEngagementPlan() {
   // Close the dropdown
@@ -5276,8 +5418,23 @@ async function generateEngagementPlan() {
   const bodyContainer = document.getElementById('engagementPlanBody');
   if (!bodyContainer) return;
 
-  // Show loading with KB indicator
-  bodyContainer.innerHTML = '<div class="engagement-loading"><div class="loading-spinner"></div><p>Generating personalized engagement plan from Knowledge Base...</p><p class="loading-subtext">Querying clinical guidelines and engagement strategies</p></div>';
+  // Show loading with progress bar
+  bodyContainer.innerHTML = `
+    <div class="engagement-loading" style="padding: 60px 40px; text-align: center;">
+      <div class="loading-spinner" style="margin-bottom: 24px;"></div>
+      <p style="font-size: 16px; color: #1F2937; margin: 0 0 8px 0;" id="engagementLoadingStatus">Generating personalized engagement plan...</p>
+      <p class="loading-subtext" style="font-size: 14px; color: #6B7280; margin: 0 0 24px 0;" id="engagementLoadingSubtext">Initializing</p>
+      <div style="max-width: 400px; margin: 0 auto;">
+        <div style="background: #E5E7EB; border-radius: 8px; height: 8px; overflow: hidden;">
+          <div id="engagementProgressBar" style="background: linear-gradient(90deg, #0F766E, #14B8A6); height: 100%; width: 5%; transition: width 0.5s ease; border-radius: 8px;"></div>
+        </div>
+        <p style="font-size: 12px; color: #9CA3AF; margin-top: 8px;" id="engagementProgressPercent">5%</p>
+      </div>
+    </div>
+  `;
+
+  // Start progress animation
+  startEngagementProgressAnimation();
 
   // Get protocol ID
   const protocolId = generatedProtocolData?.protocol?.id || generatedProtocolData?.id;
@@ -5285,12 +5442,20 @@ async function generateEngagementPlan() {
 
   if (!protocolId) {
     // If no protocol ID, use fallback content
+    stopEngagementProgressAnimation();
     renderEngagementPlanFallback(bodyContainer, protocolTitle);
     return;
   }
 
   try {
+    // Update progress: Starting API call
+    updateEngagementProgress(15, 'Connecting to AI service...', 'Preparing protocol data');
+
     const token = localStorage.getItem('auth_token');
+
+    // Update progress: Sending request
+    updateEngagementProgress(25, 'Analyzing protocol...', 'Extracting supplements, treatments, and lifestyle items');
+
     const response = await fetch(`${API_BASE}/api/protocols/${protocolId}/generate-engagement-plan`, {
       method: 'POST',
       headers: {
@@ -5303,12 +5468,19 @@ async function generateEngagementPlan() {
       })
     });
 
+    // Update progress: Processing response
+    updateEngagementProgress(85, 'Processing response...', 'Building personalized engagement phases');
+
     if (!response.ok) {
       throw new Error('Failed to generate engagement plan');
     }
 
     const data = await response.json();
     const plan = data.engagement_plan;
+
+    // Update progress: Complete
+    updateEngagementProgress(100, 'Complete!', 'Rendering engagement plan');
+    stopEngagementProgressAnimation();
 
     // Render the KB-powered engagement plan
     bodyContainer.innerHTML = `
@@ -5379,6 +5551,8 @@ async function generateEngagementPlan() {
 
   } catch (error) {
     console.error('[Engagement Plan] Error:', error);
+    // Stop progress animation on error
+    stopEngagementProgressAnimation();
     // Fall back to default content
     renderEngagementPlanFallback(bodyContainer, protocolTitle);
   }
@@ -6152,6 +6326,13 @@ function showProtocolViewModal(protocol) {
 
   // Build AI Summary section
   const hasSummary = protocol.ai_summary && protocol.ai_summary.trim().length > 0;
+
+  // Format the AI summary with proper markdown rendering
+  let formattedAISummary = '';
+  if (hasSummary) {
+    formattedAISummary = formatMarkdownToHtml(protocol.ai_summary);
+  }
+
   const aiSummaryHtml = `
     <div style="margin-bottom: 24px;">
       <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
@@ -6163,7 +6344,7 @@ function showProtocolViewModal(protocol) {
       </div>
       <div id="protocolAISummaryContainer" style="background: linear-gradient(135deg, #F0FDFA 0%, #ECFDF5 100%); border: 1px solid #99F6E4; border-radius: 12px; padding: 16px;">
         ${hasSummary ? `
-          <p id="protocolAISummaryText" style="margin: 0; font-size: 14px; line-height: 1.6; color: #134E4A; white-space: pre-wrap;">${escapeHtml(protocol.ai_summary)}</p>
+          <div id="protocolAISummaryText" style="font-size: 14px; line-height: 1.7; color: #134E4A;">${formattedAISummary}</div>
         ` : `
           <div id="protocolAISummaryText" style="text-align: center; padding: 12px;">
             <p style="margin: 0 0 12px 0; color: #6b7280; font-size: 14px;">No AI summary yet. Generate one to get a quick overview of this protocol.</p>
@@ -6778,6 +6959,13 @@ function openProtocolEditorForExisting(protocol, modules) {
 
   // Initialize editable field behaviors
   initializeEditableFields();
+
+  // Initialize handlers for empty item removal in protocol sections
+  const protocolContainer = document.getElementById('existingProtocolSections');
+  if (protocolContainer) {
+    initializeListItemHandlers(protocolContainer);
+    setupListItemEventDelegation(protocolContainer);
+  }
 }
 
 // Toggle the existing protocol editor reference panel
@@ -7480,6 +7668,10 @@ function rerenderExistingProtocolSections() {
   const container = document.getElementById('existingProtocolSections');
   if (container) {
     container.innerHTML = renderExistingProtocolSections(generatedProtocolData.modules || []);
+    // Initialize handlers for empty item removal
+    initializeListItemHandlers(container);
+    // Also re-initialize editable field behaviors
+    initializeEditableFields();
   }
 }
 
@@ -7596,6 +7788,22 @@ async function saveExistingProtocolEditor() {
             }
           }
         });
+
+        // Handle simple list items (ul.section-list > li)
+        const sectionList = section.querySelector('.section-list');
+        if (sectionList) {
+          const newItems = [];
+          sectionList.querySelectorAll(':scope > li').forEach((li) => {
+            const text = li.childNodes[0]?.textContent?.trim() || li.textContent.trim();
+            if (text) {
+              newItems.push({ name: text });
+            }
+          });
+          // Replace items with collected non-empty items
+          if (newItems.length > 0 || module[itemsKey]?.length > 0) {
+            module[itemsKey] = newItems;
+          }
+        }
 
         // Handle supplement table rows
         section.querySelectorAll('.supplement-row').forEach((row) => {
@@ -8475,6 +8683,7 @@ function formatProtocolModulesForPrint(modules) {
 }
 
 // Load engagement plans for the client
+// Now uses the separate engagement_plans table (independent of protocols)
 async function loadEngagementPlans() {
   const token = localStorage.getItem('auth_token');
   const currentClientId = clientId || new URLSearchParams(window.location.search).get('id');
@@ -8493,9 +8702,9 @@ async function loadEngagementPlans() {
   if (listContainer) listContainer.style.display = 'none';
 
   try {
-    // Fetch protocols that have engagement plans (ai_recommendations field)
-    const url = `${API_BASE}/api/protocols/client/${currentClientId}`;
-    console.log('[loadEngagementPlans] Fetching:', url);
+    // First try to fetch from the new engagement_plans table
+    const url = `${API_BASE}/api/protocols/engagement-plans/client/${currentClientId}`;
+    console.log('[loadEngagementPlans] Fetching from engagement_plans table:', url);
 
     const response = await fetch(url, {
       headers: { 'Authorization': `Bearer ${token}` }
@@ -8506,34 +8715,88 @@ async function loadEngagementPlans() {
 
     if (response.ok) {
       const data = await response.json();
-      console.log('[loadEngagementPlans] Got protocols:', data.protocols?.length);
+      console.log('[loadEngagementPlans] Got engagement plans:', data.engagement_plans?.length);
+
+      const engagementPlans = data.engagement_plans || [];
+
+      if (engagementPlans.length === 0) {
+        // Fallback: check protocols for legacy engagement plans
+        console.log('[loadEngagementPlans] No plans in new table, checking legacy protocols...');
+        await loadEngagementPlansLegacy();
+      } else {
+        console.log('[loadEngagementPlans] Displaying', engagementPlans.length, 'engagement plans');
+        if (emptyState) emptyState.style.display = 'none';
+        // Transform to match expected format for displayEngagementPlans
+        const transformedPlans = engagementPlans.map(ep => ({
+          id: ep.id,
+          engagement_plan_id: ep.id,
+          source_protocol_id: ep.source_protocol_id,
+          title: ep.title,
+          ai_recommendations: JSON.stringify(ep.plan_data),
+          created_at: ep.created_at,
+          updated_at: ep.updated_at,
+          status: ep.status,
+          protocol_title: ep.protocol_title,
+          protocol_deleted: ep.protocol_deleted
+        }));
+        displayEngagementPlans(transformedPlans);
+        if (listContainer) listContainer.style.display = 'block';
+      }
+    } else {
+      // Fallback to legacy method if new endpoint fails
+      console.log('[loadEngagementPlans] New endpoint failed, trying legacy...');
+      await loadEngagementPlansLegacy();
+    }
+  } catch (error) {
+    console.error('[loadEngagementPlans] Error:', error);
+    // Try legacy fallback
+    await loadEngagementPlansLegacy();
+  }
+}
+
+// Legacy fallback: Load engagement plans from protocols.ai_recommendations
+async function loadEngagementPlansLegacy() {
+  const token = localStorage.getItem('auth_token');
+  const currentClientId = clientId || new URLSearchParams(window.location.search).get('id');
+
+  const emptyState = document.getElementById('engagementEmpty');
+  const listContainer = document.getElementById('engagementList');
+  const loadingState = document.getElementById('engagementLoading');
+
+  if (loadingState) loadingState.style.display = 'none';
+
+  try {
+    const url = `${API_BASE}/api/protocols/client/${currentClientId}`;
+    console.log('[loadEngagementPlansLegacy] Fetching:', url);
+
+    const response = await fetch(url, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      console.log('[loadEngagementPlansLegacy] Got protocols:', data.protocols?.length);
 
       // Filter protocols that have engagement plans (any non-empty ai_recommendations)
       const engagementPlans = (data.protocols || []).filter(p => p.ai_recommendations && p.ai_recommendations.trim().length > 0);
-      console.log('[loadEngagementPlans] Engagement plans with content:', engagementPlans.length);
-
-      // Debug: log first plan's ai_recommendations
-      if (data.protocols?.length > 0) {
-        console.log('[loadEngagementPlans] First protocol ai_recommendations:', data.protocols[0].ai_recommendations?.substring(0, 100));
-      }
+      console.log('[loadEngagementPlansLegacy] Engagement plans with content:', engagementPlans.length);
 
       if (engagementPlans.length === 0) {
-        console.log('[loadEngagementPlans] No engagement plans found, showing empty state');
+        console.log('[loadEngagementPlansLegacy] No engagement plans found, showing empty state');
         if (emptyState) emptyState.style.display = 'flex';
         if (listContainer) listContainer.style.display = 'none';
       } else {
-        console.log('[loadEngagementPlans] Displaying', engagementPlans.length, 'engagement plans');
+        console.log('[loadEngagementPlansLegacy] Displaying', engagementPlans.length, 'engagement plans');
         if (emptyState) emptyState.style.display = 'none';
         displayEngagementPlans(engagementPlans);
         if (listContainer) listContainer.style.display = 'block';
       }
     } else {
-      console.error('[loadEngagementPlans] Response not OK:', response.status);
+      console.error('[loadEngagementPlansLegacy] Response not OK:', response.status);
       if (emptyState) emptyState.style.display = 'flex';
     }
   } catch (error) {
-    console.error('[loadEngagementPlans] Error:', error);
-    if (loadingState) loadingState.style.display = 'none';
+    console.error('[loadEngagementPlansLegacy] Error:', error);
     if (emptyState) emptyState.style.display = 'flex';
   }
 }
@@ -8563,46 +8826,58 @@ function displayEngagementPlans(plans) {
 
   container.innerHTML = plans.map(plan => {
     const displayTitle = getEngagementPlanTitle(plan);
+    // Check if this is from the new engagement_plans table or legacy protocols table
+    const isNewTable = plan.engagement_plan_id !== undefined;
+    const deleteId = isNewTable ? plan.engagement_plan_id : plan.id;
+    const isLegacy = !isNewTable;
+    // For new table plans, we need the engagement_plan_id for fetching; for legacy, use protocol id
+    const viewId = isNewTable ? plan.engagement_plan_id : plan.id;
+    const uniqueId = isNewTable ? `ep-${plan.engagement_plan_id}` : `p-${plan.id}`;
     return `
-    <div class="protocol-card engagement-card" data-protocol-id="${plan.id}">
+    <div class="protocol-card engagement-card" data-protocol-id="${plan.source_protocol_id || plan.id}" data-engagement-id="${plan.engagement_plan_id || ''}" data-is-legacy="${isLegacy}">
       <div class="card-menu-container">
-        <button class="card-menu-trigger" onclick="toggleCardMenu(event, 'engagement-menu-${plan.id}')">
+        <button class="card-menu-trigger" onclick="toggleCardMenu(event, 'engagement-menu-${uniqueId}')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="12" cy="5" r="1.5"/>
             <circle cx="12" cy="12" r="1.5"/>
             <circle cx="12" cy="19" r="1.5"/>
           </svg>
         </button>
-        <div class="card-menu-dropdown" id="engagement-menu-${plan.id}">
-          <button class="card-menu-item" onclick="viewEngagementPlan(${plan.id}); closeAllCardMenus();">
+        <div class="card-menu-dropdown" id="engagement-menu-${uniqueId}">
+          <button class="card-menu-item" onclick="viewEngagementPlanById(${viewId}, ${isLegacy}); closeAllCardMenus();">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
             View
           </button>
-          <button class="card-menu-item" onclick="editEngagementPlan(${plan.id}); closeAllCardMenus();">
+          <button class="card-menu-item" onclick="viewEngagementPlanById(${viewId}, ${isLegacy}); closeAllCardMenus();">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
             Edit
           </button>
           <div class="card-menu-divider"></div>
-          <button class="card-menu-item" onclick="shareEngagementPlanById(${plan.id}); closeAllCardMenus();">
+          <button class="card-menu-item" onclick="shareEngagementPlanById(${plan.source_protocol_id || plan.id}); closeAllCardMenus();">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
             Share
           </button>
-          <button class="card-menu-item" onclick="saveEngagementPlanAsPDF(${plan.id}); closeAllCardMenus();">
+          <button class="card-menu-item" onclick="saveEngagementPlanAsPDFById(${viewId}, ${isLegacy}); closeAllCardMenus();">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 18 15 15"/></svg>
             Save as PDF
           </button>
-          <button class="card-menu-item" onclick="printEngagementPlanById(${plan.id}); closeAllCardMenus();">
+          <button class="card-menu-item" onclick="printEngagementPlanById(${viewId}, ${isLegacy}); closeAllCardMenus();">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
             Print
           </button>
           <div class="card-menu-divider"></div>
-          <button class="card-menu-item danger" onclick="deleteEngagementPlan(${plan.id}); closeAllCardMenus();">
+          <button class="card-menu-item" onclick="checkAlignmentForProtocol(${plan.source_protocol_id || plan.id}); closeAllCardMenus();">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            Check Alignment
+          </button>
+          <div class="card-menu-divider"></div>
+          <button class="card-menu-item danger" onclick="deleteEngagementPlan(${deleteId}, ${isLegacy}); closeAllCardMenus();">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
             Delete
           </button>
         </div>
       </div>
-      <div class="protocol-card-header">
+      <div class="protocol-card-header" onclick="viewEngagementPlanById(${viewId}, ${isLegacy})" style="cursor: pointer;">
         <div>
           <h4 class="protocol-card-title">${escapeHtml(displayTitle)}</h4>
           <p class="protocol-card-date">${formatDate(plan.updated_at || plan.created_at)}</p>
@@ -8613,7 +8888,252 @@ function displayEngagementPlans(plans) {
   `}).join('');
 }
 
-// View engagement plan - opens the editor view
+// Check alignment between protocol and engagement plan
+async function checkAlignmentForProtocol(protocolId) {
+  const token = localStorage.getItem('auth_token');
+
+  // Show loading modal
+  showAlignmentModal({ loading: true });
+
+  try {
+    const response = await fetch(`${API_BASE}/api/protocols/${protocolId}/compare-alignment`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      showAlignmentModal({ loading: false, data, protocolId });
+    } else {
+      const error = await response.json();
+      showAlignmentModal({ loading: false, error: error.error || 'Failed to check alignment' });
+    }
+  } catch (error) {
+    console.error('Error checking alignment:', error);
+    showAlignmentModal({ loading: false, error: error.message });
+  }
+}
+
+// Show alignment comparison modal
+function showAlignmentModal({ loading, data, error, protocolId }) {
+  // Remove existing modal
+  const existingModal = document.getElementById('alignmentModal');
+  if (existingModal) existingModal.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'alignmentModal';
+  modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 3000; display: flex; align-items: center; justify-content: center;';
+
+  if (loading) {
+    modal.innerHTML = `
+      <div style="background: white; border-radius: 16px; padding: 32px; max-width: 500px; text-align: center;">
+        <div style="margin-bottom: 16px;">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#0F766E" stroke-width="2" style="animation: spin 1s linear infinite;">
+            <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+          </svg>
+        </div>
+        <h3 style="margin: 0 0 8px 0; color: #1F2937;">Checking Alignment...</h3>
+        <p style="margin: 0; color: #6B7280;">Comparing protocol with engagement plan</p>
+      </div>
+    `;
+  } else if (error) {
+    modal.innerHTML = `
+      <div style="background: white; border-radius: 16px; padding: 32px; max-width: 500px; text-align: center;">
+        <div style="margin-bottom: 16px;">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="15" y1="9" x2="9" y2="15"/>
+            <line x1="9" y1="9" x2="15" y2="15"/>
+          </svg>
+        </div>
+        <h3 style="margin: 0 0 8px 0; color: #1F2937;">Error</h3>
+        <p style="margin: 0 0 24px 0; color: #6B7280;">${escapeHtml(error)}</p>
+        <button onclick="closeAlignmentModal()" class="btn-secondary" style="padding: 10px 24px;">Close</button>
+      </div>
+    `;
+  } else if (!data.hasEngagementPlan) {
+    modal.innerHTML = `
+      <div style="background: white; border-radius: 16px; padding: 32px; max-width: 500px; text-align: center;">
+        <div style="margin-bottom: 16px;">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+        </div>
+        <h3 style="margin: 0 0 8px 0; color: #1F2937;">No Engagement Plan</h3>
+        <p style="margin: 0 0 24px 0; color: #6B7280;">No engagement plan found for this protocol.</p>
+        <button onclick="closeAlignmentModal()" class="btn-secondary" style="padding: 10px 24px;">Close</button>
+      </div>
+    `;
+  } else {
+    // Show alignment results
+    const isAligned = data.alignment.isAligned;
+    const missing = data.alignment.missingFromEngagementPlan;
+    const extra = data.alignment.extraInEngagementPlan;
+    const hasMissing = missing.supplements.length > 0 || missing.clinic_treatments.length > 0 ||
+                       missing.lifestyle_protocols.length > 0 || missing.retest_schedule.length > 0;
+    const hasExtra = extra.length > 0;
+
+    const statusIcon = isAligned
+      ? '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>'
+      : '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
+
+    const statusTitle = isAligned ? 'Fully Aligned' : 'Alignment Issues Found';
+    const statusColor = isAligned ? '#10B981' : '#F59E0B';
+
+    let detailsHtml = '';
+
+    // Protocol elements section
+    detailsHtml += `
+      <div style="background: #F0FDFA; border-radius: 8px; padding: 16px; margin-bottom: 16px; text-align: left;">
+        <h4 style="margin: 0 0 12px 0; color: #0F766E; font-size: 14px;">Protocol Contains:</h4>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 13px;">
+          <div><strong>${data.protocolElements.supplements.length}</strong> Supplements</div>
+          <div><strong>${data.protocolElements.clinic_treatments.length}</strong> Clinic Treatments</div>
+          <div><strong>${data.protocolElements.lifestyle_protocols.length}</strong> Lifestyle Protocols</div>
+          <div><strong>${data.protocolElements.retest_schedule.length}</strong> Retest Items</div>
+        </div>
+      </div>
+    `;
+
+    // Coverage section
+    detailsHtml += `
+      <div style="background: #F3F4F6; border-radius: 8px; padding: 16px; margin-bottom: 16px; text-align: left;">
+        <h4 style="margin: 0 0 12px 0; color: #374151; font-size: 14px;">Coverage: ${data.alignment.overallCoverage}%</h4>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 13px;">
+          <div>Supplements: <strong>${data.alignment.coveragePercentage.supplements}%</strong></div>
+          <div>Clinic: <strong>${data.alignment.coveragePercentage.clinic_treatments}%</strong></div>
+          <div>Lifestyle: <strong>${data.alignment.coveragePercentage.lifestyle_protocols}%</strong></div>
+          <div>Retests: <strong>${data.alignment.coveragePercentage.retest_schedule}%</strong></div>
+        </div>
+      </div>
+    `;
+
+    // Missing items section
+    if (hasMissing) {
+      detailsHtml += `
+        <div style="background: #FEF2F2; border-radius: 8px; padding: 16px; margin-bottom: 16px; text-align: left;">
+          <h4 style="margin: 0 0 12px 0; color: #991B1B; font-size: 14px;">Missing from Engagement Plan:</h4>
+          <ul style="margin: 0; padding-left: 20px; font-size: 13px; color: #7F1D1D;">
+            ${missing.supplements.map(s => `<li>${escapeHtml(s)}</li>`).join('')}
+            ${missing.clinic_treatments.map(t => `<li>${escapeHtml(t)}</li>`).join('')}
+            ${missing.lifestyle_protocols.map(l => `<li>${escapeHtml(l)}</li>`).join('')}
+            ${missing.retest_schedule.map(r => `<li>${escapeHtml(r)}</li>`).join('')}
+          </ul>
+        </div>
+      `;
+    }
+
+    // Extra/Hallucinated items section
+    if (hasExtra) {
+      detailsHtml += `
+        <div style="background: #FEF3C7; border-radius: 8px; padding: 16px; margin-bottom: 16px; text-align: left;">
+          <h4 style="margin: 0 0 12px 0; color: #92400E; font-size: 14px;">Items in Engagement Plan NOT in Protocol (Potentially Invented):</h4>
+          <ul style="margin: 0; padding-left: 20px; font-size: 13px; color: #78350F;">
+            ${extra.map(e => `<li><strong>${escapeHtml(e.name)}</strong> - ${escapeHtml(e.reason)}</li>`).join('')}
+          </ul>
+        </div>
+      `;
+    }
+
+    // Action buttons
+    const actionButtons = isAligned
+      ? `<button onclick="closeAlignmentModal()" class="btn-primary" style="padding: 10px 24px;">Great!</button>`
+      : `
+        <button onclick="closeAlignmentModal()" class="btn-secondary" style="padding: 10px 24px;">Close</button>
+        <button onclick="regenerateEngagementPlanFromAlignment(${protocolId})" class="btn-primary" style="padding: 10px 24px; margin-left: 12px;">Regenerate Plan</button>
+      `;
+
+    modal.innerHTML = `
+      <div style="background: white; border-radius: 16px; padding: 32px; max-width: 600px; max-height: 90vh; overflow-y: auto;">
+        <div style="text-align: center; margin-bottom: 24px;">
+          ${statusIcon}
+          <h3 style="margin: 16px 0 8px 0; color: ${statusColor};">${statusTitle}</h3>
+          <p style="margin: 0; color: #6B7280; font-size: 14px;">${escapeHtml(data.protocolTitle)}</p>
+        </div>
+
+        ${detailsHtml}
+
+        <div style="text-align: center; margin-top: 24px;">
+          ${actionButtons}
+        </div>
+      </div>
+    `;
+  }
+
+  document.body.appendChild(modal);
+
+  // Close on backdrop click
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) closeAlignmentModal();
+  });
+}
+
+// Close alignment modal
+function closeAlignmentModal() {
+  const modal = document.getElementById('alignmentModal');
+  if (modal) modal.remove();
+}
+
+// Regenerate engagement plan from alignment modal
+async function regenerateEngagementPlanFromAlignment(protocolId) {
+  closeAlignmentModal();
+
+  // Call the existing function to regenerate
+  if (typeof createEngagementPlanFromProtocol === 'function') {
+    await createEngagementPlanFromProtocol(protocolId);
+  } else {
+    showNotification('Regeneration not available', 'error');
+  }
+}
+
+// View engagement plan by ID - handles both new table and legacy sources
+async function viewEngagementPlanById(id, isLegacy = false) {
+  console.log('View/Edit engagement plan:', id, 'isLegacy:', isLegacy);
+  const token = localStorage.getItem('auth_token');
+
+  try {
+    if (isLegacy) {
+      // Legacy: Fetch from protocols endpoint
+      openEngagementPlanEditor(id);
+    } else {
+      // New table: Fetch from engagement_plans endpoint
+      const response = await fetch(`${API_BASE}/api/protocols/engagement-plans/${id}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const engagementPlan = data.engagement_plan;
+
+        // Transform to format expected by editor
+        const planData = engagementPlan.plan_data;
+        const protocol = {
+          id: engagementPlan.source_protocol_id,
+          title: engagementPlan.protocol_title || engagementPlan.title,
+          client_id: engagementPlan.client_id,
+          created_at: engagementPlan.created_at,
+          updated_at: engagementPlan.updated_at
+        };
+
+        // Store for later save operations
+        currentEngagementPlanData = planData;
+        currentEngagementProtocolId = engagementPlan.source_protocol_id;
+        currentEngagementPlanId = engagementPlan.id;
+
+        // Show the editor
+        showEngagementPlanEditorView(protocol, planData);
+      } else {
+        throw new Error('Failed to load engagement plan');
+      }
+    }
+  } catch (error) {
+    console.error('Error loading engagement plan:', error);
+    showNotification('Error loading engagement plan', 'error');
+  }
+}
+
+// View engagement plan - opens the editor view (legacy compatibility)
 function viewEngagementPlan(protocolId) {
   console.log('View/Edit engagement plan:', protocolId);
   // Open the engagement plan editor
@@ -8654,7 +9174,116 @@ async function viewEngagementPlanModal(protocolId) {
 // Global state for engagement plan editor
 let currentEngagementPlanData = null;
 let currentEngagementProtocolId = null;
+let currentEngagementPlanId = null; // ID in the engagement_plans table
 let selectedEngagementPhase = null;
+
+// Save engagement plan as PDF by ID (handles new table vs legacy)
+async function saveEngagementPlanAsPDFById(id, isLegacy = false) {
+  const token = localStorage.getItem('auth_token');
+
+  try {
+    let planData, planTitle;
+
+    if (isLegacy) {
+      // Legacy: Fetch from protocols endpoint
+      const response = await fetch(`${API_BASE}/api/protocols/${id}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        const protocol = data.protocol;
+        if (protocol.ai_recommendations) {
+          try {
+            planData = JSON.parse(protocol.ai_recommendations);
+          } catch (e) {
+            const match = protocol.ai_recommendations.match(/\{[\s\S]*\}/);
+            if (match) planData = JSON.parse(match[0]);
+          }
+        }
+        planTitle = planData?.title || protocol.title || 'Engagement Plan';
+      }
+    } else {
+      // New table: Fetch from engagement_plans endpoint
+      const response = await fetch(`${API_BASE}/api/protocols/engagement-plans/${id}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        planData = data.engagement_plan.plan_data;
+        planTitle = data.engagement_plan.title || 'Engagement Plan';
+      }
+    }
+
+    if (!planData) {
+      showNotification('No engagement plan data found', 'error');
+      return;
+    }
+
+    // Generate PDF content and trigger download
+    generateEngagementPlanPDF(planData, planTitle);
+  } catch (error) {
+    console.error('Error saving engagement plan as PDF:', error);
+    showNotification('Error generating PDF', 'error');
+  }
+}
+
+// Generate and download engagement plan PDF
+function generateEngagementPlanPDF(planData, title) {
+  const clientName = currentClient ? `${currentClient.first_name} ${currentClient.last_name}` : 'Client';
+
+  // Create printable HTML content
+  const content = formatEngagementPlanHtml(planData);
+
+  const printWindow = window.open('', '_blank');
+  printWindow.document.write(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>${escapeHtml(title)} - ExpandHealth</title>
+      <style>
+        body {
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+          padding: 40px;
+          line-height: 1.6;
+          max-width: 800px;
+          margin: 0 auto;
+        }
+        h1 { color: #0F766E; margin-bottom: 10px; font-size: 24px; }
+        h2 { color: #115E59; margin-top: 24px; margin-bottom: 12px; font-size: 18px; border-bottom: 1px solid #D1FAE5; padding-bottom: 8px; }
+        h3 { color: #374151; margin-top: 16px; margin-bottom: 8px; font-size: 14px; }
+        p { margin: 8px 0; color: #374151; }
+        ul { margin: 8px 0; padding-left: 20px; }
+        li { margin: 4px 0; }
+        .meta { color: #6B7280; font-size: 13px; margin-bottom: 24px; }
+        .summary { background: #FEF9C3; padding: 16px; border-radius: 8px; margin: 16px 0; }
+        .phase { background: #F0FDFA; padding: 16px; border-radius: 8px; margin: 16px 0; border-left: 3px solid #0F766E; }
+        .progress-goal { background: #ECFDF5; padding: 12px; border-radius: 6px; margin-top: 12px; font-size: 13px; }
+        @media print {
+          body { padding: 20px; }
+          .phase { break-inside: avoid; }
+        }
+      </style>
+    </head>
+    <body>
+      <h1>${escapeHtml(title)}</h1>
+      <p class="meta">Prepared for: ${escapeHtml(clientName)} | Generated: ${new Date().toLocaleDateString()}</p>
+      ${content}
+    </body>
+    </html>
+  `);
+  printWindow.document.close();
+
+  // Wait for content to load then trigger print
+  setTimeout(() => {
+    printWindow.print();
+  }, 500);
+}
+
+// Print engagement plan by ID (handles new table vs legacy)
+async function printEngagementPlanById(id, isLegacy = false) {
+  // Same as save as PDF - it opens print dialog
+  await saveEngagementPlanAsPDFById(id, isLegacy);
+}
 
 // Open engagement plan editor
 async function openEngagementPlanEditor(protocolId) {
@@ -8742,17 +9371,11 @@ function showEngagementPlanEditorView(protocol, planData) {
         Back to Client
       </button>
 
+      <div class="header-tabs">
+        <button class="header-tab active" data-tab="engagement-plan">Engagement Plan</button>
+      </div>
+
       <div class="header-actions" style="display: flex; gap: 12px;">
-        <button class="btn-secondary" onclick="shareEngagementPlan()">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="18" cy="5" r="3"/>
-            <circle cx="6" cy="12" r="3"/>
-            <circle cx="18" cy="19" r="3"/>
-            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
-            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
-          </svg>
-          Share
-        </button>
         <button class="btn-secondary" onclick="printEngagementPlanFromEditor()">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <polyline points="6 9 6 2 18 2 18 9"/>
@@ -8761,14 +9384,56 @@ function showEngagementPlanEditorView(protocol, planData) {
           </svg>
           Print
         </button>
-        <button class="btn-primary" onclick="saveEngagementPlanFromEditor()">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
-            <polyline points="17 21 17 13 7 13 7 21"/>
-            <polyline points="7 3 7 8 15 8"/>
-          </svg>
-          Save Changes
-        </button>
+        <div class="save-dropdown-container" style="position: relative;">
+          <button class="btn-primary save-dropdown-trigger" onclick="toggleEngagementSaveDropdown(event)" style="display: flex; align-items: center; gap: 8px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+              <polyline points="17 21 17 13 7 13 7 21"/>
+              <polyline points="7 3 7 8 15 8"/>
+            </svg>
+            Save Engagement Plan
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+          <div id="engagementSaveDropdownMenu" class="save-dropdown-menu" style="display: none; position: absolute; top: 100%; right: 0; margin-top: 4px; background: white; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); min-width: 200px; z-index: 100; overflow: hidden;">
+            <button onclick="saveEngagementPlanAsPDFFromEditor(); closeEngagementSaveDropdown();" class="save-dropdown-item" style="display: flex; align-items: center; gap: 10px; width: 100%; padding: 12px 16px; border: none; background: none; cursor: pointer; font-size: 14px; color: #374151; text-align: left;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="12" y1="18" x2="12" y2="12"/>
+                <polyline points="9 15 12 18 15 15"/>
+              </svg>
+              Save as PDF
+            </button>
+            <button onclick="shareEngagementPlan(); closeEngagementSaveDropdown();" class="save-dropdown-item" style="display: flex; align-items: center; gap: 10px; width: 100%; padding: 12px 16px; border: none; background: none; cursor: pointer; font-size: 14px; color: #374151; text-align: left;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="18" cy="5" r="3"/>
+                <circle cx="6" cy="12" r="3"/>
+                <circle cx="18" cy="19" r="3"/>
+                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+              </svg>
+              Share with Client
+            </button>
+            <button onclick="checkAlignmentFromEditor(); closeEngagementSaveDropdown();" class="save-dropdown-item" style="display: flex; align-items: center; gap: 10px; width: 100%; padding: 12px 16px; border: none; background: none; cursor: pointer; font-size: 14px; color: #374151; text-align: left;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 11l3 3L22 4"/>
+                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+              </svg>
+              Check Alignment
+            </button>
+            <div style="height: 1px; background: #E5E7EB; margin: 4px 0;"></div>
+            <button onclick="saveEngagementPlanFromEditor(); closeEngagementSaveDropdown();" class="save-dropdown-item" style="display: flex; align-items: center; gap: 10px; width: 100%; padding: 12px 16px; border: none; background: none; cursor: pointer; font-size: 14px; color: #374151; text-align: left; font-weight: 500;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                <polyline points="17 21 17 13 7 13 7 21"/>
+                <polyline points="7 3 7 8 15 8"/>
+              </svg>
+              Save Changes
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -8962,6 +9627,15 @@ function showEngagementPlanEditorView(protocol, planData) {
 
   document.body.appendChild(editorView);
   document.body.style.overflow = 'hidden';
+
+  // Initialize handlers for empty item removal
+  const phasesContainer = document.getElementById('engagementPhasesContainer');
+  if (phasesContainer) {
+    initializeListItemHandlers(phasesContainer);
+
+    // Also use event delegation for dynamically added items
+    setupListItemEventDelegation(phasesContainer);
+  }
 }
 
 // Render engagement phases as editable sections
@@ -9339,6 +10013,187 @@ function rerenderEngagementPhases() {
   const container = document.getElementById('engagementPhasesContainer');
   if (container) {
     container.innerHTML = renderEngagementPhases(currentEngagementPlanData.phases || []);
+    // Initialize empty item removal handlers
+    initializeListItemHandlers(container);
+  }
+}
+
+// Initialize handlers for list items to remove empty ones on blur or backspace
+function initializeListItemHandlers(container) {
+  if (!container) return;
+
+  console.log('[List Handlers] Initializing handlers for container:', container.id || container.className);
+
+  // Handle all contenteditable list items
+  const listItems = container.querySelectorAll('li[contenteditable="true"]');
+  console.log('[List Handlers] Found', listItems.length, 'contenteditable list items');
+
+  listItems.forEach(li => {
+    // Skip if already has handlers
+    if (li.dataset.handlersInit) return;
+    li.dataset.handlersInit = 'true';
+
+    // Remove empty item on blur
+    li.addEventListener('blur', function() {
+      const text = this.textContent.trim();
+      console.log('[List Handlers] Blur event, text:', text);
+      if (!text) {
+        // Remove the empty list item
+        const ul = this.parentElement;
+        console.log('[List Handlers] Removing empty item from:', ul?.className);
+        this.remove();
+
+        // Update the data model based on list type
+        updateListDataModel(ul);
+      }
+    });
+
+    // Handle backspace on empty item to remove and focus previous
+    li.addEventListener('keydown', function(e) {
+      if (e.key === 'Backspace' && this.textContent.trim() === '') {
+        e.preventDefault();
+        const ul = this.parentElement;
+        const prevLi = this.previousElementSibling;
+        console.log('[List Handlers] Backspace on empty item, removing');
+        this.remove();
+
+        // Focus the previous item if exists
+        if (prevLi && prevLi.tagName === 'LI') {
+          prevLi.focus();
+          // Move cursor to end
+          const range = document.createRange();
+          const sel = window.getSelection();
+          range.selectNodeContents(prevLi);
+          range.collapse(false);
+          sel.removeAllRanges();
+          sel.addRange(range);
+        }
+
+        // Update data model
+        updateListDataModel(ul);
+      }
+    });
+
+    // Also handle 'input' event to catch when content becomes empty
+    li.addEventListener('input', function() {
+      const text = this.textContent.trim();
+      if (!text) {
+        // Add visual indicator that item will be removed on blur
+        this.style.opacity = '0.5';
+      } else {
+        this.style.opacity = '1';
+      }
+    });
+  });
+}
+
+// Setup event delegation for list items - catches events on dynamically added items
+function setupListItemEventDelegation(container) {
+  if (!container || container.dataset.delegationInit) return;
+  container.dataset.delegationInit = 'true';
+
+  // Use focusout (bubbles) instead of blur (doesn't bubble)
+  container.addEventListener('focusout', function(e) {
+    const target = e.target;
+    if (target.tagName === 'LI' && target.contentEditable === 'true') {
+      const text = target.textContent.trim();
+      if (!text) {
+        const ul = target.parentElement;
+        console.log('[Event Delegation] Removing empty item on focusout');
+        target.remove();
+        updateListDataModel(ul);
+      }
+    }
+  });
+
+  // Keydown for backspace handling
+  container.addEventListener('keydown', function(e) {
+    const target = e.target;
+    if (e.key === 'Backspace' && target.tagName === 'LI' && target.contentEditable === 'true') {
+      if (target.textContent.trim() === '') {
+        e.preventDefault();
+        const ul = target.parentElement;
+        const prevLi = target.previousElementSibling;
+        console.log('[Event Delegation] Removing empty item on backspace');
+        target.remove();
+
+        if (prevLi && prevLi.tagName === 'LI') {
+          prevLi.focus();
+          const range = document.createRange();
+          const sel = window.getSelection();
+          range.selectNodeContents(prevLi);
+          range.collapse(false);
+          sel.removeAllRanges();
+          sel.addRange(range);
+        }
+
+        updateListDataModel(ul);
+      }
+    }
+  });
+
+  // Input event for visual feedback
+  container.addEventListener('input', function(e) {
+    const target = e.target;
+    if (target.tagName === 'LI' && target.contentEditable === 'true') {
+      const text = target.textContent.trim();
+      target.style.opacity = text ? '1' : '0.5';
+    }
+  });
+}
+
+// Update data model when list items change
+function updateListDataModel(ul) {
+  if (!ul) return;
+
+  // Engagement plan phase items
+  if (ul.classList.contains('phase-items-list')) {
+    const phaseIndex = parseInt(ul.dataset.index);
+    if (currentEngagementPlanData?.phases?.[phaseIndex]) {
+      const items = [];
+      ul.querySelectorAll('li').forEach(item => {
+        const itemText = item.textContent.trim();
+        if (itemText) items.push(itemText);
+      });
+      currentEngagementPlanData.phases[phaseIndex].items = items;
+    }
+  }
+  // Engagement plan check-in prompts
+  else if (ul.classList.contains('prompts-list')) {
+    const phaseSection = ul.closest('.engagement-phase-section');
+    if (phaseSection) {
+      const phaseIndex = parseInt(phaseSection.dataset.phaseIndex);
+      if (currentEngagementPlanData?.phases?.[phaseIndex]) {
+        const prompts = [];
+        ul.querySelectorAll('li').forEach(item => {
+          const itemText = item.textContent.trim();
+          if (itemText) prompts.push(itemText);
+        });
+        currentEngagementPlanData.phases[phaseIndex].check_in_prompts = prompts;
+      }
+    }
+  }
+  // Protocol section list items
+  else if (ul.classList.contains('section-list')) {
+    const section = ul.closest('.protocol-section');
+    if (section) {
+      // Check various attribute names used across different editors
+      const sectionIndex = parseInt(
+        section.dataset.sectionIndex ||
+        section.dataset.moduleIndex ||
+        section.dataset.index ||
+        '-1'
+      );
+      if (!isNaN(sectionIndex) && sectionIndex >= 0 && generatedProtocolData?.modules?.[sectionIndex]) {
+        const items = [];
+        ul.querySelectorAll(':scope > li').forEach(item => {
+          // Get text content excluding nested lists
+          const itemText = item.childNodes[0]?.textContent?.trim() || item.textContent.trim();
+          if (itemText) items.push({ name: itemText });
+        });
+        generatedProtocolData.modules[sectionIndex].items = items;
+      }
+    }
   }
 }
 
@@ -9371,10 +10226,34 @@ async function saveEngagementPlanFromEditor() {
     }
   });
 
+  // Collect phase subtitles/goals from section-goal elements
+  document.querySelectorAll('.section-goal[contenteditable="true"]').forEach((el) => {
+    const index = parseInt(el.dataset.index);
+    if (currentEngagementPlanData.phases[index]) {
+      currentEngagementPlanData.phases[index].subtitle = el.textContent.trim();
+    }
+  });
+
   document.querySelectorAll('.phase-progress-goal').forEach((el) => {
     const index = parseInt(el.dataset.index);
     if (currentEngagementPlanData.phases[index]) {
       currentEngagementPlanData.phases[index].progress_goal = el.textContent.trim();
+    }
+  });
+
+  // Collect check-in prompts from each phase
+  document.querySelectorAll('.prompts-list').forEach((list) => {
+    const phaseSection = list.closest('.engagement-phase-section');
+    if (phaseSection) {
+      const phaseIndex = parseInt(phaseSection.dataset.phaseIndex);
+      if (currentEngagementPlanData.phases[phaseIndex]) {
+        const prompts = [];
+        list.querySelectorAll('li[contenteditable="true"]').forEach(li => {
+          const text = li.textContent.trim();
+          if (text) prompts.push(text);
+        });
+        currentEngagementPlanData.phases[phaseIndex].check_in_prompts = prompts;
+      }
     }
   });
 
@@ -9415,23 +10294,48 @@ async function saveEngagementPlanFromEditor() {
 
   try {
     const token = localStorage.getItem('auth_token');
-    const response = await fetch(`${API_BASE}/api/protocols/${currentEngagementProtocolId}/engagement-plan`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify({
-        engagement_plan: currentEngagementPlanData
-      })
-    });
 
-    if (response.ok) {
-      showNotification('Engagement plan saved successfully!', 'success');
-      loadEngagementPlans(); // Refresh the list
+    // If we have an engagement plan ID (from new table), update that table
+    if (currentEngagementPlanId) {
+      const response = await fetch(`${API_BASE}/api/protocols/engagement-plans/${currentEngagementPlanId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          title: currentEngagementPlanData.title,
+          plan_data: currentEngagementPlanData
+        })
+      });
+
+      if (response.ok) {
+        showNotification('Engagement plan saved successfully!', 'success');
+        loadEngagementPlans(); // Refresh the list
+      } else {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to save');
+      }
     } else {
-      const data = await response.json();
-      throw new Error(data.error || 'Failed to save');
+      // Legacy: Update the protocol's ai_recommendations field
+      const response = await fetch(`${API_BASE}/api/protocols/${currentEngagementProtocolId}/engagement-plan`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          engagement_plan: currentEngagementPlanData
+        })
+      });
+
+      if (response.ok) {
+        showNotification('Engagement plan saved successfully!', 'success');
+        loadEngagementPlans(); // Refresh the list
+      } else {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to save');
+      }
     }
   } catch (error) {
     console.error('Error saving engagement plan:', error);
@@ -9928,7 +10832,62 @@ function closeEngagementPlanEditor() {
   document.body.style.overflow = '';
   currentEngagementPlanData = null;
   currentEngagementProtocolId = null;
+  currentEngagementPlanId = null;
   selectedEngagementPhase = null;
+}
+
+// Toggle engagement save dropdown
+function toggleEngagementSaveDropdown(event) {
+  event.stopPropagation();
+  const menu = document.getElementById('engagementSaveDropdownMenu');
+  if (menu) {
+    const isVisible = menu.style.display !== 'none';
+    menu.style.display = isVisible ? 'none' : 'block';
+
+    // Close when clicking outside
+    if (!isVisible) {
+      setTimeout(() => {
+        document.addEventListener('click', closeEngagementSaveDropdownOnClickOutside);
+      }, 0);
+    }
+  }
+}
+
+// Close engagement save dropdown
+function closeEngagementSaveDropdown() {
+  const menu = document.getElementById('engagementSaveDropdownMenu');
+  if (menu) {
+    menu.style.display = 'none';
+  }
+  document.removeEventListener('click', closeEngagementSaveDropdownOnClickOutside);
+}
+
+// Close dropdown when clicking outside
+function closeEngagementSaveDropdownOnClickOutside(event) {
+  const menu = document.getElementById('engagementSaveDropdownMenu');
+  const trigger = document.querySelector('.save-dropdown-trigger');
+  if (menu && trigger && !menu.contains(event.target) && !trigger.contains(event.target)) {
+    closeEngagementSaveDropdown();
+  }
+}
+
+// Save engagement plan as PDF from editor
+function saveEngagementPlanAsPDFFromEditor() {
+  if (currentEngagementPlanData) {
+    const title = currentEngagementPlanData.title || 'Engagement Plan';
+    generateEngagementPlanPDF(currentEngagementPlanData, title);
+  } else {
+    showNotification('No engagement plan data available', 'error');
+  }
+}
+
+// Check alignment from editor
+function checkAlignmentFromEditor() {
+  if (currentEngagementProtocolId) {
+    checkAlignmentForProtocol(currentEngagementProtocolId);
+  } else {
+    showNotification('No associated protocol found', 'error');
+  }
 }
 
 // Format engagement plan JSON data into readable HTML
@@ -10097,6 +11056,13 @@ function showEngagementPlanViewModal(protocol) {
         </div>
         <div style="display: flex; gap: 8px;">
           <button class="btn-secondary" onclick="closeViewEngagementModal()" style="padding: 10px 20px;">Close</button>
+          <button class="btn-secondary" onclick="closeViewEngagementModal(); viewEngagementPlan(${protocol.id});" style="padding: 10px 20px; display: flex; align-items: center; gap: 6px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+            </svg>
+            Edit
+          </button>
           <button class="btn-primary" onclick="shareEngagementPlanById(${protocol.id}); closeViewEngagementModal();" style="padding: 10px 20px; display: flex; align-items: center; gap: 6px;">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="18" cy="5" r="3"/>
@@ -10340,7 +11306,9 @@ async function generateProtocolFromPrompt() {
       const errorData = await response.json().catch(() => ({}));
       console.log('Protocol generation response:', errorData);
       closeProtocolEditor();
-      alert(`Error generating protocol: ${errorData.error || 'Unknown error'}`);
+      // Show the more specific message if available
+      const errorMsg = errorData.message || errorData.error || 'Unknown error';
+      alert(`Error generating protocol: ${errorMsg}`);
     }
 
   } catch (error) {
@@ -10919,9 +11887,9 @@ function renderProtocolSections(modules) {
         <input type="checkbox" class="section-checkbox" onclick="event.stopPropagation(); toggleSectionCheckbox(${index})">
         <h2 class="section-title">
           <span class="drag-handle">⋮⋮</span>
-          ${escapeHtml(module.name)}
+          <span contenteditable="true" class="module-title-text" data-index="${index}">${escapeHtml(module.name)}</span>
         </h2>
-        ${goal ? `<p class="section-goal"><strong>Goal:</strong> ${escapeHtml(goal)}</p>` : ''}
+        ${goal ? `<p class="section-goal"><strong>Goal:</strong> <span contenteditable="true" class="module-goal-text" data-index="${index}">${escapeHtml(goal)}</span></p>` : ''}
         ${sectionContent}
       </div>
     `;
@@ -10946,6 +11914,10 @@ function renderProtocolSections(modules) {
   `;
 
   sectionsContainer.innerHTML = modulesHtml + addModuleButton;
+
+  // Initialize handlers for empty item removal on list items
+  initializeListItemHandlers(sectionsContainer);
+  setupListItemEventDelegation(sectionsContainer);
 }
 
 // Get section type from module name
@@ -11633,7 +12605,64 @@ document.addEventListener('click', function(event) {
   if (dropdown && button && !button.contains(event.target) && !dropdown.contains(event.target)) {
     dropdown.classList.remove('show');
   }
+
+  // Also handle engagement dropdown
+  const engDropdown = document.getElementById('engagementDropdownMenu');
+  const engButton = document.getElementById('saveEngagementBtn');
+  if (engDropdown && engButton && !engButton.contains(event.target) && !engDropdown.contains(event.target)) {
+    engDropdown.classList.remove('show');
+  }
 });
+
+// Toggle engagement plan dropdown menu
+function toggleEngagementDropdown() {
+  const dropdown = document.getElementById('engagementDropdownMenu');
+  if (dropdown) {
+    dropdown.classList.toggle('show');
+  }
+}
+
+// Save engagement plan as PDF from main editor view
+async function saveEngagementPlanAsPDFMain() {
+  toggleEngagementDropdown(); // Close dropdown
+
+  // Get the engagement plan content
+  const engagementContent = document.getElementById('engagementPlanContent');
+  if (!engagementContent) {
+    showNotification('No engagement plan to export', 'error');
+    return;
+  }
+
+  showNotification('Generating PDF...', 'info');
+
+  // Use browser's print functionality
+  const printWindow = window.open('', '_blank');
+  printWindow.document.write(`
+    <html>
+      <head>
+        <title>Engagement Plan</title>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 40px; max-width: 800px; margin: 0 auto; }
+          h1 { color: #1F2937; border-bottom: 2px solid #0F766E; padding-bottom: 12px; }
+          h2 { color: #0F766E; margin-top: 24px; }
+          h3 { color: #374151; }
+          .engagement-phase { margin: 24px 0; padding: 20px; border: 1px solid #E5E7EB; border-radius: 8px; }
+          .phase-header { font-weight: bold; color: #0F766E; }
+          ul { margin: 12px 0; padding-left: 24px; }
+          li { margin: 8px 0; }
+          .progress-goal { background: #FEF3C7; padding: 12px; border-radius: 6px; margin-top: 12px; }
+          .check-in-prompts { background: #F0FDF4; padding: 12px; border-radius: 6px; margin-top: 12px; }
+          @media print { body { padding: 20px; } }
+        </style>
+      </head>
+      <body>
+        ${engagementContent.innerHTML}
+      </body>
+    </html>
+  `);
+  printWindow.document.close();
+  printWindow.print();
+}
 
 // Save protocol as PDF from editor view (uses generatedProtocolData)
 async function saveEditorProtocolAsPDF() {
@@ -13060,6 +14089,9 @@ window.toggleModuleExpand = toggleModuleExpand;
 window.editModuleWithAI = editModuleWithAI;
 window.sendAIChat = sendAIChat;
 window.generateEngagementPlan = generateEngagementPlan;
+window.startEngagementProgressAnimation = startEngagementProgressAnimation;
+window.stopEngagementProgressAnimation = stopEngagementProgressAnimation;
+window.updateEngagementProgress = updateEngagementProgress;
 window.addEngagementPhase = addEngagementPhase;
 window.switchEditorTab = switchEditorTab;
 window.previewProtocol = previewProtocol;
@@ -13118,7 +14150,9 @@ window.execCommand = execCommand;
 window.insertTable = insertTable;
 window.exportProtocol = exportProtocol;
 window.toggleSaveDropdown = toggleSaveDropdown;
+window.toggleEngagementDropdown = toggleEngagementDropdown;
 window.saveEditorProtocolAsPDF = saveEditorProtocolAsPDF;
+window.saveEngagementPlanAsPDFMain = saveEngagementPlanAsPDFMain;
 window.shareWithClient = shareWithClient;
 window.closeShareModal = closeShareModal;
 window.shareViaEmail = shareViaEmail;
@@ -13138,6 +14172,10 @@ window.loadEngagementPlans = loadEngagementPlans;
 window.displayEngagementPlans = displayEngagementPlans;
 window.viewEngagementPlan = viewEngagementPlan;
 window.editEngagementPlan = editEngagementPlan;
+window.checkAlignmentForProtocol = checkAlignmentForProtocol;
+window.showAlignmentModal = showAlignmentModal;
+window.closeAlignmentModal = closeAlignmentModal;
+window.regenerateEngagementPlanFromAlignment = regenerateEngagementPlanFromAlignment;
 window.getEngagementPlanTitle = getEngagementPlanTitle;
 window.viewEngagementPlanModal = viewEngagementPlanModal;
 window.showEngagementPlanViewModal = showEngagementPlanViewModal;
@@ -13163,6 +14201,9 @@ window.deleteEngagementPhase = deleteEngagementPhase;
 window.addPhaseItem = addPhaseItem;
 window.addSuccessMetric = addSuccessMetric;
 window.rerenderEngagementPhases = rerenderEngagementPhases;
+window.initializeListItemHandlers = initializeListItemHandlers;
+window.setupListItemEventDelegation = setupListItemEventDelegation;
+window.updateListDataModel = updateListDataModel;
 window.scrollToEngagementSection = scrollToEngagementSection;
 window.saveEngagementPlanFromEditor = saveEngagementPlanFromEditor;
 window.printEngagementPlanFromEditor = printEngagementPlanFromEditor;
@@ -13172,6 +14213,14 @@ window.shareEngagementViaEmail = shareEngagementViaEmail;
 window.shareEngagementViaWhatsApp = shareEngagementViaWhatsApp;
 window.copyEngagementPlanLink = copyEngagementPlanLink;
 window.closeEngagementPlanEditor = closeEngagementPlanEditor;
+window.viewEngagementPlanById = viewEngagementPlanById;
+window.saveEngagementPlanAsPDFById = saveEngagementPlanAsPDFById;
+window.printEngagementPlanById = printEngagementPlanById;
+window.generateEngagementPlanPDF = generateEngagementPlanPDF;
+window.toggleEngagementSaveDropdown = toggleEngagementSaveDropdown;
+window.closeEngagementSaveDropdown = closeEngagementSaveDropdown;
+window.saveEngagementPlanAsPDFFromEditor = saveEngagementPlanAsPDFFromEditor;
+window.checkAlignmentFromEditor = checkAlignmentFromEditor;
 
 // Existing Protocol Editor functions
 window.parseProtocolContentToModules = parseProtocolContentToModules;

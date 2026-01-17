@@ -271,7 +271,12 @@
           </a>
         </div>
 
-        <p class="page-subtitle">You can find all your clients here.</p>
+        <!-- Total Count Display -->
+        <div class="total-count-display" id="totalCountDisplay">
+          <span class="total-label">Total</span>
+          <span class="total-value" id="totalClientsCount">-</span>
+          <span class="total-suffix">clients</span>
+        </div>
 
         <!-- Search and Actions Row -->
         <div class="clients-toolbar">
@@ -282,7 +287,7 @@
                 <path d="m21 21-4.35-4.35"></path>
               </svg>
             </span>
-            <input type="text" id="searchInput" placeholder="Search clients" class="search-input">
+            <input type="text" id="searchInput" placeholder="Search by name, email, phone number..." class="search-input">
           </div>
 
           <button class="btn-primary" id="addClientBtn">
