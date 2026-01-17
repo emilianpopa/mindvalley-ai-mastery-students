@@ -198,12 +198,83 @@ Or use the deploy script:
 2. Verify credentials in database (`integrations` table)
 3. Check `integration_sync_logs` for error messages
 
+## Momence CSV Import System
+
+The platform includes a comprehensive CSV import system for migrating data from Momence.
+
+### Import Page
+**URL:** `/import`
+**File:** `/views/import-momence.html`
+
+### Features
+
+#### Customer Import
+- Supports both Momence appointment CSV exports and direct customer exports
+- Auto-detects CSV format based on column headers
+- Deduplicates customers by email
+- Dry-run preview before actual import
+
+#### Appointment Import
+- Imports appointments with correct durations parsed from service names
+- Duration parsing priority:
+  1. Explicit duration in CSV column (if present)
+  2. Duration in service name (e.g., "HBOT1 90 min" → 90 minutes)
+  3. Service type defaults (HBOT=60min, Cold Plunge=30min, etc.)
+- Payment status detection (Paid column: "Yes", "Paid", "true", "1")
+- Time block support (gray blocks for staff scheduling)
+
+#### Time Blocks
+Time blocks are detected when:
+- Type column contains "time block" or "timeblock"
+- Customer field is empty
+- Customer field contains "time block" or "blocked"
+
+Time blocks are displayed in gray on the calendar (like Momence).
+
+### Post-Import Utilities
+
+#### Fix Durations Button
+If appointments were imported with wrong durations, use the "Fix All Durations" button on the import page. It recalculates `end_time` for all appointments based on their title/service name.
+
+**Endpoint:** `POST /api/appointments/fix-durations`
+
+#### Sync Payment Status
+If payment status is incorrect after import, upload the same CSV to sync payment status for existing appointments.
+
+**Endpoint:** `POST /api/appointments/sync-payment-status`
+
+### Service Duration Defaults
+Located in `/api/appointments.js` - `SERVICE_DURATIONS_FALLBACK`:
+```javascript
+{
+  'cold plunge': 30, 'red light': 20, 'hbot': 60, 'infrared sauna': 45,
+  'pemf': 30, 'massage': 45, 'somadome': 30, 'hocatt': 45, 'tour': 30,
+  'lymphatic': 30
+}
+```
+
+## Appointments Calendar
+
+### Calendar View
+**URL:** `/appointments`
+**File:** `/views/appointments.html`
+
+### Color Coding (Momence-style)
+- **Green** (`#4ade80`): Paid appointments
+- **Red** (`#ef4444`): Unpaid appointments
+- **Gray** (`#6b7280`): Time blocks
+
+### Database Schema Addition
+The `appointments` table has an `is_time_block` boolean column (added via `database/init.js` on startup).
+
 ## Notes
 
 - The frontend uses vanilla JavaScript (no React/Vue)
 - HTML files in `/views` are served statically
 - Client-side JS files in `/public/js/` handle interactivity
 - The platform is multi-tenant; always check `tenant_id` in queries
+- Railway deployment uses root directory `demo/expand health/v2`
+- Health check endpoint: `/api/health` with 300s timeout
 
 ---
 
@@ -390,7 +461,7 @@ Used for both Protocols and Engagement Plans:
 
 ### Deploy to Production
 ```bash
-git push expandhealthai main:staging
+git push origin main:staging
 ```
 
 ### Railway Configuration (`railway.toml`)
