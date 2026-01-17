@@ -3606,7 +3606,7 @@
     const dateParam = urlParams.get('date');
     let currentDate = dateParam ? new Date(dateParam + 'T12:00:00') : new Date();
     let currentView = 'week';
-    let slotHeight = 80; // Taller slots like Momence for better visibility
+    let slotHeight = 120; // Taller slots like Momence for better visibility
     let appointments = [];
     let selectedAppointment = null;
     let isCheckedIn = false;
@@ -3988,7 +3988,7 @@
 
     // Zoom
     function zoomIn() {
-      slotHeight = Math.min(slotHeight + 15, 120);
+      slotHeight = Math.min(slotHeight + 20, 180);
       document.querySelectorAll('.time-slot').forEach(slot => {
         slot.style.height = `${slotHeight}px`;
       });
@@ -3996,7 +3996,7 @@
     }
 
     function zoomOut() {
-      slotHeight = Math.max(slotHeight - 15, 30);
+      slotHeight = Math.max(slotHeight - 20, 60);
       document.querySelectorAll('.time-slot').forEach(slot => {
         slot.style.height = `${slotHeight}px`;
       });
