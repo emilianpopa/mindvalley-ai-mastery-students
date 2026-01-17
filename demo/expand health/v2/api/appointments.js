@@ -142,8 +142,8 @@ router.get('/calendar', async (req, res, next) => {
       LEFT JOIN staff s ON a.staff_id = s.id
       LEFT JOIN service_types st ON a.service_type_id = st.id
       WHERE a.tenant_id = $1
-        AND a.start_time >= $2
-        AND a.end_time <= $3
+        AND a.start_time < $3
+        AND a.end_time > $2
     `;
 
     const params = [tenantId, start, end];
