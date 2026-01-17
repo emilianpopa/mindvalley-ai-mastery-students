@@ -250,6 +250,27 @@
           <p class="text-orange-800 font-medium" id="syncResultsText"></p>
         </div>
       </div>
+
+      <!-- Fix Appointment Durations Section -->
+      <div class="bg-white shadow rounded-lg p-6 mt-6">
+        <h2 class="text-lg font-semibold mb-2">Fix Appointment Durations</h2>
+        <p class="text-sm text-gray-600 mb-4">If appointments are showing incorrect durations (e.g., 90-minute sessions appearing as 60 minutes), click this button to recalculate all appointment durations based on their service names.</p>
+
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+          <p class="text-sm text-blue-800"><strong>How it works:</strong> The system will parse each appointment's title/service name to extract the correct duration (e.g., "HBOT1 90 min" → 90 minutes) and update the end times accordingly.</p>
+        </div>
+
+        <button
+          id="fixDurationsBtn"
+          class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 font-medium"
+        >
+          Fix All Durations
+        </button>
+
+        <div id="fixDurationsResults" class="hidden mt-4 p-4 bg-indigo-50 border border-indigo-200 rounded-lg">
+          <p class="text-indigo-800 font-medium" id="fixDurationsResultsText"></p>
+        </div>
+      </div>
     </div>
 
     <!-- Loading -->
@@ -519,6 +540,32 @@
 
         document.getElementById('syncResults').classList.remove('hidden');
         document.getElementById('syncResultsText').textContent = `Updated payment status for ${data.updated} appointments! Refresh the calendar to see the changes.`;
+
+      } catch (err) {
+        showError(err.message);
+      } finally {
+        hideLoading();
+      }
+    });
+
+    // ==================== FIX DURATIONS ====================
+    document.getElementById('fixDurationsBtn').addEventListener('click', async () => {
+      showLoading();
+      try {
+        const resp = await fetch('/api/appointments/fix-durations', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+          }
+        });
+
+        if (!resp.ok) throw new Error('Failed to fix durations');
+        const data = await resp.json();
+
+        document.getElementById('fixDurationsResults').classList.remove('hidden');
+        document.getElementById('fixDurationsResultsText').textContent =
+          `Fixed ${data.updated} appointments! Refresh the calendar to see the corrected durations.`;
 
       } catch (err) {
         showError(err.message);
