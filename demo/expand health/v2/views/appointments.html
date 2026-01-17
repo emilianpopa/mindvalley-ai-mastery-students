@@ -2911,6 +2911,7 @@
       z-index: 1000;
       font-size: 0.8125rem;
       overflow: visible;
+      pointer-events: none; /* Allow clicks to pass through to appointment block */
     }
 
     .appointment-block:hover .apt-tooltip {
@@ -3874,7 +3875,12 @@
           e.stopPropagation();
           e.preventDefault();
           console.log('Appointment clicked:', apt);
-          openAppointmentPanel(apt);
+          try {
+            openAppointmentPanel(apt);
+          } catch (err) {
+            console.error('Error opening appointment panel:', err);
+            alert('Error opening appointment details: ' + err.message);
+          }
         });
 
         // Position relative to the slot
@@ -4221,12 +4227,18 @@
     // =====================
 
     function openAppointmentPanel(apt) {
+      console.log('openAppointmentPanel called with:', apt);
       selectedAppointment = apt;
       isCheckedIn = apt.extendedProps?.status === 'in_progress';
 
-        // Update panel content
-        document.getElementById('panelTitle').textContent = apt.title || 'Appointment reservation';
-        document.getElementById('panelId').textContent = `ID: ${apt.id}`;
+      // Check if panel elements exist
+      const overlay = document.getElementById('appointmentPanelOverlay');
+      const panel = document.getElementById('appointmentPanel');
+      console.log('Panel elements:', { overlay: !!overlay, panel: !!panel });
+
+      // Update panel content
+      document.getElementById('panelTitle').textContent = apt.title || 'Appointment reservation';
+      document.getElementById('panelId').textContent = `ID: ${apt.id}`;
 
       // Payment Status badge (Paid / Not paid)
       // Treat NULL/missing payment_status as unpaid
