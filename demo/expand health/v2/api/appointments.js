@@ -701,20 +701,29 @@ function parseCustomerEmail(customerField) {
   return match ? match[1].trim().toLowerCase() : null;
 }
 
-// Service durations based on name
-const SERVICE_DURATIONS = {
+// Service durations based on name (fallback if no explicit duration in name)
+const SERVICE_DURATIONS_FALLBACK = {
   'cold plunge': 30, 'red light': 20, 'hbot': 60, 'infrared sauna': 45,
   'pemf': 30, 'massage': 45, 'somadome': 30, 'hocatt': 45, 'tour': 30,
-  'lymphatic': 30, '30 min': 30, '45 min': 45, '60 min': 60, '90 min': 90
+  'lymphatic': 30
 };
 
 function getServiceDuration(serviceName) {
   const lower = serviceName.toLowerCase();
-  for (const [key, duration] of Object.entries(SERVICE_DURATIONS)) {
+
+  // First, check if there's an explicit duration in the name (e.g., "90 min", "60min", "45 minutes")
+  const durationMatch = serviceName.match(/(\d+)\s*min/i);
+  if (durationMatch) {
+    return parseInt(durationMatch[1]);
+  }
+
+  // Fallback to service type defaults
+  for (const [key, duration] of Object.entries(SERVICE_DURATIONS_FALLBACK)) {
     if (lower.includes(key)) return duration;
   }
-  const match = serviceName.match(/(\d+)\s*min/i);
-  return match ? parseInt(match[1]) : 30;
+
+  // Default to 30 minutes if nothing matches
+  return 30;
 }
 
 router.post('/import/momence', async (req, res, next) => {
@@ -736,6 +745,7 @@ router.post('/import/momence', async (req, res, next) => {
     const locationIdx = header.findIndex(h => h.includes('location'));
     const cancelledIdx = header.findIndex(h => h.includes('cancel'));
     const paidIdx = header.findIndex(h => h.includes('paid'));
+    const durationIdx = header.findIndex(h => h.includes('duration') || h.includes('length'));
 
     if (dateIdx === -1 || serviceIdx === -1 || customerIdx === -1) {
       return res.status(400).json({ error: 'CSV must have date, service, and customer columns' });
@@ -795,7 +805,19 @@ router.post('/import/momence', async (req, res, next) => {
         newServices.push(serviceName);
       }
 
-      const duration = getServiceDuration(serviceName);
+      // Get duration: first check CSV duration column, then parse from service name
+      let duration;
+      if (durationIdx >= 0 && values[durationIdx]) {
+        // Try to parse duration from CSV (could be "90", "90 min", "1:30", etc.)
+        const durationVal = values[durationIdx].trim();
+        const minMatch = durationVal.match(/^(\d+)/);
+        if (minMatch) {
+          duration = parseInt(minMatch[1]);
+        }
+      }
+      if (!duration) {
+        duration = getServiceDuration(serviceName);
+      }
       const endTime = new Date(startTime.getTime() + duration * 60000);
 
       // Check paid status - Momence uses "Yes", "Paid", or similar values
@@ -999,6 +1021,56 @@ router.post('/sync-payment-status', async (req, res, next) => {
       toUpdate: updated,
       updated: dryRun ? 0 : updated,
       notFound,
+      errors: errors.slice(0, 10)
+    });
+
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * POST /api/appointments/fix-durations
+ * Fix appointment durations by recalculating end_time from title/service name
+ * Use this if appointments were imported with wrong durations
+ */
+router.post('/fix-durations', async (req, res, next) => {
+  try {
+    const tenantId = req.user?.tenantId;
+    if (!tenantId) return res.status(400).json({ error: 'Tenant context required' });
+
+    // Get all appointments with their titles
+    const result = await db.query(
+      `SELECT id, title, start_time, end_time FROM appointments WHERE tenant_id = $1`,
+      [tenantId]
+    );
+
+    let fixed = 0;
+    let errors = [];
+
+    for (const apt of result.rows) {
+      const title = apt.title || '';
+      const correctDuration = getServiceDuration(title);
+      const currentDuration = Math.round((new Date(apt.end_time) - new Date(apt.start_time)) / 60000);
+
+      if (correctDuration !== currentDuration) {
+        const newEndTime = new Date(new Date(apt.start_time).getTime() + correctDuration * 60000);
+
+        try {
+          await db.query(
+            `UPDATE appointments SET end_time = $1, updated_at = NOW() WHERE id = $2`,
+            [newEndTime, apt.id]
+          );
+          fixed++;
+        } catch (err) {
+          errors.push(`Appointment ${apt.id}: ${err.message}`);
+        }
+      }
+    }
+
+    res.json({
+      total: result.rows.length,
+      fixed,
       errors: errors.slice(0, 10)
     });
 
