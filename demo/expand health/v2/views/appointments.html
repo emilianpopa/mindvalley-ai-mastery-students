@@ -4181,6 +4181,7 @@
 
     function updateClockStatus() {
       const toast = document.getElementById('clockStatusToast');
+      if (!toast) return; // Exit if toast element not found
       const icon = toast.querySelector('.clock-status-icon');
       const text = toast.querySelector('.clock-status-text');
       const menuItem = document.getElementById('clockMenuItem');
@@ -4299,8 +4300,8 @@
 
       // Payment tags
       const paymentTagsEl = document.getElementById('panelPaymentTags');
-      const price = apt.extendedProps?.price || 0;
-      const credits = apt.extendedProps?.credits || 0;
+      const price = parseFloat(apt.extendedProps?.price) || 0;
+      const credits = parseInt(apt.extendedProps?.credits) || 0;
       let tagsHtml = '';
 
       if (price > 0) {
