@@ -1138,4 +1138,76 @@ router.post('/fix-durations', async (req, res, next) => {
   }
 });
 
+/**
+ * POST /api/appointments/analyze-csv
+ * Debug endpoint to analyze a Momence CSV and show what would be detected
+ */
+router.post('/analyze-csv', async (req, res, next) => {
+  try {
+    const { csvData } = req.body;
+
+    if (!csvData) return res.status(400).json({ error: 'csvData is required' });
+
+    const lines = csvData.trim().split('\n');
+    const header = parseCSVLine(lines[0]).map(h => h.toLowerCase());
+
+    // Find column indexes
+    const dateIdx = header.findIndex(h => h.includes('date'));
+    const serviceIdx = header.findIndex(h => h.includes('service'));
+    const customerIdx = header.findIndex(h => h.includes('customer'));
+    const typeIdx = header.findIndex(h => h.includes('type') || h.includes('booking type'));
+    const paidIdx = header.findIndex(h => h.includes('paid'));
+
+    // Analyze first 50 rows
+    const analysis = [];
+    for (let i = 1; i < Math.min(lines.length, 51); i++) {
+      const values = parseCSVLine(lines[i]);
+      if (values.length < 2) continue;
+
+      const serviceName = serviceIdx >= 0 ? values[serviceIdx]?.trim() : '';
+      const customerField = customerIdx >= 0 ? values[customerIdx]?.trim() : '';
+      const typeValue = typeIdx >= 0 ? values[typeIdx]?.trim() : '';
+      const paidValue = paidIdx >= 0 ? values[paidIdx]?.trim() : '';
+
+      // Check for email pattern
+      const email = parseCustomerEmail(customerField);
+      const hasEmail = !!email;
+
+      analysis.push({
+        row: i,
+        service: serviceName,
+        customer: customerField,
+        type: typeValue,
+        paid: paidValue,
+        hasEmail,
+        wouldBeTimeBlock: !hasEmail && !customerField?.includes('@')
+      });
+    }
+
+    // Group by type column values
+    const typeValues = [...new Set(analysis.map(a => a.type).filter(Boolean))];
+
+    // Find likely time blocks (no email in customer field)
+    const likelyTimeBlocks = analysis.filter(a => !a.hasEmail && a.customer);
+
+    res.json({
+      headers: header,
+      columnIndexes: {
+        date: dateIdx,
+        service: serviceIdx,
+        customer: customerIdx,
+        type: typeIdx,
+        paid: paidIdx
+      },
+      totalRows: lines.length - 1,
+      uniqueTypeValues: typeValues,
+      likelyTimeBlocks: likelyTimeBlocks.slice(0, 20),
+      sampleRows: analysis.slice(0, 20)
+    });
+
+  } catch (error) {
+    next(error);
+  }
+});
+
 module.exports = router;

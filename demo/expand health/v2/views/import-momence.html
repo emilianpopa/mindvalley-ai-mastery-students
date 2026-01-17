@@ -164,13 +164,39 @@
           </label>
         </div>
 
-        <button
-          id="importBtnAppointments"
-          disabled
-          class="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
-        >
-          Preview Appointment Import
-        </button>
+        <div class="flex gap-3">
+          <button
+            id="importBtnAppointments"
+            disabled
+            class="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+          >
+            Preview Appointment Import
+          </button>
+          <button
+            id="analyzeCsvBtn"
+            disabled
+            class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+          >
+            Analyze CSV (Debug)
+          </button>
+        </div>
+      </div>
+
+      <!-- CSV Analysis Results -->
+      <div id="csvAnalysis" class="hidden bg-white shadow rounded-lg p-6 mb-6">
+        <h2 class="text-lg font-semibold mb-4">CSV Analysis (Debug)</h2>
+        <div class="mb-4">
+          <h3 class="font-medium mb-2">Headers Found:</h3>
+          <div id="analysisHeaders" class="text-sm text-gray-600 font-mono bg-gray-50 p-2 rounded"></div>
+        </div>
+        <div class="mb-4">
+          <h3 class="font-medium mb-2">Type Column Values:</h3>
+          <div id="analysisTypes" class="flex flex-wrap gap-2"></div>
+        </div>
+        <div class="mb-4">
+          <h3 class="font-medium mb-2">Likely Time Blocks (no email in customer field):</h3>
+          <div id="analysisTimeBlocks" class="text-sm max-h-48 overflow-y-auto bg-gray-50 p-2 rounded font-mono"></div>
+        </div>
       </div>
 
       <!-- Results -->
@@ -408,7 +434,9 @@
         document.getElementById('rowCountAppointments').textContent = lines.length - 1;
         document.getElementById('fileInfoAppointments').classList.remove('hidden');
         document.getElementById('importBtnAppointments').disabled = false;
+        document.getElementById('analyzeCsvBtn').disabled = false;
         document.getElementById('resultsAppointments').classList.add('hidden');
+        document.getElementById('csvAnalysis').classList.add('hidden');
       };
       reader.readAsText(file);
     });
@@ -571,6 +599,56 @@
         document.getElementById('fixDurationsResults').classList.remove('hidden');
         document.getElementById('fixDurationsResultsText').textContent =
           `Fixed ${data.updated} appointments! Refresh the calendar to see the corrected durations.`;
+
+      } catch (err) {
+        showError(err.message);
+      } finally {
+        hideLoading();
+      }
+    });
+
+    // ==================== ANALYZE CSV (DEBUG) ====================
+    document.getElementById('analyzeCsvBtn').addEventListener('click', async () => {
+      if (!csvDataAppointments) return;
+      showLoading();
+      try {
+        const resp = await fetch('/api/appointments/analyze-csv', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+          },
+          body: JSON.stringify({ csvData: csvDataAppointments })
+        });
+
+        if (!resp.ok) throw new Error('Failed to analyze CSV');
+        const data = await resp.json();
+
+        // Show analysis panel
+        document.getElementById('csvAnalysis').classList.remove('hidden');
+
+        // Display headers
+        document.getElementById('analysisHeaders').textContent = data.headers.join(', ');
+
+        // Display type column values
+        const typesDiv = document.getElementById('analysisTypes');
+        if (data.uniqueTypeValues && data.uniqueTypeValues.length > 0) {
+          typesDiv.innerHTML = data.uniqueTypeValues.map(t =>
+            `<span class="px-2 py-1 bg-gray-100 text-gray-800 rounded text-sm">${t || '(empty)'}</span>`
+          ).join('');
+        } else {
+          typesDiv.innerHTML = '<span class="text-gray-500 text-sm">No Type column found or all values empty</span>';
+        }
+
+        // Display likely time blocks
+        const tbDiv = document.getElementById('analysisTimeBlocks');
+        if (data.likelyTimeBlocks && data.likelyTimeBlocks.length > 0) {
+          tbDiv.innerHTML = data.likelyTimeBlocks.map(tb =>
+            `<div class="py-1 border-b border-gray-200">Customer: "${tb.customer || '(empty)'}" | Service: "${tb.service || '(empty)'}" | Type: "${tb.type || '(empty)'}"</div>`
+          ).join('');
+        } else {
+          tbDiv.innerHTML = '<span class="text-gray-500">No likely time blocks detected</span>';
+        }
 
       } catch (err) {
         showError(err.message);
