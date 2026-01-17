@@ -273,7 +273,13 @@ function generateAlignedEngagementPlanPrompt({
   communicationPreferences,
   protocolDurationWeeks = 12
 }) {
-  const { supplements, clinic_treatments, lifestyle_protocols, retest_schedule, safety_constraints, phases } = protocolElements;
+  // Defensive defaults for all arrays
+  const supplements = protocolElements?.supplements || [];
+  const clinic_treatments = protocolElements?.clinic_treatments || [];
+  const lifestyle_protocols = protocolElements?.lifestyle_protocols || [];
+  const retest_schedule = protocolElements?.retest_schedule || [];
+  const safety_constraints = protocolElements?.safety_constraints || [];
+  const phases = protocolElements?.phases || [];
 
   // Build the REQUIRED items checklist with phase/timing info
   const supplementsList = supplements.map(s => {
@@ -508,11 +514,17 @@ function validateEngagementPlanAlignment(engagementPlan, protocolElements) {
     }
   };
 
+  // Defensive defaults
+  const supplements = protocolElements?.supplements || [];
+  const clinic_treatments = protocolElements?.clinic_treatments || [];
+  const lifestyle_protocols = protocolElements?.lifestyle_protocols || [];
+  const retest_schedule = protocolElements?.retest_schedule || [];
+
   // Flatten all items mentioned in the engagement plan
-  const planText = JSON.stringify(engagementPlan).toLowerCase();
+  const planText = JSON.stringify(engagementPlan || {}).toLowerCase();
 
   // Check supplements coverage
-  protocolElements.supplements.forEach(supp => {
+  supplements.forEach(supp => {
     const nameVariants = getNameVariants(supp.name);
     const found = nameVariants.some(v => planText.includes(v.toLowerCase()));
     if (found) {
@@ -524,7 +536,7 @@ function validateEngagementPlanAlignment(engagementPlan, protocolElements) {
   });
 
   // Check clinic treatments coverage
-  protocolElements.clinic_treatments.forEach(treatment => {
+  clinic_treatments.forEach(treatment => {
     const nameVariants = getNameVariants(treatment.name);
     const found = nameVariants.some(v => planText.includes(v.toLowerCase()));
     if (found) {
@@ -536,7 +548,7 @@ function validateEngagementPlanAlignment(engagementPlan, protocolElements) {
   });
 
   // Check lifestyle protocols coverage
-  protocolElements.lifestyle_protocols.forEach(protocol => {
+  lifestyle_protocols.forEach(protocol => {
     const nameVariants = getNameVariants(protocol.name);
     const found = nameVariants.some(v => planText.includes(v.toLowerCase()));
     if (found) {
@@ -548,7 +560,7 @@ function validateEngagementPlanAlignment(engagementPlan, protocolElements) {
   });
 
   // Check retest schedule coverage
-  protocolElements.retest_schedule.forEach(test => {
+  retest_schedule.forEach(test => {
     const nameVariants = getNameVariants(test.name);
     const found = nameVariants.some(v => planText.includes(v.toLowerCase()));
     if (found) {
@@ -561,17 +573,17 @@ function validateEngagementPlanAlignment(engagementPlan, protocolElements) {
 
   // Calculate coverage percentages
   result.coveragePercentage = {
-    supplements: protocolElements.supplements.length > 0
-      ? Math.round((result.coverage.supplements / protocolElements.supplements.length) * 100)
+    supplements: supplements.length > 0
+      ? Math.round((result.coverage.supplements / supplements.length) * 100)
       : 100,
-    clinic_treatments: protocolElements.clinic_treatments.length > 0
-      ? Math.round((result.coverage.clinic_treatments / protocolElements.clinic_treatments.length) * 100)
+    clinic_treatments: clinic_treatments.length > 0
+      ? Math.round((result.coverage.clinic_treatments / clinic_treatments.length) * 100)
       : 100,
-    lifestyle_protocols: protocolElements.lifestyle_protocols.length > 0
-      ? Math.round((result.coverage.lifestyle_protocols / protocolElements.lifestyle_protocols.length) * 100)
+    lifestyle_protocols: lifestyle_protocols.length > 0
+      ? Math.round((result.coverage.lifestyle_protocols / lifestyle_protocols.length) * 100)
       : 100,
-    retest_schedule: protocolElements.retest_schedule.length > 0
-      ? Math.round((result.coverage.retest_schedule / protocolElements.retest_schedule.length) * 100)
+    retest_schedule: retest_schedule.length > 0
+      ? Math.round((result.coverage.retest_schedule / retest_schedule.length) * 100)
       : 100
   };
 
@@ -643,7 +655,13 @@ function getNameVariants(name) {
  * @returns {Object} Fixed engagement plan
  */
 function autoFixEngagementPlan(engagementPlan, validationResult, protocolElements) {
-  const fixed = JSON.parse(JSON.stringify(engagementPlan)); // Deep clone
+  const fixed = JSON.parse(JSON.stringify(engagementPlan || {})); // Deep clone with fallback
+
+  // Defensive defaults for protocol elements
+  const supplements = protocolElements?.supplements || [];
+  const clinic_treatments = protocolElements?.clinic_treatments || [];
+  const lifestyle_protocols = protocolElements?.lifestyle_protocols || [];
+  const retest_schedule = protocolElements?.retest_schedule || [];
 
   // Ensure protocol_coverage_checklist exists
   if (!fixed.protocol_coverage_checklist) {
@@ -656,9 +674,9 @@ function autoFixEngagementPlan(engagementPlan, validationResult, protocolElement
   }
 
   // Add missing supplements to checklist and weekly plan
-  if (validationResult.missingSupplements.length > 0) {
+  if (validationResult?.missingSupplements?.length > 0) {
     validationResult.missingSupplements.forEach(suppName => {
-      const supp = protocolElements.supplements.find(s => s.name === suppName);
+      const supp = supplements.find(s => s.name === suppName);
       const startWeek = supp?.start_week || 1;
 
       // Add to checklist
@@ -705,9 +723,9 @@ function autoFixEngagementPlan(engagementPlan, validationResult, protocolElement
   }
 
   // Add missing clinic treatments
-  if (validationResult.missingClinicTreatments.length > 0) {
+  if (validationResult?.missingClinicTreatments?.length > 0) {
     validationResult.missingClinicTreatments.forEach(treatmentName => {
-      const treatment = protocolElements.clinic_treatments.find(t => t.name === treatmentName);
+      const treatment = clinic_treatments.find(t => t.name === treatmentName);
       const startWeek = treatment?.start_week || 4;
       const isConditional = treatment?.isOptional || false;
 
@@ -759,9 +777,9 @@ function autoFixEngagementPlan(engagementPlan, validationResult, protocolElement
   }
 
   // Add missing lifestyle protocols
-  if (validationResult.missingLifestyleProtocols.length > 0) {
+  if (validationResult?.missingLifestyleProtocols?.length > 0) {
     validationResult.missingLifestyleProtocols.forEach(protocolName => {
-      const lifestyle = protocolElements.lifestyle_protocols.find(l => l.name === protocolName);
+      const lifestyle = lifestyle_protocols.find(l => l.name === protocolName);
       const startWeek = lifestyle?.start_week || 1;
 
       // Add to checklist
@@ -786,12 +804,12 @@ function autoFixEngagementPlan(engagementPlan, validationResult, protocolElement
   }
 
   // Add missing retest items
-  if (validationResult.missingRetests.length > 0) {
+  if (validationResult?.missingRetests?.length > 0) {
     if (!fixed.testing_schedule) {
       fixed.testing_schedule = [];
     }
     validationResult.missingRetests.forEach(testName => {
-      const test = protocolElements.retest_schedule.find(t => t.name === testName);
+      const test = retest_schedule.find(t => t.name === testName);
 
       // Add to testing schedule
       fixed.testing_schedule.push({
@@ -818,10 +836,10 @@ function autoFixEngagementPlan(engagementPlan, validationResult, protocolElement
     fixed.alignment_self_check = {};
   }
   fixed.alignment_self_check = {
-    all_supplements_included: validationResult.missingSupplements.length === 0 || true, // Now fixed
-    all_clinic_treatments_included: validationResult.missingClinicTreatments.length === 0 || true,
-    all_lifestyle_protocols_included: validationResult.missingLifestyleProtocols.length === 0 || true,
-    all_retests_scheduled: validationResult.missingRetests.length === 0 || true,
+    all_supplements_included: (validationResult?.missingSupplements?.length || 0) === 0 || true, // Now fixed
+    all_clinic_treatments_included: (validationResult?.missingClinicTreatments?.length || 0) === 0 || true,
+    all_lifestyle_protocols_included: (validationResult?.missingLifestyleProtocols?.length || 0) === 0 || true,
+    all_retests_scheduled: (validationResult?.missingRetests?.length || 0) === 0 || true,
     no_invented_items: true,
     safety_constraints_as_rules: true,
     auto_fixed: true,
@@ -829,7 +847,7 @@ function autoFixEngagementPlan(engagementPlan, validationResult, protocolElement
   };
 
   // Add alignment note
-  fixed._alignment_note = `Auto-fixed to include ${validationResult.missingSupplements.length} supplements, ${validationResult.missingClinicTreatments.length} clinic treatments, ${validationResult.missingLifestyleProtocols.length} lifestyle protocols, and ${validationResult.missingRetests.length} retest items that were missing from original generation.`;
+  fixed._alignment_note = `Auto-fixed to include ${validationResult?.missingSupplements?.length || 0} supplements, ${validationResult?.missingClinicTreatments?.length || 0} clinic treatments, ${validationResult?.missingLifestyleProtocols?.length || 0} lifestyle protocols, and ${validationResult?.missingRetests?.length || 0} retest items that were missing from original generation.`;
 
   return fixed;
 }
@@ -860,27 +878,29 @@ function mapPhaseToWeek(phaseName) {
 function generateRegenerationPrompt(engagementPlan, validationResult, protocolElements) {
   const missingItems = [];
 
-  if (validationResult.missingSupplements.length > 0) {
+  if (validationResult?.missingSupplements?.length > 0) {
     missingItems.push(`MISSING SUPPLEMENTS: ${validationResult.missingSupplements.join(', ')}`);
   }
-  if (validationResult.missingClinicTreatments.length > 0) {
+  if (validationResult?.missingClinicTreatments?.length > 0) {
     missingItems.push(`MISSING CLINIC TREATMENTS: ${validationResult.missingClinicTreatments.join(', ')}`);
   }
-  if (validationResult.missingLifestyleProtocols.length > 0) {
+  if (validationResult?.missingLifestyleProtocols?.length > 0) {
     missingItems.push(`MISSING LIFESTYLE PROTOCOLS: ${validationResult.missingLifestyleProtocols.join(', ')}`);
   }
-  if (validationResult.missingRetests.length > 0) {
+  if (validationResult?.missingRetests?.length > 0) {
     missingItems.push(`MISSING RETESTS: ${validationResult.missingRetests.join(', ')}`);
   }
+
+  const coveragePercentage = validationResult?.coveragePercentage || {};
 
   return `The engagement plan you generated is MISSING required protocol items.
 
 ALIGNMENT VALIDATION FAILED:
-- Overall Coverage: ${validationResult.overallCoverage}%
-- Supplements Coverage: ${validationResult.coveragePercentage.supplements}%
-- Clinic Treatments Coverage: ${validationResult.coveragePercentage.clinic_treatments}%
-- Lifestyle Protocols Coverage: ${validationResult.coveragePercentage.lifestyle_protocols}%
-- Retest Coverage: ${validationResult.coveragePercentage.retest_schedule}%
+- Overall Coverage: ${validationResult?.overallCoverage || 0}%
+- Supplements Coverage: ${coveragePercentage.supplements || 0}%
+- Clinic Treatments Coverage: ${coveragePercentage.clinic_treatments || 0}%
+- Lifestyle Protocols Coverage: ${coveragePercentage.lifestyle_protocols || 0}%
+- Retest Coverage: ${coveragePercentage.retest_schedule || 0}%
 
 ${missingItems.join('\n')}
 
