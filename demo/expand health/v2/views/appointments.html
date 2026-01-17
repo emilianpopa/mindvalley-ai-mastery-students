@@ -3476,10 +3476,12 @@
       try {
         const startOfWeek = getStartOfWeek(currentDate);
         const endOfWeek = new Date(startOfWeek);
-        endOfWeek.setDate(endOfWeek.getDate() + 7);
+        endOfWeek.setDate(endOfWeek.getDate() + 6); // Saturday (6 days after Sunday)
+        endOfWeek.setHours(23, 59, 59, 999); // End of Saturday
 
         const startDate = startOfWeek.toISOString().split('T')[0];
-        const endDate = endOfWeek.toISOString().split('T')[0];
+        // Use end of Saturday to include all Saturday appointments
+        const endDate = endOfWeek.toISOString();
 
         const data = await apiRequest(`/api/appointments/calendar?start=${startDate}&end=${endDate}`);
 
@@ -3508,8 +3510,10 @@
         const start = new Date(apt.start);
         const end = new Date(apt.end);
 
-        // Calculate which day column (0-6)
-        const dayDiff = Math.floor((start - startOfWeek) / (1000 * 60 * 60 * 24));
+        // Calculate which day column (0-6) using local dates to avoid timezone issues
+        const startLocal = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+        const weekStartLocal = new Date(startOfWeek.getFullYear(), startOfWeek.getMonth(), startOfWeek.getDate());
+        const dayDiff = Math.round((startLocal - weekStartLocal) / (1000 * 60 * 60 * 24));
         if (dayDiff < 0 || dayDiff > 6) return; // Skip if outside current week
 
         // Calculate position within the day
