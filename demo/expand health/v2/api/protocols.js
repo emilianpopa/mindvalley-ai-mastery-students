@@ -705,10 +705,21 @@ router.get('/engagement-plans/:id/compare-alignment', authenticateToken, async (
     let protocol = null;
     let protocolElements = { supplements: [], clinic_treatments: [], lifestyle_protocols: [], retest_schedule: [], safety_constraints: [] };
 
+    console.log('[Compare Alignment] sourceProtocolId:', sourceProtocolId);
+
     if (sourceProtocolId) {
       const protocolResult = await db.query('SELECT * FROM protocols WHERE id = $1', [sourceProtocolId]);
+      console.log('[Compare Alignment] Found source protocol:', protocolResult.rows.length > 0);
+
       if (protocolResult.rows.length > 0) {
         protocol = protocolResult.rows[0];
+        console.log('[Compare Alignment] Protocol fields available:', {
+          has_ai_recommendations: !!protocol.ai_recommendations,
+          ai_rec_length: protocol.ai_recommendations ? String(protocol.ai_recommendations).length : 0,
+          has_modules: !!protocol.modules,
+          modules_length: protocol.modules ? String(protocol.modules).length : 0,
+          has_content: !!protocol.content
+        });
 
         // Extract protocol data - PRIORITY: ai_recommendations (where AI protocols are stored)
         let protocolData = null;
@@ -720,10 +731,14 @@ router.get('/engagement-plans/:id/compare-alignment', authenticateToken, async (
               ? JSON.parse(protocol.ai_recommendations)
               : protocol.ai_recommendations;
 
+            console.log('[Compare Alignment] ai_recommendations keys:', Object.keys(aiRec || {}));
+
             // Check if it has protocol structure (not just an engagement plan)
             if (aiRec.core_protocol || aiRec.phased_expansion || aiRec.clinic_treatments || aiRec.retest_schedule) {
               protocolData = aiRec;
               console.log('[Compare Alignment] Using ai_recommendations for protocol extraction');
+            } else {
+              console.log('[Compare Alignment] ai_recommendations does not have protocol structure');
             }
           } catch (e) {
             console.log('[Compare Alignment] Could not parse ai_recommendations:', e.message);
@@ -736,12 +751,14 @@ router.get('/engagement-plans/:id/compare-alignment', authenticateToken, async (
             protocolData = typeof protocol.modules === 'string'
               ? JSON.parse(protocol.modules)
               : protocol.modules;
+            console.log('[Compare Alignment] modules parsed, keys:', Object.keys(protocolData || {}));
             if (protocolData && (Array.isArray(protocolData) ? protocolData.length > 0 : true)) {
               console.log('[Compare Alignment] Using modules for protocol extraction');
             } else {
               protocolData = null;
             }
           } catch (e) {
+            console.log('[Compare Alignment] Could not parse modules:', e.message);
             protocolData = null;
           }
         }
@@ -756,6 +773,10 @@ router.get('/engagement-plans/:id/compare-alignment', authenticateToken, async (
           }
         }
 
+        if (!protocolData) {
+          console.log('[Compare Alignment] WARNING: No protocol data found in any field!');
+        }
+
         protocolElements = extractProtocolElements(protocolData || {});
         console.log('[Compare Alignment] Extracted elements:', {
           supplements: protocolElements.supplements.length,
@@ -764,6 +785,8 @@ router.get('/engagement-plans/:id/compare-alignment', authenticateToken, async (
           retest_schedule: protocolElements.retest_schedule.length
         });
       }
+    } else {
+      console.log('[Compare Alignment] No sourceProtocolId - engagement plan has no linked protocol');
     }
 
     // Validate alignment
