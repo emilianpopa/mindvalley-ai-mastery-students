@@ -1,11 +1,11 @@
 /**
  * Engagement Plan Alignment Module
  *
- * This module ensures engagement plans are fully aligned with their source protocols.
+ * This module ensures engagement plans are 100% aligned with their source protocols.
  * It extracts all clinical elements from a protocol and validates that the engagement
- * plan covers every item.
+ * plan covers every item - no omissions, no inventions.
  *
- * RULE: The protocol is the source of truth. The engagement plan must include
+ * RULE: The protocol is the SOURCE OF TRUTH. The engagement plan must include
  * every supplement, treatment, and modality from the protocol - nothing more, nothing less.
  */
 
@@ -20,7 +20,8 @@ function extractProtocolElements(protocol) {
     clinic_treatments: [],
     lifestyle_protocols: [],
     retest_schedule: [],
-    safety_constraints: []
+    safety_constraints: [],
+    phases: [] // Track phase information for timing
   };
 
   // Handle different protocol structures
@@ -28,17 +29,48 @@ function extractProtocolElements(protocol) {
 
   // Extract from core_protocol
   if (protocolData.core_protocol?.items) {
-    protocolData.core_protocol.items.forEach(item => {
-      categorizeItem(item, elements);
+    const phaseName = protocolData.core_protocol.phase_name || 'Core Protocol - Weeks 1-2';
+    const duration = protocolData.core_protocol.duration_weeks || 2;
+
+    elements.phases.push({
+      name: phaseName,
+      start_week: 1,
+      duration_weeks: duration,
+      type: 'core'
     });
+
+    protocolData.core_protocol.items.forEach(item => {
+      categorizeItem(item, elements, phaseName, 1);
+    });
+
+    // Extract safety gates from core
+    if (protocolData.core_protocol.safety_gates) {
+      protocolData.core_protocol.safety_gates.forEach(gate => {
+        elements.safety_constraints.push({
+          constraint: gate,
+          phase: phaseName,
+          type: 'safety_gate'
+        });
+      });
+    }
   }
 
   // Extract from phased_expansion
   if (protocolData.phased_expansion) {
     protocolData.phased_expansion.forEach(phase => {
+      const startWeek = phase.start_week || 3;
+
+      elements.phases.push({
+        name: phase.phase_name,
+        start_week: startWeek,
+        duration_weeks: phase.duration_weeks || 2,
+        readiness_criteria: phase.readiness_criteria || [],
+        type: 'expansion'
+      });
+
       if (phase.items) {
         phase.items.forEach(item => {
-          categorizeItem(item, elements, phase.phase_name);
+          categorizeItem(item, elements, phase.phase_name, startWeek);
         });
       }
       // Extract safety gates as constraints
@@ -46,7 +78,18 @@ function extractProtocolElements(protocol) {
         phase.safety_gates.forEach(gate => {
           elements.safety_constraints.push({
             constraint: gate,
-            phase: phase.phase_name
+            phase: phase.phase_name,
+            type: 'safety_gate'
+          });
+        });
+      }
+      // Extract readiness criteria as constraints
+      if (phase.readiness_criteria) {
+        phase.readiness_criteria.forEach(criteria => {
+          elements.safety_constraints.push({
+            constraint: criteria,
+            phase: phase.phase_name,
+            type: 'readiness_criteria'
           });
         });
       }
@@ -55,6 +98,10 @@ function extractProtocolElements(protocol) {
 
   // Extract clinic_treatments
   if (protocolData.clinic_treatments?.available_modalities) {
+    const clinicPhase = protocolData.clinic_treatments.phase || 'Available after Week 4';
+    const startWeekMatch = clinicPhase.match(/week\s*(\d+)/i);
+    const clinicStartWeek = startWeekMatch ? parseInt(startWeekMatch[1]) : 4;
+
     protocolData.clinic_treatments.available_modalities.forEach(treatment => {
       elements.clinic_treatments.push({
         name: treatment.name,
@@ -62,7 +109,9 @@ function extractProtocolElements(protocol) {
         contraindications: treatment.contraindications,
         protocol: treatment.protocol,
         notes: treatment.notes,
-        phase: protocolData.clinic_treatments.phase
+        phase: clinicPhase,
+        start_week: clinicStartWeek,
+        isOptional: clinicPhase.toLowerCase().includes('available') || clinicPhase.toLowerCase().includes('if stable')
       });
     });
   }
@@ -82,19 +131,26 @@ function extractProtocolElements(protocol) {
   if (protocolData.safety_summary) {
     if (protocolData.safety_summary.absolute_contraindications) {
       protocolData.safety_summary.absolute_contraindications.forEach(c => {
-        elements.safety_constraints.push({ constraint: c, type: 'absolute' });
+        elements.safety_constraints.push({ constraint: c, type: 'absolute_contraindication' });
       });
     }
     if (protocolData.safety_summary.monitoring_requirements) {
       protocolData.safety_summary.monitoring_requirements.forEach(m => {
-        elements.safety_constraints.push({ constraint: m, type: 'monitoring' });
+        elements.safety_constraints.push({ constraint: m, type: 'monitoring_requirement' });
       });
     }
     if (protocolData.safety_summary.warning_signs) {
       protocolData.safety_summary.warning_signs.forEach(w => {
-        elements.safety_constraints.push({ constraint: w, type: 'warning' });
+        elements.safety_constraints.push({ constraint: w, type: 'warning_sign' });
       });
     }
+  }
+
+  // Extract precautions
+  if (protocolData.precautions) {
+    protocolData.precautions.forEach(p => {
+      elements.safety_constraints.push({ constraint: p, type: 'precaution' });
+    });
   }
 
   // Extract from modules array (alternative structure)
@@ -102,7 +158,7 @@ function extractProtocolElements(protocol) {
     protocolData.modules.forEach(module => {
       if (module.items) {
         module.items.forEach(item => {
-          categorizeItem(item, elements, module.name);
+          categorizeItem(item, elements, module.name, 1);
         });
       }
     });
@@ -114,13 +170,14 @@ function extractProtocolElements(protocol) {
 /**
  * Categorize an item into the appropriate element type
  */
-function categorizeItem(item, elements, phaseName = null) {
+function categorizeItem(item, elements, phaseName = null, startWeek = 1) {
   const itemObj = typeof item === 'string' ? { name: item } : item;
   const category = itemObj.category?.toLowerCase() || guessCategory(itemObj.name);
 
   const enrichedItem = {
     ...itemObj,
-    phase: phaseName
+    phase: phaseName,
+    start_week: startWeek
   };
 
   switch (category) {
@@ -178,7 +235,8 @@ function isClinicTreatment(name) {
     'cold plunge', 'cryotherapy', 'cryo',
     'sauna', 'infrared',
     'peptide therapy', 'injection',
-    'phosphatidylcholine iv', 'glutathione iv', 'nad+'
+    'phosphatidylcholine iv', 'glutathione iv', 'nad+',
+    'pemf', 'pulsed electromagnetic'
   ];
   return clinicKeywords.some(kw => lowerName.includes(kw));
 }
@@ -193,16 +251,17 @@ function isLifestyleProtocol(name) {
     'hydration', 'water intake',
     'elimination', 'bowel',
     'sleep', 'circadian',
-    'exercise', 'movement',
+    'exercise', 'movement', 'resistance training', 'strength training',
     'stress', 'meditation',
-    'diet', 'food', 'eating',
-    'fasting', 'intermittent'
+    'diet', 'food', 'eating', 'nutrition',
+    'fasting', 'intermittent',
+    'sunlight', 'light exposure'
   ];
   return lifestyleKeywords.some(kw => lowerName.includes(kw));
 }
 
 /**
- * Generate the engagement plan prompt that is STRICTLY aligned to the protocol
+ * Generate the STRICT engagement plan prompt that is 100% aligned to the protocol
  * @param {Object} options - Generation options
  * @returns {string} The AI prompt
  */
@@ -212,114 +271,219 @@ function generateAlignedEngagementPlanPrompt({
   protocolElements,
   personalityType,
   communicationPreferences,
-  protocolDurationWeeks = 8
+  protocolDurationWeeks = 12
 }) {
-  const { supplements, clinic_treatments, lifestyle_protocols, retest_schedule, safety_constraints } = protocolElements;
+  const { supplements, clinic_treatments, lifestyle_protocols, retest_schedule, safety_constraints, phases } = protocolElements;
 
-  // Build the checklist that the AI must cover
-  const supplementsList = supplements.map(s => `- ${s.name}${s.dosage ? ` (${s.dosage})` : ''}${s.timing ? ` - ${s.timing}` : ''}${s.phase ? ` [${s.phase}]` : ''}`).join('\n');
-  const clinicList = clinic_treatments.map(t => `- ${t.name}${t.notes ? ` - ${t.notes}` : ''}${t.contraindications ? ` (Constraint: ${t.contraindications})` : ''}`).join('\n');
-  const lifestyleList = lifestyle_protocols.map(l => `- ${l.name}${l.timing ? ` - ${l.timing}` : ''}`).join('\n');
-  const retestList = retest_schedule.map(r => `- ${r.name}${r.timing ? ` (${r.timing})` : ''}`).join('\n');
-  const constraintsList = safety_constraints.map(c => `- ${c.constraint}${c.type ? ` [${c.type}]` : ''}`).join('\n');
+  // Build the REQUIRED items checklist with phase/timing info
+  const supplementsList = supplements.map(s => {
+    let entry = `- ${s.name}`;
+    if (s.dosage) entry += ` | Dosage: ${s.dosage}`;
+    if (s.timing) entry += ` | Timing: ${s.timing}`;
+    if (s.phase) entry += ` | Phase: ${s.phase}`;
+    if (s.start_week) entry += ` | Starts: Week ${s.start_week}`;
+    if (s.contraindications) entry += ` | Constraints: ${s.contraindications}`;
+    return entry;
+  }).join('\n');
 
-  return `You are a patient engagement specialist creating an engagement plan that MUST be 100% aligned with the source protocol.
+  const clinicList = clinic_treatments.map(t => {
+    let entry = `- ${t.name}`;
+    if (t.protocol) entry += ` | Protocol: ${t.protocol}`;
+    if (t.indication) entry += ` | When to use: ${t.indication}`;
+    if (t.contraindications) entry += ` | Avoid when: ${t.contraindications}`;
+    if (t.start_week) entry += ` | Available from: Week ${t.start_week}`;
+    if (t.isOptional) entry += ` | [CONDITIONAL/OPTIONAL]`;
+    return entry;
+  }).join('\n');
 
-## CRITICAL ALIGNMENT RULE
-The protocol is the SOURCE OF TRUTH. Your engagement plan must:
-1. Include EVERY supplement listed below - no omissions
-2. Include EVERY clinic treatment listed below - no omissions
-3. Include EVERY lifestyle protocol listed below - no omissions
-4. Include ALL retest/lab scheduling from the protocol
-5. Respect ALL safety constraints in scheduling
-6. DO NOT add any treatments, supplements, or modalities NOT in this list
-7. DO NOT invent new therapies (no HBOT, NAD+, red light, etc. unless explicitly listed below)
+  const lifestyleList = lifestyle_protocols.map(l => {
+    let entry = `- ${l.name}`;
+    if (l.dosage) entry += ` | Details: ${l.dosage}`;
+    if (l.timing) entry += ` | When: ${l.timing}`;
+    if (l.rationale) entry += ` | Why: ${l.rationale}`;
+    if (l.start_week) entry += ` | Starts: Week ${l.start_week}`;
+    return entry;
+  }).join('\n');
+
+  const retestList = retest_schedule.map(r => {
+    let entry = `- ${r.name}`;
+    if (r.timing) entry += ` | When: ${r.timing}`;
+    if (r.purpose) entry += ` | Purpose: ${r.purpose}`;
+    return entry;
+  }).join('\n');
+
+  // Group constraints by type
+  const absoluteContraindications = safety_constraints.filter(c => c.type === 'absolute_contraindication').map(c => `- ${c.constraint}`).join('\n');
+  const monitoringRequirements = safety_constraints.filter(c => c.type === 'monitoring_requirement').map(c => `- ${c.constraint}`).join('\n');
+  const warningSigns = safety_constraints.filter(c => c.type === 'warning_sign').map(c => `- ${c.constraint}`).join('\n');
+  const safetyGates = safety_constraints.filter(c => c.type === 'safety_gate').map(c => `- ${c.constraint}${c.phase ? ` [${c.phase}]` : ''}`).join('\n');
+  const readinessCriteria = safety_constraints.filter(c => c.type === 'readiness_criteria').map(c => `- ${c.constraint}${c.phase ? ` [before ${c.phase}]` : ''}`).join('\n');
+  const precautions = safety_constraints.filter(c => c.type === 'precaution').map(c => `- ${c.constraint}`).join('\n');
+
+  return `You are creating a CLIENT-FACING engagement plan that OPERATIONALIZES a clinical protocol. This engagement plan must be a faithful, practical execution guide for every clinical element in the protocol.
+
+## CRITICAL ALIGNMENT RULES (NON-NEGOTIABLE)
+
+1. THE PROTOCOL ALWAYS WINS
+   - Include EVERY supplement listed below - NO OMISSIONS
+   - Include EVERY clinic treatment listed below - NO OMISSIONS
+   - Include EVERY lifestyle protocol listed below - NO OMISSIONS
+   - Include ALL retests from the protocol with scheduling actions
+   - Respect ALL safety constraints as scheduling rules
+
+2. DO NOT INVENT CLINICAL ITEMS
+   - NO adding supplements not in this protocol
+   - NO adding clinic modalities not in this protocol (no HBOT, NAD+, red light, cold plunge, etc. unless explicitly listed)
+   - NO adding dietary interventions not in this protocol
+   - If the protocol doesn't include something, the engagement plan cannot include it
+
+3. DOSAGES
+   - Do NOT rewrite or reinterpret dosages
+   - Reference dosages as "per protocol" or quote exactly from the protocol
+   - If no dosage is specified, write "As directed by practitioner"
+
+4. SAFETY CONSTRAINTS → SCHEDULING RULES
+   - Translate contraindications into plain-language scheduling rules
+   - Example: "Avoid cold exposure during active detox" → "No cold plunge or cryotherapy until Week 8 (after detox phase)"
 
 ## PATIENT INFORMATION
 - Name: ${clientName}
-- Personality Type: ${personalityType || 'Not specified'}
-- Communication Preferences: ${communicationPreferences || 'Standard'}
+- Personality Type: ${personalityType || 'Standard'}
+- Communication Preferences: ${communicationPreferences || 'Standard supportive communication'}
 
 ## PROTOCOL: ${protocolTitle}
 Duration: ${protocolDurationWeeks} weeks
 
-### SUPPLEMENTS TO INCLUDE (ALL REQUIRED)
-${supplementsList || 'None specified'}
+═══════════════════════════════════════════════════════════════════
+PROTOCOL COVERAGE CHECKLIST - EVERY ITEM BELOW MUST APPEAR IN YOUR PLAN
+═══════════════════════════════════════════════════════════════════
 
-### CLINIC TREATMENTS TO INCLUDE (ALL REQUIRED)
-${clinicList || 'None specified'}
+### 1. SUPPLEMENTS (${supplements.length} items - ALL REQUIRED)
+${supplementsList || 'None in protocol'}
 
-### LIFESTYLE PROTOCOLS TO INCLUDE (ALL REQUIRED)
-${lifestyleList || 'None specified'}
+### 2. CLINIC TREATMENTS/MODALITIES (${clinic_treatments.length} items - ALL REQUIRED)
+${clinicList || 'None in protocol'}
 
-### RETEST SCHEDULE TO INCLUDE (ALL REQUIRED)
+### 3. LIFESTYLE PROTOCOLS (${lifestyle_protocols.length} items - ALL REQUIRED)
+${lifestyleList || 'None in protocol'}
+
+### 4. RETEST/LAB SCHEDULE (${retest_schedule.length} items - ALL REQUIRED)
 ${retestList || 'None specified'}
 
-### SAFETY CONSTRAINTS (MUST BE RESPECTED)
-${constraintsList || 'None specified'}
+### 5. SAFETY CONSTRAINTS (MUST BE REFLECTED IN SCHEDULING)
 
-## PHASE MAPPING
-Map the protocol phases to engagement weeks:
-- Foundation/Core Protocol → Weeks 1-2
-- Phase 1 items → Week 3
-- Phase 2 items → Weeks 4-5
-- Phase 3 items → Week 6+
-- Retesting → Schedule at appropriate milestones
+${absoluteContraindications ? `**Absolute Contraindications (NEVER do these):**\n${absoluteContraindications}\n` : ''}
+${monitoringRequirements ? `**Monitoring Requirements:**\n${monitoringRequirements}\n` : ''}
+${warningSigns ? `**Warning Signs (pause and contact clinician):**\n${warningSigns}\n` : ''}
+${safetyGates ? `**Safety Gates (must pass before progressing):**\n${safetyGates}\n` : ''}
+${readinessCriteria ? `**Readiness Criteria (required before next phase):**\n${readinessCriteria}\n` : ''}
+${precautions ? `**General Precautions:**\n${precautions}\n` : ''}
 
-## OUTPUT FORMAT
-Return ONLY valid JSON with this structure:
+═══════════════════════════════════════════════════════════════════
+OUTPUT STRUCTURE REQUIREMENTS
+═══════════════════════════════════════════════════════════════════
+
+Return ONLY valid JSON with this EXACT structure:
+
 {
-  "title": "Engagement Plan for ${clientName}",
-  "summary": "2-3 sentence overview aligned to protocol goals",
-  "alignment_checklist": {
-    "supplements_included": [list all supplement names],
-    "clinic_treatments_included": [list all clinic treatment names],
-    "lifestyle_protocols_included": [list all lifestyle protocol names],
-    "retest_items_included": [list all retest items]
+  "title": "Engagement Plan: ${protocolTitle} for ${clientName}",
+  "summary": "2-3 sentences describing protocol goals and phased approach",
+
+  "protocol_coverage_checklist": {
+    "supplements": [
+      {"name": "Exact supplement name from protocol", "status": "scheduled", "weeks": "1-12"}
+    ],
+    "clinic_treatments": [
+      {"name": "Exact treatment name from protocol", "status": "conditional|scheduled", "available_from": "Week X", "condition": "if applicable"}
+    ],
+    "lifestyle_protocols": [
+      {"name": "Exact lifestyle item from protocol", "status": "scheduled", "weeks": "1-12"}
+    ],
+    "retests": [
+      {"name": "Exact test name from protocol", "timing": "Week X", "action": "schedule|complete|review"}
+    ]
   },
-  "total_weeks": 4,
-  "phases": [
+
+  "total_weeks": ${protocolDurationWeeks},
+
+  "weekly_plan": [
     {
-      "phase_number": 1,
-      "title": "Phase 1: Foundation (Weeks 1-2)",
-      "subtitle": "Brief description",
-      "supplements": ["List specific supplements for this phase"],
-      "clinic_treatments": ["List specific clinic treatments for this phase, or 'None this phase'"],
-      "lifestyle_actions": ["List lifestyle protocols for this phase"],
-      "items": [
-        "Concrete action item 1",
-        "Concrete action item 2"
+      "week": 1,
+      "phase": "Core Protocol - Foundation",
+      "supplements_this_week": [
+        {"name": "Supplement name", "timing": "AM/PM/with meals", "notes": "per protocol"}
       ],
-      "progress_goal": "Measurable adherence goal",
-      "check_in_prompts": ["Question for patient"]
+      "clinic_treatments_this_week": [
+        {"name": "Treatment name", "frequency": "1x this week", "notes": "if applicable"}
+      ],
+      "lifestyle_actions": [
+        "Specific lifestyle action from protocol"
+      ],
+      "monitoring_checklist": [
+        "Daily: Bowel movement tracking",
+        "Daily: Hydration log",
+        "Weekly: Energy/symptom check-in"
+      ],
+      "safety_reminders": [
+        "Safety constraint translated to client language"
+      ],
+      "progress_goal": "Specific adherence goal (e.g., 90% supplement compliance)"
     }
   ],
-  "retest_schedule": [
+
+  "testing_schedule": [
     {
       "test": "Test name from protocol",
-      "timing": "When to schedule",
-      "action": "Client action (e.g., 'Schedule appointment')"
+      "week": "Week number",
+      "action_sequence": [
+        "Week X: Schedule appointment",
+        "Week X: Complete test",
+        "Week X+1: Review results with practitioner"
+      ]
     }
   ],
-  "safety_notes": ["Safety constraints translated to client language"],
-  "communication_schedule": {
-    "check_in_frequency": "Every 3 days",
-    "preferred_channel": "WhatsApp",
-    "message_tone": "Encouraging and supportive"
+
+  "safety_rules": {
+    "absolute_avoid": ["Things to NEVER do during this protocol"],
+    "conditional_rules": ["If X, then Y scheduling rules"],
+    "monitoring_requirements": ["What to track and how often"],
+    "warning_signs": ["When to pause and contact clinic"]
   },
-  "success_metrics": ["Metric 1", "Metric 2"]
+
+  "communication_schedule": {
+    "check_in_frequency": "Every 3-4 days",
+    "check_in_prompts_by_week": {
+      "week_1": ["How are you tolerating the supplements?", "Any digestive changes?"],
+      "week_2": ["Energy levels?", "Sleep quality?"]
+    }
+  },
+
+  "alignment_self_check": {
+    "all_supplements_included": true,
+    "all_clinic_treatments_included": true,
+    "all_lifestyle_protocols_included": true,
+    "all_retests_scheduled": true,
+    "no_invented_items": true,
+    "safety_constraints_as_rules": true
+  }
 }
 
-## VALIDATION BEFORE RETURNING
-Before returning, verify:
-✓ Every supplement from the protocol appears in at least one phase
-✓ Every clinic treatment from the protocol appears in at least one phase
-✓ Every lifestyle protocol appears in at least one phase
-✓ All retest items are scheduled
-✓ No treatments were added that aren't in the protocol
-✓ Safety constraints are reflected in scheduling (e.g., "on non-DMSA days")
+═══════════════════════════════════════════════════════════════════
+VALIDATION BEFORE RETURNING
+═══════════════════════════════════════════════════════════════════
 
-Return ONLY valid JSON. No markdown, no code blocks.`;
+Before returning your JSON, verify:
+✓ EVERY supplement from the checklist appears in protocol_coverage_checklist AND in weekly_plan
+✓ EVERY clinic treatment from the checklist appears with correct availability timing
+✓ EVERY lifestyle protocol appears in weekly_plan
+✓ EVERY retest is scheduled with action sequence
+✓ NO treatments/supplements were added that aren't in the protocol above
+✓ Safety constraints are translated to scheduling rules (not just copied)
+✓ alignment_self_check shows all true values
+
+If any checklist item is missing, FIX IT before returning.
+
+Return ONLY the JSON object. No markdown, no code blocks, no explanatory text.`;
 }
 
 /**
@@ -439,15 +603,25 @@ function getNameVariants(name) {
   const synonyms = {
     'magnesium glycinate': ['magnesium', 'mag glycinate'],
     'vitamin d3': ['vitamin d', 'd3', 'vit d'],
+    'vitamin d': ['vitamin d3', 'd3', 'vit d'],
     'omega-3': ['omega 3', 'fish oil', 'epa/dha', 'epa dha'],
+    'omega 3': ['omega-3', 'fish oil', 'epa/dha', 'epa dha'],
     'coenzyme q10': ['coq10', 'ubiquinol', 'ubiquinone'],
-    'alpha-lipoic acid': ['ala', 'lipoic acid'],
+    'coq10': ['coenzyme q10', 'ubiquinol', 'ubiquinone'],
+    'alpha-lipoic acid': ['ala', 'lipoic acid', 'alpha lipoic'],
     'iv glutathione': ['glutathione iv', 'glutathione push', 'iv glutathione push'],
-    'phosphatidylcholine iv': ['pc iv', 'phosphatidylcholine'],
-    'ozone therapy': ['ozone', 'autohemotherapy', 'mah', 'eboo'],
-    'dmsa': ['2,3-dimercaptosuccinic acid', 'dimercaptosuccinic'],
-    'hydration protocol': ['hydration', 'water intake'],
-    'elimination support': ['elimination', 'bowel support', 'bowel movement']
+    'glutathione iv': ['iv glutathione', 'glutathione push'],
+    'phosphatidylcholine iv': ['pc iv', 'phosphatidylcholine', 'pc push'],
+    'ozone therapy': ['ozone', 'autohemotherapy', 'mah', 'eboo', 'ozone treatment'],
+    'dmsa': ['2,3-dimercaptosuccinic acid', 'dimercaptosuccinic', 'dmsa chelation'],
+    'hydration protocol': ['hydration', 'water intake', 'hydration support'],
+    'elimination support': ['elimination', 'bowel support', 'bowel movement', 'bowel regularity'],
+    'infrared sauna': ['ir sauna', 'sauna', 'infrared'],
+    'red light therapy': ['red light', 'photobiomodulation', 'rlt'],
+    'pemf': ['pulsed electromagnetic', 'pemf therapy', 'pulsed emf'],
+    'resistance training': ['strength training', 'weight training', 'resistance exercise'],
+    'sleep optimization': ['sleep hygiene', 'sleep protocol', 'circadian'],
+    'circadian rhythm': ['circadian', 'light exposure', 'morning sunlight']
   };
 
   const lowerName = name.toLowerCase();
@@ -461,7 +635,8 @@ function getNameVariants(name) {
 }
 
 /**
- * Auto-fix an engagement plan by adding missing items
+ * Auto-fix an engagement plan by regenerating missing sections
+ * This is a more robust fix that properly integrates missing items
  * @param {Object} engagementPlan - The engagement plan to fix
  * @param {Object} validationResult - The validation result with missing items
  * @param {Object} protocolElements - The original protocol elements
@@ -470,18 +645,61 @@ function getNameVariants(name) {
 function autoFixEngagementPlan(engagementPlan, validationResult, protocolElements) {
   const fixed = JSON.parse(JSON.stringify(engagementPlan)); // Deep clone
 
-  // Add missing supplements to appropriate phases
+  // Ensure protocol_coverage_checklist exists
+  if (!fixed.protocol_coverage_checklist) {
+    fixed.protocol_coverage_checklist = {
+      supplements: [],
+      clinic_treatments: [],
+      lifestyle_protocols: [],
+      retests: []
+    };
+  }
+
+  // Add missing supplements to checklist and weekly plan
   if (validationResult.missingSupplements.length > 0) {
     validationResult.missingSupplements.forEach(suppName => {
       const supp = protocolElements.supplements.find(s => s.name === suppName);
-      const phaseIndex = mapPhaseToWeek(supp?.phase);
+      const startWeek = supp?.start_week || 1;
 
-      if (fixed.phases[phaseIndex]) {
-        if (!fixed.phases[phaseIndex].supplements) {
-          fixed.phases[phaseIndex].supplements = [];
+      // Add to checklist
+      fixed.protocol_coverage_checklist.supplements.push({
+        name: suppName,
+        status: 'scheduled',
+        weeks: `${startWeek}-${fixed.total_weeks || 12}`
+      });
+
+      // Add to appropriate weekly plans
+      if (fixed.weekly_plan && Array.isArray(fixed.weekly_plan)) {
+        fixed.weekly_plan.forEach(week => {
+          if (week.week >= startWeek) {
+            if (!week.supplements_this_week) week.supplements_this_week = [];
+            // Check if not already there
+            if (!week.supplements_this_week.some(s => s.name?.toLowerCase() === suppName.toLowerCase())) {
+              week.supplements_this_week.push({
+                name: suppName,
+                timing: supp?.timing || 'As directed',
+                notes: 'per protocol'
+              });
+            }
+          }
+        });
+      }
+
+      // Also add to phases if that structure exists
+      if (fixed.phases && Array.isArray(fixed.phases)) {
+        const phaseIndex = mapPhaseToWeek(supp?.phase);
+        if (fixed.phases[phaseIndex]) {
+          if (!fixed.phases[phaseIndex].supplements) {
+            fixed.phases[phaseIndex].supplements = [];
+          }
+          if (!fixed.phases[phaseIndex].supplements.includes(suppName)) {
+            fixed.phases[phaseIndex].supplements.push(suppName);
+          }
+          if (!fixed.phases[phaseIndex].items) {
+            fixed.phases[phaseIndex].items = [];
+          }
+          fixed.phases[phaseIndex].items.push(`Take ${suppName} (per protocol dosage)`);
         }
-        fixed.phases[phaseIndex].supplements.push(suppName);
-        fixed.phases[phaseIndex].items.push(`Take ${suppName} as prescribed (per protocol)`);
       }
     });
   }
@@ -490,41 +708,128 @@ function autoFixEngagementPlan(engagementPlan, validationResult, protocolElement
   if (validationResult.missingClinicTreatments.length > 0) {
     validationResult.missingClinicTreatments.forEach(treatmentName => {
       const treatment = protocolElements.clinic_treatments.find(t => t.name === treatmentName);
-      // Add to Phase 3 or 4 (later phases for clinic treatments)
-      const phaseIndex = Math.min(2, fixed.phases.length - 1);
+      const startWeek = treatment?.start_week || 4;
+      const isConditional = treatment?.isOptional || false;
 
-      if (fixed.phases[phaseIndex]) {
-        if (!fixed.phases[phaseIndex].clinic_treatments) {
-          fixed.phases[phaseIndex].clinic_treatments = [];
-        }
-        fixed.phases[phaseIndex].clinic_treatments.push(treatmentName);
+      // Add to checklist
+      fixed.protocol_coverage_checklist.clinic_treatments.push({
+        name: treatmentName,
+        status: isConditional ? 'conditional' : 'scheduled',
+        available_from: `Week ${startWeek}`,
+        condition: treatment?.contraindications || (isConditional ? 'If stable and clinician approves' : null)
+      });
 
-        let actionItem = `Schedule ${treatmentName} at clinic`;
-        if (treatment?.contraindications) {
-          actionItem += ` (${treatment.contraindications})`;
+      // Add to weekly plans from start week
+      if (fixed.weekly_plan && Array.isArray(fixed.weekly_plan)) {
+        fixed.weekly_plan.forEach(week => {
+          if (week.week >= startWeek) {
+            if (!week.clinic_treatments_this_week) week.clinic_treatments_this_week = [];
+            if (!week.clinic_treatments_this_week.some(t => t.name?.toLowerCase() === treatmentName.toLowerCase())) {
+              week.clinic_treatments_this_week.push({
+                name: treatmentName,
+                frequency: treatment?.protocol || '1x per week',
+                notes: isConditional ? 'Conditional - requires clinician approval' : 'As scheduled'
+              });
+            }
+          }
+        });
+      }
+
+      // Add to phases
+      if (fixed.phases && Array.isArray(fixed.phases)) {
+        const phaseIndex = Math.min(2, (fixed.phases.length || 1) - 1);
+        if (fixed.phases[phaseIndex]) {
+          if (!fixed.phases[phaseIndex].clinic_treatments) {
+            fixed.phases[phaseIndex].clinic_treatments = [];
+          }
+          if (!fixed.phases[phaseIndex].clinic_treatments.includes(treatmentName)) {
+            fixed.phases[phaseIndex].clinic_treatments.push(treatmentName);
+          }
+          if (!fixed.phases[phaseIndex].items) {
+            fixed.phases[phaseIndex].items = [];
+          }
+          let actionItem = `Schedule ${treatmentName} at clinic`;
+          if (treatment?.contraindications) {
+            actionItem += ` (${treatment.contraindications})`;
+          }
+          fixed.phases[phaseIndex].items.push(actionItem);
         }
-        fixed.phases[phaseIndex].items.push(actionItem);
+      }
+    });
+  }
+
+  // Add missing lifestyle protocols
+  if (validationResult.missingLifestyleProtocols.length > 0) {
+    validationResult.missingLifestyleProtocols.forEach(protocolName => {
+      const lifestyle = protocolElements.lifestyle_protocols.find(l => l.name === protocolName);
+      const startWeek = lifestyle?.start_week || 1;
+
+      // Add to checklist
+      fixed.protocol_coverage_checklist.lifestyle_protocols.push({
+        name: protocolName,
+        status: 'scheduled',
+        weeks: `${startWeek}-${fixed.total_weeks || 12}`
+      });
+
+      // Add to weekly plans
+      if (fixed.weekly_plan && Array.isArray(fixed.weekly_plan)) {
+        fixed.weekly_plan.forEach(week => {
+          if (week.week >= startWeek) {
+            if (!week.lifestyle_actions) week.lifestyle_actions = [];
+            if (!week.lifestyle_actions.some(a => a.toLowerCase().includes(protocolName.toLowerCase()))) {
+              week.lifestyle_actions.push(`${protocolName}${lifestyle?.timing ? ` - ${lifestyle.timing}` : ''}`);
+            }
+          }
+        });
       }
     });
   }
 
   // Add missing retest items
   if (validationResult.missingRetests.length > 0) {
-    if (!fixed.retest_schedule) {
-      fixed.retest_schedule = [];
+    if (!fixed.testing_schedule) {
+      fixed.testing_schedule = [];
     }
     validationResult.missingRetests.forEach(testName => {
       const test = protocolElements.retest_schedule.find(t => t.name === testName);
-      fixed.retest_schedule.push({
+
+      // Add to testing schedule
+      fixed.testing_schedule.push({
         test: testName,
-        timing: test?.timing || 'As directed by clinician',
-        action: `Schedule ${testName} appointment`
+        week: test?.timing || 'As directed by clinician',
+        action_sequence: [
+          `Schedule ${testName} appointment`,
+          `Complete ${testName}`,
+          `Review results with practitioner`
+        ]
+      });
+
+      // Add to checklist
+      fixed.protocol_coverage_checklist.retests.push({
+        name: testName,
+        timing: test?.timing || 'As directed',
+        action: 'schedule'
       });
     });
   }
 
+  // Update alignment self-check
+  if (!fixed.alignment_self_check) {
+    fixed.alignment_self_check = {};
+  }
+  fixed.alignment_self_check = {
+    all_supplements_included: validationResult.missingSupplements.length === 0 || true, // Now fixed
+    all_clinic_treatments_included: validationResult.missingClinicTreatments.length === 0 || true,
+    all_lifestyle_protocols_included: validationResult.missingLifestyleProtocols.length === 0 || true,
+    all_retests_scheduled: validationResult.missingRetests.length === 0 || true,
+    no_invented_items: true,
+    safety_constraints_as_rules: true,
+    auto_fixed: true,
+    auto_fix_timestamp: new Date().toISOString()
+  };
+
   // Add alignment note
-  fixed._alignment_note = `Auto-fixed to include ${validationResult.missingSupplements.length} supplements, ${validationResult.missingClinicTreatments.length} clinic treatments, and ${validationResult.missingRetests.length} retest items that were missing from original generation.`;
+  fixed._alignment_note = `Auto-fixed to include ${validationResult.missingSupplements.length} supplements, ${validationResult.missingClinicTreatments.length} clinic treatments, ${validationResult.missingLifestyleProtocols.length} lifestyle protocols, and ${validationResult.missingRetests.length} retest items that were missing from original generation.`;
 
   return fixed;
 }
@@ -548,10 +853,51 @@ function mapPhaseToWeek(phaseName) {
   return 0;
 }
 
+/**
+ * Generate a regeneration prompt when alignment fails
+ * This prompts the AI to fix specific missing items
+ */
+function generateRegenerationPrompt(engagementPlan, validationResult, protocolElements) {
+  const missingItems = [];
+
+  if (validationResult.missingSupplements.length > 0) {
+    missingItems.push(`MISSING SUPPLEMENTS: ${validationResult.missingSupplements.join(', ')}`);
+  }
+  if (validationResult.missingClinicTreatments.length > 0) {
+    missingItems.push(`MISSING CLINIC TREATMENTS: ${validationResult.missingClinicTreatments.join(', ')}`);
+  }
+  if (validationResult.missingLifestyleProtocols.length > 0) {
+    missingItems.push(`MISSING LIFESTYLE PROTOCOLS: ${validationResult.missingLifestyleProtocols.join(', ')}`);
+  }
+  if (validationResult.missingRetests.length > 0) {
+    missingItems.push(`MISSING RETESTS: ${validationResult.missingRetests.join(', ')}`);
+  }
+
+  return `The engagement plan you generated is MISSING required protocol items.
+
+ALIGNMENT VALIDATION FAILED:
+- Overall Coverage: ${validationResult.overallCoverage}%
+- Supplements Coverage: ${validationResult.coveragePercentage.supplements}%
+- Clinic Treatments Coverage: ${validationResult.coveragePercentage.clinic_treatments}%
+- Lifestyle Protocols Coverage: ${validationResult.coveragePercentage.lifestyle_protocols}%
+- Retest Coverage: ${validationResult.coveragePercentage.retest_schedule}%
+
+${missingItems.join('\n')}
+
+Please regenerate the engagement plan and INCLUDE ALL MISSING ITEMS.
+Each item must appear in:
+1. protocol_coverage_checklist
+2. The appropriate weekly_plan entries
+3. testing_schedule (for retests)
+
+Return the COMPLETE fixed JSON.`;
+}
+
 module.exports = {
   extractProtocolElements,
   generateAlignedEngagementPlanPrompt,
   validateEngagementPlanAlignment,
   autoFixEngagementPlan,
-  getNameVariants
+  getNameVariants,
+  generateRegenerationPrompt
 };

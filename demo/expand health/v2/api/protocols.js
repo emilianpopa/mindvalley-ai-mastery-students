@@ -29,7 +29,8 @@ const {
   extractProtocolElements,
   generateAlignedEngagementPlanPrompt,
   validateEngagementPlanAlignment,
-  autoFixEngagementPlan
+  autoFixEngagementPlan,
+  generateRegenerationPrompt
 } = require('../prompts/engagement-plan-alignment');
 
 // Initialize Gemini SDK for Knowledge Base queries (using new File Search API)
@@ -2464,45 +2465,89 @@ Return ONLY valid JSON.`;
     }
 
     // ========================================
-    // VALIDATION & AUTO-FIX - Ensure engagement plan covers all protocol items
+    // VALIDATION & REGENERATION LOOP - Ensure engagement plan covers all protocol items
     // ========================================
     if (protocolElements.supplements.length > 0 || protocolElements.clinic_treatments.length > 0) {
       console.log('[Engagement Plan] Validating alignment with protocol...');
 
-      const validationResult = validateEngagementPlanAlignment(engagementPlan, protocolElements);
+      let validationResult = validateEngagementPlanAlignment(engagementPlan, protocolElements);
+      let regenerationAttempts = 0;
+      const maxRegenerationAttempts = 2;
 
-      console.log('[Engagement Plan] Validation result:', {
+      console.log('[Engagement Plan] Initial validation result:', {
         isAligned: validationResult.isAligned,
         overallCoverage: validationResult.overallCoverage + '%',
         missingSupplements: validationResult.missingSupplements.length,
         missingClinicTreatments: validationResult.missingClinicTreatments.length,
+        missingLifestyleProtocols: validationResult.missingLifestyleProtocols?.length || 0,
         missingRetests: validationResult.missingRetests.length
       });
 
-      // Auto-fix if not fully aligned
+      // Regeneration loop - try to get AI to fix missing items
+      while (!validationResult.isAligned && regenerationAttempts < maxRegenerationAttempts) {
+        regenerationAttempts++;
+        console.log(`[Engagement Plan] Alignment failed. Regeneration attempt ${regenerationAttempts}/${maxRegenerationAttempts}...`);
+
+        // Generate regeneration prompt with specific missing items
+        const regenPrompt = generateRegenerationPrompt(engagementPlan, validationResult, protocolElements);
+
+        try {
+          const regenResponse = await anthropic.messages.create({
+            model: 'claude-sonnet-4-20250514',
+            max_tokens: 4096,
+            messages: [
+              { role: 'user', content: aiPrompt },
+              { role: 'assistant', content: JSON.stringify(engagementPlan) },
+              { role: 'user', content: regenPrompt }
+            ]
+          });
+
+          const regenText = regenResponse.content[0].text;
+          const regenJsonMatch = regenText.match(/\{[\s\S]*\}/);
+          if (regenJsonMatch) {
+            engagementPlan = JSON.parse(regenJsonMatch[0]);
+            console.log('[Engagement Plan] Regeneration response parsed successfully');
+
+            // Re-validate
+            validationResult = validateEngagementPlanAlignment(engagementPlan, protocolElements);
+            console.log(`[Engagement Plan] Post-regeneration validation:`, {
+              isAligned: validationResult.isAligned,
+              overallCoverage: validationResult.overallCoverage + '%'
+            });
+          }
+        } catch (regenError) {
+          console.error('[Engagement Plan] Regeneration failed:', regenError.message);
+          break;
+        }
+      }
+
+      // Final fallback: Auto-fix if still not fully aligned after regeneration attempts
       if (!validationResult.isAligned) {
-        console.log('[Engagement Plan] Auto-fixing missing items...');
+        console.log('[Engagement Plan] Regeneration did not achieve full coverage. Applying auto-fix...');
         engagementPlan = autoFixEngagementPlan(engagementPlan, validationResult, protocolElements);
         console.log('[Engagement Plan] Auto-fix complete. Added missing items.');
 
         // Add validation metadata to the plan
         engagementPlan._validation = {
           originalCoverage: validationResult.overallCoverage,
+          regenerationAttempts: regenerationAttempts,
           autoFixed: true,
           fixedAt: new Date().toISOString(),
           itemsAdded: {
             supplements: validationResult.missingSupplements,
             clinic_treatments: validationResult.missingClinicTreatments,
+            lifestyle_protocols: validationResult.missingLifestyleProtocols || [],
             retests: validationResult.missingRetests
           }
         };
       } else {
         engagementPlan._validation = {
-          originalCoverage: 100,
+          originalCoverage: validationResult.overallCoverage,
+          regenerationAttempts: regenerationAttempts,
           autoFixed: false,
           validatedAt: new Date().toISOString()
         };
-        console.log('[Engagement Plan] Validation passed - 100% protocol coverage');
+        console.log(`[Engagement Plan] Validation passed - ${validationResult.overallCoverage}% protocol coverage${regenerationAttempts > 0 ? ` (after ${regenerationAttempts} regeneration(s))` : ''}`);
       }
     }
 
