@@ -8898,15 +8898,16 @@ async function checkAlignmentForEngagement(engagementId, isNewTable, sourceProto
   try {
     let url;
     if (isNewTable) {
-      // Use engagement plan specific endpoint
+      // Use engagement plan specific endpoint for plans stored in engagement_plans table
       url = `${API_BASE}/api/protocols/engagement-plans/${engagementId}/compare-alignment`;
-    } else if (sourceProtocolId && sourceProtocolId !== 'null') {
-      // Legacy: use protocol-based alignment
-      url = `${API_BASE}/api/protocols/${sourceProtocolId}/compare-alignment`;
     } else {
-      // No source protocol - use engagement plan endpoint
-      url = `${API_BASE}/api/protocols/engagement-plans/${engagementId}/compare-alignment`;
+      // Legacy: engagement plan is stored in protocols.ai_recommendations
+      // The engagementId is actually the protocol ID for legacy plans
+      // Use the protocol-based alignment endpoint
+      url = `${API_BASE}/api/protocols/${engagementId}/compare-alignment`;
     }
+
+    console.log('[Check Alignment] isNewTable:', isNewTable, 'engagementId:', engagementId, 'url:', url);
 
     const response = await fetch(url, {
       headers: { 'Authorization': `Bearer ${token}` }
@@ -8914,7 +8915,7 @@ async function checkAlignmentForEngagement(engagementId, isNewTable, sourceProto
 
     if (response.ok) {
       const data = await response.json();
-      showAlignmentModal({ loading: false, data, protocolId: sourceProtocolId });
+      showAlignmentModal({ loading: false, data, protocolId: isNewTable ? sourceProtocolId : engagementId });
     } else {
       const error = await response.json();
       showAlignmentModal({ loading: false, error: error.error || 'Failed to check alignment' });
