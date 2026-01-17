@@ -4230,14 +4230,43 @@
 
       // Client / Signups section
       const clientName = apt.extendedProps?.clientName;
+      const clientEmail = apt.extendedProps?.clientEmail || '';
       const signupCard = document.getElementById('panelSignupCard');
       if (clientName) {
         signupCard.style.display = 'flex';
         document.getElementById('panelClientName').textContent = clientName;
+        document.getElementById('panelClientEmail').textContent = clientEmail;
       } else {
         signupCard.style.display = 'flex';
         document.getElementById('panelClientName').textContent = 'No client assigned';
+        document.getElementById('panelClientEmail').textContent = '';
       }
+
+      // Payment tags
+      const paymentTagsEl = document.getElementById('panelPaymentTags');
+      const price = apt.extendedProps?.price || 0;
+      const credits = apt.extendedProps?.credits || 0;
+      let tagsHtml = '';
+
+      if (price > 0) {
+        tagsHtml += `<span style="display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; background: #F3F4F6; border-radius: 4px; font-size: 0.75rem; color: #374151;">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+          ZAR ${price.toFixed(2)}
+        </span>`;
+      }
+
+      tagsHtml += `<span style="display: inline-flex; align-items: center; padding: 4px 8px; background: ${isPaid ? '#DEF7EC' : '#FEE2E2'}; border-radius: 4px; font-size: 0.75rem; color: ${isPaid ? '#03543F' : '#991B1B'}; font-weight: 500;">
+        ${isPaid ? 'Paid' : 'Not paid'}
+      </span>`;
+
+      if (credits > 0) {
+        tagsHtml += `<span style="display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; background: #EDE9FE; border-radius: 4px; font-size: 0.75rem; color: #5B21B6;">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>
+          ${credits} credits
+        </span>`;
+      }
+
+      paymentTagsEl.innerHTML = tagsHtml;
 
       // Update check-in toggle and timestamp
       const toggle = document.getElementById('panelCheckinToggle');
@@ -4273,10 +4302,31 @@
         serviceNameEl.onclick = (e) => e.preventDefault();
       }
 
-      // Price
-      const price = apt.extendedProps?.price || 0;
+      // Price (reuse price variable from payment tags)
       const priceEl = document.getElementById('panelPrice');
-      priceEl.innerHTML = `ZAR ${price.toFixed(2)} <span class="panel-price-credits">or 0 credits</span>`;
+      priceEl.innerHTML = `ZAR ${price.toFixed(2)} <span class="panel-price-credits">or ${credits} credits</span>`;
+
+      // Populate Timing tab
+      document.getElementById('panelTimingDateTime').textContent = `${dateStr} ${startTime} - ${endTime}`;
+      document.getElementById('panelTimingDuration').textContent = `Duration: ${durationMins} minutes`;
+
+      // Created at date
+      const createdAt = apt.extendedProps?.createdAt;
+      if (createdAt) {
+        const createdDate = new Date(createdAt);
+        document.getElementById('panelCreatedAt').textContent = createdDate.toLocaleDateString('en-US', {
+          weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit'
+        });
+      } else {
+        document.getElementById('panelCreatedAt').textContent = 'Not available';
+      }
+
+      // Populate Note tab
+      const notes = apt.extendedProps?.notes || apt.notes || '';
+      document.getElementById('panelNoteText').value = notes;
+
+      // Reset to Details tab when opening
+      showPanelTab('details');
 
       // Show panel
       document.getElementById('appointmentPanelOverlay').classList.add('show');
@@ -4380,9 +4430,54 @@
 
     function showPanelTab(tab) {
       document.querySelectorAll('.panel-tab').forEach((t, i) => {
-        t.classList.toggle('active', (tab === 'details' && i === 0) || (tab === 'timing' && i === 1));
+        t.classList.toggle('active', (tab === 'details' && i === 0) || (tab === 'timing' && i === 1) || (tab === 'note' && i === 2));
       });
-      // TODO: Switch content based on tab
+
+      // Show/hide content sections
+      const detailsContent = document.getElementById('panelDetailsContent');
+      const timingContent = document.getElementById('panelTimingContent');
+      const noteContent = document.getElementById('panelNoteContent');
+
+      if (detailsContent) detailsContent.style.display = tab === 'details' ? 'block' : 'none';
+      if (timingContent) timingContent.style.display = tab === 'timing' ? 'block' : 'none';
+      if (noteContent) noteContent.style.display = tab === 'note' ? 'block' : 'none';
+    }
+
+    async function saveAppointmentNote() {
+      if (!selectedAppointment) return;
+
+      const noteText = document.getElementById('panelNoteText').value;
+      const aptId = selectedAppointment.id;
+
+      try {
+        const response = await fetch(`/api/appointments/${aptId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            notes: noteText
+          })
+        });
+
+        if (response.ok) {
+          // Update the selected appointment's notes
+          if (selectedAppointment.extendedProps) {
+            selectedAppointment.extendedProps.notes = noteText;
+          } else {
+            selectedAppointment.notes = noteText;
+          }
+          alert('Note saved successfully!');
+          loadAppointments(); // Refresh calendar
+        } else {
+          const error = await response.json();
+          alert('Error saving note: ' + (error.error || 'Unknown error'));
+        }
+      } catch (error) {
+        console.error('Error saving appointment note:', error);
+        alert('Error saving note. Please try again.');
+      }
     }
 
     // =====================
@@ -5216,6 +5311,10 @@
         </div>
         <div class="panel-signup-info">
           <div class="panel-signup-name" id="panelClientName">No client assigned</div>
+          <div class="panel-signup-email" id="panelClientEmail" style="font-size: 0.75rem; color: #6B7280; margin-top: 2px;"></div>
+          <div class="panel-signup-tags" id="panelPaymentTags" style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px;">
+            <!-- Payment tags will be populated dynamically -->
+          </div>
         </div>
         <div class="panel-signup-actions">
           <div class="panel-checkin-row">
@@ -5292,10 +5391,21 @@
         </svg>
         Timing
       </button>
+      <button class="panel-tab" onclick="showPanelTab('note')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="16" y1="13" x2="8" y2="13"></line>
+          <line x1="16" y1="17" x2="8" y2="17"></line>
+        </svg>
+        Note
+      </button>
     </div>
 
     <!-- Content -->
     <div class="panel-content">
+      <!-- Details Tab Content -->
+      <div id="panelDetailsContent">
       <!-- Scheduled Section -->
       <div class="panel-section">
         <div class="panel-section-title">Scheduled</div>
@@ -5385,6 +5495,51 @@
         </svg>
         Add to calendar
       </button>
+      </div><!-- End Details Tab Content -->
+
+      <!-- Timing Tab Content -->
+      <div id="panelTimingContent" style="display: none; padding: 16px 0;">
+        <div class="panel-section">
+          <div class="panel-section-title">Timing Information</div>
+          <div class="panel-info-row">
+            <div class="panel-info-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+            </div>
+            <div class="panel-info-content">
+              <div class="panel-info-label" id="panelTimingDateTime">--</div>
+              <div class="panel-info-sublabel" id="panelTimingDuration">--</div>
+            </div>
+          </div>
+        </div>
+        <div class="panel-section">
+          <div class="panel-section-title">Created</div>
+          <div class="panel-info-row">
+            <div class="panel-info-icon gray">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+            </div>
+            <div class="panel-info-content">
+              <div class="panel-info-sublabel" id="panelCreatedAt">--</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Note Tab Content -->
+      <div id="panelNoteContent" style="display: none; padding: 16px 0;">
+        <div class="panel-section">
+          <div class="panel-section-title">Appointment Note</div>
+          <textarea id="panelNoteText" placeholder="Add a note for this appointment..." style="width: 100%; min-height: 150px; padding: 12px; border: 1px solid #E5E7EB; border-radius: 8px; font-size: 0.875rem; resize: vertical; font-family: inherit;"></textarea>
+          <button onclick="saveAppointmentNote()" style="margin-top: 12px; padding: 8px 16px; background: #0F766E; color: white; border: none; border-radius: 6px; font-size: 0.875rem; cursor: pointer;">Save Note</button>
+        </div>
+      </div>
     </div>
 
     <!-- Panel Footer -->
