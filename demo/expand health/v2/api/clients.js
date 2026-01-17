@@ -639,7 +639,7 @@ function parseCustomerFromMomence(customerField) {
   return null;
 }
 
-// Import clients from Momence appointments CSV
+// Import clients from Momence CSV (supports both appointments CSV and direct customer export)
 router.post('/import/momence', async (req, res, next) => {
   try {
     const { csvData, dryRun = true } = req.body;
@@ -659,15 +659,25 @@ router.post('/import/momence', async (req, res, next) => {
     // Parse CSV
     const lines = csvData.trim().split('\n');
     const header = parseCSVLine(lines[0]);
+    const headerLower = header.map(h => h.toLowerCase().trim());
 
-    // Find Customer column index
-    const customerIndex = header.findIndex(h =>
-      h.toLowerCase().includes('customer') || h.toLowerCase().includes('client')
-    );
+    // Detect CSV format
+    // Format 1: Appointments CSV with "Customer" column containing "Name (email)"
+    // Format 2: Direct customer export with separate "Name"/"First Name", "Email", "Phone" columns
+    const customerIndex = headerLower.findIndex(h => h.includes('customer') || h === 'client');
+    const emailIndex = headerLower.findIndex(h => h === 'email' || h === 'e-mail' || h === 'email address');
+    const nameIndex = headerLower.findIndex(h => h === 'name' || h === 'full name' || h === 'customer name');
+    const firstNameIndex = headerLower.findIndex(h => h === 'first name' || h === 'firstname');
+    const lastNameIndex = headerLower.findIndex(h => h === 'last name' || h === 'lastname');
+    const phoneIndex = headerLower.findIndex(h => h === 'phone' || h === 'phone number' || h === 'mobile');
 
-    if (customerIndex === -1) {
+    // Determine which format we're dealing with
+    const isDirectExport = emailIndex !== -1 && (nameIndex !== -1 || firstNameIndex !== -1);
+    const isAppointmentsExport = customerIndex !== -1 && !isDirectExport;
+
+    if (!isDirectExport && !isAppointmentsExport) {
       return res.status(400).json({
-        error: 'Could not find Customer column in CSV. Headers found: ' + header.join(', ')
+        error: 'Could not detect CSV format. Expected either: (1) Appointments CSV with "Customer" column, or (2) Customer export with "Email" and "Name" columns. Headers found: ' + header.join(', ')
       });
     }
 
@@ -676,17 +686,49 @@ router.post('/import/momence', async (req, res, next) => {
 
     for (let i = 1; i < lines.length; i++) {
       const values = parseCSVLine(lines[i]);
-      const customerField = values[customerIndex];
+      if (values.length < 2) continue;
 
-      if (!customerField) continue;
+      let firstName = '';
+      let lastName = '';
+      let email = '';
+      let phone = '';
 
-      const parsed = parseCustomerFromMomence(customerField);
-      if (parsed && parsed.email && !customersMap.has(parsed.email)) {
-        customersMap.set(parsed.email, {
-          firstName: parsed.firstName,
-          lastName: parsed.lastName,
-          email: parsed.email
-        });
+      if (isDirectExport) {
+        // Direct customer export format
+        email = (values[emailIndex] || '').trim().toLowerCase();
+
+        if (firstNameIndex !== -1 && lastNameIndex !== -1) {
+          firstName = (values[firstNameIndex] || '').trim();
+          lastName = (values[lastNameIndex] || '').trim();
+        } else if (nameIndex !== -1) {
+          const fullName = (values[nameIndex] || '').trim();
+          const nameParts = fullName.split(/\s+/);
+          firstName = nameParts[0] || '';
+          lastName = nameParts.slice(1).join(' ') || '';
+        }
+
+        if (phoneIndex !== -1) {
+          phone = (values[phoneIndex] || '').trim();
+        }
+      } else {
+        // Appointments CSV format: "Name (email)"
+        const customerField = values[customerIndex];
+        if (!customerField) continue;
+
+        const parsed = parseCustomerFromMomence(customerField);
+        if (!parsed) continue;
+
+        firstName = parsed.firstName;
+        lastName = parsed.lastName;
+        email = parsed.email;
+      }
+
+      // Skip if no email
+      if (!email) continue;
+
+      // Add to map (deduplicates by email)
+      if (!customersMap.has(email)) {
+        customersMap.set(email, { firstName, lastName, email, phone });
       }
     }
 
@@ -711,9 +753,9 @@ router.post('/import/momence', async (req, res, next) => {
       for (const customer of newCustomers) {
         try {
           await db.query(
-            `INSERT INTO clients (tenant_id, first_name, last_name, email, status, created_at)
-             VALUES ($1, $2, $3, $4, 'active', CURRENT_TIMESTAMP)`,
-            [tenantId, customer.firstName, customer.lastName, customer.email]
+            `INSERT INTO clients (tenant_id, first_name, last_name, email, phone, status, created_at)
+             VALUES ($1, $2, $3, $4, $5, 'active', CURRENT_TIMESTAMP)`,
+            [tenantId, customer.firstName, customer.lastName, customer.email, customer.phone || null]
           );
           imported++;
         } catch (err) {
@@ -730,6 +772,7 @@ router.post('/import/momence', async (req, res, next) => {
       existingCustomers: existingCustomers.length,
       imported: dryRun ? 0 : imported,
       errors: errors.slice(0, 10),
+      format: isDirectExport ? 'customer_export' : 'appointments_export',
       preview: {
         newCustomers: newCustomers.slice(0, 20),
         existingCustomers: existingCustomers.slice(0, 10).map(c => c.email)

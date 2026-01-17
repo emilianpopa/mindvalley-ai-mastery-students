@@ -46,20 +46,20 @@
     <div id="customersPanel" class="tab-panel">
       <!-- Instructions -->
       <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-        <h3 class="font-medium text-blue-900 mb-2">Import Customers from Momence Appointments</h3>
-        <ol class="list-decimal list-inside text-sm text-blue-800 space-y-1">
-          <li>Export appointments from Momence (contains customer info)</li>
-          <li>Upload the CSV file below</li>
-          <li>Unique customers will be extracted from the appointments</li>
-          <li>New customers will be added (existing ones skipped)</li>
-        </ol>
+        <h3 class="font-medium text-blue-900 mb-2">Import Customers from Momence</h3>
+        <p class="text-sm text-blue-800 mb-2">You can upload either:</p>
+        <ul class="list-disc list-inside text-sm text-blue-800 space-y-1 mb-3">
+          <li><strong>Customer Export CSV</strong> - Export from Momence Customers page (includes all customers)</li>
+          <li><strong>Appointments CSV</strong> - Export from Momence Appointments (only customers with bookings)</li>
+        </ul>
+        <p class="text-xs text-blue-600">Tip: For a complete import, export customers directly from Momence's Customers section.</p>
       </div>
 
       <!-- Upload Form -->
       <div class="bg-white shadow rounded-lg p-6 mb-6">
         <div class="mb-4">
           <label class="block text-sm font-medium text-gray-700 mb-2">
-            Upload Momence Appointments CSV
+            Upload Momence CSV (Customers or Appointments export)
           </label>
           <input
             type="file"
