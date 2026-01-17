@@ -1169,6 +1169,16 @@
       color: var(--red-700);
     }
 
+    .panel-status-badge.unpaid {
+      background: #fecaca;
+      color: #dc2626;
+    }
+
+    .panel-status-badge.confirmed {
+      background: var(--purple-100);
+      color: var(--purple-700);
+    }
+
     .panel-close-btn {
       display: flex;
       align-items: center;
@@ -4170,12 +4180,24 @@
         document.getElementById('panelTitle').textContent = apt.title || 'Appointment reservation';
         document.getElementById('panelId').textContent = `ID: ${apt.id}`;
 
-      // Status badge
+      // Payment Status badge (Paid / Not paid)
       const statusBadge = document.getElementById('panelStatusBadge');
-      const status = apt.extendedProps?.status || 'scheduled';
-      const displayStatus = status === 'in_progress' ? 'Paid' : status.charAt(0).toUpperCase() + status.slice(1);
-      statusBadge.textContent = displayStatus;
-      statusBadge.className = `panel-status-badge ${status === 'in_progress' ? 'paid' : status}`;
+      const paymentStatus = apt.extendedProps?.paymentStatus;
+      const isPaid = paymentStatus === 'paid';
+      const isUnpaid = paymentStatus === 'unpaid' || paymentStatus === 'pending';
+
+      if (isPaid) {
+        statusBadge.textContent = 'Paid';
+        statusBadge.className = 'panel-status-badge paid';
+      } else if (isUnpaid) {
+        statusBadge.textContent = 'Not paid';
+        statusBadge.className = 'panel-status-badge unpaid';
+      } else {
+        // No payment info - show appointment status
+        const status = apt.extendedProps?.status || 'confirmed';
+        statusBadge.textContent = status.charAt(0).toUpperCase() + status.slice(1);
+        statusBadge.className = `panel-status-badge ${status}`;
+      }
 
       // Date/time
       const start = new Date(apt.start);

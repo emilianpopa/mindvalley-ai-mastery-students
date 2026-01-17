@@ -798,6 +798,10 @@ router.post('/import/momence', async (req, res, next) => {
       const duration = getServiceDuration(serviceName);
       const endTime = new Date(startTime.getTime() + duration * 60000);
 
+      // Check paid status - Momence uses "Yes", "Paid", or similar values
+      const paidValue = paidIdx >= 0 ? values[paidIdx]?.toLowerCase().trim() : '';
+      const isPaid = paidValue === 'yes' || paidValue === 'paid' || paidValue === 'true' || paidValue === '1';
+
       appointments.push({
         clientId,
         serviceName,
@@ -807,7 +811,7 @@ router.post('/import/momence', async (req, res, next) => {
         duration,
         practitioner: practitionerIdx >= 0 ? values[practitionerIdx] : null,
         location: locationIdx >= 0 ? values[locationIdx] : null,
-        paid: paidIdx >= 0 && values[paidIdx]?.toLowerCase() === 'yes'
+        paid: isPaid
       });
       toImport++;
     }
