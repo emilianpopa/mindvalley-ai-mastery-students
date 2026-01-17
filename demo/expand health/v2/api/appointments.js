@@ -883,4 +883,116 @@ router.post('/import/momence', async (req, res, next) => {
   }
 });
 
+/**
+ * POST /api/appointments/sync-payment-status
+ * Sync payment status from Momence CSV for existing appointments
+ * This updates payment_status for appointments that already exist in the database
+ */
+router.post('/sync-payment-status', async (req, res, next) => {
+  try {
+    const { csvData, dryRun = true } = req.body;
+    const tenantId = req.user?.tenantId;
+
+    if (!csvData) return res.status(400).json({ error: 'csvData is required' });
+    if (!tenantId) return res.status(400).json({ error: 'Tenant context required' });
+
+    const lines = csvData.trim().split('\n');
+    const header = parseCSVLine(lines[0]).map(h => h.toLowerCase());
+
+    // Find column indexes
+    const dateIdx = header.findIndex(h => h.includes('date'));
+    const serviceIdx = header.findIndex(h => h.includes('service'));
+    const customerIdx = header.findIndex(h => h.includes('customer'));
+    const paidIdx = header.findIndex(h => h.includes('paid'));
+
+    if (dateIdx === -1 || customerIdx === -1) {
+      return res.status(400).json({ error: 'CSV must have date and customer columns' });
+    }
+
+    // Get existing clients
+    const clientsResult = await db.query('SELECT id, email FROM clients WHERE tenant_id = $1', [tenantId]);
+    const clientsByEmail = new Map(clientsResult.rows.map(c => [c.email?.toLowerCase(), c.id]));
+
+    let updated = 0;
+    let notFound = 0;
+    let errors = [];
+
+    for (let i = 1; i < lines.length; i++) {
+      const values = parseCSVLine(lines[i]);
+      if (values.length < Math.max(dateIdx, customerIdx) + 1) continue;
+
+      const dateStr = values[dateIdx];
+      const customerField = values[customerIdx];
+
+      if (!dateStr || !customerField) continue;
+
+      const startTime = parseMomenceDate(dateStr);
+      if (!startTime) continue;
+
+      const email = parseCustomerEmail(customerField);
+      const clientId = email ? clientsByEmail.get(email) : null;
+      if (!clientId) continue;
+
+      // Check paid status
+      const paidValue = paidIdx >= 0 ? values[paidIdx]?.toLowerCase().trim() : '';
+      const isPaid = paidValue === 'yes' || paidValue === 'paid' || paidValue === 'true' || paidValue === '1';
+      const paymentStatus = isPaid ? 'paid' : 'unpaid';
+
+      if (!dryRun) {
+        // Find and update matching appointment (by client, date within 5 minutes)
+        const startTimeStr = startTime.toISOString();
+        const endTimeWindow = new Date(startTime.getTime() + 5 * 60000).toISOString();
+
+        const result = await db.query(
+          `UPDATE appointments
+           SET payment_status = $1, updated_at = NOW()
+           WHERE tenant_id = $2
+             AND client_id = $3
+             AND start_time >= $4
+             AND start_time < $5
+           RETURNING id`,
+          [paymentStatus, tenantId, clientId, startTimeStr, endTimeWindow]
+        );
+
+        if (result.rowCount > 0) {
+          updated += result.rowCount;
+        } else {
+          notFound++;
+        }
+      } else {
+        // Dry run - just count
+        const startTimeStr = startTime.toISOString();
+        const endTimeWindow = new Date(startTime.getTime() + 5 * 60000).toISOString();
+
+        const result = await db.query(
+          `SELECT id FROM appointments
+           WHERE tenant_id = $1
+             AND client_id = $2
+             AND start_time >= $3
+             AND start_time < $4`,
+          [tenantId, clientId, startTimeStr, endTimeWindow]
+        );
+
+        if (result.rowCount > 0) {
+          updated += result.rowCount;
+        } else {
+          notFound++;
+        }
+      }
+    }
+
+    res.json({
+      dryRun,
+      totalInCSV: lines.length - 1,
+      toUpdate: updated,
+      updated: dryRun ? 0 : updated,
+      notFound,
+      errors: errors.slice(0, 10)
+    });
+
+  } catch (error) {
+    next(error);
+  }
+});
+
 module.exports = router;

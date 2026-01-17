@@ -3701,28 +3701,26 @@
         if (!targetSlot) return;
 
         // Determine payment/status for color coding
-        const isPaid = apt.extendedProps?.paymentStatus === 'paid' || apt.extendedProps?.status === 'completed';
-        const isUnpaid = apt.extendedProps?.paymentStatus === 'unpaid' || apt.extendedProps?.paymentStatus === 'pending';
+        // Treat NULL/missing payment_status as unpaid (red) - this ensures imported appointments show correctly
+        const paymentStatus = apt.extendedProps?.paymentStatus;
+        const isPaid = paymentStatus === 'paid' || apt.extendedProps?.status === 'completed';
+        // Unpaid = explicitly unpaid OR no payment status (NULL)
+        const isUnpaid = paymentStatus === 'unpaid' || paymentStatus === 'pending' || (!paymentStatus && !isPaid);
         const status = apt.extendedProps?.status || 'confirmed';
 
         // Momence-style: Color based on payment status
-        // Green = paid, Red = unpaid, Yellow indicator = confirmed/no payment info
+        // Green = paid, Red = unpaid/unknown
         let bgColor, textColor, indicatorColor;
-        if (isUnpaid) {
-          // RED background for unpaid - like Momence
-          bgColor = '#ef4444';
-          textColor = '#ffffff';
-          indicatorColor = '#ef4444';
-        } else if (isPaid) {
+        if (isPaid) {
           // GREEN background for paid
           bgColor = '#4ade80';
           textColor = '#166534';
           indicatorColor = '#22c55e';
         } else {
-          // GREEN background with yellow indicator for confirmed (no payment info)
-          bgColor = '#4ade80';
-          textColor = '#166534';
-          indicatorColor = '#eab308';
+          // RED background for unpaid/unknown - like Momence
+          bgColor = '#ef4444';
+          textColor = '#ffffff';
+          indicatorColor = '#ef4444';
         }
 
         // Create appointment block
@@ -3760,12 +3758,12 @@
         const price = apt.extendedProps?.price || 0;
 
         // Payment status text and class
-        const paymentStatusText = isPaid ? 'Paid' : isUnpaid ? 'Not paid' : 'Confirmed';
-        const statusClass = isPaid ? 'paid' : isUnpaid ? 'unpaid' : 'confirmed';
+        const paymentStatusText = isPaid ? 'Paid' : 'Not paid';
+        const statusClass = isPaid ? 'paid' : 'unpaid';
 
         block.innerHTML = `
           <!-- Payment status indicator square -->
-          <div style="width: 10px; height: 10px; min-width: 10px; background: ${isUnpaid ? '#ffffff' : indicatorColor}; border-radius: 2px; margin-top: 2px;"></div>
+          <div style="width: 10px; height: 10px; min-width: 10px; background: ${isPaid ? indicatorColor : '#ffffff'}; border-radius: 2px; margin-top: 2px;"></div>
           <!-- Appointment content -->
           <div style="flex: 1; min-width: 0; overflow: hidden;">
             <div style="font-weight: 600; color: ${textColor}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${serviceName}</div>
@@ -4181,22 +4179,18 @@
         document.getElementById('panelId').textContent = `ID: ${apt.id}`;
 
       // Payment Status badge (Paid / Not paid)
+      // Treat NULL/missing payment_status as unpaid
       const statusBadge = document.getElementById('panelStatusBadge');
       const paymentStatus = apt.extendedProps?.paymentStatus;
       const isPaid = paymentStatus === 'paid';
-      const isUnpaid = paymentStatus === 'unpaid' || paymentStatus === 'pending';
 
       if (isPaid) {
         statusBadge.textContent = 'Paid';
         statusBadge.className = 'panel-status-badge paid';
-      } else if (isUnpaid) {
+      } else {
+        // Not paid or unknown - show as Not paid
         statusBadge.textContent = 'Not paid';
         statusBadge.className = 'panel-status-badge unpaid';
-      } else {
-        // No payment info - show appointment status
-        const status = apt.extendedProps?.status || 'confirmed';
-        statusBadge.textContent = status.charAt(0).toUpperCase() + status.slice(1);
-        statusBadge.className = `panel-status-badge ${status}`;
       }
 
       // Date/time
