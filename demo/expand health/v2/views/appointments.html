@@ -2006,6 +2006,247 @@
       border-color: #1d4ed8;
     }
 
+    /* Custom Customer Dropdown (Momence-style) */
+    .customer-dropdown-container {
+      position: relative;
+      margin-bottom: 16px;
+    }
+
+    .customer-dropdown-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .customer-dropdown {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      border: 1px solid var(--gray-300);
+      border-radius: 8px;
+      background: white;
+      cursor: pointer;
+      min-height: 44px;
+      transition: all 0.15s;
+    }
+
+    .customer-dropdown:hover {
+      border-color: var(--gray-400);
+    }
+
+    .customer-dropdown.open {
+      border-color: var(--purple-500);
+      box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.1);
+    }
+
+    .customer-dropdown-selected {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .dropdown-placeholder {
+      color: var(--gray-500);
+      font-size: 0.875rem;
+    }
+
+    .dropdown-arrow {
+      width: 18px;
+      height: 18px;
+      color: var(--gray-400);
+      flex-shrink: 0;
+      transition: transform 0.2s;
+    }
+
+    .customer-dropdown.open .dropdown-arrow {
+      transform: rotate(180deg);
+    }
+
+    .customer-dropdown-menu {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      right: 48px;
+      background: white;
+      border: 1px solid var(--gray-200);
+      border-radius: 8px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+      z-index: 100;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-8px);
+      transition: all 0.2s ease;
+    }
+
+    .customer-dropdown-menu.open {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+
+    .customer-search-wrapper {
+      position: relative;
+      padding: 12px;
+      border-bottom: 1px solid var(--gray-100);
+    }
+
+    .customer-search-icon {
+      position: absolute;
+      left: 22px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 16px;
+      height: 16px;
+      color: var(--gray-400);
+      pointer-events: none;
+    }
+
+    .customer-search-input {
+      width: 100%;
+      padding: 10px 12px 10px 36px;
+      border: 1px solid var(--gray-300);
+      border-radius: 6px;
+      font-size: 0.875rem;
+      color: var(--gray-900);
+      background: var(--gray-50);
+    }
+
+    .customer-search-input:focus {
+      outline: none;
+      border-color: var(--purple-500);
+      background: white;
+    }
+
+    .customer-search-input::placeholder {
+      color: var(--gray-400);
+    }
+
+    .customer-list {
+      max-height: 280px;
+      overflow-y: auto;
+      padding: 8px 0;
+    }
+
+    .customer-list::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .customer-list::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .customer-list::-webkit-scrollbar-thumb {
+      background: var(--gray-300);
+      border-radius: 3px;
+    }
+
+    .customer-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 16px;
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+
+    .customer-item:hover {
+      background: var(--gray-50);
+    }
+
+    .customer-item.selected {
+      background: var(--purple-50);
+    }
+
+    .customer-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--purple-100);
+      color: var(--purple-700);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.875rem;
+      font-weight: 600;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+
+    .customer-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .customer-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .customer-name {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--gray-900);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .customer-email {
+      font-size: 0.75rem;
+      color: var(--gray-500);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .customer-no-results {
+      padding: 20px 16px;
+      text-align: center;
+      color: var(--gray-500);
+      font-size: 0.875rem;
+    }
+
+    /* Selected customer in dropdown trigger */
+    .selected-customer-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--purple-100);
+      color: var(--purple-700);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+
+    .selected-customer-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .selected-customer-name {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--gray-900);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .selected-customer-email {
+      font-size: 0.75rem;
+      color: var(--gray-500);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
     .modal-btn-add:disabled {
       background: var(--gray-300);
       border-color: var(--gray-300);
@@ -4781,32 +5022,158 @@
       }
     }
 
+    // =====================
+    // Customer Dropdown Functions
+    // =====================
+    let selectedCustomerId = null;
+
+    function getInitials(firstName, lastName) {
+      const first = firstName ? firstName.charAt(0).toUpperCase() : '';
+      const last = lastName ? lastName.charAt(0).toUpperCase() : '';
+      return first + last;
+    }
+
+    function populateCustomerList() {
+      const customerList = document.getElementById('customerList');
+      customerList.innerHTML = '';
+
+      if (clients.length === 0) {
+        customerList.innerHTML = '<div class="customer-no-results">No customers found</div>';
+        return;
+      }
+
+      clients.forEach(client => {
+        const item = document.createElement('div');
+        item.className = 'customer-item';
+        item.dataset.clientId = client.id;
+        item.onclick = () => selectCustomer(client);
+
+        const initials = getInitials(client.first_name, client.last_name);
+        const fullName = `${client.first_name} ${client.last_name}`;
+        const email = client.email || '';
+
+        item.innerHTML = `
+          <div class="customer-avatar">${initials}</div>
+          <div class="customer-info">
+            <div class="customer-name">${fullName}</div>
+            <div class="customer-email">${email}</div>
+          </div>
+        `;
+
+        customerList.appendChild(item);
+      });
+    }
+
+    function selectCustomer(client) {
+      selectedCustomerId = client.id;
+      document.getElementById('customerSelect').value = client.id;
+
+      // Update dropdown display
+      const selected = document.getElementById('customerDropdownSelected');
+      const initials = getInitials(client.first_name, client.last_name);
+      const fullName = `${client.first_name} ${client.last_name}`;
+      const email = client.email || '';
+
+      selected.innerHTML = `
+        <div class="selected-customer-avatar">${initials}</div>
+        <div class="selected-customer-info">
+          <div class="selected-customer-name">${fullName}</div>
+          <div class="selected-customer-email">${email}</div>
+        </div>
+      `;
+
+      // Mark as selected in list
+      document.querySelectorAll('.customer-item').forEach(item => {
+        item.classList.remove('selected');
+        if (parseInt(item.dataset.clientId) === client.id) {
+          item.classList.add('selected');
+        }
+      });
+
+      // Close dropdown
+      closeCustomerDropdown();
+    }
+
+    function toggleCustomerDropdown() {
+      const dropdown = document.getElementById('customerDropdown');
+      const menu = document.getElementById('customerDropdownMenu');
+
+      if (menu.classList.contains('open')) {
+        closeCustomerDropdown();
+      } else {
+        dropdown.classList.add('open');
+        menu.classList.add('open');
+        // Focus search input
+        setTimeout(() => {
+          document.getElementById('customerSearchInput').focus();
+        }, 100);
+      }
+    }
+
+    function closeCustomerDropdown() {
+      document.getElementById('customerDropdown').classList.remove('open');
+      document.getElementById('customerDropdownMenu').classList.remove('open');
+    }
+
+    function filterCustomerList() {
+      const searchTerm = document.getElementById('customerSearchInput').value.toLowerCase().trim();
+      const customerList = document.getElementById('customerList');
+      customerList.innerHTML = '';
+
+      const filteredClients = clients.filter(client => {
+        const fullName = `${client.first_name} ${client.last_name}`.toLowerCase();
+        const email = (client.email || '').toLowerCase();
+        return fullName.includes(searchTerm) || email.includes(searchTerm);
+      });
+
+      if (filteredClients.length === 0) {
+        customerList.innerHTML = '<div class="customer-no-results">No customers found</div>';
+        return;
+      }
+
+      filteredClients.forEach(client => {
+        const item = document.createElement('div');
+        item.className = 'customer-item';
+        if (selectedCustomerId === client.id) {
+          item.className += ' selected';
+        }
+        item.dataset.clientId = client.id;
+        item.onclick = () => selectCustomer(client);
+
+        const initials = getInitials(client.first_name, client.last_name);
+        const fullName = `${client.first_name} ${client.last_name}`;
+        const email = client.email || '';
+
+        item.innerHTML = `
+          <div class="customer-avatar">${initials}</div>
+          <div class="customer-info">
+            <div class="customer-name">${fullName}</div>
+            <div class="customer-email">${email}</div>
+          </div>
+        `;
+
+        customerList.appendChild(item);
+      });
+    }
+
     async function openAddCustomerModal() {
       if (!selectedAppointment) {
         console.log('No selected appointment');
         return;
       }
 
+      // Reset state
+      selectedCustomerId = null;
+      document.getElementById('customerSelect').value = '';
+      document.getElementById('customerSearchInput').value = '';
+      document.getElementById('customerDropdownSelected').innerHTML = '<span class="dropdown-placeholder">Select customer...</span>';
+      closeCustomerDropdown();
+
       // Always reload clients to get fresh data
       await loadClients();
 
-      // Populate the dropdown
-      const select = document.getElementById('customerSelect');
-      select.innerHTML = '<option value="">Select customer...</option>';
-
-      if (clients.length === 0) {
-        select.innerHTML = '<option value="">No customers found</option>';
-      } else {
-        clients.forEach(client => {
-          const option = document.createElement('option');
-          option.value = client.id;
-          option.textContent = `${client.first_name} ${client.last_name}`;
-          if (client.email) {
-            option.textContent += ` (${client.email})`;
-          }
-          select.appendChild(option);
-        });
-      }
+      // Populate the customer list
+      populateCustomerList();
 
       // Show modal
       document.getElementById('addCustomerModalOverlay').classList.add('show');
@@ -4816,13 +5183,13 @@
     function closeAddCustomerModal() {
       document.getElementById('addCustomerModalOverlay').classList.remove('show');
       document.getElementById('addCustomerModal').classList.remove('show');
+      closeCustomerDropdown();
     }
 
     async function assignCustomer() {
       if (!selectedAppointment) return;
 
-      const select = document.getElementById('customerSelect');
-      const clientId = select.value;
+      const clientId = document.getElementById('customerSelect').value;
 
       if (!clientId) {
         alert('Please select a customer');
@@ -4853,6 +5220,17 @@
         alert('Failed to assign customer');
       }
     }
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(event) {
+      const dropdown = document.getElementById('customerDropdown');
+      const menu = document.getElementById('customerDropdownMenu');
+      if (dropdown && menu && menu.classList.contains('open')) {
+        if (!dropdown.contains(event.target) && !menu.contains(event.target)) {
+          closeCustomerDropdown();
+        }
+      }
+    });
 
     // =====================
     // Create Customer Modal
@@ -5669,7 +6047,7 @@
   <div class="add-customer-modal" id="addCustomerModal">
     <div class="add-customer-modal-header">
       <h3>Add customer</h3>
-      <span class="modal-limit-badge" id="modalLimitBadge">Over limit</span>
+      <span class="modal-limit-badge" id="modalLimitBadge" style="display: none;">Over limit</span>
       <div class="modal-header-spacer"></div>
       <button class="modal-close-btn" onclick="closeAddCustomerModal()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -5680,17 +6058,37 @@
     </div>
     <div class="add-customer-modal-body">
       <label class="modal-label">Customer</label>
-      <div class="modal-select-row">
-        <select id="customerSelect" class="modal-select">
-          <option value="">Select customer...</option>
-        </select>
-        <button class="modal-add-new-btn" onclick="openCreateCustomerModal()" title="Create new customer">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="12" y1="5" x2="12" y2="19"></line>
-            <line x1="5" y1="12" x2="19" y2="12"></line>
-          </svg>
-        </button>
+      <div class="customer-dropdown-container">
+        <div class="customer-dropdown-row">
+          <div class="customer-dropdown" id="customerDropdown" onclick="toggleCustomerDropdown()">
+            <div class="customer-dropdown-selected" id="customerDropdownSelected">
+              <span class="dropdown-placeholder">Select customer...</span>
+            </div>
+            <svg class="dropdown-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </div>
+          <button class="modal-add-new-btn" onclick="openCreateCustomerModal()" title="Create new customer">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+          </button>
+        </div>
+        <div class="customer-dropdown-menu" id="customerDropdownMenu">
+          <div class="customer-search-wrapper">
+            <svg class="customer-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input type="text" class="customer-search-input" id="customerSearchInput" placeholder="Search customers..." oninput="filterCustomerList()" onclick="event.stopPropagation()">
+          </div>
+          <div class="customer-list" id="customerList">
+            <!-- Customer items will be populated dynamically -->
+          </div>
+        </div>
       </div>
+      <input type="hidden" id="customerSelect" value="">
       <div class="modal-actions-row">
         <label class="modal-checkbox-label">
           <input type="checkbox" id="sendConfirmation" checked>
