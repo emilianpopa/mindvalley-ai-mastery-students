@@ -1701,6 +1701,179 @@ router.post('/update-service-prices', async (req, res, next) => {
 });
 
 /**
+ * POST /api/appointments/update-prices-from-summary
+ * Learn service prices from the "Sales by Appointment" summary report
+ * This report has aggregated data: Appointment Name, Reservations, Revenue
+ * Price per session = Revenue ÷ Reservations
+ */
+router.post('/update-prices-from-summary', async (req, res, next) => {
+  try {
+    const { csvData, dryRun = true } = req.body;
+    const tenantId = req.user?.tenantId;
+
+    if (!csvData) return res.status(400).json({ error: 'csvData is required' });
+    if (!tenantId) return res.status(400).json({ error: 'Tenant context required' });
+
+    const lines = csvData.trim().split('\n');
+    const header = parseCSVLine(lines[0]).map(h => h.toLowerCase().trim());
+
+    // Find column indexes for Sales by Appointment summary report
+    const appointmentNameIdx = header.findIndex(h =>
+      h.includes('appointment name') ||
+      h.includes('appointmentname') ||
+      h.includes('appointment') ||
+      h.includes('service') ||
+      h.includes('name')
+    );
+    const reservationsIdx = header.findIndex(h =>
+      h.includes('reservations') ||
+      h.includes('reservation') ||
+      h.includes('bookings') ||
+      h.includes('count') ||
+      h.includes('qty') ||
+      h.includes('quantity')
+    );
+    const revenueIdx = header.findIndex(h =>
+      h.includes('revenue') ||
+      h.includes('total') ||
+      h.includes('amount') ||
+      h.includes('sales') ||
+      h.includes('value')
+    );
+
+    if (appointmentNameIdx === -1 || revenueIdx === -1) {
+      return res.status(400).json({
+        error: 'CSV must have "Appointment Name" and "Revenue" columns',
+        headers: header,
+        foundColumns: {
+          appointmentName: appointmentNameIdx,
+          reservations: reservationsIdx,
+          revenue: revenueIdx
+        }
+      });
+    }
+
+    // Get existing service_types
+    const servicesResult = await db.query(
+      'SELECT id, name, price FROM service_types WHERE tenant_id = $1 ORDER BY name',
+      [tenantId]
+    );
+    const servicesByName = new Map(servicesResult.rows.map(s => [s.name.toLowerCase().trim(), { id: s.id, name: s.name, price: parseFloat(s.price) || 0 }]));
+
+    // Parse the summary data
+    const summaryData = [];
+    const servicesNotInDb = new Set();
+
+    for (let i = 1; i < lines.length; i++) {
+      const values = parseCSVLine(lines[i]);
+      if (values.length < Math.max(appointmentNameIdx, revenueIdx) + 1) continue;
+
+      const appointmentName = values[appointmentNameIdx]?.trim();
+      if (!appointmentName) continue;
+
+      // Parse reservations (default to 1 if not found or 0)
+      let reservations = 1;
+      if (reservationsIdx >= 0) {
+        const rawRes = values[reservationsIdx]?.replace(/[^0-9]/g, '') || '1';
+        reservations = parseInt(rawRes) || 1;
+      }
+
+      // Parse revenue (remove currency symbols, commas, spaces)
+      const rawRevenue = values[revenueIdx]?.replace(/[^0-9.-]/g, '') || '0';
+      const revenue = parseFloat(rawRevenue) || 0;
+
+      // Calculate price per session
+      const pricePerSession = reservations > 0 ? Math.round((revenue / reservations) * 100) / 100 : 0;
+
+      // Check if service exists in DB
+      const serviceKey = appointmentName.toLowerCase().trim();
+      const service = servicesByName.get(serviceKey);
+
+      if (!service) {
+        servicesNotInDb.add(appointmentName);
+        summaryData.push({
+          name: appointmentName,
+          reservations,
+          revenue,
+          pricePerSession,
+          inDb: false,
+          currentPrice: null,
+          willUpdate: false
+        });
+        continue;
+      }
+
+      summaryData.push({
+        name: appointmentName,
+        reservations,
+        revenue,
+        pricePerSession,
+        inDb: true,
+        serviceId: service.id,
+        currentPrice: service.price,
+        willUpdate: pricePerSession > 0 && (service.price === 0 || service.price === null)
+      });
+    }
+
+    // Count services to update
+    const toUpdate = summaryData.filter(s => s.willUpdate).length;
+    const alreadySet = summaryData.filter(s => s.inDb && !s.willUpdate && s.pricePerSession > 0).length;
+
+    // Update service_types if not dry run
+    let updated = 0;
+    if (!dryRun) {
+      for (const item of summaryData) {
+        if (item.willUpdate && item.serviceId) {
+          await db.query(
+            'UPDATE service_types SET price = $1, updated_at = NOW() WHERE id = $2',
+            [item.pricePerSession, item.serviceId]
+          );
+          updated++;
+        }
+      }
+    }
+
+    // Format current prices for display
+    const currentPrices = servicesResult.rows.map(s => ({
+      name: s.name,
+      price: parseFloat(s.price) || 0
+    }));
+
+    // Format learned prices for display (only those that will be updated)
+    const learnedPrices = summaryData
+      .filter(s => s.willUpdate)
+      .map(s => ({
+        name: s.name,
+        price: s.pricePerSession,
+        reservations: s.reservations,
+        revenue: s.revenue
+      }));
+
+    res.json({
+      dryRun,
+      servicesInDb: servicesResult.rows.length,
+      totalInSummary: summaryData.length,
+      toUpdate: dryRun ? toUpdate : undefined,
+      updated: dryRun ? 0 : updated,
+      alreadySet,
+      notInDb: servicesNotInDb.size,
+      servicesNotInDb: Array.from(servicesNotInDb).slice(0, 10),
+      currentPrices,
+      learnedPrices,
+      summaryData: summaryData.slice(0, 20), // First 20 for preview
+      columnsDetected: {
+        appointmentName: appointmentNameIdx >= 0,
+        reservations: reservationsIdx >= 0,
+        revenue: revenueIdx >= 0
+      }
+    });
+
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
  * POST /api/appointments/fix-staff-assignments
  * Re-assign staff to appointments by matching practitioner name from CSV
  * Also updates prices if the CSV has a price/value column

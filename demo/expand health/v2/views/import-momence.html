@@ -481,6 +481,103 @@
         </div>
       </div>
 
+      <!-- Learn Prices from Sales by Appointment Summary -->
+      <div class="bg-white shadow rounded-lg p-6 mt-6">
+        <h2 class="text-lg font-semibold mb-2">Learn Prices from Sales Summary</h2>
+        <p class="text-sm text-gray-600 mb-4">Use the "Sales by Appointment" report from Momence Analytics to automatically calculate service prices (Revenue ÷ Reservations).</p>
+
+        <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4">
+          <p class="text-sm text-amber-800 mb-2"><strong>How to get this report:</strong></p>
+          <ol class="list-decimal list-inside text-sm text-amber-800 space-y-1">
+            <li>In Momence, go to <strong>Analytics → Sales by Appointment</strong></li>
+            <li>Set your date range and click "Download summary"</li>
+            <li>Upload the CSV below</li>
+          </ol>
+          <p class="text-xs text-amber-600 mt-2">This calculates: Price per session = Revenue ÷ Reservations (e.g., R19,200 ÷ 20 = R960 per session)</p>
+        </div>
+
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            Upload Momence "Sales by Appointment" CSV
+          </label>
+          <input
+            type="file"
+            id="csvFileSalesSummary"
+            accept=".csv"
+            class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100 cursor-pointer"
+          />
+        </div>
+
+        <div id="fileInfoSalesSummary" class="hidden mb-4 p-3 bg-gray-50 rounded-lg">
+          <p class="text-sm text-gray-600">
+            File loaded: <span id="fileNameSalesSummary" class="font-medium"></span>
+            (<span id="rowCountSalesSummary" class="font-medium"></span> services)
+          </p>
+        </div>
+
+        <button
+          id="updatePricesSummaryBtn"
+          disabled
+          class="px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+        >
+          Preview Price Calculations
+        </button>
+
+        <div id="salesSummaryResults" class="hidden mt-4">
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+            <div class="bg-gray-50 p-3 rounded-lg text-center">
+              <p class="text-xs text-gray-500">In Summary</p>
+              <p class="text-xl font-bold" id="statSummaryTotal">0</p>
+            </div>
+            <div class="bg-amber-50 p-3 rounded-lg text-center">
+              <p class="text-xs text-gray-500" id="summaryPricesToUpdateLabel">To Update</p>
+              <p class="text-xl font-bold text-amber-600" id="statSummaryToUpdate">0</p>
+            </div>
+            <div class="bg-blue-50 p-3 rounded-lg text-center">
+              <p class="text-xs text-gray-500">Already Set</p>
+              <p class="text-xl font-bold text-blue-600" id="statSummaryAlreadySet">0</p>
+            </div>
+            <div class="bg-yellow-50 p-3 rounded-lg text-center">
+              <p class="text-xs text-gray-500">Not in DB</p>
+              <p class="text-xl font-bold text-yellow-600" id="statSummaryNotInDb">0</p>
+            </div>
+          </div>
+
+          <!-- Columns Detected -->
+          <div id="summaryColumnsDetected" class="mb-4 p-3 bg-gray-50 rounded-lg">
+            <p class="text-sm font-medium mb-2">Columns Detected:</p>
+            <div id="summaryColumnsStatus" class="flex flex-wrap gap-2"></div>
+          </div>
+
+          <!-- Price Calculations Preview -->
+          <div id="summaryPreview" class="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg max-h-64 overflow-y-auto">
+            <p class="text-sm font-medium mb-2 text-amber-800">Price Calculations:</p>
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="border-b border-amber-200">
+                  <th class="text-left py-1">Service</th>
+                  <th class="text-right py-1">Reservations</th>
+                  <th class="text-right py-1">Revenue</th>
+                  <th class="text-right py-1">Per Session</th>
+                  <th class="text-center py-1">Status</th>
+                </tr>
+              </thead>
+              <tbody id="summaryPreviewContent"></tbody>
+            </table>
+          </div>
+
+          <div id="salesSummaryAction" class="hidden">
+            <button id="runUpdatePricesSummary" class="px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700 font-medium">
+              Apply Calculated Prices
+            </button>
+          </div>
+
+          <div id="salesSummarySuccess" class="hidden p-4 bg-amber-50 border border-amber-200 rounded-lg">
+            <p class="text-amber-800 font-medium" id="salesSummarySuccessText"></p>
+          </div>
+        </div>
+      </div>
+
       <!-- Fix Appointment Durations Section -->
       <div class="bg-white shadow rounded-lg p-6 mt-6">
         <h2 class="text-lg font-semibold mb-2">Fix Appointment Durations</h2>
@@ -999,6 +1096,110 @@
           document.getElementById('servicePricesSuccess').classList.remove('hidden');
           document.getElementById('servicePricesSuccessText').textContent =
             'No new prices to learn. All services either already have prices set or no non-membership bookings found.';
+        }
+
+      } catch (err) {
+        showError(err.message);
+      } finally {
+        hideLoading();
+      }
+    }
+
+    // ==================== UPDATE PRICES FROM SALES SUMMARY ====================
+    let salesSummaryCsvData = null;
+
+    document.getElementById('csvFileSalesSummary').addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      salesSummaryCsvData = await file.text();
+      const lines = salesSummaryCsvData.trim().split('\n');
+      document.getElementById('fileNameSalesSummary').textContent = file.name;
+      document.getElementById('rowCountSalesSummary').textContent = lines.length - 1;
+      document.getElementById('fileInfoSalesSummary').classList.remove('hidden');
+      document.getElementById('updatePricesSummaryBtn').disabled = false;
+      document.getElementById('salesSummaryResults').classList.add('hidden');
+    });
+
+    document.getElementById('updatePricesSummaryBtn').addEventListener('click', () => updatePricesFromSummary(true));
+    document.getElementById('runUpdatePricesSummary').addEventListener('click', () => updatePricesFromSummary(false));
+
+    async function updatePricesFromSummary(dryRun) {
+      if (!salesSummaryCsvData) return;
+
+      showLoading();
+      try {
+        const resp = await fetch('/api/appointments/update-prices-from-summary', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+          },
+          body: JSON.stringify({ csvData: salesSummaryCsvData, dryRun })
+        });
+
+        if (!resp.ok) {
+          const errData = await resp.json();
+          throw new Error(errData.error || 'Failed to update prices from summary');
+        }
+
+        const data = await resp.json();
+
+        // Show results
+        document.getElementById('salesSummaryResults').classList.remove('hidden');
+        document.getElementById('statSummaryTotal').textContent = data.totalInSummary || 0;
+        document.getElementById('statSummaryToUpdate').textContent = dryRun ? data.toUpdate : data.updated;
+        document.getElementById('statSummaryAlreadySet').textContent = data.alreadySet || 0;
+        document.getElementById('statSummaryNotInDb').textContent = data.notInDb || 0;
+        document.getElementById('summaryPricesToUpdateLabel').textContent = dryRun ? 'To Update' : 'Updated';
+
+        // Show columns detected
+        const columnsDiv = document.getElementById('summaryColumnsStatus');
+        const cols = data.columnsDetected || {};
+        columnsDiv.innerHTML = Object.entries(cols).map(([key, found]) => {
+          const label = key.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase());
+          const bgColor = found ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-500';
+          const icon = found ? '✓' : '✗';
+          return `<span class="px-2 py-1 ${bgColor} rounded text-xs">${icon} ${label}</span>`;
+        }).join('');
+
+        // Show preview table
+        const summaryData = data.summaryData || [];
+        const previewContent = document.getElementById('summaryPreviewContent');
+        previewContent.innerHTML = summaryData.map(s => {
+          let statusBadge;
+          if (!s.inDb) {
+            statusBadge = '<span class="px-2 py-0.5 bg-yellow-100 text-yellow-800 rounded text-xs">Not in DB</span>';
+          } else if (s.willUpdate) {
+            statusBadge = '<span class="px-2 py-0.5 bg-amber-100 text-amber-800 rounded text-xs">Will Update</span>';
+          } else if (s.pricePerSession > 0) {
+            statusBadge = '<span class="px-2 py-0.5 bg-blue-100 text-blue-800 rounded text-xs">Already Set</span>';
+          } else {
+            statusBadge = '<span class="px-2 py-0.5 bg-gray-100 text-gray-500 rounded text-xs">No Revenue</span>';
+          }
+          return `<tr class="border-b border-amber-100">
+            <td class="py-1 text-amber-900">${s.name}</td>
+            <td class="py-1 text-right">${s.reservations}</td>
+            <td class="py-1 text-right">R${s.revenue.toLocaleString('en-ZA', {minimumFractionDigits: 2})}</td>
+            <td class="py-1 text-right font-medium">R${s.pricePerSession.toFixed(2)}</td>
+            <td class="py-1 text-center">${statusBadge}</td>
+          </tr>`;
+        }).join('');
+
+        // Show action button or success
+        if (dryRun && data.toUpdate > 0) {
+          document.getElementById('salesSummaryAction').classList.remove('hidden');
+          document.getElementById('salesSummarySuccess').classList.add('hidden');
+        } else if (!dryRun) {
+          document.getElementById('salesSummaryAction').classList.add('hidden');
+          document.getElementById('salesSummarySuccess').classList.remove('hidden');
+          document.getElementById('salesSummarySuccessText').textContent =
+            `Successfully updated ${data.updated} service prices! Appointments will now show correct prices.`;
+        } else {
+          document.getElementById('salesSummaryAction').classList.add('hidden');
+          document.getElementById('salesSummarySuccess').classList.remove('hidden');
+          document.getElementById('salesSummarySuccessText').textContent =
+            'No new prices to update. All services either already have prices set or are not in the database.';
         }
 
       } catch (err) {
