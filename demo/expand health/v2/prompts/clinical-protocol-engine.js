@@ -46,9 +46,15 @@ ${notesContent ? `## CLINICAL NOTES\n${notesContent}\n` : ''}
 
 ${kbContext ? `## KNOWLEDGE BASE PROTOCOLS (Reference)\n${kbContext}\n` : ''}
 
-${selectedTemplates ? `## SELECTED PROTOCOL TEMPLATES
+${selectedTemplates ? `## SELECTED PROTOCOL TEMPLATES (MANDATORY)
 The clinician selected these templates: ${selectedTemplates}
-You MUST include interventions from EACH selected template area. The protocol title should reflect all selected areas.
+
+CRITICAL REQUIREMENTS:
+1. You MUST include interventions from EACH selected template area
+2. The protocol title MUST reflect the selected templates - NOT lab findings
+3. Title format: "[Primary Template Area] Protocol with [Secondary Areas] for ${clientData.first_name}"
+   Example: If selected templates are "Heavy Metal Detox, Gut Health" → "Heavy Metal Detox & Gut Health Protocol for ${clientData.first_name}"
+4. Do NOT use generic titles like "Comprehensive Health Protocol" or titles based only on lab markers
 ` : ''}
 
 ## USER REQUEST
@@ -82,7 +88,7 @@ Examples of lab-driven interventions:
 Return ONLY valid JSON with this EXACT structure (no markdown, no code blocks):
 
 {
-  "title": "Comprehensive Protocol Title for ${clientData.first_name}",
+  "title": "[Selected Template Names] Protocol for ${clientData.first_name}",
   "summary": "2-3 sentence clinical summary of the protocol goals and approach",
 
   "core_protocol": {

@@ -1724,18 +1724,22 @@ router.post('/generate', authenticateToken, async (req, res, next) => {
     const protocolNotes = buildProtocolNotes(protocolData, prompt);
 
     // Save the protocol to the database
-    // Actual DB Schema: id, client_id, template_id, start_date, end_date, status, modules, notes, ai_recommendations, protocol_data, created_by, created_at, updated_at
+    // Actual DB Schema: id, client_id, template_id, title, start_date, end_date, status, modules, notes, ai_recommendations, protocol_data, created_by, created_at, updated_at
     // NOTE: protocol_data stores the clinical protocol structure
     // NOTE: ai_recommendations is for ENGAGEMENT PLANS ONLY - set to NULL initially
+    // NOTE: title is extracted from protocolData.title (AI-generated) for proper labeling
     try {
+      const protocolTitle = protocolData.title || `Protocol for ${client.first_name || 'Client'}`;
+
       const insertResult = await db.query(
         `INSERT INTO protocols (
-          client_id, template_id, start_date, end_date, status, modules, notes, ai_recommendations, protocol_data, created_by
-        ) VALUES ($1, $2, CURRENT_DATE, CURRENT_DATE + interval '${totalDurationWeeks} weeks', 'draft', $3, $4, $5, $6, $7)
+          client_id, template_id, title, start_date, end_date, status, modules, notes, ai_recommendations, protocol_data, created_by
+        ) VALUES ($1, $2, $3, CURRENT_DATE, CURRENT_DATE + interval '${totalDurationWeeks} weeks', 'draft', $4, $5, $6, $7, $8)
         RETURNING *`,
         [
           client_id,
           primaryTemplateId,
+          protocolTitle, // Store the AI-generated title for proper engagement plan labeling
           JSON.stringify(modulesForDb),
           protocolNotes,
           null, // ai_recommendations is for ENGAGEMENT PLANS - leave NULL until plan is generated
