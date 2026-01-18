@@ -363,4 +363,396 @@ router.delete('/:id', requireRole('admin'), async (req, res, next) => {
   }
 });
 
+// ============================================
+// SERVICE ADD-ONS
+// ============================================
+
+/**
+ * GET /api/services/:id/addons
+ * Get all add-ons for a service
+ */
+router.get('/:id/addons', async (req, res, next) => {
+  try {
+    const tenantId = req.user.tenantId;
+    const { id } = req.params;
+
+    const result = await db.query(`
+      SELECT * FROM service_addons
+      WHERE service_type_id = $1 AND tenant_id = $2 AND is_active = true
+      ORDER BY sort_order ASC, name ASC
+    `, [id, tenantId]);
+
+    res.json(result.rows);
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * POST /api/services/:id/addons
+ * Create add-on for a service
+ */
+router.post('/:id/addons', requireRole('admin'), async (req, res, next) => {
+  try {
+    const tenantId = req.user.tenantId;
+    const { id } = req.params;
+    const { name, description, price = 0, duration_minutes = 0, sort_order = 0 } = req.body;
+
+    if (!name) {
+      return res.status(400).json({ error: 'name is required' });
+    }
+
+    const result = await db.query(`
+      INSERT INTO service_addons (tenant_id, service_type_id, name, description, price, duration_minutes, sort_order)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      RETURNING *
+    `, [tenantId, id, name, description, price, duration_minutes, sort_order]);
+
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * PUT /api/services/:id/addons/:addonId
+ * Update an add-on
+ */
+router.put('/:id/addons/:addonId', requireRole('admin'), async (req, res, next) => {
+  try {
+    const tenantId = req.user.tenantId;
+    const { addonId } = req.params;
+    const { name, description, price, duration_minutes, sort_order, is_active } = req.body;
+
+    const result = await db.query(`
+      UPDATE service_addons SET
+        name = COALESCE($1, name),
+        description = COALESCE($2, description),
+        price = COALESCE($3, price),
+        duration_minutes = COALESCE($4, duration_minutes),
+        sort_order = COALESCE($5, sort_order),
+        is_active = COALESCE($6, is_active),
+        updated_at = NOW()
+      WHERE id = $7 AND tenant_id = $8
+      RETURNING *
+    `, [name, description, price, duration_minutes, sort_order, is_active, addonId, tenantId]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Add-on not found' });
+    }
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * DELETE /api/services/:id/addons/:addonId
+ * Delete an add-on
+ */
+router.delete('/:id/addons/:addonId', requireRole('admin'), async (req, res, next) => {
+  try {
+    const tenantId = req.user.tenantId;
+    const { addonId } = req.params;
+
+    await db.query(
+      'DELETE FROM service_addons WHERE id = $1 AND tenant_id = $2',
+      [addonId, tenantId]
+    );
+
+    res.json({ success: true, deleted_id: addonId });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// ============================================
+// STAFF SERVICE PRICING
+// ============================================
+
+/**
+ * GET /api/services/:id/staff-prices
+ * Get staff-specific prices for a service
+ */
+router.get('/:id/staff-prices', async (req, res, next) => {
+  try {
+    const tenantId = req.user.tenantId;
+    const { id } = req.params;
+
+    const result = await db.query(`
+      SELECT
+        ssp.*,
+        s.first_name,
+        s.last_name,
+        s.email,
+        s.title
+      FROM staff_service_prices ssp
+      JOIN staff s ON ssp.staff_id = s.id
+      WHERE ssp.service_type_id = $1 AND ssp.tenant_id = $2 AND ssp.is_active = true
+      ORDER BY s.first_name, s.last_name
+    `, [id, tenantId]);
+
+    res.json(result.rows);
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * POST /api/services/:id/staff-prices
+ * Set staff-specific price for a service
+ */
+router.post('/:id/staff-prices', requireRole('admin'), async (req, res, next) => {
+  try {
+    const tenantId = req.user.tenantId;
+    const { id } = req.params;
+    const { staff_id, price } = req.body;
+
+    if (!staff_id || price === undefined) {
+      return res.status(400).json({ error: 'staff_id and price are required' });
+    }
+
+    // Upsert - insert or update on conflict
+    const result = await db.query(`
+      INSERT INTO staff_service_prices (tenant_id, staff_id, service_type_id, price)
+      VALUES ($1, $2, $3, $4)
+      ON CONFLICT (staff_id, service_type_id)
+      DO UPDATE SET price = $4, is_active = true, updated_at = NOW()
+      RETURNING *
+    `, [tenantId, staff_id, id, price]);
+
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * DELETE /api/services/:id/staff-prices/:staffId
+ * Remove staff-specific price
+ */
+router.delete('/:id/staff-prices/:staffId', requireRole('admin'), async (req, res, next) => {
+  try {
+    const tenantId = req.user.tenantId;
+    const { id, staffId } = req.params;
+
+    await db.query(
+      'DELETE FROM staff_service_prices WHERE service_type_id = $1 AND staff_id = $2 AND tenant_id = $3',
+      [id, staffId, tenantId]
+    );
+
+    res.json({ success: true });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// ============================================
+// PRICING TABLE VIEW (like Momence)
+// ============================================
+
+/**
+ * GET /api/services/pricing/all
+ * Get all services with their pricing, add-ons, and staff prices
+ * Similar to Momence's appointment pricing view
+ */
+router.get('/pricing/all', async (req, res, next) => {
+  try {
+    const tenantId = req.user.tenantId;
+
+    // Get all active services with base info
+    const servicesResult = await db.query(`
+      SELECT
+        st.id,
+        st.name,
+        st.description,
+        st.duration_minutes,
+        st.price,
+        st.price_in_credits,
+        st.max_customers,
+        st.buffer_before_minutes,
+        st.buffer_after_minutes,
+        st.color,
+        st.category,
+        st.momence_id,
+        sc.name as category_name
+      FROM service_types st
+      LEFT JOIN service_categories sc ON st.category_id = sc.id
+      WHERE st.tenant_id = $1 AND st.is_active = true
+      ORDER BY st.name ASC
+    `, [tenantId]);
+
+    const services = servicesResult.rows;
+
+    // Get add-ons for all services
+    const addonsResult = await db.query(`
+      SELECT * FROM service_addons
+      WHERE tenant_id = $1 AND is_active = true
+      ORDER BY service_type_id, sort_order ASC
+    `, [tenantId]);
+
+    // Get staff prices for all services
+    const staffPricesResult = await db.query(`
+      SELECT
+        ssp.*,
+        s.first_name,
+        s.last_name,
+        s.email
+      FROM staff_service_prices ssp
+      JOIN staff s ON ssp.staff_id = s.id
+      WHERE ssp.tenant_id = $1 AND ssp.is_active = true AND s.is_active = true
+    `, [tenantId]);
+
+    // Map add-ons and staff prices to their services
+    const addonsMap = {};
+    addonsResult.rows.forEach(addon => {
+      if (!addonsMap[addon.service_type_id]) {
+        addonsMap[addon.service_type_id] = [];
+      }
+      addonsMap[addon.service_type_id].push(addon);
+    });
+
+    const staffPricesMap = {};
+    staffPricesResult.rows.forEach(sp => {
+      if (!staffPricesMap[sp.service_type_id]) {
+        staffPricesMap[sp.service_type_id] = [];
+      }
+      staffPricesMap[sp.service_type_id].push(sp);
+    });
+
+    // Combine into final response
+    const pricingData = services.map(service => ({
+      ...service,
+      addons: addonsMap[service.id] || [],
+      staffPrices: staffPricesMap[service.id] || []
+    }));
+
+    res.json(pricingData);
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * POST /api/services/pricing/bulk-update
+ * Bulk update prices for multiple services
+ */
+router.post('/pricing/bulk-update', requireRole('admin'), async (req, res, next) => {
+  try {
+    const tenantId = req.user.tenantId;
+    const { updates } = req.body;
+
+    if (!Array.isArray(updates)) {
+      return res.status(400).json({ error: 'updates must be an array' });
+    }
+
+    const results = [];
+    for (const update of updates) {
+      const { service_id, price, price_in_credits, duration_minutes } = update;
+
+      if (!service_id) continue;
+
+      const result = await db.query(`
+        UPDATE service_types SET
+          price = COALESCE($1, price),
+          price_in_credits = COALESCE($2, price_in_credits),
+          duration_minutes = COALESCE($3, duration_minutes),
+          updated_at = NOW()
+        WHERE id = $4 AND tenant_id = $5
+        RETURNING id, name, price, price_in_credits, duration_minutes
+      `, [price, price_in_credits, duration_minutes, service_id, tenantId]);
+
+      if (result.rows.length > 0) {
+        results.push(result.rows[0]);
+      }
+    }
+
+    res.json({
+      success: true,
+      updated: results.length,
+      services: results
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * POST /api/services/sync-from-momence
+ * Bulk upsert services by name (for Momence import)
+ * Creates new services or updates existing ones matched by name
+ */
+router.post('/sync-from-momence', requireRole('admin'), async (req, res, next) => {
+  try {
+    const tenantId = req.user.tenantId;
+    const { services } = req.body;
+
+    if (!Array.isArray(services)) {
+      return res.status(400).json({ error: 'services must be an array' });
+    }
+
+    // Get category map
+    const catResult = await db.query(
+      'SELECT id, name FROM service_categories WHERE tenant_id = $1',
+      [tenantId]
+    );
+    const categoryMap = {};
+    catResult.rows.forEach(row => {
+      categoryMap[row.name] = row.id;
+    });
+
+    const results = { created: 0, updated: 0, errors: [] };
+
+    for (const service of services) {
+      try {
+        const { name, price, duration_minutes, category } = service;
+
+        if (!name) {
+          results.errors.push({ service, error: 'name is required' });
+          continue;
+        }
+
+        const categoryId = category ? categoryMap[category] : null;
+
+        // Check if service exists
+        const existing = await db.query(
+          'SELECT id FROM service_types WHERE tenant_id = $1 AND LOWER(name) = LOWER($2)',
+          [tenantId, name]
+        );
+
+        if (existing.rows.length > 0) {
+          // Update existing
+          await db.query(`
+            UPDATE service_types SET
+              price = COALESCE($1, price),
+              duration_minutes = COALESCE($2, duration_minutes),
+              category_id = COALESCE($3, category_id),
+              category = COALESCE($4, category),
+              updated_at = NOW()
+            WHERE id = $5
+          `, [price, duration_minutes, categoryId, category, existing.rows[0].id]);
+          results.updated++;
+        } else {
+          // Create new
+          await db.query(`
+            INSERT INTO service_types (tenant_id, name, price, duration_minutes, category_id, category, is_active)
+            VALUES ($1, $2, $3, $4, $5, $6, true)
+          `, [tenantId, name, price || 0, duration_minutes || 60, categoryId, category]);
+          results.created++;
+        }
+      } catch (err) {
+        results.errors.push({ service: service.name, error: err.message });
+      }
+    }
+
+    res.json({
+      success: true,
+      ...results
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
 module.exports = router;
