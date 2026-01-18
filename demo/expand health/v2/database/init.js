@@ -602,16 +602,21 @@ async function initEngagementPlans() {
 
 /**
  * Migrate existing engagement plans from protocols.ai_recommendations to engagement_plans table
+ * NOTE: Only migrates data that is actually an engagement plan (has "phases" as top-level key)
+ * NOT clinical protocols (which have "phased_expansion" or "core_protocol")
  */
 async function migrateEngagementPlans() {
   try {
     // Check if there are protocols with engagement plan data in ai_recommendations
+    // IMPORTANT: Must have "phases" key (engagement plan) but NOT "core_protocol" or "phased_expansion" (clinical protocol)
     const checkResult = await db.query(`
       SELECT id, client_id, title, ai_recommendations, created_by, created_at
       FROM protocols
       WHERE ai_recommendations IS NOT NULL
         AND ai_recommendations != ''
-        AND ai_recommendations::text LIKE '%"phases"%'
+        AND ai_recommendations::jsonb ? 'phases'
+        AND NOT (ai_recommendations::jsonb ? 'core_protocol')
+        AND NOT (ai_recommendations::jsonb ? 'phased_expansion')
         AND NOT EXISTS (
           SELECT 1 FROM engagement_plans ep WHERE ep.source_protocol_id = protocols.id
         )

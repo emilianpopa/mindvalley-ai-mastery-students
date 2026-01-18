@@ -1725,7 +1725,8 @@ router.post('/generate', authenticateToken, async (req, res, next) => {
 
     // Save the protocol to the database
     // Actual DB Schema: id, client_id, template_id, start_date, end_date, status, modules, notes, ai_recommendations, protocol_data, created_by, created_at, updated_at
-    // NOTE: protocol_data stores the clinical protocol structure, ai_recommendations can be used for engagement plans
+    // NOTE: protocol_data stores the clinical protocol structure
+    // NOTE: ai_recommendations is for ENGAGEMENT PLANS ONLY - set to NULL initially
     try {
       const insertResult = await db.query(
         `INSERT INTO protocols (
@@ -1737,7 +1738,7 @@ router.post('/generate', authenticateToken, async (req, res, next) => {
           primaryTemplateId,
           JSON.stringify(modulesForDb),
           protocolNotes,
-          JSON.stringify(protocolData), // ai_recommendations (for backward compatibility)
+          null, // ai_recommendations is for ENGAGEMENT PLANS - leave NULL until plan is generated
           JSON.stringify(protocolData), // protocol_data (source of truth for clinical protocol)
           req.user.id
         ]
