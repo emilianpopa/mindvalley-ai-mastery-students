@@ -1745,10 +1745,37 @@ router.post('/generate', authenticateToken, async (req, res, next) => {
 
       console.log('[Protocol Generate] Protocol saved to database');
 
+      const savedProtocol = insertResult.rows[0];
+
+      // ========================================
+      // AUTO-GENERATE ENGAGEMENT PLAN
+      // ========================================
+      // Automatically generate engagement plan after protocol creation
+      console.log('[Protocol Generate] Auto-generating engagement plan...');
+
+      let engagementPlanResult = null;
+      try {
+        engagementPlanResult = await generateEngagementPlanForProtocol({
+          protocolId: savedProtocol.id,
+          protocolData: protocolData,
+          clientId: client_id,
+          clientName: `${clientData.first_name} ${clientData.last_name}`,
+          protocolTitle: protocolData.title || 'Custom Protocol',
+          protocolDurationWeeks: totalDurationWeeks,
+          userId: req.user.id
+        });
+        console.log('[Protocol Generate] Engagement plan auto-generated successfully, id:', engagementPlanResult.engagement_plan_id);
+      } catch (engagementError) {
+        console.error('[Protocol Generate] Failed to auto-generate engagement plan:', engagementError.message);
+        // Continue without engagement plan - don't fail the whole request
+      }
+
       res.status(201).json({
         message: 'Protocol generated successfully',
-        protocol: insertResult.rows[0],
+        protocol: savedProtocol,
         modules: modulesForDb, // Include the converted modules for immediate display
+        engagement_plan: engagementPlanResult?.engagement_plan || null,
+        engagement_plan_id: engagementPlanResult?.engagement_plan_id || null,
         ...protocolData
       });
 
@@ -2116,6 +2143,350 @@ function buildProtocolNotes(protocolData, prompt) {
   return notes;
 }
 
+// ========================================
+// HELPER: Generate engagement plan from protocol data
+// ========================================
+// This helper can be called both from the /generate-engagement-plan endpoint
+// and automatically after protocol creation in /generate endpoint
+async function generateEngagementPlanForProtocol({
+  protocolId,
+  protocolData,
+  clientId,
+  clientName,
+  protocolTitle,
+  protocolDurationWeeks = 8,
+  userId,
+  personality_type,
+  communication_preferences
+}) {
+  console.log('[Engagement Plan Helper] Generating for protocol:', protocolId);
+
+  // Extract protocol elements for alignment
+  let protocolElements = {
+    supplements: [],
+    clinic_treatments: [],
+    lifestyle_protocols: [],
+    retest_schedule: [],
+    safety_constraints: []
+  };
+
+  if (protocolData) {
+    protocolElements = extractProtocolElements(protocolData);
+    console.log('[Engagement Plan Helper] Extracted elements:', {
+      supplements: protocolElements.supplements.length,
+      clinic_treatments: protocolElements.clinic_treatments.length,
+      lifestyle_protocols: protocolElements.lifestyle_protocols.length,
+      retest_schedule: protocolElements.retest_schedule.length,
+      safety_constraints: protocolElements.safety_constraints.length
+    });
+  }
+
+  // Query KB for engagement strategies
+  let kbEngagementContext = '';
+  try {
+    const engagementQueries = [
+      'patient engagement strategies functional medicine',
+      'phased protocol delivery best practices',
+      'behavior change techniques wellness coaching'
+    ];
+
+    const kbResults = await Promise.all(
+      engagementQueries.map(q => queryKnowledgeBase(q, `Client: ${clientName}`))
+    );
+    kbEngagementContext = kbResults.filter(r => r).join('\n\n');
+    if (kbEngagementContext) {
+      console.log('[Engagement Plan Helper] KB engagement context retrieved');
+    }
+  } catch (kbError) {
+    console.error('[Engagement Plan Helper] KB query error:', kbError.message);
+  }
+
+  // Build the AI prompt
+  let aiPrompt;
+  const hasProtocolElements = (protocolElements.supplements.length > 0) || (protocolElements.clinic_treatments.length > 0);
+
+  if (hasProtocolElements) {
+    console.log('[Engagement Plan Helper] Using ALIGNED prompt generator (protocol-driven)');
+    aiPrompt = generateAlignedEngagementPlanPrompt({
+      clientName,
+      protocolTitle: protocolTitle || 'Custom Protocol',
+      protocolElements,
+      personalityType: personality_type,
+      communicationPreferences: communication_preferences,
+      protocolDurationWeeks
+    });
+
+    if (kbEngagementContext) {
+      aiPrompt += `\n\n## ADDITIONAL ENGAGEMENT STRATEGIES FROM KNOWLEDGE BASE\n${kbEngagementContext}\n\nUse these strategies to enhance delivery, but DO NOT add treatments not listed in the protocol above.`;
+    }
+  } else {
+    console.log('[Engagement Plan Helper] Using generic prompt (no protocol structure found)');
+    aiPrompt = `You are an expert health coach. Create a 4-phase engagement plan for ${clientName}.
+
+Protocol: ${protocolTitle || 'Custom Protocol'}
+Duration: ${protocolDurationWeeks} weeks
+
+${kbEngagementContext ? `Knowledge Base Context:\n${kbEngagementContext}\n` : ''}
+
+Create a phased engagement plan with JSON structure:
+{
+  "title": "Engagement Plan for ${clientName}",
+  "summary": "2-3 sentence overview",
+  "total_weeks": ${protocolDurationWeeks},
+  "phases": [
+    {
+      "phase_number": 1,
+      "title": "Phase 1: Foundations (Week 1)",
+      "subtitle": "Brief description",
+      "items": ["Action item 1", "Action item 2"],
+      "progress_goal": "Measurable goal",
+      "check_in_prompts": ["Question for patient"]
+    }
+  ],
+  "communication_schedule": {
+    "check_in_frequency": "Every 3 days",
+    "preferred_channel": "WhatsApp",
+    "message_tone": "Encouraging"
+  },
+  "success_metrics": ["Metric 1", "Metric 2"]
+}
+
+IMPORTANT: Only include treatments/supplements that are in the protocol.
+Return ONLY valid JSON.`;
+  }
+
+  console.log('[Engagement Plan Helper] Calling Claude API...');
+
+  const response = await anthropic.messages.create({
+    model: 'claude-sonnet-4-20250514',
+    max_tokens: 4096,
+    messages: [{ role: 'user', content: aiPrompt }]
+  });
+
+  console.log('[Engagement Plan Helper] Claude API response received');
+
+  const aiResponse = response.content[0].text;
+  let engagementPlan;
+
+  try {
+    const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      engagementPlan = JSON.parse(jsonMatch[0]);
+    } else {
+      throw new Error('No JSON found in response');
+    }
+  } catch (parseError) {
+    console.error('[Engagement Plan Helper] Failed to parse response:', parseError.message);
+    // Return fallback engagement plan
+    engagementPlan = createFallbackEngagementPlan(clientName, protocolTitle);
+  }
+
+  // Validation & regeneration loop
+  if (hasProtocolElements) {
+    console.log('[Engagement Plan Helper] Validating alignment with protocol...');
+
+    let validationResult = validateEngagementPlanAlignment(engagementPlan, protocolElements);
+    let regenerationAttempts = 0;
+    const maxRegenerationAttempts = 2;
+
+    console.log('[Engagement Plan Helper] Initial validation:', {
+      isAligned: validationResult?.isAligned,
+      overallCoverage: (validationResult?.overallCoverage || 0) + '%'
+    });
+
+    // Regeneration loop
+    while (!validationResult?.isAligned && regenerationAttempts < maxRegenerationAttempts) {
+      regenerationAttempts++;
+      console.log(`[Engagement Plan Helper] Regeneration attempt ${regenerationAttempts}/${maxRegenerationAttempts}...`);
+
+      const regenPrompt = generateRegenerationPrompt(engagementPlan, validationResult, protocolElements);
+
+      try {
+        const regenResponse = await anthropic.messages.create({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 4096,
+          messages: [
+            { role: 'user', content: aiPrompt },
+            { role: 'assistant', content: JSON.stringify(engagementPlan) },
+            { role: 'user', content: regenPrompt }
+          ]
+        });
+
+        const regenText = regenResponse.content[0].text;
+        const regenJsonMatch = regenText.match(/\{[\s\S]*\}/);
+        if (regenJsonMatch) {
+          engagementPlan = JSON.parse(regenJsonMatch[0]);
+          validationResult = validateEngagementPlanAlignment(engagementPlan, protocolElements);
+          console.log(`[Engagement Plan Helper] Post-regeneration validation:`, {
+            isAligned: validationResult?.isAligned,
+            overallCoverage: (validationResult?.overallCoverage || 0) + '%'
+          });
+        }
+      } catch (regenError) {
+        console.error('[Engagement Plan Helper] Regeneration failed:', regenError.message);
+        break;
+      }
+    }
+
+    // Auto-fix if still not aligned
+    if (!validationResult?.isAligned) {
+      console.log('[Engagement Plan Helper] Applying auto-fix...');
+      engagementPlan = autoFixEngagementPlan(engagementPlan, validationResult, protocolElements);
+      engagementPlan._validation = {
+        originalCoverage: validationResult?.overallCoverage || 0,
+        regenerationAttempts,
+        autoFixed: true,
+        fixedAt: new Date().toISOString()
+      };
+    } else {
+      engagementPlan._validation = {
+        originalCoverage: validationResult?.overallCoverage || 100,
+        regenerationAttempts,
+        autoFixed: false,
+        validatedAt: new Date().toISOString()
+      };
+    }
+  }
+
+  // Save to database
+  const planTitle = engagementPlan.title || `Engagement Plan for ${clientName}`;
+  const validationData = engagementPlan._validation || {};
+
+  const planDataToSave = { ...engagementPlan };
+  delete planDataToSave._validation;
+  delete planDataToSave._alignment_note;
+
+  console.log('[Engagement Plan Helper] Saving to database...');
+
+  // Check if an engagement plan already exists for this protocol
+  const existingPlan = await db.query(
+    'SELECT id FROM engagement_plans WHERE source_protocol_id = $1',
+    [protocolId]
+  );
+
+  let engagementPlanId;
+  if (existingPlan.rows.length > 0) {
+    const updateResult = await db.query(
+      `UPDATE engagement_plans SET
+        title = $1,
+        plan_data = $2,
+        validation_data = $3,
+        updated_at = CURRENT_TIMESTAMP
+      WHERE source_protocol_id = $4
+      RETURNING id`,
+      [planTitle, JSON.stringify(planDataToSave), JSON.stringify(validationData), protocolId]
+    );
+    engagementPlanId = updateResult.rows[0].id;
+    console.log('[Engagement Plan Helper] Updated existing plan id:', engagementPlanId);
+  } else {
+    const insertResult = await db.query(
+      `INSERT INTO engagement_plans (client_id, source_protocol_id, title, plan_data, validation_data, created_by)
+      VALUES ($1, $2, $3, $4, $5, $6)
+      RETURNING id`,
+      [clientId, protocolId, planTitle, JSON.stringify(planDataToSave), JSON.stringify(validationData), userId]
+    );
+    engagementPlanId = insertResult.rows[0].id;
+    console.log('[Engagement Plan Helper] Created new plan id:', engagementPlanId);
+  }
+
+  // Also update protocol's ai_recommendations for backward compatibility
+  await db.query(
+    `UPDATE protocols SET
+      ai_recommendations = $1,
+      updated_at = CURRENT_TIMESTAMP
+    WHERE id = $2`,
+    [JSON.stringify(engagementPlan), protocolId]
+  );
+
+  console.log('[Engagement Plan Helper] Generated and saved successfully');
+
+  return {
+    success: true,
+    engagement_plan: engagementPlan,
+    engagement_plan_id: engagementPlanId,
+    protocol_id: protocolId,
+    client_name: clientName
+  };
+}
+
+// Helper to create fallback engagement plan
+function createFallbackEngagementPlan(clientName, protocolTitle) {
+  return {
+    title: `${protocolTitle || 'Wellness'} Engagement Plan`,
+    summary: `This 4-week engagement plan is designed to help ${clientName} successfully implement their wellness protocol through phased delivery and regular check-ins.`,
+    total_weeks: 4,
+    phases: [
+      {
+        phase_number: 1,
+        title: 'Phase 1: Foundations (Week 1)',
+        subtitle: 'Establishing the groundwork for success',
+        items: [
+          'Start core supplement regimen as prescribed',
+          'Get morning sunlight within 30 minutes of waking',
+          'Avoid screens at least 45 minutes before bedtime',
+          'Begin food journaling to track meals and energy levels',
+          'Journal stress triggers twice this week'
+        ],
+        progress_goal: 'Build initial rhythm and reduce common health disruptors',
+        check_in_prompts: ['How are you feeling with the new supplements?', 'Any challenges with the morning routine?']
+      },
+      {
+        phase_number: 2,
+        title: 'Phase 2: Expand & Adapt (Week 2)',
+        subtitle: 'Building on foundations and introducing dietary changes',
+        items: [
+          'Introduce dietary modifications per protocol guidelines',
+          'Begin elimination of trigger foods if applicable',
+          'Add 5-10 minutes of breathwork or meditation daily',
+          'Track energy levels and symptoms in app',
+          'Review and adjust supplement timing based on feedback'
+        ],
+        progress_goal: 'Establish dietary patterns and introduce mindfulness practices',
+        check_in_prompts: ['How is the dietary transition going?', 'Notice any changes in energy or sleep?']
+      },
+      {
+        phase_number: 3,
+        title: 'Phase 3: Refine & Reflect (Week 3)',
+        subtitle: 'Integrating feedback and tracking body response',
+        items: [
+          'Monitor wearable metrics daily (e.g. HRV, sleep quality)',
+          'Track cortisol-related symptoms like restlessness or energy crashes',
+          'Add one evening yoga or stretching session this week',
+          'Share journal notes with practitioner',
+          'Schedule recommended lab tests if applicable'
+        ],
+        progress_goal: 'Identify trends and begin individualizing the approach',
+        check_in_prompts: ['What patterns are you noticing?', 'Any symptoms we should address?']
+      },
+      {
+        phase_number: 4,
+        title: 'Phase 4: Assess & Sustain (Week 4)',
+        subtitle: 'Reviewing results and locking in long-term strategies',
+        items: [
+          'Complete any pending lab tests',
+          'Evaluate supplement effectiveness and tolerability',
+          'Refine the protocol with your practitioner based on results',
+          'Maintain consistent habits (routine, dietary choices, journaling)',
+          'Prepare questions for follow-up consultation'
+        ],
+        progress_goal: 'Make final adjustments and ensure long-term sustainability',
+        check_in_prompts: ['What has worked best for you?', 'What would you like to adjust going forward?']
+      }
+    ],
+    communication_schedule: {
+      check_in_frequency: 'Every 3 days',
+      preferred_channel: 'WhatsApp',
+      message_tone: 'Encouraging and supportive'
+    },
+    success_metrics: [
+      'Supplement adherence rate',
+      'Sleep quality improvement',
+      'Energy level changes',
+      'Symptom reduction'
+    ]
+  };
+}
+
 // Helper function to generate clinical fallback protocol
 function generateClinicalFallbackProtocol(clientData, prompt, templates, selectedTemplateNames) {
   const promptLower = prompt.toLowerCase();
@@ -2247,23 +2618,22 @@ function generateClinicalFallbackProtocol(clientData, prompt, templates, selecte
 // ========================================
 
 // Generate personalized engagement plan from protocol
+// This endpoint uses the shared helper function for consistency
 router.post('/:id/generate-engagement-plan', authenticateToken, async (req, res, next) => {
   try {
     const { id } = req.params;
     const { personality_type, communication_preferences } = req.body;
 
-    console.log('[Engagement Plan] Generating for protocol:', id);
+    console.log('[Engagement Plan Endpoint] Generating for protocol:', id);
 
     // Get protocol with client info
     const protocolResult = await db.query(
       `SELECT
         p.*,
-        c.first_name, c.last_name, c.email, c.phone,
-        cm.medical_history, cm.lifestyle_notes,
-        pt.name as template_name, pt.category as template_category
+        c.first_name, c.last_name,
+        pt.name as template_name
       FROM protocols p
       LEFT JOIN clients c ON p.client_id = c.id
-      LEFT JOIN client_metadata cm ON c.id = cm.client_id
       LEFT JOIN protocol_templates pt ON p.template_id = pt.id
       WHERE p.id = $1`,
       [id]
@@ -2276,412 +2646,51 @@ router.post('/:id/generate-engagement-plan', authenticateToken, async (req, res,
     const protocol = protocolResult.rows[0];
     const clientName = `${protocol.first_name} ${protocol.last_name}`;
 
-    // Parse modules from protocol
-    let modules = [];
-    try {
-      modules = typeof protocol.modules === 'string'
-        ? JSON.parse(protocol.modules)
-        : protocol.modules || [];
-    } catch (e) {
-      console.error('[Engagement Plan] Error parsing modules:', e.message);
-    }
-
-    // ========================================
-    // PROTOCOL ALIGNMENT - Extract all elements from the protocol
-    // ========================================
-    console.log('[Engagement Plan] Extracting protocol elements for alignment...');
-
-    // Try to get structured protocol data from ai_recommendations or modules
+    // Get protocol data from protocol_data column (source of truth) or fallback to ai_recommendations
     let protocolData = null;
     try {
-      if (protocol.ai_recommendations) {
-        // Check if it's already an engagement plan (has "phases" key) - if so, use modules instead
+      if (protocol.protocol_data) {
+        protocolData = typeof protocol.protocol_data === 'string'
+          ? JSON.parse(protocol.protocol_data)
+          : protocol.protocol_data;
+        console.log('[Engagement Plan Endpoint] Using protocol_data (source of truth)');
+      } else if (protocol.ai_recommendations) {
         const parsed = typeof protocol.ai_recommendations === 'string'
           ? JSON.parse(protocol.ai_recommendations)
           : protocol.ai_recommendations;
 
+        // Only use ai_recommendations if it has protocol structure (not engagement plan)
         if (parsed.core_protocol || parsed.phased_expansion || parsed.clinic_treatments) {
           protocolData = parsed;
-          console.log('[Engagement Plan] Using structured protocol from ai_recommendations');
+          console.log('[Engagement Plan Endpoint] Using ai_recommendations (fallback)');
         }
       }
-
-      // Fallback to modules if ai_recommendations doesn't have protocol structure
-      if (!protocolData && modules.length > 0) {
-        protocolData = { modules };
-        console.log('[Engagement Plan] Using modules array for protocol extraction');
-      }
     } catch (e) {
-      console.error('[Engagement Plan] Error parsing protocol data:', e.message);
+      console.error('[Engagement Plan Endpoint] Error parsing protocol data:', e.message);
     }
 
-    // Extract all protocol elements
-    let protocolElements = {
-      supplements: [],
-      clinic_treatments: [],
-      lifestyle_protocols: [],
-      retest_schedule: [],
-      safety_constraints: []
-    };
-
-    if (protocolData) {
-      protocolElements = extractProtocolElements(protocolData);
-      console.log('[Engagement Plan] Extracted elements:', {
-        supplements: protocolElements.supplements.length,
-        clinic_treatments: protocolElements.clinic_treatments.length,
-        lifestyle_protocols: protocolElements.lifestyle_protocols.length,
-        retest_schedule: protocolElements.retest_schedule.length,
-        safety_constraints: protocolElements.safety_constraints.length
-      });
-    } else {
-      console.log('[Engagement Plan] No protocol data found - will generate generic engagement plan');
-    }
-
-    // Query KB for engagement strategies ONLY (not hardcoded modalities)
-    console.log('[Engagement Plan] Querying KB for engagement strategies...');
-    let kbEngagementContext = '';
-    try {
-      const engagementQueries = [
-        'patient engagement strategies functional medicine',
-        'phased protocol delivery best practices',
-        'behavior change techniques wellness coaching',
-        `engagement strategies for ${protocol.template_category || 'wellness'} protocols`
-        // REMOVED: Hardcoded clinic modality queries - these caused misalignment
-      ];
-
-      const kbResults = await Promise.all(
-        engagementQueries.map(q => queryKnowledgeBase(q, `Protocol: ${protocol.template_name}, Client notes: ${protocol.lifestyle_notes || 'general wellness'}`))
-      );
-      kbEngagementContext = kbResults.filter(r => r).join('\n\n');
-      if (kbEngagementContext) {
-        console.log('[Engagement Plan] KB engagement context retrieved');
-      }
-    } catch (kbError) {
-      console.error('[Engagement Plan] KB query error:', kbError.message);
-    }
-
-    // Build the AI prompt for engagement plan using ALIGNED prompt generator
-    // This ensures the engagement plan ONLY includes items from the actual protocol
+    // Calculate protocol duration
     const protocolDurationWeeks = protocol.end_date
       ? Math.ceil((new Date(protocol.end_date) - new Date(protocol.start_date)) / (1000 * 60 * 60 * 24 * 7))
       : 8;
 
-    let aiPrompt;
-
-    // Use aligned prompt if we have protocol elements, otherwise use generic prompt
-    if (protocolElements.supplements.length > 0 || protocolElements.clinic_treatments.length > 0) {
-      console.log('[Engagement Plan] Using ALIGNED prompt generator (protocol-driven)');
-      aiPrompt = generateAlignedEngagementPlanPrompt({
-        clientName,
-        protocolTitle: protocol.template_name || protocol.title || 'Custom Protocol',
-        protocolElements,
-        personalityType: personality_type,
-        communicationPreferences: communication_preferences,
-        protocolDurationWeeks
-      });
-
-      // Add KB context if available
-      if (kbEngagementContext) {
-        aiPrompt += `\n\n## ADDITIONAL ENGAGEMENT STRATEGIES FROM KNOWLEDGE BASE\n${kbEngagementContext}\n\nUse these strategies to enhance delivery, but DO NOT add treatments not listed in the protocol above.`;
-      }
-    } else {
-      // Fallback to generic prompt when no protocol structure is available
-      console.log('[Engagement Plan] Using generic prompt (no protocol structure found)');
-      aiPrompt = `You are an expert health coach. Create a 4-phase engagement plan for ${clientName}.
-
-Protocol: ${protocol.template_name || 'Custom Protocol'}
-Category: ${protocol.template_category || 'General Wellness'}
-Duration: ${protocolDurationWeeks} weeks
-
-Modules:
-${modules.map((m, i) => `${i + 1}. ${m.name}: ${m.items?.length || 0} items`).join('\n')}
-
-${kbEngagementContext ? `Knowledge Base Context:\n${kbEngagementContext}\n` : ''}
-
-Create a phased engagement plan with JSON structure:
-{
-  "title": "Engagement Plan for ${clientName}",
-  "summary": "2-3 sentence overview",
-  "total_weeks": 4,
-  "phases": [
-    {
-      "phase_number": 1,
-      "title": "Phase 1: Foundations (Week 1)",
-      "subtitle": "Brief description",
-      "items": ["Action item 1", "Action item 2"],
-      "progress_goal": "Measurable goal",
-      "check_in_prompts": ["Question for patient"]
-    }
-  ],
-  "communication_schedule": {
-    "check_in_frequency": "Every 3 days",
-    "preferred_channel": "WhatsApp",
-    "message_tone": "Encouraging"
-  },
-  "success_metrics": ["Metric 1", "Metric 2"]
-}
-
-IMPORTANT: Only include treatments/supplements that are in the protocol modules above.
-Do NOT add treatments like HBOT, red light, cold plunge, etc. unless they are explicitly in the protocol.
-
-Return ONLY valid JSON.`;
-    }
-
-    console.log('[Engagement Plan] Calling Claude API...');
-
-    const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 4096,
-      messages: [{ role: 'user', content: aiPrompt }]
+    // Use the shared helper function
+    const result = await generateEngagementPlanForProtocol({
+      protocolId: id,
+      protocolData: protocolData,
+      clientId: protocol.client_id,
+      clientName: clientName,
+      protocolTitle: protocol.template_name || protocolData?.title || 'Custom Protocol',
+      protocolDurationWeeks: protocolDurationWeeks,
+      userId: req.user?.id,
+      personality_type,
+      communication_preferences
     });
 
-    console.log('[Engagement Plan] Claude API response received');
-
-    const aiResponse = response.content[0].text;
-    let engagementPlan;
-
-    try {
-      const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        engagementPlan = JSON.parse(jsonMatch[0]);
-      } else {
-        throw new Error('No JSON found in response');
-      }
-    } catch (parseError) {
-      console.error('[Engagement Plan] Failed to parse response:', parseError.message);
-      // Return fallback engagement plan
-      engagementPlan = {
-        title: `${protocol.template_name || 'Wellness'} Engagement Plan`,
-        summary: `This 4-week engagement plan is designed to help ${clientName} successfully implement their wellness protocol through phased delivery and regular check-ins.`,
-        total_weeks: 4,
-        phases: [
-          {
-            phase_number: 1,
-            title: 'Phase 1: Foundations (Week 1)',
-            subtitle: 'Establishing the groundwork for success',
-            items: [
-              'Start core supplement regimen as prescribed',
-              'Get morning sunlight within 30 minutes of waking',
-              'Avoid screens at least 45 minutes before bedtime',
-              'Begin food journaling to track meals and energy levels',
-              'Journal stress triggers twice this week'
-            ],
-            progress_goal: 'Build initial rhythm and reduce common health disruptors',
-            check_in_prompts: ['How are you feeling with the new supplements?', 'Any challenges with the morning routine?']
-          },
-          {
-            phase_number: 2,
-            title: 'Phase 2: Expand & Adapt (Week 2)',
-            subtitle: 'Building on foundations and introducing dietary changes',
-            items: [
-              'Introduce dietary modifications per protocol guidelines',
-              'Begin elimination of trigger foods if applicable',
-              'Add 5-10 minutes of breathwork or meditation daily',
-              'Track energy levels and symptoms in app',
-              'Review and adjust supplement timing based on feedback'
-            ],
-            progress_goal: 'Establish dietary patterns and introduce mindfulness practices',
-            check_in_prompts: ['How is the dietary transition going?', 'Notice any changes in energy or sleep?']
-          },
-          {
-            phase_number: 3,
-            title: 'Phase 3: Refine & Reflect (Week 3)',
-            subtitle: 'Integrating feedback and tracking body response',
-            items: [
-              'Monitor wearable metrics daily (e.g. HRV, sleep quality)',
-              'Track cortisol-related symptoms like restlessness or energy crashes',
-              'Add one evening yoga or stretching session this week',
-              'Share journal notes with practitioner',
-              'Schedule recommended lab tests if applicable'
-            ],
-            progress_goal: 'Identify trends and begin individualizing the approach',
-            check_in_prompts: ['What patterns are you noticing?', 'Any symptoms we should address?']
-          },
-          {
-            phase_number: 4,
-            title: 'Phase 4: Assess & Sustain (Week 4)',
-            subtitle: 'Reviewing results and locking in long-term strategies',
-            items: [
-              'Complete any pending lab tests',
-              'Evaluate supplement effectiveness and tolerability',
-              'Refine the protocol with your practitioner based on results',
-              'Maintain consistent habits (routine, dietary choices, journaling)',
-              'Prepare questions for follow-up consultation'
-            ],
-            progress_goal: 'Make final adjustments and ensure long-term sustainability',
-            check_in_prompts: ['What has worked best for you?', 'What would you like to adjust going forward?']
-          }
-        ],
-        communication_schedule: {
-          check_in_frequency: 'Every 3 days',
-          preferred_channel: 'WhatsApp',
-          message_tone: 'Encouraging and supportive'
-        },
-        success_metrics: [
-          'Supplement adherence rate',
-          'Sleep quality improvement',
-          'Energy level changes',
-          'Symptom reduction'
-        ]
-      };
-    }
-
-    // ========================================
-    // VALIDATION & REGENERATION LOOP - Ensure engagement plan covers all protocol items
-    // ========================================
-    const hasProtocolElements = (protocolElements?.supplements?.length > 0) || (protocolElements?.clinic_treatments?.length > 0);
-
-    if (hasProtocolElements) {
-      console.log('[Engagement Plan] Validating alignment with protocol...');
-
-      let validationResult = validateEngagementPlanAlignment(engagementPlan, protocolElements);
-      let regenerationAttempts = 0;
-      const maxRegenerationAttempts = 2;
-
-      console.log('[Engagement Plan] Initial validation result:', {
-        isAligned: validationResult?.isAligned,
-        overallCoverage: (validationResult?.overallCoverage || 0) + '%',
-        missingSupplements: validationResult?.missingSupplements?.length || 0,
-        missingClinicTreatments: validationResult?.missingClinicTreatments?.length || 0,
-        missingLifestyleProtocols: validationResult?.missingLifestyleProtocols?.length || 0,
-        missingRetests: validationResult?.missingRetests?.length || 0
-      });
-
-      // Regeneration loop - try to get AI to fix missing items
-      while (!validationResult?.isAligned && regenerationAttempts < maxRegenerationAttempts) {
-        regenerationAttempts++;
-        console.log(`[Engagement Plan] Alignment failed. Regeneration attempt ${regenerationAttempts}/${maxRegenerationAttempts}...`);
-
-        // Generate regeneration prompt with specific missing items
-        const regenPrompt = generateRegenerationPrompt(engagementPlan, validationResult, protocolElements);
-
-        try {
-          const regenResponse = await anthropic.messages.create({
-            model: 'claude-sonnet-4-20250514',
-            max_tokens: 4096,
-            messages: [
-              { role: 'user', content: aiPrompt },
-              { role: 'assistant', content: JSON.stringify(engagementPlan) },
-              { role: 'user', content: regenPrompt }
-            ]
-          });
-
-          const regenText = regenResponse.content[0].text;
-          const regenJsonMatch = regenText.match(/\{[\s\S]*\}/);
-          if (regenJsonMatch) {
-            engagementPlan = JSON.parse(regenJsonMatch[0]);
-            console.log('[Engagement Plan] Regeneration response parsed successfully');
-
-            // Re-validate
-            validationResult = validateEngagementPlanAlignment(engagementPlan, protocolElements);
-            console.log(`[Engagement Plan] Post-regeneration validation:`, {
-              isAligned: validationResult?.isAligned,
-              overallCoverage: (validationResult?.overallCoverage || 0) + '%'
-            });
-          }
-        } catch (regenError) {
-          console.error('[Engagement Plan] Regeneration failed:', regenError.message);
-          break;
-        }
-      }
-
-      // Final fallback: Auto-fix if still not fully aligned after regeneration attempts
-      if (!validationResult?.isAligned) {
-        console.log('[Engagement Plan] Regeneration did not achieve full coverage. Applying auto-fix...');
-        engagementPlan = autoFixEngagementPlan(engagementPlan, validationResult, protocolElements);
-        console.log('[Engagement Plan] Auto-fix complete. Added missing items.');
-
-        // Add validation metadata to the plan
-        engagementPlan._validation = {
-          originalCoverage: validationResult?.overallCoverage || 0,
-          regenerationAttempts: regenerationAttempts,
-          autoFixed: true,
-          fixedAt: new Date().toISOString(),
-          itemsAdded: {
-            supplements: validationResult?.missingSupplements || [],
-            clinic_treatments: validationResult?.missingClinicTreatments || [],
-            lifestyle_protocols: validationResult?.missingLifestyleProtocols || [],
-            retests: validationResult?.missingRetests || []
-          }
-        };
-      } else {
-        engagementPlan._validation = {
-          originalCoverage: validationResult?.overallCoverage || 100,
-          regenerationAttempts: regenerationAttempts,
-          autoFixed: false,
-          validatedAt: new Date().toISOString()
-        };
-        console.log(`[Engagement Plan] Validation passed - ${validationResult?.overallCoverage || 100}% protocol coverage${regenerationAttempts > 0 ? ` (after ${regenerationAttempts} regeneration(s))` : ''}`);
-      }
-    }
-
-    // Save engagement plan to separate engagement_plans table
-    // This ensures engagement plans persist even if the protocol is deleted
-    const planTitle = engagementPlan.title || `Engagement Plan for ${clientName}`;
-    const validationData = engagementPlan._validation || {};
-
-    // Remove internal validation metadata from plan_data before saving
-    const planDataToSave = { ...engagementPlan };
-    delete planDataToSave._validation;
-    delete planDataToSave._alignment_note;
-
-    console.log('[Engagement Plan] Saving to engagement_plans table...');
-
-    // Check if an engagement plan already exists for this protocol
-    const existingPlan = await db.query(
-      'SELECT id FROM engagement_plans WHERE source_protocol_id = $1',
-      [id]
-    );
-
-    let engagementPlanId;
-    if (existingPlan.rows.length > 0) {
-      // Update existing plan
-      const updateResult = await db.query(
-        `UPDATE engagement_plans SET
-          title = $1,
-          plan_data = $2,
-          validation_data = $3,
-          updated_at = CURRENT_TIMESTAMP
-        WHERE source_protocol_id = $4
-        RETURNING id`,
-        [planTitle, JSON.stringify(planDataToSave), JSON.stringify(validationData), id]
-      );
-      engagementPlanId = updateResult.rows[0].id;
-      console.log('[Engagement Plan] Updated existing plan id:', engagementPlanId);
-    } else {
-      // Insert new plan
-      const insertResult = await db.query(
-        `INSERT INTO engagement_plans (client_id, source_protocol_id, title, plan_data, validation_data, created_by)
-        VALUES ($1, $2, $3, $4, $5, $6)
-        RETURNING id`,
-        [protocol.client_id, id, planTitle, JSON.stringify(planDataToSave), JSON.stringify(validationData), req.user?.id]
-      );
-      engagementPlanId = insertResult.rows[0].id;
-      console.log('[Engagement Plan] Created new plan id:', engagementPlanId);
-    }
-
-    // Also update protocol's ai_recommendations for backward compatibility
-    // (This can be removed later once all code uses engagement_plans table)
-    await db.query(
-      `UPDATE protocols SET
-        ai_recommendations = $1,
-        updated_at = CURRENT_TIMESTAMP
-      WHERE id = $2`,
-      [JSON.stringify(engagementPlan), id]
-    );
-
-    console.log('[Engagement Plan] Generated and saved successfully');
-
-    res.json({
-      success: true,
-      engagement_plan: engagementPlan,
-      engagement_plan_id: engagementPlanId,
-      protocol_id: id,
-      client_name: clientName
-    });
+    res.json(result);
 
   } catch (error) {
-    console.error('[Engagement Plan] Error:', error);
+    console.error('[Engagement Plan Endpoint] Error:', error);
     next(error);
   }
 });
