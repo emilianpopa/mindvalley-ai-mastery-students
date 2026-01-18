@@ -5495,18 +5495,18 @@ async function generateEngagementPlan() {
         <div class="engagement-phase">
           <div class="phase-header">
             <span class="phase-drag-handle">⋮⋮</span>
-            <h2>${phase.title}</h2>
+            <h2 contenteditable="true">${phase.title}</h2>
           </div>
-          <p class="phase-subtitle">${phase.subtitle}</p>
+          <p class="phase-subtitle" contenteditable="true">${phase.subtitle}</p>
           <ul class="phase-items">
-            ${phase.items.map(item => `<li>${item}</li>`).join('')}
+            ${phase.items.map(item => `<li contenteditable="true">${item}</li>`).join('')}
           </ul>
-          <p class="progress-goal"><strong>Progress Goal:</strong> ${phase.progress_goal}</p>
+          <p class="progress-goal"><strong>Progress Goal:</strong> <span contenteditable="true">${phase.progress_goal}</span></p>
           ${phase.check_in_prompts ? `
           <div class="check-in-prompts">
             <p class="prompts-label"><strong>Check-in Questions:</strong></p>
             <ul class="prompts-list">
-              ${phase.check_in_prompts.map(prompt => `<li>${prompt}</li>`).join('')}
+              ${phase.check_in_prompts.map(prompt => `<li contenteditable="true">${prompt}</li>`).join('')}
             </ul>
           </div>
           ` : ''}
@@ -5571,65 +5571,65 @@ function renderEngagementPlanFallback(container, protocolTitle) {
       <div class="engagement-phase">
         <div class="phase-header">
           <span class="phase-drag-handle">⋮⋮</span>
-          <h2>Phase 1: Foundations (Week 1)</h2>
+          <h2 contenteditable="true">Phase 1: Foundations (Week 1)</h2>
         </div>
-        <p class="phase-subtitle">Establishing the groundwork for improved health</p>
+        <p class="phase-subtitle" contenteditable="true">Establishing the groundwork for improved health</p>
         <ul class="phase-items">
-          <li>Start core supplement regimen as prescribed</li>
-          <li>Get morning sunlight within 30 minutes of waking</li>
-          <li>Avoid screens at least 45 minutes before bedtime</li>
-          <li>Begin food journaling to track meals and energy levels</li>
-          <li>Journal stress triggers twice this week</li>
+          <li contenteditable="true">Start core supplement regimen as prescribed</li>
+          <li contenteditable="true">Get morning sunlight within 30 minutes of waking</li>
+          <li contenteditable="true">Avoid screens at least 45 minutes before bedtime</li>
+          <li contenteditable="true">Begin food journaling to track meals and energy levels</li>
+          <li contenteditable="true">Journal stress triggers twice this week</li>
         </ul>
-        <p class="progress-goal"><strong>Progress Goal:</strong> Build initial rhythm and reduce common health disruptors</p>
+        <p class="progress-goal"><strong>Progress Goal:</strong> <span contenteditable="true">Build initial rhythm and reduce common health disruptors</span></p>
       </div>
 
       <div class="engagement-phase">
         <div class="phase-header">
           <span class="phase-drag-handle">⋮⋮</span>
-          <h2>Phase 2: Expand & Adapt (Week 2)</h2>
+          <h2 contenteditable="true">Phase 2: Expand & Adapt (Week 2)</h2>
         </div>
-        <p class="phase-subtitle">Building on foundations and introducing dietary changes</p>
+        <p class="phase-subtitle" contenteditable="true">Building on foundations and introducing dietary changes</p>
         <ul class="phase-items">
-          <li>Introduce dietary modifications per protocol guidelines</li>
-          <li>Begin elimination of trigger foods if applicable</li>
-          <li>Add 5-10 minutes of breathwork or meditation daily</li>
-          <li>Track energy levels and symptoms in app</li>
-          <li>Review and adjust supplement timing based on feedback</li>
+          <li contenteditable="true">Introduce dietary modifications per protocol guidelines</li>
+          <li contenteditable="true">Begin elimination of trigger foods if applicable</li>
+          <li contenteditable="true">Add 5-10 minutes of breathwork or meditation daily</li>
+          <li contenteditable="true">Track energy levels and symptoms in app</li>
+          <li contenteditable="true">Review and adjust supplement timing based on feedback</li>
         </ul>
-        <p class="progress-goal"><strong>Progress Goal:</strong> Establish dietary patterns and introduce mindfulness practices</p>
+        <p class="progress-goal"><strong>Progress Goal:</strong> <span contenteditable="true">Establish dietary patterns and introduce mindfulness practices</span></p>
       </div>
 
       <div class="engagement-phase">
         <div class="phase-header">
           <span class="phase-drag-handle">⋮⋮</span>
-          <h2>Phase 3: Refine & Reflect (Week 3)</h2>
+          <h2 contenteditable="true">Phase 3: Refine & Reflect (Week 3)</h2>
         </div>
-        <p class="phase-subtitle">Integrating feedback and tracking body response</p>
+        <p class="phase-subtitle" contenteditable="true">Integrating feedback and tracking body response</p>
         <ul class="phase-items">
-          <li>Monitor wearable metrics daily (e.g. HRV, sleep quality)</li>
-          <li>Track cortisol-related symptoms like restlessness or energy crashes</li>
-          <li>Add one evening yoga or stretching session this week</li>
-          <li>Share journal notes with practitioner</li>
-          <li>Schedule recommended lab tests if applicable</li>
+          <li contenteditable="true">Monitor wearable metrics daily (e.g. HRV, sleep quality)</li>
+          <li contenteditable="true">Track cortisol-related symptoms like restlessness or energy crashes</li>
+          <li contenteditable="true">Add one evening yoga or stretching session this week</li>
+          <li contenteditable="true">Share journal notes with practitioner</li>
+          <li contenteditable="true">Schedule recommended lab tests if applicable</li>
         </ul>
-        <p class="progress-goal"><strong>Progress Goal:</strong> Identify trends and begin individualizing the approach</p>
+        <p class="progress-goal"><strong>Progress Goal:</strong> <span contenteditable="true">Identify trends and begin individualizing the approach</span></p>
       </div>
 
       <div class="engagement-phase">
         <div class="phase-header">
           <span class="phase-drag-handle">⋮⋮</span>
-          <h2>Phase 4: Assess & Sustain (Week 4)</h2>
+          <h2 contenteditable="true">Phase 4: Assess & Sustain (Week 4)</h2>
         </div>
-        <p class="phase-subtitle">Reviewing results and locking in long-term strategies</p>
+        <p class="phase-subtitle" contenteditable="true">Reviewing results and locking in long-term strategies</p>
         <ul class="phase-items">
-          <li>Complete any pending lab tests</li>
-          <li>Evaluate supplement effectiveness and tolerability</li>
-          <li>Refine the protocol with your practitioner based on results</li>
-          <li>Maintain consistent habits (routine, dietary choices, journaling)</li>
-          <li>Prepare questions for follow-up consultation</li>
+          <li contenteditable="true">Complete any pending lab tests</li>
+          <li contenteditable="true">Evaluate supplement effectiveness and tolerability</li>
+          <li contenteditable="true">Refine the protocol with your practitioner based on results</li>
+          <li contenteditable="true">Maintain consistent habits (routine, dietary choices, journaling)</li>
+          <li contenteditable="true">Prepare questions for follow-up consultation</li>
         </ul>
-        <p class="progress-goal"><strong>Progress Goal:</strong> Make final adjustments and ensure long-term sustainability</p>
+        <p class="progress-goal"><strong>Progress Goal:</strong> <span contenteditable="true">Make final adjustments and ensure long-term sustainability</span></p>
       </div>
 
       <div class="add-phase-btn" onclick="addEngagementPhase()">

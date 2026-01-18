@@ -4309,9 +4309,16 @@
 .phase-title-text[contenteditable="true"],
 .phase-progress-goal[contenteditable="true"],
 .engagement-phase-section li[contenteditable="true"],
+.engagement-phase li[contenteditable="true"],
+.phase-items li[contenteditable="true"],
 .section-goal[contenteditable="true"],
+.phase-subtitle[contenteditable="true"],
 #engagementPlanTitle[contenteditable="true"],
-#engagementPlanSummary[contenteditable="true"] {
+#engagementPlanSummary[contenteditable="true"],
+.engagement-phase h2[contenteditable="true"],
+.progress-goal span[contenteditable="true"],
+.check-in-prompts li[contenteditable="true"],
+.prompts-list li[contenteditable="true"] {
   cursor: text;
   padding: 2px 6px;
   border-radius: 4px;
@@ -4323,18 +4330,32 @@
 .phase-title-text[contenteditable="true"]:hover,
 .phase-progress-goal[contenteditable="true"]:hover,
 .engagement-phase-section li[contenteditable="true"]:hover,
+.engagement-phase li[contenteditable="true"]:hover,
+.phase-items li[contenteditable="true"]:hover,
 .section-goal[contenteditable="true"]:hover,
+.phase-subtitle[contenteditable="true"]:hover,
 #engagementPlanTitle[contenteditable="true"]:hover,
-#engagementPlanSummary[contenteditable="true"]:hover {
+#engagementPlanSummary[contenteditable="true"]:hover,
+.engagement-phase h2[contenteditable="true"]:hover,
+.progress-goal span[contenteditable="true"]:hover,
+.check-in-prompts li[contenteditable="true"]:hover,
+.prompts-list li[contenteditable="true"]:hover {
   background-color: rgba(15, 118, 110, 0.08);
 }
 
 .phase-title-text[contenteditable="true"]:focus,
 .phase-progress-goal[contenteditable="true"]:focus,
 .engagement-phase-section li[contenteditable="true"]:focus,
+.engagement-phase li[contenteditable="true"]:focus,
+.phase-items li[contenteditable="true"]:focus,
 .section-goal[contenteditable="true"]:focus,
+.phase-subtitle[contenteditable="true"]:focus,
 #engagementPlanTitle[contenteditable="true"]:focus,
-#engagementPlanSummary[contenteditable="true"]:focus {
+#engagementPlanSummary[contenteditable="true"]:focus,
+.engagement-phase h2[contenteditable="true"]:focus,
+.progress-goal span[contenteditable="true"]:focus,
+.check-in-prompts li[contenteditable="true"]:focus,
+.prompts-list li[contenteditable="true"]:focus {
   background-color: #fff;
   box-shadow: 0 0 0 2px rgba(15, 118, 110, 0.3);
 }
