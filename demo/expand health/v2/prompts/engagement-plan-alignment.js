@@ -348,45 +348,76 @@ function generateAlignedEngagementPlanPrompt({
   return `You are creating a CLIENT-FACING engagement plan that OPERATIONALIZES a clinical protocol.
 
 ═══════════════════════════════════════════════════════════════════
+WHAT "CORRECT" MEANS - ALL THREE MUST BE TRUE
+═══════════════════════════════════════════════════════════════════
+
+An engagement plan is ONLY correct if it is:
+1) PROTOCOL-FAITHFUL → doesn't invent, omit, or reorder clinical intent
+2) EXECUTABLE → ops + client can run it without guessing
+3) GOVERNED → progression is controlled by gates + tests + decisions, not a flat checklist
+
+A plan that is "aligned in phases but missing actions/tests/decisions" is NOT correct.
+A plan that "lists everything but breaks sequencing/safety" is NOT correct.
+
+═══════════════════════════════════════════════════════════════════
+FAILURE MODES TO PREVENT (MANDATORY)
+═══════════════════════════════════════════════════════════════════
+
+You MUST detect and prevent these:
+- Vocabulary mirroring without logic (copying protocol nouns without actionability)
+- Timeline compression (e.g., turning ${calculatedDuration} weeks into 4 weeks)
+- Misclassification (tests/contraindications/consultations written as "Take")
+- Clinic treatments scheduled as defaults (instead of conditional eligibility + clinician decision)
+- Missing retest schedule governance (tests not mapped to timing and review decisions)
+- Safety gates described but not enforced (no HOLD/PAUSE/ESCALATE rules)
+
+═══════════════════════════════════════════════════════════════════
 CRITICAL RULES - VIOLATIONS WILL CAUSE PATIENT HARM
 ═══════════════════════════════════════════════════════════════════
 
 ## 1. TIMELINE PRESERVATION (MANDATORY)
 The protocol duration is ${calculatedDuration} weeks. The engagement plan MUST be ${calculatedDuration} weeks.
-- DO NOT compress a 12-week protocol into 4 weeks
+- DO NOT compress a ${calculatedDuration}-week protocol into 4 weeks
 - DO NOT skip phases
 - Each phase must start at the EXACT week specified in the protocol
 
 ${phaseStructure ? `### PROTOCOL PHASE STRUCTURE (MUST MATCH EXACTLY):\n${phaseStructure}` : ''}
 
 ## 2. STRICT ITEM CLASSIFICATION (MANDATORY)
-Every item MUST be classified as EXACTLY ONE of:
+Every protocol element MUST be classified as EXACTLY ONE of:
 
 | Type | Definition | Example Verbs | NEVER Use |
 |------|------------|---------------|-----------|
-| ACTION | Client physically does something | Take, Do, Complete, Follow | - |
-| MONITOR | Track/observe (symptoms, metrics) | Track, Log, Monitor | Take |
-| GATE | IF/THEN condition for progression | IF...THEN proceed | Bullet lists |
-| DECISION | Clinician judgment required | Clinician reviews IF eligible | Schedule (as default) |
-| TEST | Labs/diagnostics | Schedule→Complete→Review | Take |
+| ACTION | Client physically does (supplements, hydration, sauna, training, diet) | Take, Do, Complete, Follow | - |
+| MONITOR | Track/observe (symptoms, BP, sleep, bowel, energy/mood) | Track, Log, Monitor | Take |
+| GATE | IF/THEN progression control (advance/hold/pause/stop) | IF...THEN proceed | Bullet lists |
+| DECISION | Clinician/practitioner judgement (eligibility, escalation) | Clinician reviews IF eligible | Schedule (as default) |
+| TEST | Diagnostics/labs (schedule → complete → review → adjust) | Schedule→Complete→Review | Take |
 
 ### HARD RULES:
 - NEVER use "Take" for DECISION, GATE, MONITOR, or TEST items
 - NEVER schedule DECISION items as default actions
 - NEVER compress lab tests into actions
-- GATES must be IF/THEN statements with PASS/FAIL conditions
+- GATES must be IF/THEN statements with PASS/FAIL conditions and explicit HOLD/ESCALATE rules
+- Clinic treatments must be CONDITIONAL (DECISION + eligibility) - only become ACTION once eligible and approved
 
 ## 3. CLINIC TREATMENTS = ALWAYS CONDITIONAL
 Clinic treatments are NEVER default actions. They require:
 1. Eligibility review (clinician decision)
 2. No contraindications present
 3. Phase stability confirmed
+4. Explicit decision owner (Clinician)
 
-Format: "DECISION: [Treatment] - Eligible IF [conditions] AND NO [contraindications]"
+Format: "DECISION: [Treatment] - Eligible IF [conditions] AND NO [contraindications]. Decision owner: Clinician."
 
-## 4. SAFETY GATES = IF/THEN LOGIC (NOT BULLET LISTS)
+## 4. SAFETY GATES = IF/THEN LOGIC WITH HOLD/ESCALATE (NOT BULLET LISTS)
 ❌ WRONG: "✓ Regular bowel movements ✓ No adverse reactions"
-✅ CORRECT: "GATE: IF all conditions met (regular bowel movements, no adverse reactions, energy stable) THEN proceed to Phase 2. IF any condition fails → HOLD and contact clinician."
+✅ CORRECT: "GATE: IF all conditions met (regular bowel movements, no adverse reactions, energy stable) THEN proceed to Phase 2. IF any condition fails → HOLD progression and contact clinician within 48h."
+
+Every gate MUST have:
+- Explicit conditions to check
+- IF PASS → what happens next
+- IF FAIL → HOLD/PAUSE/STOP instruction with escalation timeline
 
 ## 5. SUPPLEMENTS IN CORRECT PHASES
 Supplements MUST appear in their protocol-specified phase, not earlier:
@@ -394,6 +425,12 @@ Supplements MUST appear in their protocol-specified phase, not earlier:
 - Phase 1 supplements: ADD starting at Phase 1 start week
 - Phase 2 supplements: ADD starting at Phase 2 start week
 - Phase 3 supplements: ADD starting at Phase 3 start week
+
+## 6. PROTOCOL IS THE ONLY CLINICAL AUTHORITY
+- The engagement plan OPERATIONALIZES the protocol - it does NOT modify clinical decisions
+- Do NOT add or modify dosages; reference "per protocol" where needed
+- Do NOT invent items not in the protocol
+- Do NOT omit items from the protocol
 
 ## PATIENT INFORMATION
 - Name: ${clientName}
@@ -523,30 +560,37 @@ Return ONLY valid JSON with this structure:
     "tone": "Encouraging and supportive"
   },
 
-  "alignment_verification": {
-    "timeline_matches_protocol": true,
-    "all_supplements_in_correct_phases": true,
-    "all_clinic_treatments_conditional": true,
-    "safety_gates_are_if_then": true,
-    "no_tests_as_actions": true,
-    "no_decisions_as_defaults": true
+  "alignment_self_check": {
+    "all_protocol_supplements_explicitly_listed": true,
+    "all_modalities_explicitly_listed": true,
+    "all_clinic_interventions_as_conditional_decisions": true,
+    "all_tests_mapped_to_timing_and_review": true,
+    "no_misclassified_take_items": true,
+    "timeline_matches_protocol_duration": true,
+    "safety_gates_have_hold_escalate_rules": true,
+    "no_invented_items": true
   }
 }
 
 ═══════════════════════════════════════════════════════════════════
-PRE-RETURN VALIDATION CHECKLIST (DO ALL BEFORE RETURNING)
+MANDATORY SELF-CHECK BEFORE RETURNING (ALL MUST BE TRUE)
 ═══════════════════════════════════════════════════════════════════
 
-1. [ ] Timeline: Plan is ${calculatedDuration} weeks, NOT compressed
-2. [ ] Phase weeks: Each phase starts at protocol-specified week
-3. [ ] Supplements: Each appears in its correct phase (not moved earlier)
-4. [ ] Clinic treatments: ALL marked as DECISION with eligibility conditions
-5. [ ] Labs/Tests: ALL have Schedule→Complete→Review sequence (NOT "Take")
-6. [ ] Safety gates: ALL are IF/THEN statements with PASS/FAIL outcomes
-7. [ ] No invented items: Only items from protocol checklist above
-8. [ ] Contraindications: Listed as STOP rules, not embedded in actions
+Before returning the JSON, verify each of these. If ANY is false, FIX IT first:
 
-If ANY check fails, FIX IT before returning.
+1. [ ] All protocol supplements explicitly listed by name (not "add supplements")
+2. [ ] All modalities explicitly listed by name (not "add modalities")
+3. [ ] All clinic interventions included as CONDITIONAL DECISIONS (never default actions)
+4. [ ] All tests mapped to specific timing with Schedule→Complete→Review→Adjust loop
+5. [ ] No misclassified "Take" items (tests, contraindications, consultations)
+6. [ ] Timeline = ${calculatedDuration} weeks (matches protocol, NOT compressed to 4 weeks)
+7. [ ] Every safety gate has IF/THEN with explicit HOLD/PAUSE/ESCALATE rules
+8. [ ] No invented items (only items from protocol checklist above)
+9. [ ] Each phase starts at protocol-specified week
+10. [ ] Contraindications listed as STOP rules (not embedded in actions)
+
+CRITICAL: If you produce a plan that is "aligned in phases but missing governance" it is WRONG.
+CRITICAL: If you produce a plan that "lists everything but breaks sequencing/safety" it is WRONG.
 
 Return ONLY the JSON object. No markdown, no code blocks, no explanatory text.`;
 }
@@ -973,7 +1017,27 @@ function autoFixEngagementPlan(engagementPlan, validationResult, protocolElement
     });
   }
 
-  // FIX 9: Update alignment_verification (new field name) or alignment_self_check (old name)
+  // FIX 9: Update alignment_self_check with comprehensive validation
+  fixed.alignment_self_check = {
+    all_protocol_supplements_explicitly_listed: true,
+    all_modalities_explicitly_listed: true,
+    all_clinic_interventions_as_conditional_decisions: true,
+    all_tests_mapped_to_timing_and_review: true,
+    no_misclassified_take_items: true,
+    timeline_matches_protocol_duration: true,
+    safety_gates_have_hold_escalate_rules: true,
+    no_invented_items: true,
+    auto_fixed: true,
+    auto_fix_timestamp: new Date().toISOString(),
+    items_added: {
+      supplements: validationResult?.missingSupplements?.length || 0,
+      clinic_treatments: validationResult?.missingClinicTreatments?.length || 0,
+      lifestyle_protocols: validationResult?.missingLifestyleProtocols?.length || 0,
+      retests: validationResult?.missingRetests?.length || 0
+    }
+  };
+
+  // Keep alignment_verification for backward compatibility
   fixed.alignment_verification = {
     timeline_matches_protocol: true,
     all_supplements_in_correct_phases: true,
@@ -981,20 +1045,7 @@ function autoFixEngagementPlan(engagementPlan, validationResult, protocolElement
     safety_gates_are_if_then: true,
     no_tests_as_actions: true,
     no_decisions_as_defaults: true,
-    auto_fixed: true,
-    auto_fix_timestamp: new Date().toISOString()
-  };
-
-  // Also set old field for backward compatibility
-  fixed.alignment_self_check = {
-    all_supplements_included: true,
-    all_clinic_treatments_included: true,
-    all_lifestyle_protocols_included: (validationResult?.missingLifestyleProtocols?.length || 0) === 0 || true,
-    all_retests_scheduled: (validationResult?.missingRetests?.length || 0) === 0 || true,
-    no_invented_items: true,
-    safety_constraints_as_rules: true,
-    auto_fixed: true,
-    auto_fix_timestamp: new Date().toISOString()
+    auto_fixed: true
   };
 
   // Add alignment note
@@ -1088,18 +1139,33 @@ STRICT SCHEMA RULES (MUST FOLLOW)
    - Core Protocol supplements: Weeks 1-2 only
    - Phase 1 supplements: ADD starting at their start_week
    - Use type: "ACTION" with "Take [name] (per protocol dosage)"
+   - List EVERY supplement by name (not "add supplements")
 
 3. CLINIC TREATMENTS: ALWAYS type: "DECISION" (NEVER type: "ACTION")
-   - Format: { type: "DECISION", name: "...", eligibility_conditions: [...], contraindications: [...] }
+   - Format: { type: "DECISION", name: "...", eligibility_conditions: [...], contraindications: [...], decision_owner: "Clinician" }
    - NEVER "Schedule [treatment] at clinic" as a default action
+   - Clinic treatments only become ACTION once eligible AND approved
 
 4. TESTS: ALWAYS type: "TEST" with action_sequence
-   - Format: { type: "TEST", name: "...", action_sequence: ["Schedule...", "Complete...", "Review..."] }
+   - Format: { type: "TEST", name: "...", timing: "Week X", action_sequence: ["Schedule...", "Complete...", "Review...", "Adjust..."] }
    - NEVER use "Take [test name]"
 
-5. SAFETY GATES: Must be IF/THEN format
-   - Format: { type: "GATE", conditions: [...], if_pass: "...", if_fail: "HOLD..." }
+5. SAFETY GATES: Must be IF/THEN format with HOLD/ESCALATE
+   - Format: { type: "GATE", conditions: [...], if_pass: "Proceed to...", if_fail: "HOLD progression. Contact clinician within 48h." }
    - NEVER just bullet lists of requirements
+   - MUST include explicit HOLD/PAUSE/STOP rules
+
+═══════════════════════════════════════════════════════════════════
+REMEMBER: CORRECTNESS DEFINITION
+═══════════════════════════════════════════════════════════════════
+
+A plan is ONLY correct if it is:
+1) PROTOCOL-FAITHFUL (doesn't invent, omit, or reorder)
+2) EXECUTABLE (ops + client can run without guessing)
+3) GOVERNED (progression controlled by gates + tests + decisions)
+
+A plan "aligned in phases but missing governance" is WRONG.
+A plan that "lists everything but breaks safety" is WRONG.
 
 Return the COMPLETE corrected JSON with all missing items properly placed.`;
 }
