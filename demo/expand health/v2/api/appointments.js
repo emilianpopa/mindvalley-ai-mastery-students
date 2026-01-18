@@ -1566,6 +1566,141 @@ router.post('/enrich-from-sales', async (req, res, next) => {
 });
 
 /**
+ * POST /api/appointments/update-service-prices
+ * Learn service prices from non-membership bookings in Total Bookings CSV
+ * When a booking has saleValue > 0 and no membership used, that's the real service price
+ */
+router.post('/update-service-prices', async (req, res, next) => {
+  try {
+    const { csvData, dryRun = true } = req.body;
+    const tenantId = req.user?.tenantId;
+
+    if (!csvData) return res.status(400).json({ error: 'csvData is required' });
+    if (!tenantId) return res.status(400).json({ error: 'Tenant context required' });
+
+    const lines = csvData.trim().split('\n');
+    const header = parseCSVLine(lines[0]).map(h => h.toLowerCase().trim());
+
+    // Find column indexes for Total Bookings CSV
+    const saleItemIdx = header.findIndex(h => h.includes('sale item') || h.includes('saleitem') || h.includes('item') || h.includes('service'));
+    const saleValueIdx = header.findIndex(h => h.includes('sale value') || h.includes('salevalue') || h.includes('value') || h.includes('amount') || h.includes('price'));
+    const membershipUsedIdx = header.findIndex(h => h.includes('membership used') || h.includes('membershipused') || h.includes('membership'));
+
+    if (saleItemIdx === -1 || saleValueIdx === -1) {
+      return res.status(400).json({
+        error: 'CSV must have "Sale Item" and "Sale Value" columns',
+        headers: header,
+        foundColumns: {
+          saleItem: saleItemIdx,
+          saleValue: saleValueIdx,
+          membershipUsed: membershipUsedIdx
+        }
+      });
+    }
+
+    // Get existing service_types
+    const servicesResult = await db.query(
+      'SELECT id, name, price FROM service_types WHERE tenant_id = $1 ORDER BY name',
+      [tenantId]
+    );
+    const servicesByName = new Map(servicesResult.rows.map(s => [s.name.toLowerCase().trim(), { id: s.id, name: s.name, price: parseFloat(s.price) || 0 }]));
+
+    // First pass: Learn service prices from non-membership bookings
+    const learnedPrices = new Map(); // serviceName -> price
+    const servicesNotInDb = new Set();
+
+    for (let i = 1; i < lines.length; i++) {
+      const values = parseCSVLine(lines[i]);
+      if (values.length < Math.max(saleItemIdx, saleValueIdx) + 1) continue;
+
+      const saleItem = values[saleItemIdx]?.trim();
+      const membershipUsed = membershipUsedIdx >= 0 ? values[membershipUsedIdx]?.trim() : null;
+      const rawValue = values[saleValueIdx]?.replace(/[^0-9.-]/g, '') || '0';
+      const saleValue = parseFloat(rawValue) || 0;
+
+      if (!saleItem) continue;
+
+      // Check if service exists in DB
+      const serviceKey = saleItem.toLowerCase().trim();
+      if (!servicesByName.has(serviceKey)) {
+        servicesNotInDb.add(saleItem);
+        continue;
+      }
+
+      // If no membership used and saleValue > 0, this is the real price
+      if (saleValue > 0 && !membershipUsed) {
+        const existing = learnedPrices.get(serviceKey);
+        // Keep the highest price seen (in case of discounts)
+        if (!existing || saleValue > existing) {
+          learnedPrices.set(serviceKey, saleValue);
+        }
+      }
+    }
+
+    // Determine which services need updating (price = 0)
+    let toUpdate = 0;
+    let alreadySet = 0;
+    const pricesToUpdate = [];
+
+    for (const [serviceName, learnedPrice] of learnedPrices) {
+      const service = servicesByName.get(serviceName);
+      if (service) {
+        if (service.price === 0 || service.price === null) {
+          toUpdate++;
+          pricesToUpdate.push({ id: service.id, name: service.name, price: learnedPrice });
+        } else {
+          alreadySet++;
+        }
+      }
+    }
+
+    // Update service_types if not dry run
+    let updated = 0;
+    if (!dryRun && pricesToUpdate.length > 0) {
+      for (const { id, price } of pricesToUpdate) {
+        await db.query(
+          'UPDATE service_types SET price = $1, updated_at = NOW() WHERE id = $2',
+          [price, id]
+        );
+        updated++;
+      }
+    }
+
+    // Format current prices for display
+    const currentPrices = servicesResult.rows.map(s => ({
+      name: s.name,
+      price: parseFloat(s.price) || 0
+    }));
+
+    // Format learned prices for display
+    const learnedPricesArray = pricesToUpdate.map(p => ({
+      name: p.name,
+      price: p.price
+    }));
+
+    res.json({
+      dryRun,
+      servicesInDb: servicesResult.rows.length,
+      toUpdate: dryRun ? toUpdate : undefined,
+      updated: dryRun ? 0 : updated,
+      alreadySet,
+      notInDb: servicesNotInDb.size,
+      servicesNotInDb: Array.from(servicesNotInDb).slice(0, 10),
+      currentPrices,
+      learnedPrices: learnedPricesArray,
+      columnsDetected: {
+        saleItem: saleItemIdx >= 0,
+        saleValue: saleValueIdx >= 0,
+        membershipUsed: membershipUsedIdx >= 0
+      }
+    });
+
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
  * POST /api/appointments/fix-staff-assignments
  * Re-assign staff to appointments by matching practitioner name from CSV
  * Also updates prices if the CSV has a price/value column

@@ -386,6 +386,101 @@
         </div>
       </div>
 
+      <!-- Update Service Prices Section -->
+      <div class="bg-white shadow rounded-lg p-6 mt-6">
+        <h2 class="text-lg font-semibold mb-2">Update Service Prices</h2>
+        <p class="text-sm text-gray-600 mb-4">Learn service prices from non-membership bookings. When clients pay full price (no membership), we use that to determine the real service price.</p>
+
+        <div class="bg-emerald-50 border border-emerald-200 rounded-lg p-3 mb-4">
+          <p class="text-sm text-emerald-800 mb-2"><strong>How it works:</strong></p>
+          <ol class="list-decimal list-inside text-sm text-emerald-800 space-y-1">
+            <li>Upload the "Total Bookings" CSV from Momence</li>
+            <li>System finds bookings where Sale Value > 0 AND no membership was used</li>
+            <li>Those prices are saved to the service_types table</li>
+            <li>Now all appointments (even membership ones) show the correct service price</li>
+          </ol>
+          <p class="text-xs text-emerald-600 mt-2">Example: "Red Light Therapy" paid R500 without membership → service price set to R500 → membership bookings now show "R500 or 1 credits"</p>
+        </div>
+
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            Upload Momence "Total Bookings" CSV
+          </label>
+          <input
+            type="file"
+            id="csvFileServicePrices"
+            accept=".csv"
+            class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer"
+          />
+        </div>
+
+        <div id="fileInfoServicePrices" class="hidden mb-4 p-3 bg-gray-50 rounded-lg">
+          <p class="text-sm text-gray-600">
+            File loaded: <span id="fileNameServicePrices" class="font-medium"></span>
+            (<span id="rowCountServicePrices" class="font-medium"></span> rows)
+          </p>
+        </div>
+
+        <button
+          id="updateServicePricesBtn"
+          disabled
+          class="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+        >
+          Preview Price Updates
+        </button>
+
+        <div id="servicePricesResults" class="hidden mt-4">
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+            <div class="bg-gray-50 p-3 rounded-lg text-center">
+              <p class="text-xs text-gray-500">Services in DB</p>
+              <p class="text-xl font-bold" id="statServicesInDb">0</p>
+            </div>
+            <div class="bg-emerald-50 p-3 rounded-lg text-center">
+              <p class="text-xs text-gray-500" id="servicePricesToUpdateLabel">Prices to Learn</p>
+              <p class="text-xl font-bold text-emerald-600" id="statPricesToUpdate">0</p>
+            </div>
+            <div class="bg-blue-50 p-3 rounded-lg text-center">
+              <p class="text-xs text-gray-500">Already Set</p>
+              <p class="text-xl font-bold text-blue-600" id="statPricesAlreadySet">0</p>
+            </div>
+            <div class="bg-yellow-50 p-3 rounded-lg text-center">
+              <p class="text-xs text-gray-500">Not in DB</p>
+              <p class="text-xl font-bold text-yellow-600" id="statServicesNotInDb">0</p>
+            </div>
+          </div>
+
+          <!-- Current Service Prices -->
+          <div id="currentServicePrices" class="mb-4 p-3 bg-gray-50 rounded-lg">
+            <p class="text-sm font-medium mb-2">Current Service Prices:</p>
+            <div id="currentPricesList" class="flex flex-wrap gap-2"></div>
+          </div>
+
+          <!-- Learned Prices Preview -->
+          <div id="learnedPricesPreview" class="hidden mb-4 p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
+            <p class="text-sm font-medium mb-2 text-emerald-800">
+              <span class="inline-flex items-center">
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                Prices learned from non-membership bookings:
+              </span>
+            </p>
+            <div id="learnedPricesPreviewList" class="flex flex-wrap gap-2"></div>
+            <p class="text-xs text-emerald-700 mt-2">Only services with price = 0 will be updated.</p>
+          </div>
+
+          <div id="servicePricesAction" class="hidden">
+            <button id="runUpdateServicePrices" class="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 font-medium">
+              Apply Service Prices
+            </button>
+          </div>
+
+          <div id="servicePricesSuccess" class="hidden p-4 bg-emerald-50 border border-emerald-200 rounded-lg">
+            <p class="text-emerald-800 font-medium" id="servicePricesSuccessText"></p>
+          </div>
+        </div>
+      </div>
+
       <!-- Fix Appointment Durations Section -->
       <div class="bg-white shadow rounded-lg p-6 mt-6">
         <h2 class="text-lg font-semibold mb-2">Fix Appointment Durations</h2>
@@ -817,6 +912,101 @@
         hideLoading();
       }
     });
+
+    // ==================== UPDATE SERVICE PRICES ====================
+    let servicePricesCsvData = null;
+
+    document.getElementById('csvFileServicePrices').addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      servicePricesCsvData = await file.text();
+      const lines = servicePricesCsvData.trim().split('\n');
+      document.getElementById('fileNameServicePrices').textContent = file.name;
+      document.getElementById('rowCountServicePrices').textContent = lines.length - 1;
+      document.getElementById('fileInfoServicePrices').classList.remove('hidden');
+      document.getElementById('updateServicePricesBtn').disabled = false;
+      document.getElementById('servicePricesResults').classList.add('hidden');
+    });
+
+    document.getElementById('updateServicePricesBtn').addEventListener('click', () => updateServicePrices(true));
+    document.getElementById('runUpdateServicePrices').addEventListener('click', () => updateServicePrices(false));
+
+    async function updateServicePrices(dryRun) {
+      if (!servicePricesCsvData) return;
+
+      showLoading();
+      try {
+        const resp = await fetch('/api/appointments/update-service-prices', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+          },
+          body: JSON.stringify({ csvData: servicePricesCsvData, dryRun })
+        });
+
+        if (!resp.ok) {
+          const errData = await resp.json();
+          throw new Error(errData.error || 'Failed to update service prices');
+        }
+
+        const data = await resp.json();
+
+        // Show results
+        document.getElementById('servicePricesResults').classList.remove('hidden');
+        document.getElementById('statServicesInDb').textContent = data.servicesInDb || 0;
+        document.getElementById('statPricesToUpdate').textContent = dryRun ? data.toUpdate : data.updated;
+        document.getElementById('statPricesAlreadySet').textContent = data.alreadySet || 0;
+        document.getElementById('statServicesNotInDb').textContent = data.notInDb || 0;
+        document.getElementById('servicePricesToUpdateLabel').textContent = dryRun ? 'Prices to Learn' : 'Updated';
+
+        // Show current service prices
+        const currentPricesList = document.getElementById('currentPricesList');
+        const currentPrices = data.currentPrices || [];
+        if (currentPrices.length > 0) {
+          currentPricesList.innerHTML = currentPrices.map(p => {
+            const priceText = p.price > 0 ? `R${p.price.toFixed(2)}` : 'Not set';
+            const bgColor = p.price > 0 ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-500';
+            return `<span class="px-2 py-1 ${bgColor} rounded text-xs">${p.name}: ${priceText}</span>`;
+          }).join('');
+        } else {
+          currentPricesList.innerHTML = '<span class="text-gray-500 text-sm">No services in database</span>';
+        }
+
+        // Show learned prices
+        const learnedPrices = data.learnedPrices || [];
+        if (learnedPrices.length > 0) {
+          document.getElementById('learnedPricesPreview').classList.remove('hidden');
+          document.getElementById('learnedPricesPreviewList').innerHTML = learnedPrices.map(p =>
+            `<span class="px-2 py-1 bg-emerald-100 text-emerald-800 rounded text-xs">${p.name}: R${p.price.toFixed(2)}</span>`
+          ).join('');
+        } else {
+          document.getElementById('learnedPricesPreview').classList.add('hidden');
+        }
+
+        // Show action button or success
+        if (dryRun && data.toUpdate > 0) {
+          document.getElementById('servicePricesAction').classList.remove('hidden');
+          document.getElementById('servicePricesSuccess').classList.add('hidden');
+        } else if (!dryRun) {
+          document.getElementById('servicePricesAction').classList.add('hidden');
+          document.getElementById('servicePricesSuccess').classList.remove('hidden');
+          document.getElementById('servicePricesSuccessText').textContent =
+            `Successfully updated ${data.updated} service prices! Appointments will now show correct prices.`;
+        } else {
+          document.getElementById('servicePricesAction').classList.add('hidden');
+          document.getElementById('servicePricesSuccess').classList.remove('hidden');
+          document.getElementById('servicePricesSuccessText').textContent =
+            'No new prices to learn. All services either already have prices set or no non-membership bookings found.';
+        }
+
+      } catch (err) {
+        showError(err.message);
+      } finally {
+        hideLoading();
+      }
+    }
 
     // ==================== ANALYZE CSV (DEBUG) ====================
     document.getElementById('analyzeCsvBtn').addEventListener('click', async () => {
