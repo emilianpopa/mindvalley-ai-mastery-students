@@ -9159,6 +9159,11 @@ async function viewEngagementPlanById(id, isLegacy = false) {
         currentEngagementProtocolId = engagementPlan.source_protocol_id;
         currentEngagementPlanId = engagementPlan.id;
 
+        // Override planData.title with the correct database title
+        // This ensures the engagement plan displays the proper protocol-derived title
+        // not the AI-generated title which may be abbreviated
+        planData.title = engagementPlan.title || `Engagement Plan: ${engagementPlan.protocol_title}` || planData.title;
+
         // Show the editor
         showEngagementPlanEditorView(protocol, planData);
       } else {
@@ -9394,6 +9399,13 @@ async function openEngagementPlanEditor(protocolId) {
 
     currentEngagementPlanData = planData;
     currentEngagementProtocolId = protocolId;
+
+    // Override planData.title with the correct protocol title
+    // This ensures the engagement plan displays the proper protocol-derived title
+    // not the AI-generated title which may be abbreviated
+    if (protocol.title) {
+      planData.title = `Engagement Plan: ${protocol.title}`;
+    }
 
     // Show the editor
     showEngagementPlanEditorView(protocol, planData);
