@@ -750,6 +750,8 @@ router.post('/import/momence', async (req, res, next) => {
     const durationIdx = header.findIndex(h => h.includes('duration') || h.includes('length'));
     // Look for time block/type column
     const typeIdx = header.findIndex(h => h.includes('type') || h.includes('booking type'));
+    // Look for sales value/price column
+    const salesValueIdx = header.findIndex(h => h.includes('sales value') || h.includes('salesvalue') || h.includes('price') || h.includes('amount'));
 
     if (dateIdx === -1 || serviceIdx === -1) {
       return res.status(400).json({ error: 'CSV must have date and service columns' });
@@ -864,6 +866,13 @@ router.post('/import/momence', async (req, res, next) => {
       const paidValue = paidIdx >= 0 ? values[paidIdx]?.toLowerCase().trim() : '';
       const isPaid = paidValue === 'yes' || paidValue === 'paid' || paidValue === 'true' || paidValue === '1';
 
+      // Parse sales value/price
+      let salesValue = 0;
+      if (salesValueIdx >= 0 && values[salesValueIdx]) {
+        const rawValue = values[salesValueIdx].replace(/[^0-9.-]/g, ''); // Remove currency symbols
+        salesValue = parseFloat(rawValue) || 0;
+      }
+
       appointments.push({
         clientId,
         serviceName,
@@ -874,6 +883,7 @@ router.post('/import/momence', async (req, res, next) => {
         practitioner: practitionerIdx >= 0 ? values[practitionerIdx] : null,
         location: locationIdx >= 0 ? values[locationIdx] : null,
         paid: isPaid,
+        salesValue,
         isTimeBlock,
         customerField // Store for debugging
       });
@@ -905,8 +915,8 @@ router.post('/import/momence', async (req, res, next) => {
           }
 
           await db.query(
-            `INSERT INTO appointments (tenant_id, client_id, service_type_id, staff_id, title, start_time, end_time, status, payment_status, booking_source, is_time_block, created_at)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW())`,
+            `INSERT INTO appointments (tenant_id, client_id, service_type_id, staff_id, title, start_time, end_time, status, payment_status, price, booking_source, is_time_block, created_at)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW())`,
             [
               tenantId,
               appt.clientId || null, // null for time blocks
@@ -917,6 +927,7 @@ router.post('/import/momence', async (req, res, next) => {
               appt.endTime,
               appt.isTimeBlock ? 'scheduled' : 'confirmed',
               appt.isTimeBlock ? null : (appt.paid ? 'paid' : 'unpaid'), // no payment status for time blocks
+              appt.salesValue || 0, // price from Momence sales value
               'momence', // booking_source
               appt.isTimeBlock // is_time_block
             ]
@@ -932,6 +943,10 @@ router.post('/import/momence', async (req, res, next) => {
     const paidCount = appointments.filter(a => a.paid && !a.isTimeBlock).length;
     const unpaidCount = appointments.filter(a => !a.paid && !a.isTimeBlock).length;
     const timeBlockCount = appointments.filter(a => a.isTimeBlock).length;
+
+    // Calculate total sales value
+    const totalSalesValue = appointments.reduce((sum, a) => sum + (a.salesValue || 0), 0);
+    const appointmentsWithPrice = appointments.filter(a => a.salesValue > 0).length;
 
     // Sample time blocks for debugging
     const timeBlockSamples = appointments
@@ -960,6 +975,12 @@ router.post('/import/momence', async (req, res, next) => {
           paidColumnName: paidIdx >= 0 ? header[paidIdx] : null,
           paidCount,
           unpaidCount
+        },
+        salesValueStats: {
+          salesValueColumnFound: salesValueIdx >= 0,
+          salesValueColumnName: salesValueIdx >= 0 ? header[salesValueIdx] : null,
+          appointmentsWithPrice,
+          totalSalesValue: totalSalesValue.toFixed(2)
         },
         timeBlockStats: {
           typeColumnFound: typeIdx >= 0,
