@@ -2911,6 +2911,7 @@
       z-index: 1000;
       font-size: 0.8125rem;
       overflow: visible;
+      pointer-events: none; /* Allow clicks to pass through to appointment block */
     }
 
     .appointment-block:hover .apt-tooltip {
@@ -3228,6 +3229,17 @@
                   <polyline points="17 11 19 13 23 9"></polyline>
                 </svg>
                 Lead
+              </button>
+              <button class="utility-add-btn" onclick="openNewAptModal(new Date())">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                  <line x1="16" y1="2" x2="16" y2="6"></line>
+                  <line x1="8" y1="2" x2="8" y2="6"></line>
+                  <line x1="3" y1="10" x2="21" y2="10"></line>
+                  <line x1="12" y1="14" x2="12" y2="18"></line>
+                  <line x1="10" y1="16" x2="14" y2="16"></line>
+                </svg>
+                Appointment
               </button>
             </div>
             <div class="utility-divider"></div>
@@ -3676,6 +3688,11 @@
         const endDate = endOfWeek.toISOString();
 
         const data = await apiRequest(`/api/appointments/calendar?start=${startDate}&end=${endDate}`);
+        console.log('Appointments data from API:', data);
+        if (data && data.length > 0) {
+          console.log('First appointment extendedProps:', data[0].extendedProps);
+          console.log('Payment statuses:', data.slice(0, 5).map(a => a.extendedProps?.paymentStatus));
+        }
 
         // API returns array directly, not wrapped in { events: [...] }
         if (data && Array.isArray(data)) {
@@ -3734,6 +3751,11 @@
         const isPaid = paymentStatus === 'paid' || apt.extendedProps?.status === 'completed';
         // Unpaid = explicitly unpaid OR no payment status (NULL)
         const isUnpaid = paymentStatus === 'unpaid' || paymentStatus === 'pending' || (!paymentStatus && !isPaid);
+
+        // Debug first few appointments
+        if (appointments.indexOf(apt) < 3) {
+          console.log(`Appointment ${apt.id}: paymentStatus="${paymentStatus}", isPaid=${isPaid}, status="${apt.extendedProps?.status}"`);
+        }
         const status = apt.extendedProps?.status || 'confirmed';
         // Check if this is a time block
         const isTimeBlock = apt.extendedProps?.isTimeBlock === true;
@@ -3796,7 +3818,8 @@
         const serviceName = apt.extendedProps?.serviceName || apt.title || 'Appointment';
         const staffName = apt.extendedProps?.staffName || '';
         const locationType = apt.extendedProps?.locationType || 'in_person';
-        const price = apt.extendedProps?.price || 0;
+        const priceVal = apt.extendedProps?.price;
+        const price = (priceVal !== null && priceVal !== undefined && !isNaN(Number(priceVal))) ? Number(priceVal) : 0;
 
         // Payment status text and class
         const paymentStatusText = isPaid ? 'Paid' : 'Not paid';
@@ -3863,7 +3886,12 @@
           e.stopPropagation();
           e.preventDefault();
           console.log('Appointment clicked:', apt);
-          openAppointmentPanel(apt);
+          try {
+            openAppointmentPanel(apt);
+          } catch (err) {
+            console.error('Error opening appointment panel:', err);
+            alert('Error opening appointment details: ' + err.message);
+          }
         });
 
         // Position relative to the slot
@@ -4164,6 +4192,7 @@
 
     function updateClockStatus() {
       const toast = document.getElementById('clockStatusToast');
+      if (!toast) return; // Exit if toast element not found
       const icon = toast.querySelector('.clock-status-icon');
       const text = toast.querySelector('.clock-status-text');
       const menuItem = document.getElementById('clockMenuItem');
@@ -4210,12 +4239,18 @@
     // =====================
 
     function openAppointmentPanel(apt) {
+      console.log('openAppointmentPanel called with:', apt);
       selectedAppointment = apt;
       isCheckedIn = apt.extendedProps?.status === 'in_progress';
 
-        // Update panel content
-        document.getElementById('panelTitle').textContent = apt.title || 'Appointment reservation';
-        document.getElementById('panelId').textContent = `ID: ${apt.id}`;
+      // Check if panel elements exist
+      const overlay = document.getElementById('appointmentPanelOverlay');
+      const panel = document.getElementById('appointmentPanel');
+      console.log('Panel elements:', { overlay: !!overlay, panel: !!panel });
+
+      // Update panel content
+      document.getElementById('panelTitle').textContent = apt.title || 'Appointment reservation';
+      document.getElementById('panelId').textContent = `ID: ${apt.id}`;
 
       // Payment Status badge (Paid / Not paid)
       // Treat NULL/missing payment_status as unpaid
@@ -4276,8 +4311,10 @@
 
       // Payment tags
       const paymentTagsEl = document.getElementById('panelPaymentTags');
-      const price = apt.extendedProps?.price || 0;
-      const credits = apt.extendedProps?.credits || 0;
+      const priceRaw = apt.extendedProps?.price;
+      const price = (priceRaw !== null && priceRaw !== undefined && !isNaN(Number(priceRaw))) ? Number(priceRaw) : 0;
+      const creditsRaw = apt.extendedProps?.credits;
+      const credits = (creditsRaw !== null && creditsRaw !== undefined && !isNaN(Number(creditsRaw))) ? Number(creditsRaw) : 0;
       let tagsHtml = '';
 
       if (price > 0) {
