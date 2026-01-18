@@ -459,6 +459,16 @@
             <div id="staffNamesList" class="flex flex-wrap gap-2"></div>
           </div>
 
+          <!-- Missing Practitioners Section -->
+          <div id="missingPractitioners" class="hidden mb-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+            <p class="text-sm font-medium mb-2 text-orange-800">Practitioners in CSV not found in database (<span id="missingCount">0</span>):</p>
+            <div id="missingPractitionersList" class="flex flex-wrap gap-2 mb-3"></div>
+            <button id="createStaffBtn" class="px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 font-medium text-sm">
+              Create Staff Records & Fix Assignments
+            </button>
+            <p class="text-xs text-orange-700 mt-2">This will create staff records for each practitioner name and then assign them to matching appointments.</p>
+          </div>
+
           <div id="staffPreview" class="hidden mb-4 p-3 bg-violet-50 rounded-lg max-h-48 overflow-y-auto">
             <p class="text-sm font-medium mb-2">Preview (first 10 matches):</p>
             <div id="staffPreviewContent" class="text-sm"></div>
@@ -951,10 +961,11 @@
       document.getElementById('staffResults').classList.add('hidden');
     });
 
-    document.getElementById('fixStaffBtn').addEventListener('click', () => fixStaffAssignments(true));
-    document.getElementById('runFixStaff').addEventListener('click', () => fixStaffAssignments(false));
+    document.getElementById('fixStaffBtn').addEventListener('click', () => fixStaffAssignments(true, false));
+    document.getElementById('runFixStaff').addEventListener('click', () => fixStaffAssignments(false, false));
+    document.getElementById('createStaffBtn').addEventListener('click', () => fixStaffAssignments(false, true));
 
-    async function fixStaffAssignments(dryRun) {
+    async function fixStaffAssignments(dryRun, autoCreateStaff = false) {
       if (!staffCsvData) return;
 
       showLoading();
@@ -965,7 +976,7 @@
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
           },
-          body: JSON.stringify({ csvData: staffCsvData, dryRun })
+          body: JSON.stringify({ csvData: staffCsvData, dryRun, autoCreateStaff })
         });
 
         if (!resp.ok) {
@@ -986,9 +997,25 @@
         // Show staff names in database
         const staffNamesDiv = document.getElementById('staffNamesList');
         const staffNames = data.staffNames || [];
-        staffNamesDiv.innerHTML = staffNames.map(name =>
-          `<span class="px-2 py-1 bg-violet-100 text-violet-800 rounded text-xs">${name}</span>`
-        ).join('');
+        if (staffNames.length > 0) {
+          staffNamesDiv.innerHTML = staffNames.map(name =>
+            `<span class="px-2 py-1 bg-violet-100 text-violet-800 rounded text-xs">${name}</span>`
+          ).join('');
+        } else {
+          staffNamesDiv.innerHTML = '<span class="text-gray-500 text-sm">No staff records in database</span>';
+        }
+
+        // Show missing practitioners if any
+        const missingPractitioners = data.missingPractitioners || [];
+        if (missingPractitioners.length > 0 && dryRun) {
+          document.getElementById('missingPractitioners').classList.remove('hidden');
+          document.getElementById('missingCount').textContent = missingPractitioners.length;
+          document.getElementById('missingPractitionersList').innerHTML = missingPractitioners.map(name =>
+            `<span class="px-2 py-1 bg-orange-100 text-orange-800 rounded text-xs">${name}</span>`
+          ).join('');
+        } else {
+          document.getElementById('missingPractitioners').classList.add('hidden');
+        }
 
         // Show preview if available
         if (data.preview && data.preview.length > 0) {
@@ -1009,9 +1036,20 @@
           document.getElementById('staffSuccess').classList.add('hidden');
         } else if (!dryRun) {
           document.getElementById('staffAction').classList.add('hidden');
+          document.getElementById('missingPractitioners').classList.add('hidden');
           document.getElementById('staffSuccess').classList.remove('hidden');
-          document.getElementById('staffSuccessText').textContent =
-            `Successfully updated ${data.updated} appointments with staff assignments! Refresh the calendar to see the changes.`;
+          let successMsg = '';
+          if (data.staffCreated > 0) {
+            successMsg = `Created ${data.staffCreated} staff records and updated ${data.updated} appointments! `;
+          } else {
+            successMsg = `Successfully updated ${data.updated} appointments with staff assignments! `;
+          }
+          successMsg += 'Refresh the calendar to see the changes.';
+          document.getElementById('staffSuccessText').textContent = successMsg;
+        } else if (missingPractitioners.length > 0) {
+          // Only missing practitioners, show create button
+          document.getElementById('staffAction').classList.add('hidden');
+          document.getElementById('staffSuccess').classList.add('hidden');
         } else {
           document.getElementById('staffAction').classList.add('hidden');
           document.getElementById('staffSuccess').classList.remove('hidden');

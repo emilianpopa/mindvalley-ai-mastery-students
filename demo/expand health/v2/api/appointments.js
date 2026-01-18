@@ -1512,7 +1512,7 @@ router.post('/enrich-from-sales', async (req, res, next) => {
  */
 router.post('/fix-staff-assignments', async (req, res, next) => {
   try {
-    const { csvData, dryRun = true } = req.body;
+    const { csvData, dryRun = true, autoCreateStaff = false } = req.body;
     const tenantId = req.user?.tenantId;
 
     if (!csvData) return res.status(400).json({ error: 'csvData is required' });
@@ -1533,12 +1533,18 @@ router.post('/fix-staff-assignments', async (req, res, next) => {
       });
     }
 
-    // Get existing clients
-    const clientsResult = await db.query('SELECT id, email FROM clients WHERE tenant_id = $1', [tenantId]);
-    const clientsByEmail = new Map(clientsResult.rows.map(c => [c.email?.toLowerCase(), c.id]));
+    // Extract unique practitioner names from CSV first
+    const uniquePractitioners = new Set();
+    for (let i = 1; i < lines.length; i++) {
+      const values = parseCSVLine(lines[i]);
+      if (values.length > practitionerIdx) {
+        const name = values[practitionerIdx]?.trim();
+        if (name) uniquePractitioners.add(name);
+      }
+    }
 
     // Get existing staff and create lookup by name
-    const staffResult = await db.query('SELECT id, first_name, last_name FROM staff WHERE tenant_id = $1', [tenantId]);
+    let staffResult = await db.query('SELECT id, first_name, last_name FROM staff WHERE tenant_id = $1', [tenantId]);
     const staffByName = new Map();
     staffResult.rows.forEach(s => {
       const fullName = `${s.first_name} ${s.last_name}`.toLowerCase().trim();
@@ -1548,6 +1554,45 @@ router.post('/fix-staff-assignments', async (req, res, next) => {
         staffByName.set(s.first_name.toLowerCase().trim(), s.id);
       }
     });
+
+    // Find practitioners not in database
+    const missingPractitioners = [];
+    uniquePractitioners.forEach(name => {
+      if (!staffByName.has(name.toLowerCase())) {
+        missingPractitioners.push(name);
+      }
+    });
+
+    // Auto-create staff records if requested
+    let staffCreated = 0;
+    if (autoCreateStaff && !dryRun && missingPractitioners.length > 0) {
+      for (const practName of missingPractitioners) {
+        const nameParts = practName.trim().split(/\s+/);
+        const firstName = nameParts[0] || practName;
+        const lastName = nameParts.slice(1).join(' ') || '';
+
+        try {
+          const insertResult = await db.query(
+            `INSERT INTO staff (tenant_id, first_name, last_name, title, is_active)
+             VALUES ($1, $2, $3, $4, true)
+             RETURNING id`,
+            [tenantId, firstName, lastName, 'Practitioner']
+          );
+          const newStaffId = insertResult.rows[0].id;
+          staffByName.set(practName.toLowerCase(), newStaffId);
+          staffCreated++;
+        } catch (err) {
+          console.error('Error creating staff:', practName, err.message);
+        }
+      }
+
+      // Refresh staff list after creating
+      staffResult = await db.query('SELECT id, first_name, last_name FROM staff WHERE tenant_id = $1', [tenantId]);
+    }
+
+    // Get existing clients
+    const clientsResult = await db.query('SELECT id, email FROM clients WHERE tenant_id = $1', [tenantId]);
+    const clientsByEmail = new Map(clientsResult.rows.map(c => [c.email?.toLowerCase(), c.id]));
 
     let updated = 0;
     let notFound = 0;
@@ -1633,6 +1678,9 @@ router.post('/fix-staff-assignments', async (req, res, next) => {
       totalInCSV: lines.length - 1,
       staffFound: staffResult.rows.length,
       staffNames: staffResult.rows.map(s => `${s.first_name} ${s.last_name}`),
+      staffCreated,
+      uniquePractitionersInCSV: Array.from(uniquePractitioners),
+      missingPractitioners,
       updated: dryRun ? 0 : updated,
       toUpdate: dryRun ? updated : null,
       alreadyCorrect,
