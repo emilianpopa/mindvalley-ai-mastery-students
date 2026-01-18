@@ -4993,8 +4993,9 @@
 
     async function loadClients() {
       try {
-        console.log('Loading clients...');
-        const response = await fetch('/api/clients?limit=500', {
+        console.log('Loading clients... Token:', token ? 'present' : 'missing');
+        // Load all clients (high limit for client-side search/filtering)
+        const response = await fetch('/api/clients?limit=10000', {
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
@@ -5005,20 +5006,23 @@
         if (!response.ok) {
           const errorText = await response.text();
           console.error('Clients API error:', response.status, errorText);
+          clients = []; // Reset to empty on error
           return;
         }
 
         const data = await response.json();
-        console.log('Clients data:', data);
+        console.log('Clients API response:', JSON.stringify(data).substring(0, 500));
 
-        if (data && data.clients) {
+        if (data && Array.isArray(data.clients)) {
           clients = data.clients;
-          console.log('Loaded', clients.length, 'clients');
+          console.log('Loaded', clients.length, 'clients. First client:', clients[0] ? JSON.stringify(clients[0]) : 'none');
         } else {
-          console.log('No clients array in response');
+          console.log('No clients array in response, data keys:', Object.keys(data || {}));
+          clients = [];
         }
       } catch (error) {
         console.error('Failed to load clients:', error);
+        clients = []; // Reset to empty on error
       }
     }
 
