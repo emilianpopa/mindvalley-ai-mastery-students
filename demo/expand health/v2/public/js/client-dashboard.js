@@ -12535,9 +12535,20 @@ async function saveProtocolEditor() {
     return;
   }
 
+  // Debug: log the data structure to help troubleshoot
+  console.log('[Save Protocol] generatedProtocolData:', generatedProtocolData);
+  console.log('[Save Protocol] generatedProtocolData.protocol:', generatedProtocolData.protocol);
+
+  // Check if there was a save error during generation
+  if (generatedProtocolData.saveError) {
+    alert(`Protocol was not saved during generation: ${generatedProtocolData.saveError}\n\nPlease regenerate the protocol.`);
+    return;
+  }
+
   const protocolId = generatedProtocolData.protocol?.id || generatedProtocolData.id;
   if (!protocolId) {
-    alert('Protocol ID not found');
+    console.error('[Save Protocol] Protocol ID not found. Data structure:', JSON.stringify(generatedProtocolData, null, 2));
+    alert('Protocol ID not found. The protocol may not have been saved properly. Please check the browser console for details.');
     return;
   }
 
