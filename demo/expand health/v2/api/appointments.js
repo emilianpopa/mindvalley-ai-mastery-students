@@ -752,8 +752,20 @@ router.post('/import/momence', async (req, res, next) => {
     const durationIdx = header.findIndex(h => h.includes('duration') || h.includes('length'));
     // Look for time block/type column
     const typeIdx = header.findIndex(h => h.includes('type') || h.includes('booking type'));
-    // Look for sales value/price column
-    const salesValueIdx = header.findIndex(h => h.includes('sales value') || h.includes('salesvalue') || h.includes('price') || h.includes('amount'));
+    // Look for sales value/price column - check many variations
+    const salesValueIdx = header.findIndex(h =>
+      h.includes('sales value') ||
+      h.includes('salesvalue') ||
+      h.includes('sale value') ||
+      h.includes('salevalue') ||
+      h.includes('price') ||
+      h.includes('amount') ||
+      h.includes('value') ||
+      h.includes('total') ||
+      h.includes('cost') ||
+      h.includes('fee') ||
+      h.includes('revenue')
+    );
 
     if (dateIdx === -1 || serviceIdx === -1) {
       return res.status(400).json({ error: 'CSV must have date and service columns' });
@@ -1508,6 +1520,7 @@ router.post('/enrich-from-sales', async (req, res, next) => {
 /**
  * POST /api/appointments/fix-staff-assignments
  * Re-assign staff to appointments by matching practitioner name from CSV
+ * Also updates prices if the CSV has a price/value column
  * Use this to fix appointments that were imported before staff matching was implemented
  */
 router.post('/fix-staff-assignments', async (req, res, next) => {
@@ -1525,6 +1538,21 @@ router.post('/fix-staff-assignments', async (req, res, next) => {
     const dateIdx = header.findIndex(h => h.includes('date'));
     const customerIdx = header.findIndex(h => h.includes('customer'));
     const practitionerIdx = header.findIndex(h => h.includes('practitioner'));
+
+    // Also look for price/value column so we can update prices at the same time
+    const priceIdx = header.findIndex(h =>
+      h.includes('sales value') ||
+      h.includes('salesvalue') ||
+      h.includes('sale value') ||
+      h.includes('salevalue') ||
+      h.includes('price') ||
+      h.includes('amount') ||
+      h.includes('value') ||
+      h.includes('total') ||
+      h.includes('cost') ||
+      h.includes('fee') ||
+      h.includes('revenue')
+    );
 
     if (dateIdx === -1 || customerIdx === -1 || practitionerIdx === -1) {
       return res.status(400).json({
@@ -1597,8 +1625,10 @@ router.post('/fix-staff-assignments', async (req, res, next) => {
     let updated = 0;
     let notFound = 0;
     let alreadyCorrect = 0;
+    let pricesUpdated = 0;
     let errors = [];
     const preview = [];
+    const hasPriceColumn = priceIdx >= 0;
 
     for (let i = 1; i < lines.length; i++) {
       const values = parseCSVLine(lines[i]);
@@ -1624,12 +1654,19 @@ router.post('/fix-staff-assignments', async (req, res, next) => {
         continue;
       }
 
+      // Parse price value if column exists
+      let priceValue = null;
+      if (hasPriceColumn && values[priceIdx]) {
+        const rawValue = values[priceIdx].replace(/[^0-9.-]/g, ''); // Remove currency symbols
+        priceValue = parseFloat(rawValue) || null;
+      }
+
       // Find the matching appointment (within 5 minute window)
       const startWindow = new Date(startTime.getTime() - 5 * 60000).toISOString();
       const endWindow = new Date(startTime.getTime() + 5 * 60000).toISOString();
 
       const existingResult = await db.query(
-        `SELECT id, staff_id FROM appointments
+        `SELECT id, staff_id, price FROM appointments
          WHERE tenant_id = $1 AND client_id = $2
          AND start_time BETWEEN $3 AND $4`,
         [tenantId, clientId, startWindow, endWindow]
@@ -1642,8 +1679,11 @@ router.post('/fix-staff-assignments', async (req, res, next) => {
 
       const apt = existingResult.rows[0];
 
-      // Check if already has correct staff
-      if (apt.staff_id === staffId) {
+      // Check if anything needs updating (staff or price)
+      const needsStaffUpdate = apt.staff_id !== staffId;
+      const needsPriceUpdate = priceValue !== null && (apt.price === null || apt.price === 0 || parseFloat(apt.price) !== priceValue);
+
+      if (!needsStaffUpdate && !needsPriceUpdate) {
         alreadyCorrect++;
         continue;
       }
@@ -1654,15 +1694,37 @@ router.post('/fix-staff-assignments', async (req, res, next) => {
           clientEmail: email,
           practitioner: practitionerName,
           oldStaffId: apt.staff_id,
-          newStaffId: staffId
+          newStaffId: staffId,
+          oldPrice: apt.price,
+          newPrice: priceValue
         });
       }
 
       if (!dryRun) {
         try {
+          // Build dynamic update query
+          const updateParts = ['updated_at = NOW()'];
+          const updateParams = [];
+          let paramIdx = 1;
+
+          if (needsStaffUpdate) {
+            updateParts.push(`staff_id = $${paramIdx}`);
+            updateParams.push(staffId);
+            paramIdx++;
+          }
+
+          if (needsPriceUpdate) {
+            updateParts.push(`price = $${paramIdx}`);
+            updateParams.push(priceValue);
+            paramIdx++;
+            pricesUpdated++;
+          }
+
+          updateParams.push(apt.id);
+
           await db.query(
-            `UPDATE appointments SET staff_id = $1, updated_at = NOW() WHERE id = $2`,
-            [staffId, apt.id]
+            `UPDATE appointments SET ${updateParts.join(', ')} WHERE id = $${paramIdx}`,
+            updateParams
           );
           updated++;
         } catch (err) {
@@ -1670,6 +1732,7 @@ router.post('/fix-staff-assignments', async (req, res, next) => {
         }
       } else {
         updated++;
+        if (needsPriceUpdate) pricesUpdated++;
       }
     }
 
@@ -1681,6 +1744,9 @@ router.post('/fix-staff-assignments', async (req, res, next) => {
       staffCreated,
       uniquePractitionersInCSV: Array.from(uniquePractitioners),
       missingPractitioners,
+      priceColumnFound: hasPriceColumn,
+      priceColumnName: hasPriceColumn ? header[priceIdx] : null,
+      pricesUpdated,
       updated: dryRun ? 0 : updated,
       toUpdate: dryRun ? updated : null,
       alreadyCorrect,

@@ -459,6 +459,19 @@
             <div id="staffNamesList" class="flex flex-wrap gap-2"></div>
           </div>
 
+          <!-- Price Column Detected Section -->
+          <div id="priceColumnDetected" class="hidden mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <p class="text-sm font-medium mb-1 text-blue-800">
+              <span class="inline-flex items-center">
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                Price column found: "<span id="priceColumnName"></span>"
+              </span>
+            </p>
+            <p class="text-sm text-blue-700"><span id="pricesWillUpdate">0</span> appointment prices will be updated</p>
+          </div>
+
           <!-- Missing Practitioners Section -->
           <div id="missingPractitioners" class="hidden mb-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
             <p class="text-sm font-medium mb-2 text-orange-800">Practitioners in CSV not found in database (<span id="missingCount">0</span>):</p>
@@ -1005,6 +1018,15 @@
           staffNamesDiv.innerHTML = '<span class="text-gray-500 text-sm">No staff records in database</span>';
         }
 
+        // Show price column detection
+        if (data.priceColumnFound) {
+          document.getElementById('priceColumnDetected').classList.remove('hidden');
+          document.getElementById('priceColumnName').textContent = data.priceColumnName || 'value';
+          document.getElementById('pricesWillUpdate').textContent = data.pricesUpdated || 0;
+        } else {
+          document.getElementById('priceColumnDetected').classList.add('hidden');
+        }
+
         // Show missing practitioners if any
         const missingPractitioners = data.missingPractitioners || [];
         if (missingPractitioners.length > 0 && dryRun) {
@@ -1042,7 +1064,10 @@
           if (data.staffCreated > 0) {
             successMsg = `Created ${data.staffCreated} staff records and updated ${data.updated} appointments! `;
           } else {
-            successMsg = `Successfully updated ${data.updated} appointments with staff assignments! `;
+            successMsg = `Successfully updated ${data.updated} appointments! `;
+          }
+          if (data.pricesUpdated > 0) {
+            successMsg += `(${data.pricesUpdated} prices updated) `;
           }
           successMsg += 'Refresh the calendar to see the changes.';
           document.getElementById('staffSuccessText').textContent = successMsg;
