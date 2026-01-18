@@ -810,8 +810,8 @@
 
     async function loadCustomers() {
       try {
-        // Use the existing clients API - returns { clients: [], total: number, pagination: {} }
-        const data = await apiRequest('/api/clients');
+        // Use the existing clients API - fetch all clients (high limit for client-side pagination)
+        const data = await apiRequest('/api/clients?limit=10000');
         customers = (data.clients || []).map(c => ({
           ...c,
           name: `${c.first_name || ''} ${c.last_name || ''}`.trim() || c.email || 'Unnamed'
