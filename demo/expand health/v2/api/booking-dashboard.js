@@ -178,7 +178,7 @@ router.get('/upcoming-appointments', async (req, res, next) => {
         a.end_time,
         a.status,
         a.payment_status,
-        a.price,
+        COALESCE(a.price, st.price) as price,
         a.location_type,
         a.location_details,
         c.id as client_id,
@@ -190,7 +190,8 @@ router.get('/upcoming-appointments', async (req, res, next) => {
         s.last_name as staff_last_name,
         st.name as service_name,
         st.color as service_color,
-        st.duration_minutes
+        st.duration_minutes,
+        st.price as service_price
       FROM appointments a
       LEFT JOIN clients c ON a.client_id = c.id
       LEFT JOIN staff s ON a.staff_id = s.id

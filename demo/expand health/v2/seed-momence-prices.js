@@ -103,17 +103,17 @@ async function seedPrices() {
         // Update existing service
         await client.query(`
           UPDATE service_types
-          SET price = $1, duration_minutes = $2, category_id = $3, category = $4, updated_at = NOW()
-          WHERE id = $5
-        `, [service.price, service.duration, categoryId, service.category, existing.rows[0].id]);
+          SET price = $1, duration_minutes = $2, category_id = $3, updated_at = NOW()
+          WHERE id = $4
+        `, [service.price, service.duration, categoryId, existing.rows[0].id]);
         updated++;
         console.log(`Updated: ${service.name} -> ZAR ${service.price.toFixed(2)}`);
       } else {
         // Insert new service
         await client.query(`
-          INSERT INTO service_types (tenant_id, name, price, duration_minutes, category_id, category, is_active)
-          VALUES ($1, $2, $3, $4, $5, $6, true)
-        `, [tenantId, service.name, service.price, service.duration, categoryId, service.category]);
+          INSERT INTO service_types (tenant_id, name, price, duration_minutes, category_id, is_active)
+          VALUES ($1, $2, $3, $4, $5, true)
+        `, [tenantId, service.name, service.price, service.duration, categoryId]);
         created++;
         console.log(`Created: ${service.name} -> ZAR ${service.price.toFixed(2)}`);
       }
