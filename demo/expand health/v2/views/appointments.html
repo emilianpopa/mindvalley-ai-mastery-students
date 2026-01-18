@@ -1649,15 +1649,41 @@
       font-weight: 400;
     }
 
+    .panel-price-actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
     .panel-price-type {
       display: inline-block;
-      margin-top: 8px;
       padding: 4px 10px;
       background: var(--blue-100);
       color: var(--blue-700);
       font-size: 0.75rem;
       font-weight: 500;
       border-radius: 4px;
+    }
+
+    .panel-copy-link-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      background: none;
+      border: none;
+      color: var(--blue-600);
+      font-size: 0.75rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: color 0.15s;
+    }
+
+    .panel-copy-link-btn:hover {
+      color: var(--blue-700);
+      text-decoration: underline;
     }
 
     /* Service Section */
@@ -1745,10 +1771,21 @@
     /* Panel Footer */
     .panel-footer {
       display: flex;
+      flex-direction: column;
       gap: 12px;
       padding: 16px 20px;
       border-top: 1px solid var(--gray-200);
       background: white;
+    }
+
+    .panel-footer-top {
+      display: flex;
+      gap: 8px;
+    }
+
+    .panel-footer-bottom {
+      display: flex;
+      gap: 8px;
     }
 
     .panel-btn {
@@ -1770,14 +1807,24 @@
       height: 16px;
     }
 
+    .panel-btn-secondary {
+      background: var(--gray-100);
+      border: 1px solid var(--gray-300);
+      color: var(--gray-700);
+    }
+
+    .panel-btn-secondary:hover {
+      background: var(--gray-200);
+    }
+
     .panel-btn-cancel {
-      background: var(--red-500);
-      border: none;
-      color: white;
+      background: white;
+      border: 1px solid var(--red-300);
+      color: var(--red-600);
     }
 
     .panel-btn-cancel:hover {
-      background: var(--red-600);
+      background: var(--red-50);
     }
 
     .panel-btn-edit {
@@ -1788,6 +1835,26 @@
 
     .panel-btn-edit:hover {
       background: var(--purple-700);
+    }
+
+    .panel-btn-pay {
+      background: var(--purple-600);
+      border: none;
+      color: white;
+    }
+
+    .panel-btn-pay:hover {
+      background: var(--purple-700);
+    }
+
+    .panel-btn-pay.paid {
+      background: white;
+      border: 1px solid var(--green-500);
+      color: var(--green-600);
+    }
+
+    .panel-btn-pay.paid:hover {
+      background: var(--green-50);
     }
 
     .panel-btn-paid {
@@ -4568,15 +4635,18 @@
       // Client / Signups section
       const clientName = apt.extendedProps?.clientName;
       const clientEmail = apt.extendedProps?.clientEmail || '';
+      const clientPhone = apt.extendedProps?.clientPhone || '';
       const signupCard = document.getElementById('panelSignupCard');
       if (clientName) {
         signupCard.style.display = 'flex';
         document.getElementById('panelClientName').textContent = clientName;
         document.getElementById('panelClientEmail').textContent = clientEmail;
+        document.getElementById('panelClientPhone').textContent = clientPhone;
       } else {
         signupCard.style.display = 'flex';
         document.getElementById('panelClientName').textContent = 'No client assigned';
         document.getElementById('panelClientEmail').textContent = '';
+        document.getElementById('panelClientPhone').textContent = '';
       }
 
       // Payment tags
@@ -4765,6 +4835,58 @@
 
       // Open in new tab
       window.open(googleCalUrl.toString(), '_blank');
+    }
+
+    function copyPaymentLink() {
+      if (!selectedAppointment) return;
+
+      const apt = selectedAppointment;
+      // Generate a payment link based on appointment ID
+      const paymentLink = `${window.location.origin}/pay/${apt.id}`;
+
+      navigator.clipboard.writeText(paymentLink).then(() => {
+        // Show a brief success message
+        const btn = event.target.closest('button');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = `
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+          Copied!
+        `;
+        setTimeout(() => {
+          btn.innerHTML = originalText;
+        }, 2000);
+      }).catch(err => {
+        console.error('Failed to copy payment link:', err);
+        alert('Failed to copy payment link');
+      });
+    }
+
+    async function sendPaymentLink() {
+      if (!selectedAppointment) return;
+
+      const apt = selectedAppointment;
+      const clientEmail = apt.extendedProps?.clientEmail;
+      const clientName = apt.extendedProps?.clientName;
+
+      if (!clientEmail) {
+        alert('No email address available for this client');
+        return;
+      }
+
+      try {
+        const response = await apiRequest(`/api/appointments/${apt.id}/send-payment-link`, {
+          method: 'POST'
+        });
+
+        if (response) {
+          alert(`Payment link sent to ${clientName} (${clientEmail})`);
+        }
+      } catch (error) {
+        console.error('Failed to send payment link:', error);
+        alert('Failed to send payment link. Please try again.');
+      }
     }
 
     function showPanelTab(tab) {
@@ -5792,6 +5914,7 @@
         <div class="panel-signup-info">
           <div class="panel-signup-name" id="panelClientName">No client assigned</div>
           <div class="panel-signup-email" id="panelClientEmail" style="font-size: 0.75rem; color: #6B7280; margin-top: 2px;"></div>
+          <div class="panel-signup-phone" id="panelClientPhone" style="font-size: 0.75rem; color: #6B7280; margin-top: 2px;"></div>
           <div class="panel-signup-tags" id="panelPaymentTags" style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px;">
             <!-- Payment tags will be populated dynamically -->
           </div>
@@ -5943,7 +6066,16 @@
           <div class="panel-info-content">
             <div class="panel-price-label">Total price</div>
             <div class="panel-price-value" id="panelPrice">ZAR 0.00 <span class="panel-price-credits">or 0 credits</span></div>
-            <span class="panel-price-type">Flat price</span>
+            <div class="panel-price-actions">
+              <span class="panel-price-type">Flat price</span>
+              <button class="panel-copy-link-btn" onclick="copyPaymentLink()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;">
+                  <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                  <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                </svg>
+                Copy reservation payment link
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -5965,16 +6097,6 @@
         </div>
       </div>
 
-      <!-- Add to Calendar -->
-      <button class="panel-add-calendar" onclick="addToCalendar()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-          <line x1="16" y1="2" x2="16" y2="6"></line>
-          <line x1="8" y1="2" x2="8" y2="6"></line>
-          <line x1="3" y1="10" x2="21" y2="10"></line>
-        </svg>
-        Add to calendar
-      </button>
       </div><!-- End Details Tab Content -->
 
       <!-- Timing Tab Content -->
@@ -6024,25 +6146,46 @@
 
     <!-- Panel Footer -->
     <div class="panel-footer">
-      <button class="panel-btn panel-btn-cancel" onclick="cancelAppointment()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <line x1="18" y1="6" x2="6" y2="18"></line>
-          <line x1="6" y1="6" x2="18" y2="18"></line>
-        </svg>
-        Cancel
-      </button>
-      <button class="panel-btn panel-btn-edit" onclick="openEditAppointmentModal()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
-        </svg>
-        Edit
-      </button>
-      <button class="panel-btn panel-btn-paid" id="panelPaidBtn">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polyline points="20 6 9 17 4 12"></polyline>
-        </svg>
-        Paid
-      </button>
+      <div class="panel-footer-top">
+        <button class="panel-btn panel-btn-secondary" onclick="addToCalendar()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="16" y1="2" x2="16" y2="6"></line>
+            <line x1="8" y1="2" x2="8" y2="6"></line>
+            <line x1="3" y1="10" x2="21" y2="10"></line>
+          </svg>
+          Add to calendar
+        </button>
+        <button class="panel-btn panel-btn-secondary" onclick="sendPaymentLink()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+          </svg>
+          Send payment link
+        </button>
+      </div>
+      <div class="panel-footer-bottom">
+        <button class="panel-btn panel-btn-cancel" onclick="cancelAppointment()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+          Cancel
+        </button>
+        <button class="panel-btn panel-btn-edit" onclick="openEditAppointmentModal()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
+          </svg>
+          Edit
+        </button>
+        <button class="panel-btn panel-btn-pay" id="panelPaidBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+            <line x1="1" y1="10" x2="23" y2="10"></line>
+          </svg>
+          Pay
+        </button>
+      </div>
     </div>
   </div>
 
