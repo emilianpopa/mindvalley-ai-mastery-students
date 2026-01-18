@@ -3673,7 +3673,34 @@
       updateWeekDisplay();
       generateTimeSlots();
       await loadAppointments();
+      scrollToBusinessHours();
     });
+
+    // Scroll calendar to business hours (6 AM) or first appointment
+    function scrollToBusinessHours() {
+      const container = document.querySelector('.calendar-container');
+      if (!container) return;
+
+      // Find the earliest appointment hour, default to 6 AM
+      let targetHour = 6;
+      if (appointments && appointments.length > 0) {
+        const earliestHour = Math.min(...appointments.map(apt => {
+          const start = new Date(apt.start);
+          return start.getHours();
+        }));
+        // Use earliest appointment hour if it's reasonable (between 5 AM and 10 AM)
+        if (earliestHour >= 5 && earliestHour <= 10) {
+          targetHour = earliestHour;
+        } else if (earliestHour < 5) {
+          targetHour = earliestHour; // Very early appointments, scroll there
+        }
+      }
+
+      // Calculate scroll position: each hour slot is slotHeight pixels
+      // Subtract 1 hour to show a bit of context above
+      const scrollPosition = Math.max(0, (targetHour - 1)) * slotHeight;
+      container.scrollTop = scrollPosition;
+    }
 
     // Load appointments from API
     async function loadAppointments() {
@@ -4030,12 +4057,14 @@
       currentDate.setDate(currentDate.getDate() - 7);
       updateWeekDisplay();
       await loadAppointments();
+      scrollToBusinessHours();
     }
 
     async function nextWeek() {
       currentDate.setDate(currentDate.getDate() + 7);
       updateWeekDisplay();
       await loadAppointments();
+      scrollToBusinessHours();
     }
 
     function setView(view) {
