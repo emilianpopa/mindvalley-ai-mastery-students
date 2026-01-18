@@ -456,6 +456,24 @@ async function initProtocolsAISummary() {
 }
 
 /**
+ * Initialize title column on protocols table
+ * This stores the AI-generated protocol title for proper labeling
+ */
+async function initProtocolTitle() {
+  try {
+    // Add title column if it doesn't exist
+    await db.query(`
+      ALTER TABLE protocols ADD COLUMN IF NOT EXISTS title VARCHAR(255);
+    `);
+    console.log('✅ Protocols title column ready');
+    return true;
+  } catch (error) {
+    console.error('❌ Failed to initialize protocols title column:', error.message);
+    return false;
+  }
+}
+
+/**
  * Initialize protocol_data column to store clinical protocol separately from engagement plans
  * This prevents engagement plan generation from overwriting the protocol source of truth
  */
@@ -666,6 +684,9 @@ async function initDatabase() {
   console.log('\n🔄 Initializing database schema...');
 
   try {
+    // Initialize protocols title column
+    await initProtocolTitle();
+
     // Initialize protocols AI summary column
     await initProtocolsAISummary();
 
@@ -721,6 +742,7 @@ module.exports = {
   initIntegrations,
   initMessages,
   initStaffTasks,
+  initProtocolTitle,
   initProtocolsAISummary,
   initProtocolData,
   initLabNotes,
