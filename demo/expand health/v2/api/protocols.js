@@ -714,18 +714,34 @@ router.get('/engagement-plans/:id/compare-alignment', authenticateToken, async (
       if (protocolResult.rows.length > 0) {
         protocol = protocolResult.rows[0];
         console.log('[Compare Alignment] Protocol fields available:', {
+          has_protocol_data: !!protocol.protocol_data,
+          protocol_data_length: protocol.protocol_data ? String(protocol.protocol_data).length : 0,
           has_ai_recommendations: !!protocol.ai_recommendations,
           ai_rec_length: protocol.ai_recommendations ? String(protocol.ai_recommendations).length : 0,
           has_modules: !!protocol.modules,
-          modules_length: protocol.modules ? String(protocol.modules).length : 0,
-          has_content: !!protocol.content
+          modules_length: protocol.modules ? String(protocol.modules).length : 0
         });
 
-        // Extract protocol data - PRIORITY: ai_recommendations (where AI protocols are stored)
+        // Extract protocol data - PRIORITY ORDER:
+        // 1. protocol_data (dedicated column for clinical protocol - source of truth)
+        // 2. ai_recommendations (may contain protocol if no engagement plan generated yet)
+        // 3. modules (legacy fallback)
         let protocolData = null;
 
-        // First try ai_recommendations (where AI-generated protocols are stored)
-        if (protocol.ai_recommendations) {
+        // First try protocol_data (dedicated column for clinical protocol)
+        if (protocol.protocol_data) {
+          try {
+            protocolData = typeof protocol.protocol_data === 'string'
+              ? JSON.parse(protocol.protocol_data)
+              : protocol.protocol_data;
+            console.log('[Compare Alignment] Using protocol_data for extraction, keys:', Object.keys(protocolData || {}));
+          } catch (e) {
+            console.log('[Compare Alignment] Could not parse protocol_data:', e.message);
+          }
+        }
+
+        // Fallback to ai_recommendations if protocol_data not available
+        if (!protocolData && protocol.ai_recommendations) {
           try {
             const aiRec = typeof protocol.ai_recommendations === 'string'
               ? JSON.parse(protocol.ai_recommendations)
@@ -738,7 +754,7 @@ router.get('/engagement-plans/:id/compare-alignment', authenticateToken, async (
               protocolData = aiRec;
               console.log('[Compare Alignment] Using ai_recommendations for protocol extraction');
             } else {
-              console.log('[Compare Alignment] ai_recommendations does not have protocol structure');
+              console.log('[Compare Alignment] ai_recommendations does not have protocol structure (likely contains engagement plan)');
             }
           } catch (e) {
             console.log('[Compare Alignment] Could not parse ai_recommendations:', e.message);
@@ -760,16 +776,6 @@ router.get('/engagement-plans/:id/compare-alignment', authenticateToken, async (
           } catch (e) {
             console.log('[Compare Alignment] Could not parse modules:', e.message);
             protocolData = null;
-          }
-        }
-
-        // Fallback to content
-        if (!protocolData && protocol.content) {
-          try {
-            protocolData = JSON.parse(protocol.content);
-            console.log('[Compare Alignment] Using content for protocol extraction');
-          } catch (e) {
-            protocolData = { content: protocol.content };
           }
         }
 
@@ -1718,19 +1724,21 @@ router.post('/generate', authenticateToken, async (req, res, next) => {
     const protocolNotes = buildProtocolNotes(protocolData, prompt);
 
     // Save the protocol to the database
-    // Actual DB Schema: id, client_id, template_id, start_date, end_date, status, modules, notes, ai_recommendations, created_by, created_at, updated_at
+    // Actual DB Schema: id, client_id, template_id, start_date, end_date, status, modules, notes, ai_recommendations, protocol_data, created_by, created_at, updated_at
+    // NOTE: protocol_data stores the clinical protocol structure, ai_recommendations can be used for engagement plans
     try {
       const insertResult = await db.query(
         `INSERT INTO protocols (
-          client_id, template_id, start_date, end_date, status, modules, notes, ai_recommendations, created_by
-        ) VALUES ($1, $2, CURRENT_DATE, CURRENT_DATE + interval '${totalDurationWeeks} weeks', 'draft', $3, $4, $5, $6)
+          client_id, template_id, start_date, end_date, status, modules, notes, ai_recommendations, protocol_data, created_by
+        ) VALUES ($1, $2, CURRENT_DATE, CURRENT_DATE + interval '${totalDurationWeeks} weeks', 'draft', $3, $4, $5, $6, $7)
         RETURNING *`,
         [
           client_id,
           primaryTemplateId,
           JSON.stringify(modulesForDb),
           protocolNotes,
-          JSON.stringify(protocolData), // Store full clinical structure as JSON
+          JSON.stringify(protocolData), // ai_recommendations (for backward compatibility)
+          JSON.stringify(protocolData), // protocol_data (source of truth for clinical protocol)
           req.user.id
         ]
       );
@@ -2829,11 +2837,35 @@ router.get('/:id/compare-alignment', authenticateToken, async (req, res, next) =
       });
     }
 
-    // Extract protocol elements - PRIORITY: ai_recommendations (where AI protocols are stored)
+    // Extract protocol elements - PRIORITY ORDER:
+    // 1. protocol_data (dedicated column for clinical protocol - source of truth)
+    // 2. ai_recommendations (may contain protocol if no engagement plan generated yet)
+    // 3. modules (legacy fallback)
     let protocolData = null;
 
-    // First try ai_recommendations (where AI-generated protocols are stored)
-    if (protocol.ai_recommendations) {
+    console.log('[Compare Alignment Legacy] Protocol fields available:', {
+      has_protocol_data: !!protocol.protocol_data,
+      protocol_data_length: protocol.protocol_data ? String(protocol.protocol_data).length : 0,
+      has_ai_recommendations: !!protocol.ai_recommendations,
+      ai_rec_length: protocol.ai_recommendations ? String(protocol.ai_recommendations).length : 0,
+      has_modules: !!protocol.modules,
+      modules_length: protocol.modules ? String(protocol.modules).length : 0
+    });
+
+    // First try protocol_data (dedicated column for clinical protocol)
+    if (protocol.protocol_data) {
+      try {
+        protocolData = typeof protocol.protocol_data === 'string'
+          ? JSON.parse(protocol.protocol_data)
+          : protocol.protocol_data;
+        console.log('[Compare Alignment Legacy] Using protocol_data for extraction, keys:', Object.keys(protocolData || {}));
+      } catch (e) {
+        console.log('[Compare Alignment Legacy] Could not parse protocol_data:', e.message);
+      }
+    }
+
+    // Fallback to ai_recommendations if protocol_data not available
+    if (!protocolData && protocol.ai_recommendations) {
       try {
         const aiRec = typeof protocol.ai_recommendations === 'string'
           ? JSON.parse(protocol.ai_recommendations)
@@ -2843,6 +2875,8 @@ router.get('/:id/compare-alignment', authenticateToken, async (req, res, next) =
         if (aiRec.core_protocol || aiRec.phased_expansion || aiRec.clinic_treatments || aiRec.retest_schedule) {
           protocolData = aiRec;
           console.log('[Compare Alignment Legacy] Using ai_recommendations for protocol extraction');
+        } else {
+          console.log('[Compare Alignment Legacy] ai_recommendations does not have protocol structure (likely contains engagement plan)');
         }
       } catch (e) {
         console.log('[Compare Alignment Legacy] Could not parse ai_recommendations:', e.message);
@@ -2865,14 +2899,8 @@ router.get('/:id/compare-alignment', authenticateToken, async (req, res, next) =
       }
     }
 
-    // Fallback to content
-    if (!protocolData && protocol.content) {
-      try {
-        protocolData = JSON.parse(protocol.content);
-        console.log('[Compare Alignment Legacy] Using content for protocol extraction');
-      } catch (e) {
-        protocolData = { content: protocol.content };
-      }
+    if (!protocolData) {
+      console.log('[Compare Alignment Legacy] WARNING: No protocol data found in any field!');
     }
 
     // Extract elements from protocol
