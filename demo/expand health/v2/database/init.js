@@ -456,6 +456,41 @@ async function initProtocolsAISummary() {
 }
 
 /**
+ * Initialize protocol_data column to store clinical protocol separately from engagement plans
+ * This prevents engagement plan generation from overwriting the protocol source of truth
+ */
+async function initProtocolData() {
+  const addColumnSQL = `
+    ALTER TABLE protocols ADD COLUMN IF NOT EXISTS protocol_data JSONB;
+  `;
+
+  // Migrate existing ai_recommendations that contain protocol structure to protocol_data
+  const migrateSQL = `
+    UPDATE protocols
+    SET protocol_data = ai_recommendations::jsonb
+    WHERE protocol_data IS NULL
+      AND ai_recommendations IS NOT NULL
+      AND ai_recommendations::jsonb ? 'core_protocol';
+  `;
+
+  try {
+    await db.query(addColumnSQL);
+    console.log('✅ Protocols protocol_data column ready');
+
+    // Migrate existing protocol data
+    const migrateResult = await db.query(migrateSQL);
+    if (migrateResult.rowCount > 0) {
+      console.log(`✅ Migrated ${migrateResult.rowCount} protocols to protocol_data column`);
+    }
+
+    return true;
+  } catch (error) {
+    console.error('❌ Failed to initialize protocols protocol_data:', error.message);
+    return false;
+  }
+}
+
+/**
  * Initialize lab_notes table for storing notes on lab results
  */
 async function initLabNotes() {
@@ -609,6 +644,9 @@ async function initDatabase() {
     // Initialize protocols AI summary column
     await initProtocolsAISummary();
 
+    // Initialize protocol_data column (stores clinical protocol separately from engagement plans)
+    await initProtocolData();
+
     // Initialize lab_notes table
     await initLabNotes();
 
@@ -659,6 +697,7 @@ module.exports = {
   initMessages,
   initStaffTasks,
   initProtocolsAISummary,
+  initProtocolData,
   initLabNotes,
   initTimeBlocks,
   initEngagementPlans,
