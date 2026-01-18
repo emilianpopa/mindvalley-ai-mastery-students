@@ -355,6 +355,20 @@
             <div id="salesPreviewContent" class="text-sm"></div>
           </div>
 
+          <!-- Learned Service Prices Section -->
+          <div id="learnedPricesSection" class="hidden mb-4 p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
+            <p class="text-sm font-medium mb-2 text-emerald-800">
+              <span class="inline-flex items-center">
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                Learned <span id="learnedPricesCount">0</span> service prices from non-membership bookings:
+              </span>
+            </p>
+            <div id="learnedPricesList" class="flex flex-wrap gap-2"></div>
+            <p class="text-xs text-emerald-700 mt-2">These prices will be saved to the service_types table so appointments show correct prices.</p>
+          </div>
+
           <div id="salesErrors" class="hidden mb-4 p-3 bg-red-50 border border-red-200 rounded-lg max-h-32 overflow-y-auto">
             <p class="text-sm font-medium text-red-800 mb-1">Errors:</p>
             <div id="salesErrorsContent" class="text-sm text-red-700"></div>
@@ -927,6 +941,17 @@
           document.getElementById('salesPreview').classList.add('hidden');
         }
 
+        // Show learned service prices
+        if (data.learnedPrices && data.learnedPrices.length > 0) {
+          document.getElementById('learnedPricesSection').classList.remove('hidden');
+          document.getElementById('learnedPricesCount').textContent = data.servicePricesLearned || 0;
+          document.getElementById('learnedPricesList').innerHTML = data.learnedPrices.map(p =>
+            `<span class="px-2 py-1 bg-emerald-100 text-emerald-800 rounded text-xs">${p.name}: R${p.price.toFixed(2)}</span>`
+          ).join('');
+        } else {
+          document.getElementById('learnedPricesSection').classList.add('hidden');
+        }
+
         // Show errors if any
         if (data.errors && data.errors.length > 0) {
           document.getElementById('salesErrors').classList.remove('hidden');
@@ -936,14 +961,18 @@
         }
 
         // Show action button or success
-        if (dryRun && (data.toUpdate > 0)) {
+        if (dryRun && (data.toUpdate > 0 || data.servicePricesLearned > 0)) {
           document.getElementById('salesAction').classList.remove('hidden');
           document.getElementById('salesSuccess').classList.add('hidden');
         } else if (!dryRun) {
           document.getElementById('salesAction').classList.add('hidden');
           document.getElementById('salesSuccess').classList.remove('hidden');
-          document.getElementById('salesSuccessText').textContent =
-            `Successfully enriched ${data.updated} appointments with sales data! Refresh the calendar to see the changes.`;
+          let successMsg = `Successfully enriched ${data.updated} appointments with sales data!`;
+          if (data.servicePricesUpdated > 0) {
+            successMsg += ` Updated ${data.servicePricesUpdated} service prices.`;
+          }
+          successMsg += ' Refresh the calendar to see the changes.';
+          document.getElementById('salesSuccessText').textContent = successMsg;
         } else {
           document.getElementById('salesAction').classList.add('hidden');
           document.getElementById('salesSuccess').classList.remove('hidden');

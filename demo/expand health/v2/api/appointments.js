@@ -1269,6 +1269,7 @@ router.post('/analyze-csv', async (req, res, next) => {
  * POST /api/appointments/enrich-from-sales
  * Enrich existing appointments with sales data from Momence "Sales by Appointment" CSV
  * This updates price, payment_method, and stores membership info for matching appointments
+ * Also learns service prices from non-membership bookings and updates service_types table
  *
  * Expected CSV columns: Sale Date, Sale Item, Appointment Date, Customer Email, Payment Method, Membership used, Sale Value
  */
@@ -1291,6 +1292,7 @@ router.post('/enrich-from-sales', async (req, res, next) => {
     const membershipUsedIdx = header.findIndex(h => h.includes('membership used') || h.includes('membershipused') || h.includes('membership'));
     const saleValueIdx = header.findIndex(h => h.includes('sale value') || h.includes('salevalue') || h.includes('value') || h.includes('amount') || h.includes('price'));
     const saleItemIdx = header.findIndex(h => h.includes('sale item') || h.includes('saleitem') || h.includes('item') || h.includes('service'));
+    const salesTaxIdx = header.findIndex(h => h.includes('sales tax') || h.includes('salestax') || h.includes('tax'));
 
     // Fallback: if no appointment date column, try to use a generic date column
     const effectiveDateIdx = appointmentDateIdx >= 0 ? appointmentDateIdx : header.findIndex(h => h.includes('date'));
@@ -1313,11 +1315,53 @@ router.post('/enrich-from-sales', async (req, res, next) => {
     const clientsResult = await db.query('SELECT id, email FROM clients WHERE tenant_id = $1', [tenantId]);
     const clientsByEmail = new Map(clientsResult.rows.map(c => [c.email?.toLowerCase().trim(), c.id]));
 
+    // Get existing service_types to learn prices
+    const servicesResult = await db.query('SELECT id, name, price FROM service_types WHERE tenant_id = $1', [tenantId]);
+    const servicesByName = new Map(servicesResult.rows.map(s => [s.name.toLowerCase().trim(), { id: s.id, price: parseFloat(s.price) || 0 }]));
+
+    // First pass: Learn service prices from non-membership bookings
+    // When saleValue > 0 and no membership used, that's the real service price
+    const learnedServicePrices = new Map(); // serviceName -> price
+    if (saleItemIdx >= 0 && saleValueIdx >= 0) {
+      for (let i = 1; i < lines.length; i++) {
+        const values = parseCSVLine(lines[i]);
+        const saleItem = values[saleItemIdx]?.trim();
+        const membershipUsed = membershipUsedIdx >= 0 ? values[membershipUsedIdx]?.trim() : null;
+        const rawValue = values[saleValueIdx]?.replace(/[^0-9.-]/g, '') || '0';
+        const saleValue = parseFloat(rawValue) || 0;
+
+        // If no membership used and saleValue > 0, this is the real price
+        if (saleItem && saleValue > 0 && !membershipUsed) {
+          const existing = learnedServicePrices.get(saleItem.toLowerCase().trim());
+          // Keep the highest price seen (in case of discounts)
+          if (!existing || saleValue > existing) {
+            learnedServicePrices.set(saleItem.toLowerCase().trim(), saleValue);
+          }
+        }
+      }
+    }
+
     let updated = 0;
     let notFound = 0;
     let skipped = 0;
+    let servicePricesUpdated = 0;
     let errors = [];
     const updatedDetails = [];
+
+    // Update service_types with learned prices (if not dry run)
+    if (!dryRun && learnedServicePrices.size > 0) {
+      for (const [serviceName, price] of learnedServicePrices) {
+        const service = servicesByName.get(serviceName);
+        if (service && (service.price === 0 || service.price === null)) {
+          // Only update if current price is 0 or null
+          await db.query(
+            'UPDATE service_types SET price = $1, updated_at = NOW() WHERE id = $2',
+            [price, service.id]
+          );
+          servicePricesUpdated++;
+        }
+      }
+    }
 
     for (let i = 1; i < lines.length; i++) {
       const values = parseCSVLine(lines[i]);
@@ -1500,6 +1544,9 @@ router.post('/enrich-from-sales', async (req, res, next) => {
       updated: dryRun ? 0 : updated,
       notFound,
       skipped,
+      servicePricesLearned: learnedServicePrices.size,
+      servicePricesUpdated: dryRun ? 0 : servicePricesUpdated,
+      learnedPrices: Array.from(learnedServicePrices.entries()).slice(0, 10).map(([name, price]) => ({ name, price })),
       errors: errors.slice(0, 20),
       columnsDetected: {
         appointmentDate: appointmentDateIdx >= 0,
@@ -1507,7 +1554,8 @@ router.post('/enrich-from-sales', async (req, res, next) => {
         paymentMethod: paymentMethodIdx >= 0,
         membershipUsed: membershipUsedIdx >= 0,
         saleValue: saleValueIdx >= 0,
-        saleItem: saleItemIdx >= 0
+        saleItem: saleItemIdx >= 0,
+        salesTax: salesTaxIdx >= 0
       },
       preview: updatedDetails.slice(0, 10)
     });
