@@ -2731,9 +2731,10 @@ router.post('/:id/generate-engagement-plan', authenticateToken, async (req, res,
     // Use aligned prompt if we have protocol elements, otherwise use generic prompt
     if (protocolElements.supplements.length > 0 || protocolElements.clinic_treatments.length > 0) {
       console.log('[Engagement Plan] Using ALIGNED prompt generator (protocol-driven)');
+      // Use protocol.title first (AI-generated title), then fallback to template_name
       aiPrompt = generateAlignedEngagementPlanPrompt({
         clientName,
-        protocolTitle: protocol.template_name || protocol.title || 'Custom Protocol',
+        protocolTitle: protocol.title || protocol.template_name || 'Custom Protocol',
         protocolElements,
         personalityType: personality_type,
         communicationPreferences: communication_preferences,
@@ -2977,13 +2978,17 @@ Return ONLY valid JSON.`;
 
     // Save engagement plan to separate engagement_plans table
     // This ensures engagement plans persist even if the protocol is deleted
-    const planTitle = engagementPlan.title || `Engagement Plan for ${clientName}`;
+    // Use protocol.title (AI-generated protocol title) to ensure correct naming
+    const protocolTitleForPlan = protocol.title || protocol.template_name || 'Custom Protocol';
+    const planTitle = `Engagement Plan: ${protocolTitleForPlan} for ${clientName}`;
     const validationData = engagementPlan._validation || {};
 
     // Remove internal validation metadata from plan_data before saving
     const planDataToSave = { ...engagementPlan };
     delete planDataToSave._validation;
     delete planDataToSave._alignment_note;
+    // Override AI-generated title with correct protocol title
+    planDataToSave.title = planTitle;
 
     console.log('[Engagement Plan] Saving to engagement_plans table...');
 
