@@ -392,6 +392,89 @@
           <p class="text-indigo-800 font-medium" id="fixDurationsResultsText"></p>
         </div>
       </div>
+
+      <!-- Fix Staff Assignments Section -->
+      <div class="bg-white shadow rounded-lg p-6 mt-6">
+        <h2 class="text-lg font-semibold mb-2">Fix Staff/Practitioner Assignments</h2>
+        <p class="text-sm text-gray-600 mb-4">If appointments are showing "Not assigned" for practitioner, use this to match practitioners from your Momence CSV.</p>
+
+        <div class="bg-violet-50 border border-violet-200 rounded-lg p-3 mb-4">
+          <p class="text-sm text-violet-800 mb-2"><strong>How it works:</strong></p>
+          <ol class="list-decimal list-inside text-sm text-violet-800 space-y-1">
+            <li>Upload the same Momence "Appointment Reservations" CSV used for import</li>
+            <li>The system will match practitioners by name to your existing staff records</li>
+            <li>Appointments will be updated with the correct staff ID</li>
+          </ol>
+        </div>
+
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            Upload Momence CSV with Practitioner column
+          </label>
+          <input
+            type="file"
+            id="csvFileStaff"
+            accept=".csv"
+            class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100 cursor-pointer"
+          />
+        </div>
+
+        <div id="fileInfoStaff" class="hidden mb-4 p-3 bg-gray-50 rounded-lg">
+          <p class="text-sm text-gray-600">
+            File loaded: <span id="fileNameStaff" class="font-medium"></span>
+            (<span id="rowCountStaff" class="font-medium"></span> rows)
+          </p>
+        </div>
+
+        <button
+          id="fixStaffBtn"
+          disabled
+          class="px-4 py-2 bg-violet-600 text-white rounded-md hover:bg-violet-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+        >
+          Preview Staff Matching
+        </button>
+
+        <div id="staffResults" class="hidden mt-4">
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+            <div class="bg-gray-50 p-3 rounded-lg text-center">
+              <p class="text-xs text-gray-500">In CSV</p>
+              <p class="text-xl font-bold" id="statTotalStaff">0</p>
+            </div>
+            <div class="bg-violet-50 p-3 rounded-lg text-center">
+              <p class="text-xs text-gray-500" id="toUpdateStaffLabel">To Update</p>
+              <p class="text-xl font-bold text-violet-600" id="statToUpdateStaff">0</p>
+            </div>
+            <div class="bg-green-50 p-3 rounded-lg text-center">
+              <p class="text-xs text-gray-500">Already Correct</p>
+              <p class="text-xl font-bold text-green-600" id="statAlreadyCorrect">0</p>
+            </div>
+            <div class="bg-yellow-50 p-3 rounded-lg text-center">
+              <p class="text-xs text-gray-500">Not Found</p>
+              <p class="text-xl font-bold text-yellow-600" id="statNotFoundStaff">0</p>
+            </div>
+          </div>
+
+          <div id="staffNamesDetected" class="mb-4 p-3 bg-gray-50 rounded-lg">
+            <p class="text-sm font-medium mb-2">Staff in Database:</p>
+            <div id="staffNamesList" class="flex flex-wrap gap-2"></div>
+          </div>
+
+          <div id="staffPreview" class="hidden mb-4 p-3 bg-violet-50 rounded-lg max-h-48 overflow-y-auto">
+            <p class="text-sm font-medium mb-2">Preview (first 10 matches):</p>
+            <div id="staffPreviewContent" class="text-sm"></div>
+          </div>
+
+          <div id="staffAction" class="hidden">
+            <button id="runFixStaff" class="px-4 py-2 bg-violet-600 text-white rounded-md hover:bg-violet-700 font-medium">
+              Apply Staff Assignments
+            </button>
+          </div>
+
+          <div id="staffSuccess" class="hidden p-4 bg-violet-50 border border-violet-200 rounded-lg">
+            <p class="text-violet-800 font-medium" id="staffSuccessText"></p>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Loading -->
@@ -843,6 +926,97 @@
           document.getElementById('salesSuccess').classList.remove('hidden');
           document.getElementById('salesSuccessText').textContent =
             'No matching appointments found to update. Make sure the CSV contains customer emails that match existing appointments.';
+        }
+
+      } catch (err) {
+        showError(err.message);
+      } finally {
+        hideLoading();
+      }
+    }
+
+    // ==================== FIX STAFF ASSIGNMENTS ====================
+    let staffCsvData = null;
+
+    document.getElementById('csvFileStaff').addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      staffCsvData = await file.text();
+      const lines = staffCsvData.trim().split('\n');
+      document.getElementById('fileNameStaff').textContent = file.name;
+      document.getElementById('rowCountStaff').textContent = lines.length - 1;
+      document.getElementById('fileInfoStaff').classList.remove('hidden');
+      document.getElementById('fixStaffBtn').disabled = false;
+      document.getElementById('staffResults').classList.add('hidden');
+    });
+
+    document.getElementById('fixStaffBtn').addEventListener('click', () => fixStaffAssignments(true));
+    document.getElementById('runFixStaff').addEventListener('click', () => fixStaffAssignments(false));
+
+    async function fixStaffAssignments(dryRun) {
+      if (!staffCsvData) return;
+
+      showLoading();
+      try {
+        const resp = await fetch('/api/appointments/fix-staff-assignments', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+          },
+          body: JSON.stringify({ csvData: staffCsvData, dryRun })
+        });
+
+        if (!resp.ok) {
+          const errData = await resp.json();
+          throw new Error(errData.error || 'Failed to fix staff assignments');
+        }
+
+        const data = await resp.json();
+
+        // Show results
+        document.getElementById('staffResults').classList.remove('hidden');
+        document.getElementById('statTotalStaff').textContent = data.totalInCSV;
+        document.getElementById('statToUpdateStaff').textContent = dryRun ? data.toUpdate : data.updated;
+        document.getElementById('statAlreadyCorrect').textContent = data.alreadyCorrect || 0;
+        document.getElementById('statNotFoundStaff').textContent = data.notFound;
+        document.getElementById('toUpdateStaffLabel').textContent = dryRun ? 'To Update' : 'Updated';
+
+        // Show staff names in database
+        const staffNamesDiv = document.getElementById('staffNamesList');
+        const staffNames = data.staffNames || [];
+        staffNamesDiv.innerHTML = staffNames.map(name =>
+          `<span class="px-2 py-1 bg-violet-100 text-violet-800 rounded text-xs">${name}</span>`
+        ).join('');
+
+        // Show preview if available
+        if (data.preview && data.preview.length > 0) {
+          document.getElementById('staffPreview').classList.remove('hidden');
+          document.getElementById('staffPreviewContent').innerHTML = data.preview.map(p =>
+            `<div class="py-1 border-b border-violet-200 last:border-0">
+              <span class="font-medium">Apt #${p.appointmentId}</span> - ${p.clientEmail}
+              <span class="text-violet-700">→ ${p.practitioner}</span>
+            </div>`
+          ).join('');
+        } else {
+          document.getElementById('staffPreview').classList.add('hidden');
+        }
+
+        // Show action button or success
+        if (dryRun && data.toUpdate > 0) {
+          document.getElementById('staffAction').classList.remove('hidden');
+          document.getElementById('staffSuccess').classList.add('hidden');
+        } else if (!dryRun) {
+          document.getElementById('staffAction').classList.add('hidden');
+          document.getElementById('staffSuccess').classList.remove('hidden');
+          document.getElementById('staffSuccessText').textContent =
+            `Successfully updated ${data.updated} appointments with staff assignments! Refresh the calendar to see the changes.`;
+        } else {
+          document.getElementById('staffAction').classList.add('hidden');
+          document.getElementById('staffSuccess').classList.remove('hidden');
+          document.getElementById('staffSuccessText').textContent =
+            'No matching appointments found to update. Make sure the CSV contains practitioner names that match existing staff.';
         }
 
       } catch (err) {

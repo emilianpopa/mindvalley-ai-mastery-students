@@ -766,8 +766,17 @@ router.post('/import/momence', async (req, res, next) => {
     const servicesResult = await db.query('SELECT id, name FROM service_types WHERE tenant_id = $1', [tenantId]);
     const servicesByName = new Map(servicesResult.rows.map(s => [s.name.toLowerCase().trim(), s.id]));
 
-    // Get default staff
-    const staffResult = await db.query('SELECT id FROM staff WHERE tenant_id = $1 LIMIT 1', [tenantId]);
+    // Get existing staff and create lookup by name
+    const staffResult = await db.query('SELECT id, first_name, last_name FROM staff WHERE tenant_id = $1', [tenantId]);
+    const staffByName = new Map();
+    staffResult.rows.forEach(s => {
+      const fullName = `${s.first_name} ${s.last_name}`.toLowerCase().trim();
+      staffByName.set(fullName, s.id);
+      // Also map by first name only for flexible matching
+      if (s.first_name) {
+        staffByName.set(s.first_name.toLowerCase().trim(), s.id);
+      }
+    });
     const defaultStaffId = staffResult.rows[0]?.id;
 
     let toImport = 0;
@@ -875,6 +884,16 @@ router.post('/import/momence', async (req, res, next) => {
         salesValue = parseFloat(rawValue) || 0;
       }
 
+      // Look up staff ID by practitioner name from CSV
+      const practitionerName = practitionerIdx >= 0 ? values[practitionerIdx]?.trim() : null;
+      let staffId = null;
+      if (practitionerName) {
+        // Try full name match first, then partial match
+        staffId = staffByName.get(practitionerName.toLowerCase()) || defaultStaffId;
+      } else {
+        staffId = defaultStaffId;
+      }
+
       appointments.push({
         clientId,
         serviceName,
@@ -882,7 +901,8 @@ router.post('/import/momence', async (req, res, next) => {
         startTime,
         endTime,
         duration,
-        practitioner: practitionerIdx >= 0 ? values[practitionerIdx] : null,
+        practitioner: practitionerName,
+        staffId,
         location: locationIdx >= 0 ? values[locationIdx] : null,
         paid: isPaid,
         salesValue,
@@ -923,7 +943,7 @@ router.post('/import/momence', async (req, res, next) => {
               tenantId,
               appt.clientId || null, // null for time blocks
               appt.isTimeBlock ? null : serviceId, // no service for time blocks
-              defaultStaffId,
+              appt.staffId || defaultStaffId, // use matched staff ID or fallback to default
               appt.serviceName, // title
               appt.startTime,
               appt.endTime,
@@ -1478,6 +1498,147 @@ router.post('/enrich-from-sales', async (req, res, next) => {
         saleItem: saleItemIdx >= 0
       },
       preview: updatedDetails.slice(0, 10)
+    });
+
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * POST /api/appointments/fix-staff-assignments
+ * Re-assign staff to appointments by matching practitioner name from CSV
+ * Use this to fix appointments that were imported before staff matching was implemented
+ */
+router.post('/fix-staff-assignments', async (req, res, next) => {
+  try {
+    const { csvData, dryRun = true } = req.body;
+    const tenantId = req.user?.tenantId;
+
+    if (!csvData) return res.status(400).json({ error: 'csvData is required' });
+    if (!tenantId) return res.status(400).json({ error: 'Tenant context required' });
+
+    const lines = csvData.trim().split('\n');
+    const header = parseCSVLine(lines[0]).map(h => h.toLowerCase());
+
+    // Find column indexes
+    const dateIdx = header.findIndex(h => h.includes('date'));
+    const customerIdx = header.findIndex(h => h.includes('customer'));
+    const practitionerIdx = header.findIndex(h => h.includes('practitioner'));
+
+    if (dateIdx === -1 || customerIdx === -1 || practitionerIdx === -1) {
+      return res.status(400).json({
+        error: 'CSV must have date, customer, and practitioner columns',
+        detectedColumns: header
+      });
+    }
+
+    // Get existing clients
+    const clientsResult = await db.query('SELECT id, email FROM clients WHERE tenant_id = $1', [tenantId]);
+    const clientsByEmail = new Map(clientsResult.rows.map(c => [c.email?.toLowerCase(), c.id]));
+
+    // Get existing staff and create lookup by name
+    const staffResult = await db.query('SELECT id, first_name, last_name FROM staff WHERE tenant_id = $1', [tenantId]);
+    const staffByName = new Map();
+    staffResult.rows.forEach(s => {
+      const fullName = `${s.first_name} ${s.last_name}`.toLowerCase().trim();
+      staffByName.set(fullName, s.id);
+      // Also map by first name only for flexible matching
+      if (s.first_name) {
+        staffByName.set(s.first_name.toLowerCase().trim(), s.id);
+      }
+    });
+
+    let updated = 0;
+    let notFound = 0;
+    let alreadyCorrect = 0;
+    let errors = [];
+    const preview = [];
+
+    for (let i = 1; i < lines.length; i++) {
+      const values = parseCSVLine(lines[i]);
+      if (values.length < Math.max(dateIdx, customerIdx, practitionerIdx) + 1) continue;
+
+      const dateStr = values[dateIdx];
+      const customerField = values[customerIdx];
+      const practitionerName = values[practitionerIdx]?.trim();
+
+      if (!dateStr || !customerField || !practitionerName) continue;
+
+      const startTime = parseMomenceDate(dateStr);
+      if (!startTime) continue;
+
+      const email = parseCustomerEmail(customerField);
+      const clientId = email ? clientsByEmail.get(email) : null;
+      if (!clientId) continue;
+
+      // Find staff ID by practitioner name
+      const staffId = staffByName.get(practitionerName.toLowerCase());
+      if (!staffId) {
+        notFound++;
+        continue;
+      }
+
+      // Find the matching appointment (within 5 minute window)
+      const startWindow = new Date(startTime.getTime() - 5 * 60000).toISOString();
+      const endWindow = new Date(startTime.getTime() + 5 * 60000).toISOString();
+
+      const existingResult = await db.query(
+        `SELECT id, staff_id FROM appointments
+         WHERE tenant_id = $1 AND client_id = $2
+         AND start_time BETWEEN $3 AND $4`,
+        [tenantId, clientId, startWindow, endWindow]
+      );
+
+      if (existingResult.rows.length === 0) {
+        notFound++;
+        continue;
+      }
+
+      const apt = existingResult.rows[0];
+
+      // Check if already has correct staff
+      if (apt.staff_id === staffId) {
+        alreadyCorrect++;
+        continue;
+      }
+
+      if (preview.length < 10) {
+        preview.push({
+          appointmentId: apt.id,
+          clientEmail: email,
+          practitioner: practitionerName,
+          oldStaffId: apt.staff_id,
+          newStaffId: staffId
+        });
+      }
+
+      if (!dryRun) {
+        try {
+          await db.query(
+            `UPDATE appointments SET staff_id = $1, updated_at = NOW() WHERE id = $2`,
+            [staffId, apt.id]
+          );
+          updated++;
+        } catch (err) {
+          errors.push(`Appointment ${apt.id}: ${err.message}`);
+        }
+      } else {
+        updated++;
+      }
+    }
+
+    res.json({
+      dryRun,
+      totalInCSV: lines.length - 1,
+      staffFound: staffResult.rows.length,
+      staffNames: staffResult.rows.map(s => `${s.first_name} ${s.last_name}`),
+      updated: dryRun ? 0 : updated,
+      toUpdate: dryRun ? updated : null,
+      alreadyCorrect,
+      notFound,
+      errors: errors.slice(0, 10),
+      preview
     });
 
   } catch (error) {
