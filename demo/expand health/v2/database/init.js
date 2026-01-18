@@ -473,6 +473,16 @@ async function initProtocolData() {
       AND ai_recommendations::jsonb ? 'core_protocol';
   `;
 
+  // Log protocols that have engagement plans but no protocol_data (data may be lost)
+  const checkLostDataSQL = `
+    SELECT p.id, p.title, p.client_id
+    FROM protocols p
+    JOIN engagement_plans ep ON ep.source_protocol_id = p.id
+    WHERE p.protocol_data IS NULL
+      AND (p.ai_recommendations IS NULL
+           OR NOT (p.ai_recommendations::jsonb ? 'core_protocol'))
+  `;
+
   try {
     await db.query(addColumnSQL);
     console.log('✅ Protocols protocol_data column ready');
@@ -481,6 +491,16 @@ async function initProtocolData() {
     const migrateResult = await db.query(migrateSQL);
     if (migrateResult.rowCount > 0) {
       console.log(`✅ Migrated ${migrateResult.rowCount} protocols to protocol_data column`);
+    }
+
+    // Check for protocols with lost data
+    const lostDataResult = await db.query(checkLostDataSQL);
+    if (lostDataResult.rows.length > 0) {
+      console.log(`⚠️  WARNING: ${lostDataResult.rows.length} protocols have linked engagement plans but no protocol_data.`);
+      console.log('   These protocols need to be regenerated for alignment checks to work.');
+      lostDataResult.rows.forEach(row => {
+        console.log(`   - Protocol ID ${row.id}: "${row.title}" (Client ${row.client_id})`);
+      });
     }
 
     return true;
