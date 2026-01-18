@@ -281,6 +281,95 @@
         </div>
       </div>
 
+      <!-- Enrich with Sales Data Section -->
+      <div class="bg-white shadow rounded-lg p-6 mt-6">
+        <h2 class="text-lg font-semibold mb-2">Enrich with Sales Data</h2>
+        <p class="text-sm text-gray-600 mb-4">Upload the "Sales by Appointment" report from Momence to add payment details, prices, and membership info to existing appointments.</p>
+
+        <div class="bg-teal-50 border border-teal-200 rounded-lg p-3 mb-4">
+          <p class="text-sm text-teal-800 mb-2"><strong>How to get this report:</strong></p>
+          <ol class="list-decimal list-inside text-sm text-teal-800 space-y-1">
+            <li>In Momence, go to Reports → Sales by Appointment</li>
+            <li>Set your date range and export as CSV</li>
+            <li>Upload the CSV below to match sales data with appointments</li>
+          </ol>
+          <p class="text-xs text-teal-600 mt-2">This will update: Sale Value (price), Payment Method, and Membership used</p>
+        </div>
+
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            Upload Momence "Sales by Appointment" CSV
+          </label>
+          <input
+            type="file"
+            id="csvFileSales"
+            accept=".csv"
+            class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100 cursor-pointer"
+          />
+        </div>
+
+        <div id="fileInfoSales" class="hidden mb-4 p-3 bg-gray-50 rounded-lg">
+          <p class="text-sm text-gray-600">
+            File loaded: <span id="fileNameSales" class="font-medium"></span>
+            (<span id="rowCountSales" class="font-medium"></span> rows)
+          </p>
+        </div>
+
+        <button
+          id="enrichSalesBtn"
+          disabled
+          class="px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+        >
+          Preview Sales Enrichment
+        </button>
+
+        <div id="salesResults" class="hidden mt-4">
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+            <div class="bg-gray-50 p-3 rounded-lg text-center">
+              <p class="text-xs text-gray-500">In CSV</p>
+              <p class="text-xl font-bold" id="statTotalSales">0</p>
+            </div>
+            <div class="bg-teal-50 p-3 rounded-lg text-center">
+              <p class="text-xs text-gray-500" id="toUpdateLabel">To Update</p>
+              <p class="text-xl font-bold text-teal-600" id="statToUpdateSales">0</p>
+            </div>
+            <div class="bg-yellow-50 p-3 rounded-lg text-center">
+              <p class="text-xs text-gray-500">Not Found</p>
+              <p class="text-xl font-bold text-yellow-600" id="statNotFoundSales">0</p>
+            </div>
+            <div class="bg-gray-100 p-3 rounded-lg text-center">
+              <p class="text-xs text-gray-500">Skipped</p>
+              <p class="text-xl font-bold text-gray-600" id="statSkippedSales">0</p>
+            </div>
+          </div>
+
+          <div id="salesColumnsDetected" class="mb-4 p-3 bg-gray-50 rounded-lg">
+            <p class="text-sm font-medium mb-2">Columns Detected:</p>
+            <div id="columnsStatus" class="flex flex-wrap gap-2"></div>
+          </div>
+
+          <div id="salesPreview" class="hidden mb-4 p-3 bg-teal-50 rounded-lg max-h-48 overflow-y-auto">
+            <p class="text-sm font-medium mb-2">Preview (first 10 matches):</p>
+            <div id="salesPreviewContent" class="text-sm"></div>
+          </div>
+
+          <div id="salesErrors" class="hidden mb-4 p-3 bg-red-50 border border-red-200 rounded-lg max-h-32 overflow-y-auto">
+            <p class="text-sm font-medium text-red-800 mb-1">Errors:</p>
+            <div id="salesErrorsContent" class="text-sm text-red-700"></div>
+          </div>
+
+          <div id="salesAction" class="hidden">
+            <button id="runEnrichSales" class="px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 font-medium">
+              Apply Sales Data
+            </button>
+          </div>
+
+          <div id="salesSuccess" class="hidden p-4 bg-teal-50 border border-teal-200 rounded-lg">
+            <p class="text-teal-800 font-medium" id="salesSuccessText"></p>
+          </div>
+        </div>
+      </div>
+
       <!-- Fix Appointment Durations Section -->
       <div class="bg-white shadow rounded-lg p-6 mt-6">
         <h2 class="text-lg font-semibold mb-2">Fix Appointment Durations</h2>
@@ -656,6 +745,110 @@
         hideLoading();
       }
     });
+
+    // ==================== ENRICH WITH SALES DATA ====================
+    let salesCsvData = null;
+
+    document.getElementById('csvFileSales').addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      salesCsvData = await file.text();
+      const lines = salesCsvData.trim().split('\n');
+      document.getElementById('fileNameSales').textContent = file.name;
+      document.getElementById('rowCountSales').textContent = lines.length - 1;
+      document.getElementById('fileInfoSales').classList.remove('hidden');
+      document.getElementById('enrichSalesBtn').disabled = false;
+      document.getElementById('salesResults').classList.add('hidden');
+    });
+
+    document.getElementById('enrichSalesBtn').addEventListener('click', () => enrichFromSales(true));
+    document.getElementById('runEnrichSales').addEventListener('click', () => enrichFromSales(false));
+
+    async function enrichFromSales(dryRun) {
+      if (!salesCsvData) return;
+
+      showLoading();
+      try {
+        const resp = await fetch('/api/appointments/enrich-from-sales', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+          },
+          body: JSON.stringify({ csvData: salesCsvData, dryRun })
+        });
+
+        if (!resp.ok) {
+          const errData = await resp.json();
+          throw new Error(errData.error || 'Failed to enrich appointments');
+        }
+
+        const data = await resp.json();
+
+        // Show results
+        document.getElementById('salesResults').classList.remove('hidden');
+        document.getElementById('statTotalSales').textContent = data.totalInCSV;
+        document.getElementById('statToUpdateSales').textContent = dryRun ? data.toUpdate : data.updated;
+        document.getElementById('statNotFoundSales').textContent = data.notFound;
+        document.getElementById('statSkippedSales').textContent = data.skipped || 0;
+        document.getElementById('toUpdateLabel').textContent = dryRun ? 'To Update' : 'Updated';
+
+        // Show columns detected
+        const columnsDiv = document.getElementById('columnsStatus');
+        const cols = data.columnsDetected || {};
+        columnsDiv.innerHTML = Object.entries(cols).map(([key, found]) => {
+          const label = key.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase());
+          const bgColor = found ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-500';
+          const icon = found ? '✓' : '✗';
+          return `<span class="px-2 py-1 ${bgColor} rounded text-xs">${icon} ${label}</span>`;
+        }).join('');
+
+        // Show preview if available
+        if (data.preview && data.preview.length > 0) {
+          document.getElementById('salesPreview').classList.remove('hidden');
+          document.getElementById('salesPreviewContent').innerHTML = data.preview.map(p =>
+            `<div class="py-1 border-b border-teal-200 last:border-0">
+              <span class="font-medium">${p.title || 'Appointment'}</span> - ${p.email}
+              ${p.price ? `<span class="text-teal-700">R${p.price}</span>` : ''}
+              ${p.paymentMethod ? `<span class="text-gray-600">(${p.paymentMethod})</span>` : ''}
+              ${p.membershipUsed ? `<span class="text-purple-600">[${p.membershipUsed}]</span>` : ''}
+            </div>`
+          ).join('');
+        } else {
+          document.getElementById('salesPreview').classList.add('hidden');
+        }
+
+        // Show errors if any
+        if (data.errors && data.errors.length > 0) {
+          document.getElementById('salesErrors').classList.remove('hidden');
+          document.getElementById('salesErrorsContent').innerHTML = data.errors.map(e => `<div>${e}</div>`).join('');
+        } else {
+          document.getElementById('salesErrors').classList.add('hidden');
+        }
+
+        // Show action button or success
+        if (dryRun && (data.toUpdate > 0)) {
+          document.getElementById('salesAction').classList.remove('hidden');
+          document.getElementById('salesSuccess').classList.add('hidden');
+        } else if (!dryRun) {
+          document.getElementById('salesAction').classList.add('hidden');
+          document.getElementById('salesSuccess').classList.remove('hidden');
+          document.getElementById('salesSuccessText').textContent =
+            `Successfully enriched ${data.updated} appointments with sales data! Refresh the calendar to see the changes.`;
+        } else {
+          document.getElementById('salesAction').classList.add('hidden');
+          document.getElementById('salesSuccess').classList.remove('hidden');
+          document.getElementById('salesSuccessText').textContent =
+            'No matching appointments found to update. Make sure the CSV contains customer emails that match existing appointments.';
+        }
+
+      } catch (err) {
+        showError(err.message);
+      } finally {
+        hideLoading();
+      }
+    }
 
     // ==================== HELPERS ====================
     function showLoading() {

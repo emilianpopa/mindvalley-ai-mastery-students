@@ -1231,4 +1231,256 @@ router.post('/analyze-csv', async (req, res, next) => {
   }
 });
 
+/**
+ * POST /api/appointments/enrich-from-sales
+ * Enrich existing appointments with sales data from Momence "Sales by Appointment" CSV
+ * This updates price, payment_method, and stores membership info for matching appointments
+ *
+ * Expected CSV columns: Sale Date, Sale Item, Appointment Date, Customer Email, Payment Method, Membership used, Sale Value
+ */
+router.post('/enrich-from-sales', async (req, res, next) => {
+  try {
+    const { csvData, dryRun = true } = req.body;
+    const tenantId = req.user?.tenantId;
+
+    if (!csvData) return res.status(400).json({ error: 'csvData is required' });
+    if (!tenantId) return res.status(400).json({ error: 'Tenant context required' });
+
+    const lines = csvData.trim().split('\n');
+    const header = parseCSVLine(lines[0]).map(h => h.toLowerCase().trim());
+
+    // Find column indexes for Sales by Appointment CSV
+    // Columns: Sale Date, Sale Item, Appointment Date, Customer Email, Payment Method, Membership used, Sale Value
+    const appointmentDateIdx = header.findIndex(h => h.includes('appointment date') || h.includes('appointmentdate'));
+    const customerEmailIdx = header.findIndex(h => h.includes('customer email') || h.includes('email'));
+    const paymentMethodIdx = header.findIndex(h => h.includes('payment method') || h.includes('paymentmethod'));
+    const membershipUsedIdx = header.findIndex(h => h.includes('membership used') || h.includes('membershipused') || h.includes('membership'));
+    const saleValueIdx = header.findIndex(h => h.includes('sale value') || h.includes('salevalue') || h.includes('value') || h.includes('amount') || h.includes('price'));
+    const saleItemIdx = header.findIndex(h => h.includes('sale item') || h.includes('saleitem') || h.includes('item') || h.includes('service'));
+
+    // Fallback: if no appointment date column, try to use a generic date column
+    const effectiveDateIdx = appointmentDateIdx >= 0 ? appointmentDateIdx : header.findIndex(h => h.includes('date'));
+
+    if (effectiveDateIdx === -1 || customerEmailIdx === -1) {
+      return res.status(400).json({
+        error: 'CSV must have date and customer email columns',
+        headers: header,
+        foundColumns: {
+          appointmentDate: appointmentDateIdx,
+          customerEmail: customerEmailIdx,
+          paymentMethod: paymentMethodIdx,
+          membershipUsed: membershipUsedIdx,
+          saleValue: saleValueIdx
+        }
+      });
+    }
+
+    // Get existing clients
+    const clientsResult = await db.query('SELECT id, email FROM clients WHERE tenant_id = $1', [tenantId]);
+    const clientsByEmail = new Map(clientsResult.rows.map(c => [c.email?.toLowerCase().trim(), c.id]));
+
+    let updated = 0;
+    let notFound = 0;
+    let skipped = 0;
+    let errors = [];
+    const updatedDetails = [];
+
+    for (let i = 1; i < lines.length; i++) {
+      const values = parseCSVLine(lines[i]);
+      if (values.length < Math.max(effectiveDateIdx, customerEmailIdx) + 1) {
+        skipped++;
+        continue;
+      }
+
+      const dateStr = values[effectiveDateIdx]?.trim();
+      const customerEmail = values[customerEmailIdx]?.toLowerCase().trim();
+
+      if (!dateStr || !customerEmail) {
+        skipped++;
+        continue;
+      }
+
+      // Parse the date - try multiple formats
+      let appointmentDate = parseMomenceDate(dateStr);
+      if (!appointmentDate) {
+        // Try alternative format: MM/DD/YYYY or YYYY-MM-DD
+        const parts = dateStr.split(/[\/\-]/);
+        if (parts.length === 3) {
+          // Try MM/DD/YYYY
+          appointmentDate = new Date(parts[2], parts[0] - 1, parts[1]);
+          if (isNaN(appointmentDate.getTime())) {
+            // Try YYYY-MM-DD
+            appointmentDate = new Date(parts[0], parts[1] - 1, parts[2]);
+          }
+        }
+      }
+
+      if (!appointmentDate || isNaN(appointmentDate.getTime())) {
+        errors.push(`Row ${i}: Invalid date format "${dateStr}"`);
+        continue;
+      }
+
+      // Find client by email
+      const clientId = clientsByEmail.get(customerEmail);
+      if (!clientId) {
+        notFound++;
+        continue;
+      }
+
+      // Extract values
+      const paymentMethod = paymentMethodIdx >= 0 ? values[paymentMethodIdx]?.trim() : null;
+      const membershipUsed = membershipUsedIdx >= 0 ? values[membershipUsedIdx]?.trim() : null;
+      const saleItem = saleItemIdx >= 0 ? values[saleItemIdx]?.trim() : null;
+
+      // Parse sale value (remove currency symbols)
+      let saleValue = null;
+      if (saleValueIdx >= 0 && values[saleValueIdx]) {
+        const rawValue = values[saleValueIdx].replace(/[^0-9.-]/g, '');
+        saleValue = parseFloat(rawValue) || null;
+      }
+
+      // Determine payment status from payment method or sale value
+      let paymentStatus = null;
+      if (paymentMethod) {
+        // If payment method is specified, assume it's paid
+        paymentStatus = 'paid';
+      } else if (membershipUsed) {
+        // If using membership, also consider paid
+        paymentStatus = 'paid';
+      }
+
+      if (!dryRun) {
+        // Find and update matching appointment
+        // Match by client_id and date (within the same day)
+        const startOfDay = new Date(appointmentDate);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(appointmentDate);
+        endOfDay.setHours(23, 59, 59, 999);
+
+        // Build update query dynamically based on what data we have
+        let updateFields = [];
+        let updateValues = [];
+        let paramIdx = 1;
+
+        if (saleValue !== null) {
+          updateFields.push(`price = $${paramIdx}`);
+          updateValues.push(saleValue);
+          paramIdx++;
+        }
+
+        if (paymentMethod) {
+          updateFields.push(`payment_method = $${paramIdx}`);
+          updateValues.push(paymentMethod);
+          paramIdx++;
+        }
+
+        if (paymentStatus) {
+          updateFields.push(`payment_status = $${paramIdx}`);
+          updateValues.push(paymentStatus);
+          paramIdx++;
+        }
+
+        // Store membership info in notes if present
+        if (membershipUsed) {
+          updateFields.push(`notes = COALESCE(notes, '') || CASE WHEN notes IS NOT NULL AND notes != '' THEN E'\\n' ELSE '' END || $${paramIdx}`);
+          updateValues.push(`Membership used: ${membershipUsed}`);
+          paramIdx++;
+        }
+
+        updateFields.push('updated_at = NOW()');
+
+        if (updateFields.length > 1) { // More than just updated_at
+          const whereClause = `
+            tenant_id = $${paramIdx}
+            AND client_id = $${paramIdx + 1}
+            AND start_time >= $${paramIdx + 2}
+            AND start_time <= $${paramIdx + 3}
+          `;
+          updateValues.push(tenantId, clientId, startOfDay.toISOString(), endOfDay.toISOString());
+
+          const updateQuery = `
+            UPDATE appointments
+            SET ${updateFields.join(', ')}
+            WHERE ${whereClause}
+            RETURNING id, title, start_time
+          `;
+
+          const result = await db.query(updateQuery, updateValues);
+
+          if (result.rowCount > 0) {
+            updated += result.rowCount;
+            result.rows.forEach(row => {
+              updatedDetails.push({
+                id: row.id,
+                title: row.title,
+                date: row.start_time,
+                email: customerEmail,
+                price: saleValue,
+                paymentMethod,
+                membershipUsed
+              });
+            });
+          } else {
+            notFound++;
+          }
+        }
+      } else {
+        // Dry run - just count potential matches
+        const startOfDay = new Date(appointmentDate);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(appointmentDate);
+        endOfDay.setHours(23, 59, 59, 999);
+
+        const result = await db.query(
+          `SELECT id, title, start_time FROM appointments
+           WHERE tenant_id = $1
+             AND client_id = $2
+             AND start_time >= $3
+             AND start_time <= $4`,
+          [tenantId, clientId, startOfDay.toISOString(), endOfDay.toISOString()]
+        );
+
+        if (result.rowCount > 0) {
+          updated += result.rowCount;
+          result.rows.forEach(row => {
+            updatedDetails.push({
+              id: row.id,
+              title: row.title,
+              date: row.start_time,
+              email: customerEmail,
+              price: saleValue,
+              paymentMethod,
+              membershipUsed
+            });
+          });
+        } else {
+          notFound++;
+        }
+      }
+    }
+
+    res.json({
+      dryRun,
+      totalInCSV: lines.length - 1,
+      toUpdate: dryRun ? updated : undefined,
+      updated: dryRun ? 0 : updated,
+      notFound,
+      skipped,
+      errors: errors.slice(0, 20),
+      columnsDetected: {
+        appointmentDate: appointmentDateIdx >= 0,
+        customerEmail: customerEmailIdx >= 0,
+        paymentMethod: paymentMethodIdx >= 0,
+        membershipUsed: membershipUsedIdx >= 0,
+        saleValue: saleValueIdx >= 0,
+        saleItem: saleItemIdx >= 0
+      },
+      preview: updatedDetails.slice(0, 10)
+    });
+
+  } catch (error) {
+    next(error);
+  }
+});
+
 module.exports = router;
