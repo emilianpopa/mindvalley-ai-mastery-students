@@ -487,3 +487,288 @@ restartPolicyMaxRetries = 10
 - **Appointment Panel Enhancement** - Client email, payment tags, timing/note tabs
 - **Save Dropdown for Engagement Plans** - Matches protocol save dropdown pattern
 - **Health Check Timeout** - Increased to 300 seconds for Railway deployments
+- **Protocol Data Preservation Fix** - Added `protocol_data` column to prevent clinical protocol data from being overwritten when generating engagement plans
+
+---
+
+## Protocol-to-Engagement-Plan Alignment Guide
+
+This section documents how to properly convert clinical protocols into client-facing engagement plans.
+
+### The Core Problem
+
+When generating engagement plans from protocols, several common issues occur:
+
+1. **Wrong action verbs**: Using "Take X" for non-supplements (contraindications, lab tests, monitoring requirements)
+2. **Timeline compression**: Compressing 12-week protocols into 4 weeks
+3. **Phase misalignment**: Items appear in wrong weeks (e.g., DMSA in Week 1 instead of Week 7)
+4. **Safety gates as checklists**: Safety gates listed but not enforced as IF/THEN rules
+5. **Clinic treatments as defaults**: Conditional treatments shown as always-available tasks
+
+### Content Type Classification
+
+**CRITICAL**: Not everything is a "Take" action. Classify items correctly:
+
+| Category | Action Verb | Example |
+|----------|-------------|---------|
+| Supplements | "Take" | "Take Magnesium (per protocol)" |
+| Modalities | "Complete" / "Do" | "Complete infrared sauna session" |
+| Clinic Treatments | "Schedule" (conditional) | "IF eligible, schedule NAD+ IV" |
+| Labs/Retesting | "Schedule" / "Complete" / "Review" | "Schedule CMP panel" |
+| Safety Gates | "Verify" / "Confirm" | "Verify kidney function before DMSA" |
+| Contraindications | "STOP if" / "Do NOT" | "STOP protocol if rash develops" |
+| Warning Signs | "Contact clinician if" | "Contact clinician if severe fatigue" |
+
+### Protocol Structure Reference
+
+Clinical protocols from the AI engine have this structure:
+
+```json
+{
+  "core_protocol": {
+    "phase_name": "Core Protocol - Weeks 1-2",
+    "items": [...],
+    "safety_gates": [...]
+  },
+  "phased_expansion": [
+    {
+      "phase_name": "Phase 1 - Weeks 3-6",
+      "start_week": 3,
+      "items": [...],
+      "safety_gates": [...],
+      "readiness_criteria": [...]
+    },
+    {
+      "phase_name": "Phase 2 - Weeks 7-10",
+      "start_week": 7,
+      "items": [...]
+    },
+    {
+      "phase_name": "Phase 3 - Weeks 11-12",
+      "start_week": 11,
+      "items": [...]
+    }
+  ],
+  "clinic_treatments": {
+    "phase": "Available after Week 4",
+    "available_modalities": [...]
+  },
+  "retest_schedule": [...],
+  "safety_summary": {
+    "absolute_contraindications": [...],
+    "monitoring_requirements": [...],
+    "warning_signs": [...]
+  }
+}
+```
+
+### Correct Engagement Plan Structure
+
+```markdown
+# Engagement Plan for [Client Name]
+
+## A) Protocol Coverage Checklist (Internal QA)
+
+### 1. Supplements
+- [ ] Magnesium Glycinate (Weeks 1-12)
+- [ ] Zinc (Weeks 1-12)
+- [ ] DMSA (Weeks 7-10 only)
+
+### 2. Modalities
+- [ ] Sleep Protocol (Daily)
+- [ ] Hydration Protocol (Daily)
+- [ ] Infrared Sauna (2x/week from Week 3)
+
+### 3. Clinic Treatments (Conditional)
+- [ ] NAD+ IV (Available Week 5+ if kidney function normal)
+- [ ] PEMF (Available Week 4+ if no pacemaker)
+
+### 4. Labs/Retesting
+- [ ] Week 4: CMP, Liver Panel
+- [ ] Week 8: Heavy Metals Retest
+- [ ] Week 12: Full Panel Review
+
+### 5. Safety Gates / Contraindications / Warning Signs
+- [ ] Absolute: Active cancer, pregnancy, pacemaker
+- [ ] Monitoring: Kidney function before chelation
+- [ ] Warning: Severe fatigue, rash, GI distress
+
+---
+
+## B) 12-Week Engagement Plan
+
+### Weeks 1-2 (Foundation)
+
+**Supplements:**
+- AM: Magnesium, B-Complex (with food)
+- PM: Zinc, Vitamin D (with dinner)
+
+**Modalities:**
+- Sleep protocol (lights out by 10pm)
+- Hydration (half body weight in oz)
+
+**Clinic Treatments:**
+- Not eligible yet
+
+**Monitoring:**
+- Track energy levels (1-10)
+- Track sleep quality
+- Note any GI symptoms
+
+**Progress Gate:**
+- Must complete 14 days of foundation before Phase 1
+- No adverse reactions
+
+---
+
+### Weeks 3-6 (Phase 1)
+
+**Supplements:**
+- Continue all foundation supplements
+- ADD: Glutathione (empty stomach, AM)
+
+**Modalities:**
+- Continue sleep/hydration
+- ADD: Infrared sauna 2x/week
+
+**Clinic Treatments:**
+- Week 4+: PEMF eligible (if no pacemaker)
+- Week 5+: NAD+ IV eligible (if kidney function OK)
+
+**Monitoring:**
+- Week 4: Schedule labs (CMP, Liver)
+- Track detox symptoms
+
+**Progress Gate:**
+- Labs must be reviewed before Week 7
+- Kidney function must be normal for chelation phase
+
+---
+
+### Weeks 7-10 (Phase 2 - Chelation)
+
+**Supplements:**
+- Continue foundation supplements
+- ADD: DMSA (per protocol schedule)
+- ADD: Binders (away from other supplements)
+
+**Modalities:**
+- Continue all
+- Increase sauna to 3x/week during chelation
+
+**Clinic Treatments:**
+- Continue NAD+ if started
+- ADD: Lymphatic drainage (recommended during chelation)
+
+**Monitoring:**
+- Week 8: Heavy metals retest
+- Daily symptom tracking (critical)
+
+**Progress Gate:**
+- Week 8 labs must show improvement or hold chelation
+- Reassess if severe detox symptoms
+
+---
+
+### Weeks 11-12 (Phase 3 - Consolidation)
+
+**Supplements:**
+- Taper DMSA per protocol
+- Continue maintenance supplements
+
+**Modalities:**
+- Return to 2x/week sauna
+- Focus on recovery
+
+**Clinic Treatments:**
+- Complete any remaining sessions
+
+**Monitoring:**
+- Week 12: Full panel review
+- Assess overall progress
+
+---
+
+## C) Clinic Treatments Eligibility
+
+| Treatment | Available From | Key Contraindications |
+|-----------|----------------|----------------------|
+| PEMF | Week 4 | Pacemaker, metal implants |
+| NAD+ IV | Week 5 | Kidney dysfunction, active infection |
+| Infrared Sauna | Week 3 | Heat intolerance, pregnancy |
+| Lymphatic | Week 7 | Active infection, DVT |
+
+---
+
+## D) Testing & Review Schedule
+
+| Week | Test | Actions |
+|------|------|---------|
+| 4 | CMP, Liver Panel | Schedule → Complete → Review with clinician |
+| 8 | Heavy Metals Retest | Schedule → Complete → Adjust chelation if needed |
+| 12 | Full Panel | Schedule → Complete → Plan next phase |
+| 16 | Follow-up Retest | Schedule → Compare to baseline |
+
+---
+
+## E) Safety & Escalation Rules
+
+### STOP / Do Not Proceed If:
+- Active cancer diagnosis
+- Pregnancy or planning pregnancy
+- Severe kidney dysfunction (eGFR < 30)
+- Active serious infection
+
+### Contact Clinician Immediately If:
+- Severe fatigue lasting > 3 days
+- Skin rash or hives
+- Significant GI distress
+- Any neurological symptoms
+- Chest pain or palpitations
+
+### Conditional Rules:
+- IF kidney labs abnormal → HOLD chelation until reviewed
+- IF severe detox symptoms → REDUCE dosages by 50%
+- IF no improvement by Week 8 → Schedule clinician review
+```
+
+### Validation Checklist
+
+Before finalizing any engagement plan, verify:
+
+1. **Timeline Match**: Protocol weeks match engagement plan weeks exactly
+2. **Phase Start Weeks**: Items appear in correct phases (check `start_week` in protocol)
+3. **All Items Covered**: Every supplement, modality, and treatment from protocol appears
+4. **Correct Action Verbs**: Supplements use "Take", labs use "Schedule/Complete/Review"
+5. **Safety Gates Enforced**: IF/THEN rules, not just listed items
+6. **Clinic Treatments Conditional**: Shown with eligibility requirements
+7. **Retests Scheduled**: All protocol retests have clear action sequences
+
+### Database Schema Note
+
+**IMPORTANT**: The `protocols` table has two JSONB columns:
+- `ai_recommendations` - May contain engagement plan data (gets overwritten)
+- `protocol_data` - Contains clinical protocol (source of truth, never overwritten)
+
+When checking alignment, always use `protocol_data` first:
+```javascript
+const protocolData = protocol.protocol_data || protocol.ai_recommendations;
+```
+
+### API Endpoint for Alignment Check
+
+```
+GET /api/protocols/engagement-plans/:id/compare-alignment
+```
+
+Returns:
+```json
+{
+  "protocol": { "supplements": [...], "clinic_treatments": [...], ... },
+  "engagement_plan": { "supplements": [...], ... },
+  "alignment": {
+    "supplements": { "in_protocol": 10, "in_plan": 8, "missing": ["DMSA", "Binders"] },
+    "clinic_treatments": { "in_protocol": 4, "in_plan": 4, "missing": [] }
+  }
+}
+```
