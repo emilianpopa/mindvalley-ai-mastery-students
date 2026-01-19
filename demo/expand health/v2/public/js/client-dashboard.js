@@ -489,85 +489,145 @@ async function deleteEngagementPlan(planId, isLegacy = false) {
 async function printEngagementPlanById(planId) {
   const token = localStorage.getItem('auth_token');
   try {
-    const response = await fetch(`${API_BASE}/api/protocols/${planId}`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
+    // First try to fetch from engagement_plans table (new system)
+    let planData = null;
+    let clientName = currentClient ? `${currentClient.first_name} ${currentClient.last_name}` : 'Client';
+    let protocolTitle = 'Engagement Plan';
 
-    if (response.ok) {
-      const data = await response.json();
-      const protocol = data.protocol;
-      const clientName = currentClient ? `${currentClient.first_name} ${currentClient.last_name}` : 'Client';
-
-      // Parse the engagement plan from ai_recommendations JSON
-      let planData = null;
-      if (protocol.ai_recommendations) {
-        try {
-          planData = JSON.parse(protocol.ai_recommendations);
-        } catch (e) {
-          // Try regex extraction for legacy data
-          const jsonMatch = protocol.ai_recommendations.match(/\{[\s\S]*\}/);
-          if (jsonMatch) {
-            try {
-              planData = JSON.parse(jsonMatch[0]);
-            } catch (e2) {
-              console.error('Error parsing engagement plan JSON:', e2);
-            }
-          }
+    // Try engagement_plans endpoint first
+    try {
+      const epResponse = await fetch(`${API_BASE}/api/protocols/engagement-plans/by-protocol/${planId}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (epResponse.ok) {
+        const epData = await epResponse.json();
+        if (epData.engagement_plan?.plan_data) {
+          planData = typeof epData.engagement_plan.plan_data === 'string'
+            ? JSON.parse(epData.engagement_plan.plan_data)
+            : epData.engagement_plan.plan_data;
+          protocolTitle = epData.engagement_plan.title || planData?.title || 'Engagement Plan';
+          console.log('[Print] Loaded from engagement_plans table:', {
+            phasesCount: planData?.phases?.length,
+            firstPhaseElements: planData?.phases?.[0]?.clinical_elements?.length
+          });
         }
       }
-
-      const printWindow = window.open('', '_blank');
-      printWindow.document.write(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <title>${planData?.title || protocol.title || 'Engagement Plan'} - ExpandHealth</title>
-          <style>
-            @page { size: A4; margin: 20mm; }
-            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 40px; line-height: 1.6; max-width: 800px; margin: 0 auto; color: #1f2937; }
-            h1 { color: #0F766E; margin-bottom: 8px; font-size: 24px; }
-            h2 { color: #0F766E; margin-top: 24px; font-size: 18px; border-bottom: 2px solid #0F766E; padding-bottom: 8px; }
-            h3 { color: #374151; margin-top: 16px; font-size: 16px; }
-            .header-logo { color: #0F766E; font-weight: bold; font-size: 18px; margin-bottom: 20px; }
-            .meta { color: #6b7280; margin-bottom: 24px; font-size: 14px; }
-            .summary { background: #FEF9C3; padding: 16px; border-radius: 8px; margin-bottom: 24px; }
-            .summary p { color: #713F12; margin: 0; }
-            .phase { background: #F9FAFB; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #0F766E; page-break-inside: avoid; }
-            .phase h3 { margin-top: 0; color: #1F2937; }
-            .phase-subtitle { font-style: italic; color: #6B7280; margin: 4px 0 12px 0; font-size: 14px; }
-            ul { padding-left: 20px; margin: 12px 0; }
-            li { margin-bottom: 8px; }
-            .goal { background: #E0F2F1; padding: 12px; border-radius: 6px; margin-top: 12px; }
-            .goal-label { font-weight: 600; color: #0F766E; font-size: 12px; text-transform: uppercase; }
-            .check-in { background: #FEF3C7; padding: 12px; border-radius: 6px; margin-top: 12px; }
-            .check-in-label { font-weight: 600; color: #92400E; font-size: 12px; text-transform: uppercase; }
-            .comm-schedule { background: #EFF6FF; padding: 16px; border-radius: 8px; margin-top: 24px; }
-            .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb; color: #6b7280; font-size: 11px; }
-            @media print { body { padding: 0; } .no-print { display: none; } }
-          </style>
-        </head>
-        <body>
-          <div class="header-logo">ExpandHealth</div>
-          <h1>${escapeHtml(planData?.title || protocol.title || 'Engagement Plan')}</h1>
-          <div class="meta">
-            <strong>Client:</strong> ${escapeHtml(clientName)}<br>
-            <strong>Date:</strong> ${formatDate(protocol.updated_at || protocol.created_at)}
-          </div>
-
-          ${planData ? formatEngagementPlanForPrint(planData) : '<p>No engagement plan data available.</p>'}
-
-          <div class="footer">
-            Generated by ExpandHealth • ${new Date().toLocaleDateString()}<br>
-            This document is confidential and intended for the named recipient only.
-          </div>
-        </body>
-        </html>
-      `);
-      printWindow.document.close();
-      printWindow.print();
-    } else {
-      showNotification('Failed to load engagement plan for printing', 'error');
+    } catch (epErr) {
+      console.log('[Print] engagement_plans endpoint not available, falling back to protocol');
     }
+
+    // Fallback to protocol.ai_recommendations
+    if (!planData) {
+      const response = await fetch(`${API_BASE}/api/protocols/${planId}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const protocol = data.protocol;
+        protocolTitle = protocol.title || 'Engagement Plan';
+
+        // Parse the engagement plan from ai_recommendations
+        if (protocol.ai_recommendations) {
+          // Handle both string and object formats
+          if (typeof protocol.ai_recommendations === 'string') {
+            try {
+              planData = JSON.parse(protocol.ai_recommendations);
+            } catch (e) {
+              // Try regex extraction for legacy data
+              const jsonMatch = protocol.ai_recommendations.match(/\{[\s\S]*\}/);
+              if (jsonMatch) {
+                try {
+                  planData = JSON.parse(jsonMatch[0]);
+                } catch (e2) {
+                  console.error('[Print] Error parsing engagement plan JSON:', e2);
+                }
+              }
+            }
+          } else if (typeof protocol.ai_recommendations === 'object') {
+            planData = protocol.ai_recommendations;
+          }
+
+          console.log('[Print] Loaded from protocol.ai_recommendations:', {
+            type: typeof protocol.ai_recommendations,
+            phasesCount: planData?.phases?.length,
+            firstPhaseElements: planData?.phases?.[0]?.clinical_elements?.length,
+            keys: planData ? Object.keys(planData) : 'null'
+          });
+        }
+      } else {
+        showNotification('Failed to load engagement plan for printing', 'error');
+        return;
+      }
+    }
+
+    if (!planData) {
+      showNotification('No engagement plan data found', 'error');
+      return;
+    }
+
+    // Debug: Log what we're about to render
+    console.log('[Print] Final planData for rendering:', {
+      title: planData.title,
+      phasesCount: planData.phases?.length,
+      phases: planData.phases?.map(p => ({
+        title: p.title,
+        elementsCount: p.clinical_elements?.length,
+        hasMonitoring: !!p.monitoring,
+        hasSafetyGate: !!p.safety_gate
+      }))
+    });
+
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>${escapeHtml(planData?.title || protocolTitle)} - ExpandHealth</title>
+        <style>
+          @page { size: A4; margin: 20mm; }
+          body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 40px; line-height: 1.6; max-width: 800px; margin: 0 auto; color: #1f2937; }
+          h1 { color: #0F766E; margin-bottom: 8px; font-size: 24px; }
+          h2 { color: #0F766E; margin-top: 24px; font-size: 18px; border-bottom: 2px solid #0F766E; padding-bottom: 8px; }
+          h3 { color: #374151; margin-top: 16px; font-size: 16px; }
+          .header-logo { color: #0F766E; font-weight: bold; font-size: 18px; margin-bottom: 20px; }
+          .meta { color: #6b7280; margin-bottom: 24px; font-size: 14px; }
+          .summary { background: #FEF9C3; padding: 16px; border-radius: 8px; margin-bottom: 24px; }
+          .summary p { color: #713F12; margin: 0; }
+          .phase { background: #F9FAFB; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #0F766E; page-break-inside: avoid; }
+          .phase h3 { margin-top: 0; color: #1F2937; }
+          .phase-subtitle { font-style: italic; color: #6B7280; margin: 4px 0 12px 0; font-size: 14px; }
+          ul { padding-left: 20px; margin: 12px 0; }
+          li { margin-bottom: 8px; }
+          .goal { background: #E0F2F1; padding: 12px; border-radius: 6px; margin-top: 12px; }
+          .goal-label { font-weight: 600; color: #0F766E; font-size: 12px; text-transform: uppercase; }
+          .check-in { background: #FEF3C7; padding: 12px; border-radius: 6px; margin-top: 12px; }
+          .check-in-label { font-weight: 600; color: #92400E; font-size: 12px; text-transform: uppercase; }
+          .comm-schedule { background: #EFF6FF; padding: 16px; border-radius: 8px; margin-top: 24px; }
+          .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb; color: #6b7280; font-size: 11px; }
+          @media print { body { padding: 0; } .no-print { display: none; } }
+        </style>
+      </head>
+      <body>
+        <div class="header-logo">ExpandHealth</div>
+        <h1>${escapeHtml(planData?.title || protocolTitle)}</h1>
+        <div class="meta">
+          <strong>Client:</strong> ${escapeHtml(clientName)}<br>
+          <strong>Date:</strong> ${new Date().toLocaleDateString()}
+        </div>
+
+        ${formatEngagementPlanForPrint(planData)}
+
+        <div class="footer">
+          Generated by ExpandHealth • ${new Date().toLocaleDateString()}<br>
+          This document is confidential and intended for the named recipient only.
+        </div>
+      </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.print();
+
   } catch (error) {
     console.error('Error printing engagement plan:', error);
     showNotification('Error printing engagement plan', 'error');
@@ -6088,36 +6148,93 @@ async function downloadEngagementPlanPDF() {
 
   try {
     const token = localStorage.getItem('auth_token');
-    const response = await fetch(`${API_BASE}/api/protocols/${protocolId}`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
+    let planData = null;
+    let planTitle = 'Engagement Plan';
+    const clientName = currentClient ? `${currentClient.first_name} ${currentClient.last_name}` : 'Client';
 
-    if (response.ok) {
-      const data = await response.json();
-      const protocol = data.protocol;
-      const clientName = currentClient ? `${currentClient.first_name} ${currentClient.last_name}` : 'Client';
-
-      // Parse the engagement plan from ai_recommendations JSON
-      let planData = null;
-      if (protocol.ai_recommendations) {
-        try {
-          planData = JSON.parse(protocol.ai_recommendations);
-        } catch (e) {
-          // Try regex extraction for legacy data
-          const jsonMatch = protocol.ai_recommendations.match(/\{[\s\S]*\}/);
-          if (jsonMatch) {
-            try {
-              planData = JSON.parse(jsonMatch[0]);
-            } catch (e2) {
-              console.error('Error parsing engagement plan JSON:', e2);
-            }
-          }
+    // First try engagement_plans table (new system)
+    try {
+      const epResponse = await fetch(`${API_BASE}/api/protocols/engagement-plans/by-protocol/${protocolId}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (epResponse.ok) {
+        const epData = await epResponse.json();
+        if (epData.engagement_plan?.plan_data) {
+          planData = typeof epData.engagement_plan.plan_data === 'string'
+            ? JSON.parse(epData.engagement_plan.plan_data)
+            : epData.engagement_plan.plan_data;
+          planTitle = epData.engagement_plan.title || planData?.title || 'Engagement Plan';
+          console.log('[PDF] Loaded from engagement_plans table:', {
+            phasesCount: planData?.phases?.length,
+            firstPhaseElements: planData?.phases?.[0]?.clinical_elements?.length
+          });
         }
       }
+    } catch (epErr) {
+      console.log('[PDF] engagement_plans endpoint not available, falling back to protocol');
+    }
 
-      // Use the proper formatting function for engagement plan data
-      const formattedContent = planData ? formatEngagementPlanForPrint(planData) : '<p>No engagement plan data available.</p>';
-      const planTitle = planData?.title || protocol.title || 'Engagement Plan';
+    // Fallback to protocol.ai_recommendations
+    if (!planData) {
+      const response = await fetch(`${API_BASE}/api/protocols/${protocolId}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const protocol = data.protocol;
+        planTitle = protocol.title || 'Engagement Plan';
+
+        // Parse the engagement plan from ai_recommendations
+        if (protocol.ai_recommendations) {
+          if (typeof protocol.ai_recommendations === 'string') {
+            try {
+              planData = JSON.parse(protocol.ai_recommendations);
+            } catch (e) {
+              const jsonMatch = protocol.ai_recommendations.match(/\{[\s\S]*\}/);
+              if (jsonMatch) {
+                try {
+                  planData = JSON.parse(jsonMatch[0]);
+                } catch (e2) {
+                  console.error('[PDF] Error parsing engagement plan JSON:', e2);
+                }
+              }
+            }
+          } else if (typeof protocol.ai_recommendations === 'object') {
+            planData = protocol.ai_recommendations;
+          }
+
+          console.log('[PDF] Loaded from protocol.ai_recommendations:', {
+            type: typeof protocol.ai_recommendations,
+            phasesCount: planData?.phases?.length,
+            firstPhaseElements: planData?.phases?.[0]?.clinical_elements?.length
+          });
+        }
+      } else {
+        showNotification('Failed to load engagement plan', 'error');
+        return;
+      }
+    }
+
+    if (!planData) {
+      showNotification('No engagement plan data found', 'error');
+      return;
+    }
+
+    // Debug: Log what we're about to render
+    console.log('[PDF] Final planData for rendering:', {
+      title: planData.title,
+      phasesCount: planData.phases?.length,
+      phases: planData.phases?.map(p => ({
+        title: p.title,
+        elementsCount: p.clinical_elements?.length,
+        hasMonitoring: !!p.monitoring,
+        hasSafetyGate: !!p.safety_gate
+      }))
+    });
+
+    // Use the proper formatting function for engagement plan data
+    const formattedContent = formatEngagementPlanForPrint(planData);
 
       // Create print window
       const printWindow = window.open('', '_blank');
@@ -6271,7 +6388,7 @@ async function downloadEngagementPlanPDF() {
             <h1>${escapeHtml(planTitle)}</h1>
             <div class="meta">
               <strong>Client:</strong> ${escapeHtml(clientName)}<br>
-              <strong>Created:</strong> ${formatDate(protocol.created_at)}
+              <strong>Created:</strong> ${new Date().toLocaleDateString()}
             </div>
           </div>
 
@@ -6289,9 +6406,7 @@ async function downloadEngagementPlanPDF() {
       printWindow.document.close();
 
       showNotification('PDF ready - click "Print / Save as PDF" in the new window', 'success');
-    } else {
-      showNotification('Failed to load engagement plan', 'error');
-    }
+
   } catch (error) {
     console.error('Error generating PDF:', error);
     showNotification('Error generating PDF', 'error');
@@ -11252,44 +11367,152 @@ function formatEngagementPlanHtml(planData) {
 
   // Title and summary
   if (planData.title) {
-    html += `<h2 style="color: #0F766E; margin: 0 0 16px 0; font-size: 22px;">${planData.title}</h2>`;
+    html += `<h2 style="color: #0F766E; margin: 0 0 16px 0; font-size: 22px;">${escapeHtml(planData.title)}</h2>`;
   }
   if (planData.summary) {
-    html += `<p style="color: #374151; margin-bottom: 24px; font-size: 15px; line-height: 1.6;">${planData.summary}</p>`;
+    html += `<p style="color: #374151; margin-bottom: 24px; font-size: 15px; line-height: 1.6;">${escapeHtml(planData.summary)}</p>`;
   }
 
-  // Phases
+  // Phases - supports both new (clinical_elements) and old (items) formats
   if (planData.phases && Array.isArray(planData.phases)) {
     planData.phases.forEach(phase => {
+      const hasClinicElements = phase.clinical_elements && phase.clinical_elements.length > 0;
+      const hasItems = phase.items && phase.items.length > 0;
+      const weekRange = phase.week_range ? `(Weeks ${phase.week_range})` : '';
+
       html += `
         <div style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 16px; border-left: 4px solid #0F766E;">
-          <h3 style="color: #1F2937; margin: 0 0 4px 0; font-size: 17px;">${phase.title || `Phase ${phase.phase_number}`}</h3>
-          ${phase.subtitle ? `<p style="color: #6B7280; margin: 0 0 16px 0; font-size: 13px; font-style: italic;">${phase.subtitle}</p>` : ''}
+          <h3 style="color: #1F2937; margin: 0 0 4px 0; font-size: 17px;">${escapeHtml(phase.title || `Phase ${phase.phase_number}`)} ${weekRange}</h3>
+          ${phase.subtitle ? `<p style="color: #6B7280; margin: 0 0 16px 0; font-size: 13px; font-style: italic;">${escapeHtml(phase.subtitle)}</p>` : ''}
 
-          ${phase.items && phase.items.length > 0 ? `
+          ${hasClinicElements ? `
+            <div style="margin: 12px 0;">
+              <strong style="color: #0F766E; font-size: 13px;">Clinical Elements in Scope:</strong>
+              <ul style="margin: 8px 0 0 0; padding-left: 20px;">
+                ${phase.clinical_elements.map(el => {
+                  const name = typeof el === 'string' ? el : el.name;
+                  const status = el.status || 'SCHEDULED';
+                  return `<li style="color: #374151; margin-bottom: 6px; line-height: 1.5;">${escapeHtml(name)} <span style="color: #6B7280; font-size: 11px;">[${escapeHtml(status)}]</span></li>`;
+                }).join('')}
+              </ul>
+            </div>
+          ` : hasItems ? `
             <ul style="margin: 0 0 16px 0; padding-left: 20px;">
-              ${phase.items.map(item => `<li style="color: #374151; margin-bottom: 8px; line-height: 1.5;">${item}</li>`).join('')}
+              ${phase.items.map(item => `<li style="color: #374151; margin-bottom: 8px; line-height: 1.5;">${escapeHtml(item)}</li>`).join('')}
             </ul>
           ` : ''}
 
+          ${phase.monitoring && phase.monitoring.length > 0 ? `
+            <div style="background: #FEF3C7; padding: 12px; border-radius: 8px; margin-top: 12px;">
+              <strong style="color: #92400E; font-size: 12px; text-transform: uppercase;">Monitoring:</strong>
+              <ul style="margin: 8px 0 0 0; padding-left: 20px;">
+                ${phase.monitoring.map(m => `<li style="color: #78350F; margin-bottom: 4px; font-size: 13px;">${escapeHtml(m)}</li>`).join('')}
+              </ul>
+            </div>
+          ` : ''}
+
+          ${phase.safety_gate ? `
+            <div style="background: #FEE2E2; padding: 12px; border-radius: 8px; margin-top: 12px; border-left: 3px solid #DC2626;">
+              <strong style="color: #DC2626; font-size: 12px; text-transform: uppercase;">Safety Gate:</strong>
+              ${phase.safety_gate.conditions && phase.safety_gate.conditions.length > 0 ? `
+                <p style="margin: 8px 0 4px 0; font-weight: 600; font-size: 13px;">IF all TRUE:</p>
+                <ul style="margin: 0 0 8px 0; padding-left: 20px;">
+                  ${phase.safety_gate.conditions.map(c => `<li style="font-size: 13px;">${escapeHtml(c)}</li>`).join('')}
+                </ul>
+              ` : ''}
+              ${phase.safety_gate.if_pass ? `<p style="margin: 4px 0; color: #166534; font-size: 13px;"><strong>THEN:</strong> ${escapeHtml(phase.safety_gate.if_pass)}</p>` : ''}
+              ${phase.safety_gate.if_fail ? `<p style="margin: 4px 0; color: #DC2626; font-size: 13px;"><strong>ELSE:</strong> ${escapeHtml(phase.safety_gate.if_fail)}</p>` : ''}
+            </div>
+          ` : ''}
+
           ${phase.progress_goal ? `
-            <div style="background: #F0FDFA; padding: 12px; border-radius: 8px; margin-bottom: 12px;">
+            <div style="background: #F0FDFA; padding: 12px; border-radius: 8px; margin-top: 12px;">
               <strong style="color: #0F766E; font-size: 12px; text-transform: uppercase;">Progress Goal:</strong>
-              <p style="color: #374151; margin: 4px 0 0 0; font-size: 14px;">${phase.progress_goal}</p>
+              <p style="color: #374151; margin: 4px 0 0 0; font-size: 14px;">${escapeHtml(phase.progress_goal)}</p>
             </div>
           ` : ''}
 
           ${phase.check_in_prompts && phase.check_in_prompts.length > 0 ? `
-            <div style="background: #FEF3C7; padding: 12px; border-radius: 8px;">
+            <div style="background: #FEF3C7; padding: 12px; border-radius: 8px; margin-top: 12px;">
               <strong style="color: #92400E; font-size: 12px; text-transform: uppercase;">Check-in Questions:</strong>
               <ul style="margin: 8px 0 0 0; padding-left: 20px;">
-                ${phase.check_in_prompts.map(q => `<li style="color: #78350F; margin-bottom: 4px; font-size: 13px;">${q}</li>`).join('')}
+                ${phase.check_in_prompts.map(q => `<li style="color: #78350F; margin-bottom: 4px; font-size: 13px;">${escapeHtml(q)}</li>`).join('')}
               </ul>
             </div>
           ` : ''}
         </div>
       `;
     });
+  }
+
+  // Clinic Treatments section (new format)
+  if (planData.clinic_treatments && planData.clinic_treatments.items && planData.clinic_treatments.items.length > 0) {
+    html += `
+      <div style="background: #F9FAFB; border-radius: 12px; padding: 20px; margin-bottom: 16px;">
+        <h3 style="color: #374151; margin: 0 0 12px 0; font-size: 16px;">Clinic Treatments</h3>
+        ${planData.clinic_treatments.note ? `<p style="color: #DC2626; font-style: italic; font-size: 13px; margin-bottom: 12px;">${escapeHtml(planData.clinic_treatments.note)}</p>` : ''}
+        ${planData.clinic_treatments.items.map(t => `
+          <div style="margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #E5E7EB;">
+            <strong>${escapeHtml(t.name)}</strong> <span style="color: #6B7280; font-size: 12px;">[${escapeHtml(t.status)}]</span>
+            <p style="margin: 4px 0; font-size: 13px;">Earliest: ${escapeHtml(t.earliest_eligibility || 'TBD')}</p>
+            ${t.conditions && t.conditions.length > 0 ? `<p style="margin: 4px 0; font-size: 13px;">Conditions: ${t.conditions.map(c => escapeHtml(c)).join(', ')}</p>` : ''}
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  // Testing Schedule section (new format)
+  if (planData.testing_schedule && planData.testing_schedule.length > 0) {
+    html += `
+      <div style="background: #F9FAFB; border-radius: 12px; padding: 20px; margin-bottom: 16px;">
+        <h3 style="color: #374151; margin: 0 0 12px 0; font-size: 16px;">Testing Schedule</h3>
+        ${planData.testing_schedule.map(test => `
+          <div style="margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #E5E7EB;">
+            <strong>${escapeHtml(test.name)}</strong>
+            <p style="margin: 4px 0; font-size: 13px;"><strong>Timing:</strong> ${escapeHtml(test.timing)}</p>
+            ${test.purpose ? `<p style="margin: 4px 0; font-size: 13px;"><strong>Purpose:</strong> ${escapeHtml(test.purpose)}</p>` : ''}
+            ${test.sequence && test.sequence.length > 0 ? `<p style="margin: 4px 0; font-size: 13px;"><strong>Sequence:</strong> ${test.sequence.map(s => escapeHtml(s)).join(' → ')}</p>` : ''}
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  // Safety Rules section (new format)
+  if (planData.safety_rules) {
+    const rules = planData.safety_rules;
+    html += `<div style="background: #FEF2F2; border-radius: 12px; padding: 20px; margin-bottom: 16px;">
+      <h3 style="color: #DC2626; margin: 0 0 12px 0; font-size: 16px;">Safety Rules</h3>`;
+
+    if (rules.stop_immediately && rules.stop_immediately.length > 0) {
+      html += `
+        <div style="background: #FEE2E2; padding: 12px; border-radius: 6px; margin-bottom: 12px; border-left: 4px solid #DC2626;">
+          <strong style="color: #DC2626;">STOP IMMEDIATELY if:</strong>
+          <ul style="margin: 8px 0 0 0; padding-left: 20px;">${rules.stop_immediately.map(r => `<li style="font-size: 13px;">${escapeHtml(r)}</li>`).join('')}</ul>
+        </div>
+      `;
+    }
+
+    if (rules.hold_and_contact && rules.hold_and_contact.length > 0) {
+      html += `
+        <div style="background: #FEF3C7; padding: 12px; border-radius: 6px; margin-bottom: 12px; border-left: 4px solid #F59E0B;">
+          <strong style="color: #92400E;">HOLD & Contact Clinician if:</strong>
+          <ul style="margin: 8px 0 0 0; padding-left: 20px;">${rules.hold_and_contact.map(r => `<li style="font-size: 13px;">${escapeHtml(r)}</li>`).join('')}</ul>
+        </div>
+      `;
+    }
+
+    if (rules.escalation_24h && rules.escalation_24h.length > 0) {
+      html += `
+        <div style="background: #DBEAFE; padding: 12px; border-radius: 6px; margin-bottom: 12px; border-left: 4px solid #3B82F6;">
+          <strong style="color: #1E40AF;">Escalate within 24h if:</strong>
+          <ul style="margin: 8px 0 0 0; padding-left: 20px;">${rules.escalation_24h.map(r => `<li style="font-size: 13px;">${escapeHtml(r)}</li>`).join('')}</ul>
+        </div>
+      `;
+    }
+
+    html += `</div>`;
   }
 
   // Communication schedule
@@ -11299,9 +11522,9 @@ function formatEngagementPlanHtml(planData) {
       <div style="background: #EDE9FE; border-radius: 12px; padding: 20px; margin-bottom: 16px;">
         <h3 style="color: #6D28D9; margin: 0 0 12px 0; font-size: 16px;">Communication Schedule</h3>
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px;">
-          ${comm.check_in_frequency ? `<div><strong style="color: #7C3AED; font-size: 12px;">Frequency:</strong><br><span style="color: #374151;">${comm.check_in_frequency}</span></div>` : ''}
-          ${comm.preferred_channel ? `<div><strong style="color: #7C3AED; font-size: 12px;">Channel:</strong><br><span style="color: #374151;">${comm.preferred_channel}</span></div>` : ''}
-          ${comm.message_tone ? `<div><strong style="color: #7C3AED; font-size: 12px;">Tone:</strong><br><span style="color: #374151;">${comm.message_tone}</span></div>` : ''}
+          ${comm.check_in_frequency ? `<div><strong style="color: #7C3AED; font-size: 12px;">Frequency:</strong><br><span style="color: #374151;">${escapeHtml(comm.check_in_frequency)}</span></div>` : ''}
+          ${comm.preferred_channel ? `<div><strong style="color: #7C3AED; font-size: 12px;">Channel:</strong><br><span style="color: #374151;">${escapeHtml(comm.preferred_channel)}</span></div>` : ''}
+          ${comm.message_tone ? `<div><strong style="color: #7C3AED; font-size: 12px;">Tone:</strong><br><span style="color: #374151;">${escapeHtml(comm.message_tone)}</span></div>` : ''}
         </div>
       </div>
     `;
@@ -11313,7 +11536,7 @@ function formatEngagementPlanHtml(planData) {
       <div style="background: #ECFDF5; border-radius: 12px; padding: 20px;">
         <h3 style="color: #065F46; margin: 0 0 12px 0; font-size: 16px;">Success Metrics</h3>
         <ul style="margin: 0; padding-left: 20px;">
-          ${planData.success_metrics.map(m => `<li style="color: #047857; margin-bottom: 6px;">${m}</li>`).join('')}
+          ${planData.success_metrics.map(m => `<li style="color: #047857; margin-bottom: 6px;">${escapeHtml(m)}</li>`).join('')}
         </ul>
       </div>
     `;

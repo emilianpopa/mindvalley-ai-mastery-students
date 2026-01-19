@@ -630,6 +630,51 @@ router.get('/engagement-plans/:id', authenticateToken, async (req, res, next) =>
   }
 });
 
+// Get engagement plan by source protocol ID
+router.get('/engagement-plans/by-protocol/:protocolId', authenticateToken, async (req, res, next) => {
+  try {
+    const { protocolId } = req.params;
+
+    const result = await db.query(`
+      SELECT
+        ep.*,
+        p.title as protocol_title,
+        c.first_name, c.last_name
+      FROM engagement_plans ep
+      LEFT JOIN protocols p ON ep.source_protocol_id = p.id
+      LEFT JOIN clients c ON ep.client_id = c.id
+      WHERE ep.source_protocol_id = $1
+      ORDER BY ep.created_at DESC
+      LIMIT 1
+    `, [protocolId]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Engagement plan not found for this protocol' });
+    }
+
+    const row = result.rows[0];
+    res.json({
+      success: true,
+      engagement_plan: {
+        id: row.id,
+        client_id: row.client_id,
+        client_name: `${row.first_name} ${row.last_name}`,
+        source_protocol_id: row.source_protocol_id,
+        protocol_title: row.protocol_title,
+        title: row.title,
+        status: row.status,
+        plan_data: typeof row.plan_data === 'string' ? JSON.parse(row.plan_data) : row.plan_data,
+        validation_data: typeof row.validation_data === 'string' ? JSON.parse(row.validation_data) : row.validation_data,
+        created_at: row.created_at,
+        updated_at: row.updated_at
+      }
+    });
+  } catch (error) {
+    console.error('[Engagement Plans] Error loading plan by protocol:', error);
+    next(error);
+  }
+});
+
 // Update engagement plan (independent of protocol)
 router.put('/engagement-plans/:id', authenticateToken, async (req, res, next) => {
   try {
