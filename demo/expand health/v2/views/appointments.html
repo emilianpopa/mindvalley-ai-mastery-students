@@ -4068,6 +4068,9 @@
       });
 
       // For each day, calculate column positions for overlapping appointments
+      // Cap at 3 columns max to keep appointments readable
+      const MAX_COLUMNS = 3;
+
       Object.keys(appointmentsByDay).forEach(day => {
         const dayAppts = appointmentsByDay[day];
         // Sort by start time, then by end time
@@ -4080,6 +4083,7 @@
         });
 
         // Simple greedy algorithm: place each appointment in the leftmost column that doesn't overlap
+        // Cap at MAX_COLUMNS - appointments beyond that will stack in the last column
         dayAppts.forEach(apt => {
           // Find all appointments that overlap with this one and have already been placed
           const overlapping = dayAppts.filter(other =>
@@ -4089,11 +4093,12 @@
             apt.endTime > other.startTime
           );
 
-          // Find the first available column
+          // Find the first available column (up to MAX_COLUMNS - 1)
           const usedColumns = new Set(overlapping.map(o => o.column));
           let col = 0;
-          while (usedColumns.has(col)) col++;
-          apt.column = col;
+          while (usedColumns.has(col) && col < MAX_COLUMNS - 1) col++;
+          // If all columns are taken, use the last column (they'll stack)
+          apt.column = Math.min(col, MAX_COLUMNS - 1);
         });
 
         // Calculate totalColumns for each appointment based on direct overlaps only
@@ -4108,8 +4113,11 @@
           if (directOverlaps.length === 0) {
             apt.totalColumns = 1;
           } else {
-            // totalColumns = max column used by any overlapping appointment + 1
-            const maxCol = Math.max(apt.column, ...directOverlaps.map(o => o.column));
+            // totalColumns = max column used by any overlapping appointment + 1, capped at MAX_COLUMNS
+            const maxCol = Math.min(
+              Math.max(apt.column, ...directOverlaps.map(o => o.column)),
+              MAX_COLUMNS - 1
+            );
             apt.totalColumns = maxCol + 1;
             // Also update the overlapping appointments to have the same totalColumns
             directOverlaps.forEach(o => {
