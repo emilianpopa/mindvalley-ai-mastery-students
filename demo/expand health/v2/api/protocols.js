@@ -2697,6 +2697,7 @@ function generateClinicalFallbackProtocol(clientData, prompt, templates, selecte
 
 // Generate personalized engagement plan from protocol
 router.post('/:id/generate-engagement-plan', authenticateToken, async (req, res, next) => {
+  console.log('[Engagement Plan API] >>> ENDPOINT HIT - generate-engagement-plan for id:', req.params.id);
   try {
     const { id } = req.params;
     const { personality_type, communication_preferences } = req.body;
