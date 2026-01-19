@@ -153,12 +153,91 @@ function extractProtocolElements(protocol) {
     });
   }
 
-  // Extract from modules array (alternative structure)
-  if (protocolData.modules) {
-    protocolData.modules.forEach(module => {
-      if (module.items) {
-        module.items.forEach(item => {
-          categorizeItem(item, elements, module.name, 1);
+  // Extract from modules array (template structure from seed-clinical-templates.js)
+  if (protocolData.modules && Array.isArray(protocolData.modules)) {
+    protocolData.modules.forEach((module, moduleIndex) => {
+      // Determine start week from module properties
+      const startWeek = module.start_week || (module.is_core_protocol ? 1 : (module.phase_number ? (module.phase_number * 2 + 1) : 1));
+      const durationWeeks = module.duration_weeks || 2;
+
+      // Track phase information
+      if (module.is_core_protocol || module.phase_number !== undefined || module.is_clinic_treatment) {
+        const phaseType = module.is_core_protocol ? 'core' : (module.is_clinic_treatment ? 'clinic' : 'expansion');
+        elements.phases.push({
+          name: module.name,
+          start_week: startWeek,
+          duration_weeks: durationWeeks,
+          readiness_criteria: module.readiness_criteria || [],
+          type: phaseType
+        });
+      }
+
+      // Extract items from module
+      if (module.items && Array.isArray(module.items)) {
+        // Check if this is a clinic treatments module
+        if (module.is_clinic_treatment) {
+          module.items.forEach(item => {
+            elements.clinic_treatments.push({
+              name: item.name,
+              indication: item.indication,
+              contraindications: item.contraindications,
+              protocol: item.protocol,
+              notes: item.notes,
+              phase: module.name,
+              start_week: startWeek,
+              isOptional: true,
+              category: 'clinic_treatment'
+            });
+          });
+        } else {
+          // Regular module items
+          module.items.forEach(item => {
+            categorizeItem(item, elements, module.name, startWeek);
+          });
+        }
+      }
+
+      // Extract safety gates from module
+      if (module.safety_gates && Array.isArray(module.safety_gates)) {
+        module.safety_gates.forEach(gate => {
+          elements.safety_constraints.push({
+            constraint: gate,
+            phase: module.name,
+            type: 'safety_gate'
+          });
+        });
+      }
+
+      // Extract readiness criteria from module
+      if (module.readiness_criteria && Array.isArray(module.readiness_criteria)) {
+        module.readiness_criteria.forEach(criteria => {
+          elements.safety_constraints.push({
+            constraint: criteria,
+            phase: module.name,
+            type: 'readiness_criteria'
+          });
+        });
+      }
+
+      // Extract what_not_to_do as absolute contraindications
+      if (module.what_not_to_do && Array.isArray(module.what_not_to_do)) {
+        module.what_not_to_do.forEach(rule => {
+          elements.safety_constraints.push({
+            constraint: rule,
+            phase: module.name,
+            type: 'absolute_contraindication'
+          });
+        });
+      }
+
+      // Extract clinician decision points
+      if (module.clinician_decision_points && Array.isArray(module.clinician_decision_points)) {
+        module.clinician_decision_points.forEach(point => {
+          elements.safety_constraints.push({
+            constraint: point,
+            phase: module.name,
+            type: 'clinician_decision'
+          });
         });
       }
     });
@@ -1136,11 +1215,122 @@ A plan that "lists everything but breaks safety" is WRONG.
 Return the COMPLETE corrected JSON with all missing items properly placed.`;
 }
 
+/**
+ * Validate protocol elements before generating engagement plan
+ * Returns warnings for missing or incomplete protocol data
+ *
+ * @param {Object} protocolElements - Extracted protocol elements
+ * @param {string} protocolTitle - Protocol title for context
+ * @returns {Object} Validation result with warnings and quality score
+ */
+function validateProtocolElements(protocolElements, protocolTitle = 'Protocol') {
+  const warnings = [];
+  const criticalWarnings = [];
+  let qualityScore = 100;
+
+  // Check for supplements
+  if (!protocolElements.supplements || protocolElements.supplements.length === 0) {
+    criticalWarnings.push('No supplements found in protocol. Engagement plan will have empty clinical elements.');
+    qualityScore -= 30;
+  } else {
+    // Check if supplements have required fields
+    const supplementsWithoutNames = protocolElements.supplements.filter(s => !s.name);
+    if (supplementsWithoutNames.length > 0) {
+      warnings.push(`${supplementsWithoutNames.length} supplement(s) missing name field`);
+      qualityScore -= 5;
+    }
+
+    const supplementsWithoutStartWeek = protocolElements.supplements.filter(s => !s.start_week);
+    if (supplementsWithoutStartWeek.length > 0) {
+      warnings.push(`${supplementsWithoutStartWeek.length} supplement(s) missing start_week - defaulting to Week 1`);
+      qualityScore -= 5;
+    }
+  }
+
+  // Check for phases
+  if (!protocolElements.phases || protocolElements.phases.length === 0) {
+    warnings.push('No phases defined in protocol. Will auto-generate phases based on supplement start weeks.');
+    qualityScore -= 10;
+  } else {
+    // Check phase structure
+    const phasesWithoutStartWeek = protocolElements.phases.filter(p => !p.start_week);
+    if (phasesWithoutStartWeek.length > 0) {
+      warnings.push(`${phasesWithoutStartWeek.length} phase(s) missing start_week`);
+      qualityScore -= 5;
+    }
+  }
+
+  // Check for safety constraints
+  if (!protocolElements.safety_constraints || protocolElements.safety_constraints.length === 0) {
+    warnings.push('No safety constraints found. Engagement plan will use default safety rules.');
+    qualityScore -= 10;
+  } else {
+    const safetyGates = protocolElements.safety_constraints.filter(c => c.type === 'safety_gate');
+    if (safetyGates.length === 0) {
+      warnings.push('No safety gates defined. Phase transitions will use default gates.');
+      qualityScore -= 5;
+    }
+  }
+
+  // Check for lifestyle protocols
+  if (!protocolElements.lifestyle_protocols || protocolElements.lifestyle_protocols.length === 0) {
+    warnings.push('No lifestyle protocols found (diet, sleep, hydration, etc.)');
+    qualityScore -= 5;
+  }
+
+  // Check for clinic treatments (optional but valuable)
+  if (!protocolElements.clinic_treatments || protocolElements.clinic_treatments.length === 0) {
+    warnings.push('No clinic treatments specified (IV, sauna, etc.) - this may be intentional');
+    // Don't reduce score - clinic treatments are optional
+  } else {
+    const treatmentsWithoutContraindications = protocolElements.clinic_treatments.filter(t => !t.contraindications);
+    if (treatmentsWithoutContraindications.length > 0) {
+      warnings.push(`${treatmentsWithoutContraindications.length} clinic treatment(s) missing contraindications`);
+      qualityScore -= 5;
+    }
+  }
+
+  // Check for retest schedule
+  if (!protocolElements.retest_schedule || protocolElements.retest_schedule.length === 0) {
+    warnings.push('No retest schedule defined. Consider adding testing milestones.');
+    qualityScore -= 5;
+  }
+
+  // Determine overall quality level
+  let qualityLevel = 'EXCELLENT';
+  if (qualityScore < 90) qualityLevel = 'GOOD';
+  if (qualityScore < 75) qualityLevel = 'FAIR';
+  if (qualityScore < 60) qualityLevel = 'POOR';
+  if (criticalWarnings.length > 0) qualityLevel = 'CRITICAL';
+
+  return {
+    isValid: criticalWarnings.length === 0,
+    qualityScore: Math.max(0, qualityScore),
+    qualityLevel,
+    criticalWarnings,
+    warnings,
+    summary: {
+      supplements: protocolElements.supplements?.length || 0,
+      phases: protocolElements.phases?.length || 0,
+      lifestyle_protocols: protocolElements.lifestyle_protocols?.length || 0,
+      clinic_treatments: protocolElements.clinic_treatments?.length || 0,
+      safety_constraints: protocolElements.safety_constraints?.length || 0,
+      retest_schedule: protocolElements.retest_schedule?.length || 0
+    },
+    message: criticalWarnings.length > 0
+      ? `Protocol "${protocolTitle}" has critical issues that will result in an incomplete engagement plan.`
+      : warnings.length > 0
+        ? `Protocol "${protocolTitle}" has ${warnings.length} warning(s) but can generate an engagement plan.`
+        : `Protocol "${protocolTitle}" has complete data for engagement plan generation.`
+  };
+}
+
 module.exports = {
   extractProtocolElements,
   generateAlignedEngagementPlanPrompt,
   validateEngagementPlanAlignment,
   autoFixEngagementPlan,
   getNameVariants,
-  generateRegenerationPrompt
+  generateRegenerationPrompt,
+  validateProtocolElements
 };

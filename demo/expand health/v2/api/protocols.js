@@ -30,7 +30,8 @@ const {
   generateAlignedEngagementPlanPrompt,
   validateEngagementPlanAlignment,
   autoFixEngagementPlan,
-  generateRegenerationPrompt
+  generateRegenerationPrompt,
+  validateProtocolElements
 } = require('../prompts/engagement-plan-alignment');
 
 // Import DETERMINISTIC Engagement Plan Generator (no AI improvisation)
@@ -2885,6 +2886,31 @@ router.post('/:id/generate-engagement-plan', authenticateToken, async (req, res,
     }
 
     // ========================================
+    // VALIDATE PROTOCOL ELEMENTS BEFORE GENERATION
+    // Warn about missing or incomplete data
+    // ========================================
+
+    const protocolTitle = protocol.title || protocol.template_name || 'Custom Protocol';
+    const protocolValidation = validateProtocolElements(protocolElements, protocolTitle);
+
+    console.log('[Engagement Plan] Protocol validation:', {
+      qualityLevel: protocolValidation.qualityLevel,
+      qualityScore: protocolValidation.qualityScore,
+      isValid: protocolValidation.isValid,
+      summary: protocolValidation.summary
+    });
+
+    if (protocolValidation.criticalWarnings.length > 0) {
+      console.warn('[Engagement Plan] CRITICAL WARNINGS:');
+      protocolValidation.criticalWarnings.forEach(w => console.warn('  - ' + w));
+    }
+
+    if (protocolValidation.warnings.length > 0) {
+      console.log('[Engagement Plan] Warnings:');
+      protocolValidation.warnings.forEach(w => console.log('  - ' + w));
+    }
+
+    // ========================================
     // DETERMINISTIC ENGAGEMENT PLAN GENERATION
     // No AI improvisation - direct transformation from protocol data
     // ========================================
@@ -3000,17 +3026,30 @@ router.post('/:id/generate-engagement-plan', authenticateToken, async (req, res,
       }
     }
 
+    // Add protocol validation info to the engagement plan
+    engagementPlan._protocolValidation = {
+      qualityLevel: protocolValidation.qualityLevel,
+      qualityScore: protocolValidation.qualityScore,
+      warnings: protocolValidation.warnings,
+      criticalWarnings: protocolValidation.criticalWarnings,
+      summary: protocolValidation.summary
+    };
+
     // Save engagement plan to separate engagement_plans table
     // This ensures engagement plans persist even if the protocol is deleted
     // Use protocol.title (AI-generated protocol title) to ensure correct naming
     const protocolTitleForPlan = protocol.title || protocol.template_name || 'Custom Protocol';
     const planTitle = `Engagement Plan: ${protocolTitleForPlan} for ${clientName}`;
-    const validationData = engagementPlan._validation || {};
+    const validationData = {
+      ...engagementPlan._validation || {},
+      protocolValidation: engagementPlan._protocolValidation
+    };
 
     // Remove internal validation metadata from plan_data before saving
     const planDataToSave = { ...engagementPlan };
     delete planDataToSave._validation;
     delete planDataToSave._alignment_note;
+    delete planDataToSave._protocolValidation;
     // Override AI-generated title with correct protocol title
     planDataToSave.title = planTitle;
 
