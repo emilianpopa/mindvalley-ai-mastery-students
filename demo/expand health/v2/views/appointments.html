@@ -6076,18 +6076,35 @@
         const startTime = document.getElementById('newAptStartsAt').value;
         const duration = document.getElementById('newAptDuration').value || 60;
 
-        // Use availability endpoint if we have a start time
+        // Use availability endpoint if we have a start time, otherwise use basic locations
         let url = '/api/locations';
         if (startTime) {
           url = `/api/locations/availability?start_time=${encodeURIComponent(startTime)}&duration=${duration}`;
         }
 
+        console.log('Loading venues from:', url);
         const response = await fetch(url, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
+
         if (response.ok) {
-          newAptVenues = await response.json();
+          const data = await response.json();
+          console.log('Loaded venues:', data);
+          newAptVenues = Array.isArray(data) ? data : [];
           renderVenueDropdown();
+        } else {
+          console.error('Failed to load venues, status:', response.status);
+          // Fallback: try basic locations endpoint
+          if (startTime) {
+            console.log('Falling back to /api/locations');
+            const fallbackResponse = await fetch('/api/locations', {
+              headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (fallbackResponse.ok) {
+              newAptVenues = await fallbackResponse.json();
+              renderVenueDropdown();
+            }
+          }
         }
       } catch (error) {
         console.error('Failed to load venues:', error);
