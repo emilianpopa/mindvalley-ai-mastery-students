@@ -4070,60 +4070,83 @@
       // For each day, calculate column positions for overlapping appointments
       Object.keys(appointmentsByDay).forEach(day => {
         const dayAppts = appointmentsByDay[day];
-        // Sort by start time
-        dayAppts.sort((a, b) => a.startTime - b.startTime);
+        // Sort by start time, then by end time
+        dayAppts.sort((a, b) => a.startTime - b.startTime || a.endTime - b.endTime);
 
-        // Calculate columns for overlapping appointments
+        // Reset column assignments
         dayAppts.forEach(apt => {
           apt.column = 0;
           apt.totalColumns = 1;
         });
 
-        // Find overlapping groups and assign columns
-        for (let i = 0; i < dayAppts.length; i++) {
-          const apt = dayAppts[i];
-          const overlapping = [apt];
+        // Use a greedy column assignment algorithm
+        // For each appointment, find the first column where it doesn't overlap with existing appointments
+        const columns = []; // Array of arrays, each sub-array contains appointments in that column
 
-          // Find all appointments that overlap with this one
-          for (let j = 0; j < dayAppts.length; j++) {
-            if (i !== j) {
-              const other = dayAppts[j];
-              // Check if they overlap
-              if (apt.startTime < other.endTime && apt.endTime > other.startTime) {
-                overlapping.push(other);
-              }
+        dayAppts.forEach(apt => {
+          // Find the first column where this appointment fits (doesn't overlap)
+          let placed = false;
+          for (let col = 0; col < columns.length; col++) {
+            // Check if apt overlaps with any appointment in this column
+            const overlaps = columns[col].some(other =>
+              apt.startTime < other.endTime && apt.endTime > other.startTime
+            );
+            if (!overlaps) {
+              // Place in this column
+              apt.column = col;
+              columns[col].push(apt);
+              placed = true;
+              break;
             }
           }
+          if (!placed) {
+            // Create a new column
+            apt.column = columns.length;
+            columns.push([apt]);
+          }
+        });
 
-          if (overlapping.length > 1) {
-            // Sort overlapping by start time, then by id for consistency
-            overlapping.sort((a, b) => a.startTime - b.startTime || a.id - b.id);
+        // Now calculate totalColumns for each appointment based on concurrent overlaps
+        // For each appointment, find max concurrent appointments at any point during its duration
+        dayAppts.forEach(apt => {
+          let maxConcurrent = 1;
+          dayAppts.forEach(other => {
+            if (apt !== other && apt.startTime < other.endTime && apt.endTime > other.startTime) {
+              // They overlap - count how many overlap at the same time
+              const overlapStart = Math.max(apt.startTime.getTime(), other.startTime.getTime());
+              const concurrent = dayAppts.filter(a =>
+                a.startTime.getTime() <= overlapStart && a.endTime.getTime() > overlapStart
+              ).length;
+              maxConcurrent = Math.max(maxConcurrent, concurrent);
+            }
+          });
+          apt.totalColumns = Math.max(columns.length, maxConcurrent);
+        });
 
-            // Assign columns
-            const usedColumns = new Set();
-            overlapping.forEach(o => {
-              if (o.columnAssigned) usedColumns.add(o.column);
-            });
-
-            overlapping.forEach((o, idx) => {
-              if (!o.columnAssigned) {
-                // Find first available column
-                let col = 0;
-                while (usedColumns.has(col)) col++;
-                o.column = col;
-                o.columnAssigned = true;
-                usedColumns.add(col);
+        // Normalize: all overlapping appointments should have the same totalColumns
+        // Find connected groups and set uniform totalColumns
+        const visited = new Set();
+        dayAppts.forEach(apt => {
+          if (visited.has(apt.id)) return;
+          // BFS to find all connected appointments
+          const group = [];
+          const queue = [apt];
+          while (queue.length > 0) {
+            const current = queue.shift();
+            if (visited.has(current.id)) continue;
+            visited.add(current.id);
+            group.push(current);
+            // Find all that overlap with current
+            dayAppts.forEach(other => {
+              if (!visited.has(other.id) && current.startTime < other.endTime && current.endTime > other.startTime) {
+                queue.push(other);
               }
-              o.totalColumns = Math.max(o.totalColumns, overlapping.length);
-            });
-
-            // Update totalColumns for all in group
-            const maxCol = Math.max(...overlapping.map(o => o.column)) + 1;
-            overlapping.forEach(o => {
-              o.totalColumns = Math.max(o.totalColumns, maxCol);
             });
           }
-        }
+          // Set uniform totalColumns for the group
+          const maxCol = Math.max(...group.map(a => a.column)) + 1;
+          group.forEach(a => a.totalColumns = maxCol);
+        });
       });
 
       // Flatten appointmentsByDay to render with column info
