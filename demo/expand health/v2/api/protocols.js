@@ -2787,10 +2787,22 @@ router.post('/:id/generate-engagement-plan', authenticateToken, async (req, res,
         clinic_treatments: protocolElements.clinic_treatments.length,
         lifestyle_protocols: protocolElements.lifestyle_protocols.length,
         retest_schedule: protocolElements.retest_schedule.length,
-        safety_constraints: protocolElements.safety_constraints.length
+        safety_constraints: protocolElements.safety_constraints.length,
+        phases: protocolElements.phases?.length || 0
       });
+
+      // Log actual supplement names for debugging
+      if (protocolElements.supplements.length > 0) {
+        console.log('[Engagement Plan] Supplement names:', protocolElements.supplements.map(s => s.name).join(', '));
+      }
+      if (protocolElements.lifestyle_protocols.length > 0) {
+        console.log('[Engagement Plan] Lifestyle protocols:', protocolElements.lifestyle_protocols.map(l => l.name).join(', '));
+      }
+      if (protocolElements.phases && protocolElements.phases.length > 0) {
+        console.log('[Engagement Plan] Phase names:', protocolElements.phases.map(p => `${p.name} (week ${p.start_week})`).join(', '));
+      }
     } else {
-      console.log('[Engagement Plan] No protocol data found - will generate generic engagement plan');
+      console.log('[Engagement Plan] WARNING: No protocol data found - will generate generic engagement plan');
     }
 
     // Query KB for engagement strategies AND protocol-specific execution patterns
@@ -2932,10 +2944,23 @@ router.post('/:id/generate-engagement-plan', authenticateToken, async (req, res,
     });
 
     console.log('[Engagement Plan] Generated deterministically');
-    console.log('[Engagement Plan] Phases:', engagementPlan.phases?.length);
+    console.log('[Engagement Plan] Generated deterministically - FULL DETAILS:');
+    console.log('[Engagement Plan] Phases count:', engagementPlan.phases?.length);
     console.log('[Engagement Plan] Total clinical elements:', engagementPlan.phases?.reduce((sum, p) => sum + (p.clinical_elements?.length || 0), 0));
     console.log('[Engagement Plan] Clinic treatments:', engagementPlan.clinic_treatments?.items?.length || 0);
     console.log('[Engagement Plan] Tests:', engagementPlan.testing_schedule?.length || 0);
+
+    // Log each phase for debugging
+    if (engagementPlan.phases) {
+      engagementPlan.phases.forEach((phase, i) => {
+        console.log(`[Engagement Plan] Phase ${i + 1}: "${phase.title}" (Weeks ${phase.week_range}) - ${phase.clinical_elements?.length || 0} elements`);
+        if (phase.clinical_elements && phase.clinical_elements.length > 0) {
+          console.log(`[Engagement Plan]   Elements: ${phase.clinical_elements.map(e => e.name).join(', ')}`);
+        }
+      });
+    } else {
+      console.error('[Engagement Plan] ERROR: No phases array in generated plan!');
+    }
 
     // ========================================
     // VALIDATION & REGENERATION LOOP - Ensure engagement plan covers all protocol items
