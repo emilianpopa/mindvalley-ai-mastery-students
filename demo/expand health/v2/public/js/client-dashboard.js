@@ -9806,28 +9806,94 @@ function renderEngagementPhases(phases) {
     return '<p style="color: #6B7280; text-align: center; padding: 40px;">No phases yet. Click "Add New Phase" to create one.</p>';
   }
 
-  return phases.map((phase, index) => `
+  return phases.map((phase, index) => {
+    // Support both old format (items array) and new format (clinical_elements array)
+    const hasClinicElements = phase.clinical_elements && phase.clinical_elements.length > 0;
+    const hasItems = phase.items && phase.items.length > 0;
+
+    // Render clinical elements (new format) or items (old format)
+    let itemsHtml = '';
+    if (hasClinicElements) {
+      itemsHtml = `
+        <div class="clinical-elements-section" style="margin-bottom: 16px;">
+          <strong style="color: #0F766E; font-size: 12px; display: block; margin-bottom: 8px;">Clinical Elements in Scope:</strong>
+          <ul class="section-list clinical-elements-list" data-index="${index}">
+            ${phase.clinical_elements.map((el, elIndex) => {
+              const name = typeof el === 'string' ? el : el.name;
+              const status = el.status || 'SCHEDULED';
+              const statusClass = status.toLowerCase().includes('conditional') ? 'status-conditional' :
+                                  status.toLowerCase().includes('clinician') ? 'status-decision' : 'status-scheduled';
+              return `
+                <li data-phase="${index}" data-item="${elIndex}" style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: #F0FDFA; border-radius: 6px; margin-bottom: 6px;">
+                  <span contenteditable="true" style="flex: 1;">${escapeHtml(name)}</span>
+                  <span class="element-status ${statusClass}" style="font-size: 11px; padding: 2px 8px; border-radius: 4px; background: ${status.includes('CONDITIONAL') ? '#FEF3C7' : status.includes('CLINICIAN') ? '#FEE2E2' : '#D1FAE5'}; color: ${status.includes('CONDITIONAL') ? '#92400E' : status.includes('CLINICIAN') ? '#991B1B' : '#065F46'};">[${escapeHtml(status)}]</span>
+                </li>`;
+            }).join('')}
+          </ul>
+        </div>`;
+    } else if (hasItems) {
+      itemsHtml = `
+        <ul class="section-list phase-items-list" data-index="${index}">
+          ${phase.items.map((item, itemIndex) => {
+            const itemText = typeof item === 'string' ? item : (item.name || item.item || JSON.stringify(item));
+            return `<li contenteditable="true" data-phase="${index}" data-item="${itemIndex}">${escapeHtml(itemText)}</li>`;
+          }).join('')}
+        </ul>`;
+    }
+
+    // Render monitoring section (new format)
+    let monitoringHtml = '';
+    if (phase.monitoring && phase.monitoring.length > 0) {
+      monitoringHtml = `
+        <div class="monitoring-section" style="background: #EFF6FF; padding: 12px; border-radius: 8px; margin-bottom: 12px; border-left: 3px solid #3B82F6;">
+          <strong style="color: #1E40AF; font-size: 12px;">Monitoring:</strong>
+          <ul style="margin: 8px 0 0 0; padding-left: 20px;">
+            ${phase.monitoring.map(m => {
+              const text = typeof m === 'string' ? m : (m.item || m.name || JSON.stringify(m));
+              return `<li style="color: #1E3A8A; font-size: 13px; margin-bottom: 4px;">${escapeHtml(text)}</li>`;
+            }).join('')}
+          </ul>
+        </div>`;
+    }
+
+    // Render safety gate (new format)
+    let safetyGateHtml = '';
+    if (phase.safety_gate) {
+      const conditions = Array.isArray(phase.safety_gate.conditions) ? phase.safety_gate.conditions.join(', ') : (phase.safety_gate.conditions || '');
+      safetyGateHtml = `
+        <div class="safety-gate-section" style="background: #FEF2F2; padding: 12px; border-radius: 8px; margin-bottom: 12px; border-left: 3px solid #EF4444;">
+          <strong style="color: #991B1B; font-size: 12px;">Safety Gate:</strong>
+          <p style="margin: 8px 0 4px 0; font-size: 13px; color: #374151;"><em>Conditions:</em> ${escapeHtml(conditions)}</p>
+          <p style="margin: 4px 0; font-size: 13px; color: #065F46;">✓ IF PASS: ${escapeHtml(phase.safety_gate.if_pass || 'Proceed to next phase')}</p>
+          <p style="margin: 4px 0; font-size: 13px; color: #991B1B;">✗ IF FAIL: ${escapeHtml(phase.safety_gate.if_fail || 'HOLD. Contact clinician.')}</p>
+        </div>`;
+    }
+
+    return `
     <div class="protocol-section engagement-phase-section" data-phase-index="${index}" onclick="selectEngagementPhase(${index}, event)">
       <input type="checkbox" class="section-checkbox" onclick="toggleEngagementPhaseCheckbox(${index})" />
 
       <h2 class="section-title">
         <span class="drag-handle">⋮⋮</span>
         <span contenteditable="true" class="phase-title-text" data-index="${index}">${escapeHtml(phase.title || `Phase ${index + 1}`)}</span>
+        ${phase.week_range ? `<span style="font-size: 12px; color: #6B7280; font-weight: normal; margin-left: 8px;">(Weeks ${escapeHtml(phase.week_range)})</span>` : ''}
       </h2>
 
       ${phase.subtitle ? `<p class="section-goal" contenteditable="true" data-index="${index}">${escapeHtml(phase.subtitle)}</p>` : ''}
 
-      <!-- Phase Items -->
-      <ul class="section-list phase-items-list" data-index="${index}">
-        ${(phase.items || []).map((item, itemIndex) => `
-          <li contenteditable="true" data-phase="${index}" data-item="${itemIndex}">${escapeHtml(item)}</li>
-        `).join('')}
-      </ul>
+      <!-- Clinical Elements or Items -->
+      ${itemsHtml}
 
       <!-- Add Item Button -->
       <button onclick="addPhaseItem(${index}); event.stopPropagation();" style="margin: 8px 0 16px 24px; padding: 6px 12px; background: #F9FAFB; border: 1px dashed #D1D5DB; border-radius: 4px; color: #6B7280; font-size: 12px; cursor: pointer;">
-        + Add Item
+        + Add Clinical Element
       </button>
+
+      <!-- Monitoring Section -->
+      ${monitoringHtml}
+
+      <!-- Safety Gate Section -->
+      ${safetyGateHtml}
 
       ${phase.progress_goal ? `
       <div style="background: #F0FDFA; padding: 12px; border-radius: 8px; margin-bottom: 12px;">
@@ -9867,8 +9933,8 @@ function renderEngagementPhases(phases) {
           <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
         </svg>
       </button>
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
 }
 
 // Select an engagement phase
