@@ -4480,7 +4480,7 @@
                 ${price > 0 ? `
                 <div class="apt-tooltip-detail">
                   <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                  <span class="apt-tooltip-detail-value">$${price.toFixed(2)}</span>
+                  <span class="apt-tooltip-detail-value">$${price.toFixed(0)}</span>
                 </div>
                 ` : ''}
               </div>
@@ -4932,7 +4932,7 @@
       if (price > 0) {
         tagsHtml += `<span style="display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; background: #F3F4F6; border-radius: 4px; font-size: 0.75rem; color: #374151;">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
-          ZAR ${price.toFixed(2)}
+          ZAR ${price.toFixed(0)}
         </span>`;
       }
 
@@ -4985,7 +4985,7 @@
 
       // Price (reuse price variable from payment tags)
       const priceEl = document.getElementById('panelPrice');
-      priceEl.innerHTML = `ZAR ${price.toFixed(2)} <span class="panel-price-credits">or ${credits} credits</span>`;
+      priceEl.innerHTML = `ZAR ${price.toFixed(0)} <span class="panel-price-credits">or ${credits} credits</span>`;
 
       // Populate Timing tab - Reservation Preview
       const bufferBefore = apt.extendedProps?.bufferBefore || 0;
@@ -5138,7 +5138,7 @@
       // Price info
       const price = apt.extendedProps?.price;
       if (price && price > 0) {
-        description += `Price: ZAR ${parseFloat(price).toFixed(2)}\n`;
+        description += `Price: ZAR ${parseFloat(price).toFixed(0)}\n`;
       }
 
       // Payment status
@@ -6276,7 +6276,7 @@
         const bufferBefore = selectedOption.dataset.bufferBefore || 10;
         const bufferAfter = selectedOption.dataset.bufferAfter || 10;
         document.getElementById('newAptDuration').value = duration;
-        document.getElementById('newAptPrice').value = parseFloat(price).toFixed(2);
+        document.getElementById('newAptPrice').value = parseFloat(price).toFixed(0);
         document.getElementById('newAptBufferStart').value = bufferBefore;
         document.getElementById('newAptBufferEnd').value = bufferAfter;
         // Refresh venue availability with new duration
@@ -7225,7 +7225,7 @@
         <div class="apt-form-control">
           <div class="price-input-row">
             <span class="price-currency">ZAR</span>
-            <input type="number" id="newAptPrice" value="0" min="0" step="0.01">
+            <input type="number" id="newAptPrice" value="0" min="0" step="1">
           </div>
           <div class="price-note">You can charge the customer or send a payment link once the appointment is created.</div>
         </div>
