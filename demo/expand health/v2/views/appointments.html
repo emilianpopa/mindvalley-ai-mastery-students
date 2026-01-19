@@ -5878,22 +5878,7 @@
 
     async function cancelAppointment() {
       if (!selectedAppointment) return;
-      if (!confirm('Are you sure you want to cancel this appointment?')) return;
-
-      try {
-        const response = await apiRequest(`/api/appointments/${selectedAppointment.id}/cancel`, {
-          method: 'POST',
-          body: JSON.stringify({ reason: 'Cancelled by staff' })
-        });
-
-        if (response) {
-          closeAppointmentPanel();
-          await loadAppointments();
-        }
-      } catch (error) {
-        console.error('Failed to cancel appointment:', error);
-        alert('Failed to cancel appointment');
-      }
+      openCancelModal();
     }
 
     async function checkInAppointment() {
@@ -7317,5 +7302,397 @@
       </svg>
     </button>
   </div>
+
+  <!-- Cancel Reservation Modal -->
+  <div class="cancel-modal-overlay" id="cancelModalOverlay" onclick="closeCancelModal()"></div>
+  <div class="cancel-modal" id="cancelModal">
+    <div class="cancel-modal-header">
+      <h3>Cancel reservation</h3>
+      <button class="cancel-modal-close" onclick="closeCancelModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+    <div class="cancel-modal-body">
+      <p class="cancel-modal-question">Are you sure you want to cancel this reservation?</p>
+      <div class="cancel-modal-options">
+        <label class="cancel-option">
+          <div class="cancel-toggle">
+            <input type="checkbox" id="cancelCreditCustomer">
+            <span class="toggle-slider"></span>
+          </div>
+          <span class="cancel-option-text">Credit the customer (nothing to credit back)</span>
+        </label>
+        <label class="cancel-option">
+          <div class="cancel-toggle">
+            <input type="checkbox" id="cancelSendEmail" checked>
+            <span class="toggle-slider"></span>
+          </div>
+          <span class="cancel-option-text">Send email notification to the customer</span>
+        </label>
+        <label class="cancel-option">
+          <div class="cancel-toggle">
+            <input type="checkbox" id="cancelLateCancellation">
+            <span class="toggle-slider"></span>
+          </div>
+          <span class="cancel-option-text">Late cancellation</span>
+        </label>
+      </div>
+    </div>
+    <div class="cancel-modal-footer">
+      <button class="cancel-modal-btn cancel-modal-btn-close" onclick="closeCancelModal()">Close</button>
+      <button class="cancel-modal-btn cancel-modal-btn-confirm" onclick="confirmCancelAppointment()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+        Cancel reservation
+      </button>
+    </div>
+  </div>
+
+  <!-- Success Toast Notification -->
+  <div class="success-toast" id="successToast">
+    <div class="success-toast-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+        <polyline points="20 6 9 17 4 12"></polyline>
+      </svg>
+    </div>
+    <span class="success-toast-text" id="successToastText">Appointment reservation deleted successfully!</span>
+    <button class="success-toast-close" onclick="hideSuccessToast()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    </button>
+  </div>
+
+  <style>
+    /* Cancel Modal Styles */
+    .cancel-modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 10000;
+    }
+
+    .cancel-modal-overlay.show {
+      display: block;
+    }
+
+    .cancel-modal {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      z-index: 10001;
+      width: 450px;
+      max-width: 90vw;
+    }
+
+    .cancel-modal.show {
+      display: block;
+    }
+
+    .cancel-modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 24px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .cancel-modal-header h3 {
+      margin: 0;
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: #111827;
+    }
+
+    .cancel-modal-close {
+      background: none;
+      border: none;
+      padding: 4px;
+      cursor: pointer;
+      color: #6b7280;
+      border-radius: 4px;
+    }
+
+    .cancel-modal-close:hover {
+      background: #f3f4f6;
+      color: #374151;
+    }
+
+    .cancel-modal-close svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    .cancel-modal-body {
+      padding: 24px;
+    }
+
+    .cancel-modal-question {
+      margin: 0 0 20px 0;
+      font-size: 0.9375rem;
+      color: #374151;
+    }
+
+    .cancel-modal-options {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .cancel-option {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+    }
+
+    .cancel-toggle {
+      position: relative;
+      width: 44px;
+      height: 24px;
+      flex-shrink: 0;
+    }
+
+    .cancel-toggle input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: #e5e7eb;
+      border-radius: 24px;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+
+    .toggle-slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background: white;
+      border-radius: 50%;
+      transition: all 0.2s;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    }
+
+    .cancel-toggle input:checked + .toggle-slider {
+      background: #7c3aed;
+    }
+
+    .cancel-toggle input:checked + .toggle-slider:before {
+      transform: translateX(20px);
+    }
+
+    .cancel-option-text {
+      font-size: 0.9375rem;
+      color: #374151;
+    }
+
+    .cancel-modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      padding: 16px 24px;
+      border-top: 1px solid #e5e7eb;
+    }
+
+    .cancel-modal-btn {
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.15s;
+    }
+
+    .cancel-modal-btn-close {
+      background: white;
+      border: 1px solid #d1d5db;
+      color: #374151;
+    }
+
+    .cancel-modal-btn-close:hover {
+      background: #f9fafb;
+    }
+
+    .cancel-modal-btn-confirm {
+      background: #ef4444;
+      border: none;
+      color: white;
+    }
+
+    .cancel-modal-btn-confirm:hover {
+      background: #dc2626;
+    }
+
+    .cancel-modal-btn-confirm svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    /* Success Toast Styles */
+    .success-toast {
+      display: none;
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+      padding: 16px 20px;
+      z-index: 10002;
+      align-items: center;
+      gap: 12px;
+      border-left: 4px solid #10b981;
+      animation: slideIn 0.3s ease-out;
+    }
+
+    .success-toast.show {
+      display: flex;
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    .success-toast-icon {
+      width: 24px;
+      height: 24px;
+      background: #10b981;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .success-toast-icon svg {
+      width: 14px;
+      height: 14px;
+      color: white;
+    }
+
+    .success-toast-text {
+      font-size: 0.9375rem;
+      color: #374151;
+    }
+
+    .success-toast-close {
+      background: none;
+      border: none;
+      padding: 4px;
+      cursor: pointer;
+      color: #9ca3af;
+      margin-left: 8px;
+    }
+
+    .success-toast-close:hover {
+      color: #6b7280;
+    }
+
+    .success-toast-close svg {
+      width: 16px;
+      height: 16px;
+    }
+  </style>
+
+  <script>
+    // Cancel Modal Functions
+    function openCancelModal() {
+      // Reset checkboxes
+      document.getElementById('cancelCreditCustomer').checked = false;
+      document.getElementById('cancelSendEmail').checked = true;
+      document.getElementById('cancelLateCancellation').checked = false;
+
+      document.getElementById('cancelModalOverlay').classList.add('show');
+      document.getElementById('cancelModal').classList.add('show');
+    }
+
+    function closeCancelModal() {
+      document.getElementById('cancelModalOverlay').classList.remove('show');
+      document.getElementById('cancelModal').classList.remove('show');
+    }
+
+    async function confirmCancelAppointment() {
+      if (!selectedAppointment) return;
+
+      const creditCustomer = document.getElementById('cancelCreditCustomer').checked;
+      const sendEmail = document.getElementById('cancelSendEmail').checked;
+      const lateCancellation = document.getElementById('cancelLateCancellation').checked;
+
+      try {
+        const response = await apiRequest(`/api/appointments/${selectedAppointment.id}/cancel`, {
+          method: 'POST',
+          body: JSON.stringify({
+            reason: 'Cancelled by staff',
+            credit_customer: creditCustomer,
+            send_notification: sendEmail,
+            late_cancellation: lateCancellation
+          })
+        });
+
+        if (response) {
+          closeCancelModal();
+          closeAppointmentPanel();
+          showSuccessToast('Appointment reservation deleted successfully!');
+          await loadAppointments();
+        }
+      } catch (error) {
+        console.error('Failed to cancel appointment:', error);
+        alert('Failed to cancel appointment');
+      }
+    }
+
+    // Success Toast Functions
+    function showSuccessToast(message) {
+      const toast = document.getElementById('successToast');
+      const textEl = document.getElementById('successToastText');
+      textEl.textContent = message;
+      toast.classList.add('show');
+
+      // Auto-hide after 5 seconds
+      setTimeout(() => {
+        hideSuccessToast();
+      }, 5000);
+    }
+
+    function hideSuccessToast() {
+      document.getElementById('successToast').classList.remove('show');
+    }
+  </script>
 </body>
 </html>
