@@ -5736,14 +5736,30 @@
         document.getElementById('newAptModalOverlay').classList.add('show');
         document.getElementById('newAptModal').classList.add('show');
 
-        // Set the start date/time
-        const dateStr = date.toISOString().slice(0, 16);
-        document.getElementById('newAptStartsAt').value = dateStr;
+        // Set the start date/time using LOCAL time (not UTC)
+        // Format: YYYY-MM-DDTHH:MM for datetime-local input
+        const formatLocalDateTime = (d) => {
+          const year = d.getFullYear();
+          const month = String(d.getMonth() + 1).padStart(2, '0');
+          const day = String(d.getDate()).padStart(2, '0');
+          const hours = String(d.getHours()).padStart(2, '0');
+          const minutes = String(d.getMinutes()).padStart(2, '0');
+          return `${year}-${month}-${day}T${hours}:${minutes}`;
+        };
+
+        const formatLocalDate = (d) => {
+          const year = d.getFullYear();
+          const month = String(d.getMonth() + 1).padStart(2, '0');
+          const day = String(d.getDate()).padStart(2, '0');
+          return `${year}-${month}-${day}`;
+        };
+
+        document.getElementById('newAptStartsAt').value = formatLocalDateTime(date);
 
         // Set default end date for recurring (1 week later)
         const endDate = new Date(date);
         endDate.setDate(endDate.getDate() + 7);
-        document.getElementById('endsOnDate').value = endDate.toISOString().slice(0, 10);
+        document.getElementById('endsOnDate').value = formatLocalDate(endDate);
 
         // Load dropdowns in parallel (don't block modal display)
         Promise.all([
