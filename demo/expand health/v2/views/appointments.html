@@ -6095,12 +6095,13 @@
     async function loadNewAptCustomers() {
       try {
         const token = localStorage.getItem('auth_token');
-        const response = await fetch('/api/clients?limit=500', {
+        const response = await fetch('/api/clients?limit=5000', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (response.ok) {
           const data = await response.json();
           newAptCustomers = data.clients || data;
+          console.log(`Loaded ${newAptCustomers.length} customers for dropdown`);
           renderCustomerDropdown(newAptCustomers);
         }
       } catch (error) {
