@@ -162,30 +162,37 @@ router.get('/calendar', async (req, res, next) => {
     const result = await db.query(query, params);
 
     // Format for FullCalendar
-    const events = result.rows.map(apt => ({
-      id: apt.id,
-      title: apt.title || apt.service_name || 'Appointment',
-      start: apt.start_time,
-      end: apt.end_time,
-      backgroundColor: apt.service_color || apt.staff_color || '#3B82F6',
-      borderColor: apt.service_color || apt.staff_color || '#3B82F6',
-      extendedProps: {
-        status: apt.status,
-        paymentStatus: apt.payment_status,
-        clientId: apt.client_id,
-        clientName: apt.client_name,
-        clientEmail: apt.client_email,
-        clientPhone: apt.client_phone,
-        staffId: apt.staff_id,
-        staffName: apt.staff_name,
-        serviceId: apt.service_type_id,
-        serviceName: apt.service_name,
-        locationType: apt.location_type,
-        price: apt.appointment_price || apt.service_price || 0,
-        checkedInAt: apt.checked_in_at,
-        isTimeBlock: apt.is_time_block || false
-      }
-    }));
+    const events = result.rows.map(apt => {
+      // Use service price if appointment price is null, undefined, or 0
+      const aptPrice = parseFloat(apt.appointment_price) || 0;
+      const svcPrice = parseFloat(apt.service_price) || 0;
+      const price = aptPrice > 0 ? aptPrice : svcPrice;
+
+      return {
+        id: apt.id,
+        title: apt.title || apt.service_name || 'Appointment',
+        start: apt.start_time,
+        end: apt.end_time,
+        backgroundColor: apt.service_color || apt.staff_color || '#3B82F6',
+        borderColor: apt.service_color || apt.staff_color || '#3B82F6',
+        extendedProps: {
+          status: apt.status,
+          paymentStatus: apt.payment_status,
+          clientId: apt.client_id,
+          clientName: apt.client_name,
+          clientEmail: apt.client_email,
+          clientPhone: apt.client_phone,
+          staffId: apt.staff_id,
+          staffName: apt.staff_name,
+          serviceId: apt.service_type_id,
+          serviceName: apt.service_name,
+          locationType: apt.location_type,
+          price: price,
+          checkedInAt: apt.checked_in_at,
+          isTimeBlock: apt.is_time_block || false
+        }
+      };
+    });
 
     res.json(events);
   } catch (error) {
