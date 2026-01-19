@@ -10072,6 +10072,94 @@ function showEngagementPlanEditorView(protocol, planData) {
           </div>
           ` : ''}
 
+          <!-- Clinic Treatments -->
+          ${planData.clinic_treatments && planData.clinic_treatments.items && planData.clinic_treatments.items.length > 0 ? `
+          <div id="clinicTreatmentsSection" class="engagement-clinic-treatments" style="background: white; border: 1px solid #E5E7EB; border-radius: 12px; padding: 24px; margin-top: 24px;">
+            <h3 style="font-size: 16px; font-weight: 600; color: #111827; margin: 0 0 8px 0;">Clinic Treatments</h3>
+            ${planData.clinic_treatments.note ? `<p style="font-size: 13px; color: #DC2626; font-style: italic; margin: 0 0 16px 0;">${escapeHtml(planData.clinic_treatments.note)}</p>` : ''}
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+              ${planData.clinic_treatments.items.map(treatment => `
+                <div style="background: #F9FAFB; padding: 16px; border-radius: 8px; border-left: 4px solid #6366F1;">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <strong style="color: #1F2937;">${escapeHtml(treatment.name)}</strong>
+                    <span style="font-size: 12px; padding: 2px 8px; background: #EEF2FF; color: #4F46E5; border-radius: 4px;">${escapeHtml(treatment.status || 'SCHEDULED')}</span>
+                  </div>
+                  <p style="margin: 0 0 4px 0; font-size: 13px; color: #6B7280;">
+                    <strong>Earliest Eligibility:</strong> ${escapeHtml(treatment.earliest_eligibility || 'TBD')}
+                  </p>
+                  ${treatment.conditions && treatment.conditions.length > 0 ? `
+                    <p style="margin: 0; font-size: 13px; color: #6B7280;">
+                      <strong>Conditions:</strong> ${treatment.conditions.map(c => escapeHtml(c)).join(', ')}
+                    </p>
+                  ` : ''}
+                </div>
+              `).join('')}
+            </div>
+          </div>
+          ` : ''}
+
+          <!-- Testing Schedule -->
+          ${planData.testing_schedule && planData.testing_schedule.length > 0 ? `
+          <div id="testingScheduleSection" class="engagement-testing" style="background: white; border: 1px solid #E5E7EB; border-radius: 12px; padding: 24px; margin-top: 24px;">
+            <h3 style="font-size: 16px; font-weight: 600; color: #111827; margin: 0 0 16px 0;">Testing Schedule</h3>
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+              ${planData.testing_schedule.map(test => `
+                <div style="background: #F0F9FF; padding: 16px; border-radius: 8px; border-left: 4px solid #0EA5E9;">
+                  <strong style="color: #0C4A6E; display: block; margin-bottom: 8px;">${escapeHtml(test.name)}</strong>
+                  <p style="margin: 0 0 4px 0; font-size: 13px; color: #0369A1;">
+                    <strong>Timing:</strong> ${escapeHtml(test.timing || 'As scheduled')}
+                  </p>
+                  ${test.purpose ? `
+                    <p style="margin: 0 0 4px 0; font-size: 13px; color: #0369A1;">
+                      <strong>Purpose:</strong> ${escapeHtml(test.purpose)}
+                    </p>
+                  ` : ''}
+                  ${test.sequence && test.sequence.length > 0 ? `
+                    <p style="margin: 0; font-size: 13px; color: #0369A1;">
+                      <strong>Sequence:</strong> ${test.sequence.map(s => escapeHtml(s)).join(' → ')}
+                    </p>
+                  ` : ''}
+                </div>
+              `).join('')}
+            </div>
+          </div>
+          ` : ''}
+
+          <!-- Safety Rules -->
+          ${planData.safety_rules ? `
+          <div id="safetyRulesSection" class="engagement-safety" style="background: #FEF2F2; border: 1px solid #FECACA; border-radius: 12px; padding: 24px; margin-top: 24px;">
+            <h3 style="font-size: 16px; font-weight: 600; color: #991B1B; margin: 0 0 16px 0;">Safety Rules</h3>
+            ${planData.safety_rules.note ? `<p style="font-size: 13px; color: #7F1D1D; font-style: italic; margin: 0 0 16px 0;">${escapeHtml(planData.safety_rules.note)}</p>` : ''}
+
+            ${planData.safety_rules.stop_immediately && planData.safety_rules.stop_immediately.length > 0 ? `
+              <div style="background: #FEE2E2; padding: 16px; border-radius: 8px; margin-bottom: 12px; border-left: 4px solid #DC2626;">
+                <strong style="color: #DC2626; display: block; margin-bottom: 8px;">🛑 STOP IMMEDIATELY if:</strong>
+                <ul style="margin: 0; padding-left: 20px;">
+                  ${planData.safety_rules.stop_immediately.map(r => `<li style="color: #991B1B; margin-bottom: 4px;">${escapeHtml(typeof r === 'string' ? r : (r.rule || ''))}</li>`).join('')}
+                </ul>
+              </div>
+            ` : ''}
+
+            ${planData.safety_rules.hold_and_contact && planData.safety_rules.hold_and_contact.length > 0 ? `
+              <div style="background: #FEF3C7; padding: 16px; border-radius: 8px; margin-bottom: 12px; border-left: 4px solid #F59E0B;">
+                <strong style="color: #92400E; display: block; margin-bottom: 8px;">⏸️ HOLD & Contact Clinician if:</strong>
+                <ul style="margin: 0; padding-left: 20px;">
+                  ${planData.safety_rules.hold_and_contact.map(r => `<li style="color: #78350F; margin-bottom: 4px;">${escapeHtml(typeof r === 'string' ? r : (r.rule || ''))}</li>`).join('')}
+                </ul>
+              </div>
+            ` : ''}
+
+            ${(planData.safety_rules.escalation_24h || planData.safety_rules.escalation_triggers) && (planData.safety_rules.escalation_24h?.length > 0 || planData.safety_rules.escalation_triggers?.length > 0) ? `
+              <div style="background: #DBEAFE; padding: 16px; border-radius: 8px; border-left: 4px solid #3B82F6;">
+                <strong style="color: #1E40AF; display: block; margin-bottom: 8px;">⚠️ Escalate within 24h if:</strong>
+                <ul style="margin: 0; padding-left: 20px;">
+                  ${(planData.safety_rules.escalation_24h || planData.safety_rules.escalation_triggers).map(r => `<li style="color: #1E3A8A; margin-bottom: 4px;">${escapeHtml(typeof r === 'string' ? r : (r.rule || ''))}</li>`).join('')}
+                </ul>
+              </div>
+            ` : ''}
+          </div>
+          ` : ''}
+
         </div>
       </div>
     </div>
