@@ -4505,17 +4505,19 @@
           top: ${(startMinutes / 60) * slotHeight}px;
           left: calc(${leftPercent}% + 2px);
           width: calc(${widthPercent}% - 4px);
-          height: ${Math.max(durationHours * slotHeight - 4, 24)}px;
+          height: ${Math.max(durationHours * slotHeight - 4, 28)}px;
           background: ${bgColor};
-          border-radius: 4px;
-          padding: 4px 6px 4px 8px;
+          border-radius: 6px;
+          padding: 6px 8px;
           font-size: 0.75rem;
           overflow: visible;
           cursor: pointer;
           z-index: 100;
           box-sizing: border-box;
           display: flex;
-          gap: 6px;
+          align-items: flex-start;
+          gap: 8px;
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         `;
 
         // Format times
@@ -4528,6 +4530,7 @@
         const clientEmail = apt.extendedProps?.clientEmail || '';
         const serviceName = apt.extendedProps?.serviceName || apt.title || 'Appointment';
         const staffName = apt.extendedProps?.staffName || '';
+        const locationName = apt.extendedProps?.locationName || '';
         const locationType = apt.extendedProps?.locationType || 'in_person';
         const priceVal = apt.extendedProps?.price;
         const price = (priceVal !== null && priceVal !== undefined && !isNaN(Number(priceVal))) ? Number(priceVal) : 0;
@@ -4536,14 +4539,38 @@
         const paymentStatusText = isPaid ? 'Paid' : 'Not paid';
         const statusClass = isPaid ? 'paid' : 'unpaid';
 
+        // Momence-style card layout with icons
         block.innerHTML = `
-          <!-- Payment status indicator square -->
-          <div style="width: 10px; height: 10px; min-width: 10px; background: ${isPaid ? indicatorColor : '#ffffff'}; border-radius: 2px; margin-top: 2px;"></div>
-          <!-- Appointment content -->
-          <div style="flex: 1; min-width: 0; overflow: hidden;">
-            <div style="font-weight: 600; color: ${textColor}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${serviceName}</div>
-            <div style="color: ${textColor}; font-size: 0.6875rem; opacity: 0.9;">${clientName}</div>
-            <div style="color: ${textColor}; font-size: 0.6875rem; opacity: 0.8;">${timeStr}</div>
+          <!-- White indicator square (checkbox style) -->
+          <div style="width: 12px; height: 12px; min-width: 12px; background: #ffffff; border-radius: 2px; margin-top: 1px; flex-shrink: 0;"></div>
+          <!-- Appointment content - Momence style -->
+          <div style="flex: 1; min-width: 0; overflow: hidden; display: flex; flex-direction: column; gap: 1px;">
+            <!-- Service name - bold -->
+            <div style="font-weight: 600; font-size: 0.8125rem; color: ${textColor}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;">${serviceName}</div>
+            <!-- Customer with icon -->
+            <div style="display: flex; align-items: center; gap: 4px; color: ${textColor}; font-size: 0.6875rem; opacity: 0.95; line-height: 1.2;">
+              <svg width="10" height="10" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="flex-shrink: 0;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+              <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${clientName}</span>
+            </div>
+            <!-- Location/Venue with icon -->
+            ${locationName ? `
+            <div style="display: flex; align-items: center; gap: 4px; color: ${textColor}; font-size: 0.6875rem; opacity: 0.95; line-height: 1.2;">
+              <svg width="10" height="10" fill="currentColor" viewBox="0 0 24 24" style="flex-shrink: 0;"><circle cx="12" cy="12" r="3"/><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/></svg>
+              <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${locationName}</span>
+            </div>
+            ` : ''}
+            <!-- Staff with icon -->
+            ${staffName ? `
+            <div style="display: flex; align-items: center; gap: 4px; color: ${textColor}; font-size: 0.6875rem; opacity: 0.95; line-height: 1.2;">
+              <svg width="10" height="10" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="flex-shrink: 0;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+              <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${staffName}</span>
+            </div>
+            ` : ''}
+            <!-- Time range -->
+            <div style="display: flex; align-items: center; gap: 4px; color: ${textColor}; font-size: 0.6875rem; opacity: 0.9; line-height: 1.2;">
+              <svg width="10" height="10" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="flex-shrink: 0;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              <span>${timeRange}</span>
+            </div>
           </div>
 
           <!-- Hover Tooltip - Momence style -->
