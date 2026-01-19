@@ -52,6 +52,24 @@ You must not add:
 - New contraindications, warning signs, red flags, or stop conditions
 - New clinical thresholds (e.g., "BM >= 1/day", "hsCRP target", "liver enzyme cutoffs")
 
+--------------------------------------------
+3.1.1 CRITICAL MEDICAL BOUNDARY RULE (NON-NEGOTIABLE)
+--------------------------------------------
+You are NOT allowed to introduce:
+- STOP, HOLD, PAUSE, ESCALATE, or DECISION logic
+- Conditional IF/THEN statements related to symptoms, labs, tolerance, or safety
+- Reinterpretation of contraindications, safety gates, or monitoring requirements
+
+If the protocol lists:
+- Contraindications → list them only as "Contraindications (as per protocol)"
+- Safety gates → repeat the text verbatim, without operationalization
+- Monitoring requirements → list only, do not infer actions
+
+If the protocol does not explicitly state what action to take, you must write:
+"Action not specified in protocol. Managed per supervising clinician."
+
+Any transformation that implies a clinical decision is PROHIBITED.
+
 3.2 You may add ONLY engagement mechanics
 Allowed additions are strictly "engagement mechanics" that do not change medical content:
 - Naming phases as they appear in the protocol
@@ -80,6 +98,7 @@ Check 2: Did you add any numeric targets/thresholds not in protocol? If yes, rem
 Check 3: Did you invent contraindications or warning signs? If yes, remove.
 Check 4: Does every phase include "protocol_trace" with exact item names? If no, add.
 Check 5: If protocol lacks durations, safety details, or timing, did you label as "Not specified in protocol"? If no, fix.
+Check 6: CRITICAL - Did you introduce any STOP/HOLD/PAUSE/ESCALATE decision logic or IF/THEN conditionals for symptoms/labs/safety? If yes, REMOVE and replace with verbatim protocol text or "Action not specified in protocol. Managed per supervising clinician."
 
 --------------------------------------------
 5) OUTPUT FORMAT
@@ -277,6 +296,28 @@ function validateAIGeneratedPlan(plan, protocolElements) {
     warnings.push('Generated method should indicate AI generation');
   }
 
+  // Check 7: CRITICAL - Scan for prohibited decision logic patterns
+  const prohibitedPatterns = [
+    { pattern: /\bSTOP\s+(if|when|immediately)/gi, type: 'STOP decision logic' },
+    { pattern: /\bHOLD\s+(if|when|and\s+contact)/gi, type: 'HOLD decision logic' },
+    { pattern: /\bPAUSE\s+(if|when)/gi, type: 'PAUSE decision logic' },
+    { pattern: /\bESCALATE\s+(if|when|within)/gi, type: 'ESCALATE decision logic' },
+    { pattern: /\bif\s+.*(symptom|lab|tolerance|safety|adverse)/gi, type: 'IF/THEN conditional' }
+  ];
+
+  prohibitedPatterns.forEach(({ pattern, type }) => {
+    const matches = planString.match(pattern);
+    if (matches) {
+      // Check if these patterns exist in the original protocol (verbatim allowed)
+      const inputString = JSON.stringify(protocolElements);
+      matches.forEach(match => {
+        if (!inputString.toLowerCase().includes(match.toLowerCase())) {
+          issues.push(`CRITICAL: Prohibited ${type} detected: "${match}" - must use verbatim protocol text or "Action not specified in protocol"`);
+        }
+      });
+    }
+  });
+
   return {
     is_valid: issues.length === 0,
     issues: issues,
@@ -286,7 +327,8 @@ function validateAIGeneratedPlan(plan, protocolElements) {
       no_invented_treatments: issues.filter(i => i.includes('treatment')).length === 0,
       no_invented_tests: issues.filter(i => i.includes('Test')).length === 0,
       has_required_fields: issues.filter(i => i.includes('Missing required')).length === 0,
-      protocol_traceability: warnings.filter(w => w.includes('protocol_trace')).length === 0
+      protocol_traceability: warnings.filter(w => w.includes('protocol_trace')).length === 0,
+      no_prohibited_decision_logic: issues.filter(i => i.includes('CRITICAL: Prohibited')).length === 0
     }
   };
 }
