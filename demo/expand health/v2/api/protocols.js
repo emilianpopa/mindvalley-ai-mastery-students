@@ -3089,14 +3089,23 @@ router.post('/:id/generate-engagement-plan', authenticateToken, async (req, res,
     }
 
     // Also update protocol's ai_recommendations for backward compatibility
-    // (This can be removed later once all code uses engagement_plans table)
+    // IMPORTANT: Use planDataToSave (without internal metadata) for cleaner storage
     await db.query(
       `UPDATE protocols SET
         ai_recommendations = $1,
         updated_at = CURRENT_TIMESTAMP
       WHERE id = $2`,
-      [JSON.stringify(engagementPlan), id]
+      [JSON.stringify(planDataToSave), id]
     );
+
+    // Log what we're saving for debugging
+    console.log('[Engagement Plan] Saved to ai_recommendations:', {
+      title: planDataToSave.title,
+      phasesCount: planDataToSave.phases?.length,
+      firstPhaseElements: planDataToSave.phases?.[0]?.clinical_elements?.length,
+      hasClinicTreatments: !!planDataToSave.clinic_treatments,
+      hasSafetyRules: !!planDataToSave.safety_rules
+    });
 
     console.log('[Engagement Plan] Generated and saved successfully');
 
