@@ -4904,34 +4904,76 @@
 
       const apt = selectedAppointment;
 
-      // Format dates for Google Calendar (YYYYMMDDTHHmmssZ format)
-      const startDate = new Date(apt.start_time);
-      const endDate = new Date(apt.end_time);
+      // Get start and end times - handle both formats (apt.start or apt.start_time)
+      const startDate = new Date(apt.start || apt.start_time);
+      const endDate = new Date(apt.end || apt.end_time);
 
-      const formatDate = (date) => {
-        return date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+      // Format dates for Google Calendar (YYYYMMDDTHHmmss format - local time)
+      // Using local time format so Google Calendar doesn't ask about timezone conversion
+      const formatDateLocal = (date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        const seconds = String(date.getSeconds()).padStart(2, '0');
+        return `${year}${month}${day}T${hours}${minutes}${seconds}`;
       };
 
-      const startStr = formatDate(startDate);
-      const endStr = formatDate(endDate);
+      const startStr = formatDateLocal(startDate);
+      const endStr = formatDateLocal(endDate);
 
-      // Build event title
-      const title = apt.title || 'Appointment';
+      // Build event title - include service name
+      const serviceName = apt.extendedProps?.serviceName || apt.title || 'Appointment';
+      const title = `${serviceName}`;
 
-      // Build description
+      // Build description with all relevant details
       let description = '';
-      if (apt.client_name) {
-        description += `Client: ${apt.client_name}\n`;
-      }
-      if (apt.staff_name) {
-        description += `Practitioner: ${apt.staff_name}\n`;
-      }
-      if (apt.notes) {
-        description += `\nNotes: ${apt.notes}`;
+
+      // Service info
+      description += `Service: ${serviceName}\n`;
+
+      // Client info
+      const clientName = apt.extendedProps?.clientName || apt.client_name;
+      if (clientName) {
+        description += `Client: ${clientName}\n`;
       }
 
-      // Location (use clinic name if available)
-      const location = 'Expand Health';
+      const clientEmail = apt.extendedProps?.clientEmail;
+      if (clientEmail) {
+        description += `Email: ${clientEmail}\n`;
+      }
+
+      // Staff/Practitioner info
+      const staffName = apt.extendedProps?.staffName || apt.staff_name;
+      if (staffName) {
+        description += `Practitioner: ${staffName}\n`;
+      }
+
+      // Price info
+      const price = apt.extendedProps?.price;
+      if (price && price > 0) {
+        description += `Price: ZAR ${parseFloat(price).toFixed(2)}\n`;
+      }
+
+      // Payment status
+      const paymentStatus = apt.extendedProps?.paymentStatus;
+      if (paymentStatus) {
+        description += `Payment: ${paymentStatus === 'paid' ? 'Paid' : 'Not paid'}\n`;
+      }
+
+      // Notes
+      const notes = apt.extendedProps?.notes || apt.notes;
+      if (notes) {
+        description += `\nNotes: ${notes}`;
+      }
+
+      // Add link back to appointment
+      description += `\n\n---\nManage this appointment:\n${window.location.origin}/appointments`;
+
+      // Location - use location details or default to business name
+      const locationDetails = apt.extendedProps?.locationDetails || apt.extendedProps?.locationType;
+      const location = locationDetails || 'Expand Health (Pty) Ltd';
 
       // Build Google Calendar URL
       const googleCalUrl = new URL('https://calendar.google.com/calendar/render');
@@ -4940,6 +4982,8 @@
       googleCalUrl.searchParams.set('dates', `${startStr}/${endStr}`);
       googleCalUrl.searchParams.set('details', description);
       googleCalUrl.searchParams.set('location', location);
+      // Set timezone to South Africa
+      googleCalUrl.searchParams.set('ctz', 'Africa/Johannesburg');
 
       // Open in new tab
       window.open(googleCalUrl.toString(), '_blank');
