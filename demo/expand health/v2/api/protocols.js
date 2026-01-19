@@ -2163,21 +2163,87 @@ async function generateEngagementPlanForProtocol({
     });
   }
 
-  // Query KB for engagement strategies
+  // Query KB for engagement strategies AND protocol-specific execution patterns
   let kbEngagementContext = '';
   try {
+    // Build comprehensive KB queries based on protocol content
     const engagementQueries = [
+      // General engagement strategies
       'patient engagement strategies functional medicine',
       'phased protocol delivery best practices',
       'behavior change techniques wellness coaching'
     ];
 
+    // Add protocol-type specific queries based on extracted elements
+    const protocolTitleLower = (protocolTitle || '').toLowerCase();
+
+    if (protocolTitleLower.includes('detox') || protocolTitleLower.includes('heavy metal') || protocolElements.supplements.some(s => s.toLowerCase().includes('chelat') || s.toLowerCase().includes('dmsa') || s.toLowerCase().includes('ala'))) {
+      engagementQueries.push('detoxification protocol phasing chelation sequencing safety gates');
+      engagementQueries.push('heavy metal detox engagement plan supplement introduction schedule');
+      engagementQueries.push('detox protocol safety monitoring bowel movement requirements');
+    }
+
+    if (protocolTitleLower.includes('gut') || protocolElements.supplements.some(s => s.toLowerCase().includes('probiotic') || s.toLowerCase().includes('glutamine') || s.toLowerCase().includes('digestive'))) {
+      engagementQueries.push('gut healing protocol phasing supplement introduction');
+      engagementQueries.push('elimination diet engagement coaching phases');
+      engagementQueries.push('gut protocol safety gates food reintroduction');
+    }
+
+    if (protocolTitleLower.includes('hormone') || protocolTitleLower.includes('hormonal') || protocolElements.supplements.some(s => s.toLowerCase().includes('dhea') || s.toLowerCase().includes('pregnenolone'))) {
+      engagementQueries.push('hormone optimization protocol phasing safety monitoring');
+      engagementQueries.push('hormonal support engagement plan lab monitoring schedule');
+    }
+
+    if (protocolTitleLower.includes('sleep') || protocolTitleLower.includes('circadian')) {
+      engagementQueries.push('sleep optimization protocol engagement phases behavior change');
+      engagementQueries.push('circadian rhythm protocol coaching light exposure timing');
+    }
+
+    if (protocolTitleLower.includes('adrenal') || protocolTitleLower.includes('stress') || protocolElements.supplements.some(s => s.toLowerCase().includes('ashwagandha') || s.toLowerCase().includes('rhodiola'))) {
+      engagementQueries.push('adrenal support protocol phasing adaptogen introduction');
+      engagementQueries.push('stress management engagement coaching burnout recovery');
+    }
+
+    // Add queries for clinic treatments if present
+    if (protocolElements.clinic_treatments.length > 0) {
+      engagementQueries.push('clinic treatment eligibility criteria decision trees functional medicine');
+      engagementQueries.push('IV therapy HBOT sauna treatment scheduling patient preparation');
+
+      // Specific treatment queries
+      if (protocolElements.clinic_treatments.some(t => t.toLowerCase().includes('iv') || t.toLowerCase().includes('glutathione'))) {
+        engagementQueries.push('IV glutathione therapy eligibility contraindications G6PD');
+      }
+      if (protocolElements.clinic_treatments.some(t => t.toLowerCase().includes('sauna') || t.toLowerCase().includes('infrared'))) {
+        engagementQueries.push('infrared sauna therapy protocol frequency duration detox');
+      }
+      if (protocolElements.clinic_treatments.some(t => t.toLowerCase().includes('pemf'))) {
+        engagementQueries.push('PEMF therapy protocol frequency duration indications');
+      }
+    }
+
+    // Add queries for safety and monitoring
+    if (protocolElements.safety_constraints.length > 0) {
+      engagementQueries.push('protocol safety gates IF THEN logic patient escalation');
+      engagementQueries.push('adverse reaction monitoring functional medicine protocols');
+    }
+
+    // Add queries for tests/labs
+    if (protocolElements.retest_schedule.length > 0) {
+      engagementQueries.push('lab testing schedule engagement plan retesting protocols');
+      engagementQueries.push('test result review patient communication protocols');
+    }
+
+    console.log(`[Engagement Plan Helper] Executing ${engagementQueries.length} KB queries...`);
+
     const kbResults = await Promise.all(
       engagementQueries.map(q => queryKnowledgeBase(q, `Client: ${clientName}`))
     );
-    kbEngagementContext = kbResults.filter(r => r).join('\n\n');
+    kbEngagementContext = kbResults.filter(r => r).join('\n\n---\n\n');
     if (kbEngagementContext) {
-      console.log('[Engagement Plan Helper] KB engagement context retrieved');
+      console.log('[Engagement Plan Helper] KB engagement context retrieved successfully');
+      console.log(`[Engagement Plan Helper] KB context length: ${kbEngagementContext.length} characters`);
+    } else {
+      console.log('[Engagement Plan Helper] WARNING: No KB context retrieved from queries');
     }
   } catch (kbError) {
     console.error('[Engagement Plan Helper] KB query error:', kbError.message);
@@ -2719,24 +2785,89 @@ router.post('/:id/generate-engagement-plan', authenticateToken, async (req, res,
       console.log('[Engagement Plan] No protocol data found - will generate generic engagement plan');
     }
 
-    // Query KB for engagement strategies ONLY (not hardcoded modalities)
-    console.log('[Engagement Plan] Querying KB for engagement strategies...');
+    // Query KB for engagement strategies AND protocol-specific execution patterns
+    console.log('[Engagement Plan] Querying KB for engagement strategies and protocol patterns...');
     let kbEngagementContext = '';
     try {
+      // Build comprehensive KB queries based on protocol content
       const engagementQueries = [
+        // General engagement strategies
         'patient engagement strategies functional medicine',
         'phased protocol delivery best practices',
         'behavior change techniques wellness coaching',
         `engagement strategies for ${protocol.template_category || 'wellness'} protocols`
-        // REMOVED: Hardcoded clinic modality queries - these caused misalignment
       ];
+
+      // Add protocol-type specific queries based on extracted elements
+      const protocolTitle = (protocol.title || protocol.template_name || '').toLowerCase();
+
+      if (protocolTitle.includes('detox') || protocolTitle.includes('heavy metal') || protocolElements.supplements.some(s => s.toLowerCase().includes('chelat') || s.toLowerCase().includes('dmsa') || s.toLowerCase().includes('ala'))) {
+        engagementQueries.push('detoxification protocol phasing chelation sequencing safety gates');
+        engagementQueries.push('heavy metal detox engagement plan supplement introduction schedule');
+        engagementQueries.push('detox protocol safety monitoring bowel movement requirements');
+      }
+
+      if (protocolTitle.includes('gut') || protocolElements.supplements.some(s => s.toLowerCase().includes('probiotic') || s.toLowerCase().includes('glutamine') || s.toLowerCase().includes('digestive'))) {
+        engagementQueries.push('gut healing protocol phasing supplement introduction');
+        engagementQueries.push('elimination diet engagement coaching phases');
+        engagementQueries.push('gut protocol safety gates food reintroduction');
+      }
+
+      if (protocolTitle.includes('hormone') || protocolTitle.includes('hormonal') || protocolElements.supplements.some(s => s.toLowerCase().includes('dhea') || s.toLowerCase().includes('pregnenolone'))) {
+        engagementQueries.push('hormone optimization protocol phasing safety monitoring');
+        engagementQueries.push('hormonal support engagement plan lab monitoring schedule');
+      }
+
+      if (protocolTitle.includes('sleep') || protocolTitle.includes('circadian')) {
+        engagementQueries.push('sleep optimization protocol engagement phases behavior change');
+        engagementQueries.push('circadian rhythm protocol coaching light exposure timing');
+      }
+
+      if (protocolTitle.includes('adrenal') || protocolTitle.includes('stress') || protocolElements.supplements.some(s => s.toLowerCase().includes('ashwagandha') || s.toLowerCase().includes('rhodiola'))) {
+        engagementQueries.push('adrenal support protocol phasing adaptogen introduction');
+        engagementQueries.push('stress management engagement coaching burnout recovery');
+      }
+
+      // Add queries for clinic treatments if present
+      if (protocolElements.clinic_treatments.length > 0) {
+        engagementQueries.push('clinic treatment eligibility criteria decision trees functional medicine');
+        engagementQueries.push('IV therapy HBOT sauna treatment scheduling patient preparation');
+
+        // Specific treatment queries
+        if (protocolElements.clinic_treatments.some(t => t.toLowerCase().includes('iv') || t.toLowerCase().includes('glutathione'))) {
+          engagementQueries.push('IV glutathione therapy eligibility contraindications G6PD');
+        }
+        if (protocolElements.clinic_treatments.some(t => t.toLowerCase().includes('sauna') || t.toLowerCase().includes('infrared'))) {
+          engagementQueries.push('infrared sauna therapy protocol frequency duration detox');
+        }
+        if (protocolElements.clinic_treatments.some(t => t.toLowerCase().includes('pemf'))) {
+          engagementQueries.push('PEMF therapy protocol frequency duration indications');
+        }
+      }
+
+      // Add queries for safety and monitoring
+      if (protocolElements.safety_constraints.length > 0) {
+        engagementQueries.push('protocol safety gates IF THEN logic patient escalation');
+        engagementQueries.push('adverse reaction monitoring functional medicine protocols');
+      }
+
+      // Add queries for tests/labs
+      if (protocolElements.retest_schedule.length > 0) {
+        engagementQueries.push('lab testing schedule engagement plan retesting protocols');
+        engagementQueries.push('test result review patient communication protocols');
+      }
+
+      console.log(`[Engagement Plan] Executing ${engagementQueries.length} KB queries...`);
 
       const kbResults = await Promise.all(
         engagementQueries.map(q => queryKnowledgeBase(q, `Protocol: ${protocol.template_name}, Client notes: ${protocol.lifestyle_notes || 'general wellness'}`))
       );
-      kbEngagementContext = kbResults.filter(r => r).join('\n\n');
+      kbEngagementContext = kbResults.filter(r => r).join('\n\n---\n\n');
       if (kbEngagementContext) {
-        console.log('[Engagement Plan] KB engagement context retrieved');
+        console.log('[Engagement Plan] KB engagement context retrieved successfully');
+        console.log(`[Engagement Plan] KB context length: ${kbEngagementContext.length} characters`);
+      } else {
+        console.log('[Engagement Plan] WARNING: No KB context retrieved from queries');
       }
     } catch (kbError) {
       console.error('[Engagement Plan] KB query error:', kbError.message);
