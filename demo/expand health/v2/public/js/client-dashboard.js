@@ -638,26 +638,61 @@ async function printEngagementPlanById(planId) {
 function formatEngagementPlanForPrint(planData) {
   let html = '';
 
+  // Compliance disclaimer at top (strict protocol mirror)
+  if (planData.compliance_disclaimer) {
+    html += `<div style="background: #FEF3C7; padding: 12px; border-radius: 6px; margin-bottom: 16px; border-left: 4px solid #F59E0B;">`;
+    html += `<p style="margin: 0; font-size: 12px; color: #92400E;">${escapeHtml(planData.compliance_disclaimer)}</p>`;
+    html += `</div>`;
+  }
+
   // Summary
   if (planData.summary) {
     html += `<div class="summary"><p>${escapeHtml(planData.summary)}</p></div>`;
   }
 
-  // Phases - supports both new (clinical_elements) and old (items) formats
+  // Overview section (strict protocol mirror format)
+  if (planData.overview) {
+    html += `<div style="background: #F0F9FF; padding: 16px; border-radius: 8px; margin-bottom: 20px;">`;
+    html += `<h3 style="margin: 0 0 12px 0; color: #0369A1;">Overview</h3>`;
+    if (planData.overview.purpose) {
+      html += `<p style="margin: 0 0 8px 0;"><strong>Purpose:</strong> ${escapeHtml(planData.overview.purpose)}</p>`;
+    }
+    if (planData.overview.phases_included && planData.overview.phases_included.length > 0) {
+      html += `<p style="margin: 0 0 8px 0;"><strong>Phases:</strong> ${planData.overview.phases_included.map(p => escapeHtml(p)).join(', ')}</p>`;
+    }
+    if (planData.overview.success_criteria && planData.overview.success_criteria.length > 0) {
+      html += `<p style="margin: 0 0 4px 0;"><strong>Success Criteria:</strong></p>`;
+      html += `<ul style="margin: 0; padding-left: 20px;">${planData.overview.success_criteria.map(c => `<li style="font-size: 13px;">${escapeHtml(c)}</li>`).join('')}</ul>`;
+    }
+    html += `</div>`;
+  }
+
+  // Phases - supports strict protocol mirror, clinical_elements, and legacy formats
   if (planData.phases && Array.isArray(planData.phases)) {
+    html += `<h2 style="color: #0F766E; border-bottom: 2px solid #0F766E; padding-bottom: 8px;">Phase-by-Phase Engagement Plan</h2>`;
+
     planData.phases.forEach((phase, index) => {
       const hasClinicElements = phase.clinical_elements && phase.clinical_elements.length > 0;
       const hasItems = phase.items && phase.items.length > 0;
-      const weekRange = phase.week_range ? `(Weeks ${phase.week_range})` : '';
+      const weekRange = phase.week_range ? `(${phase.week_range.includes('Week') ? phase.week_range : `Weeks ${phase.week_range}`})` : '';
+      const duration = phase.duration && phase.duration !== 'Not specified in protocol' ? ` - ${phase.duration}` : '';
 
       html += `<div class="phase">`;
-      html += `<h3>${escapeHtml(phase.title || `Phase ${index + 1}`)} ${weekRange}</h3>`;
+      html += `<h3>${escapeHtml(phase.title || `Phase ${index + 1}`)} ${weekRange}${duration}</h3>`;
 
       if (phase.subtitle) {
         html += `<p class="phase-subtitle">${escapeHtml(phase.subtitle)}</p>`;
       }
 
-      // NEW FORMAT: clinical_elements with name/status
+      // Phase goal (strict protocol mirror format)
+      if (phase.phase_goal && phase.phase_goal !== 'Not specified in protocol') {
+        html += `<div style="background: #F0FDFA; padding: 12px; border-radius: 6px; margin-bottom: 12px;">`;
+        html += `<strong style="color: #0F766E; font-size: 12px; text-transform: uppercase;">Phase Goal:</strong>`;
+        html += `<p style="margin: 4px 0 0 0; color: #134E4A;">${escapeHtml(phase.phase_goal)}</p>`;
+        html += `</div>`;
+      }
+
+      // Clinical elements (new format with source tracking)
       if (hasClinicElements) {
         html += `<div style="margin: 12px 0;"><strong style="color: #0F766E;">Clinical Elements in Scope:</strong>`;
         html += `<ul style="margin-top: 8px;">`;
@@ -668,12 +703,28 @@ function formatEngagementPlanForPrint(planData) {
         });
         html += `</ul></div>`;
       }
-      // OLD FORMAT: items array
+      // Legacy items format
       else if (hasItems) {
         html += `<ul>${phase.items.map(item => `<li>${escapeHtml(item)}</li>`).join('')}</ul>`;
       }
 
-      // Monitoring section (new format)
+      // Engagement actions (strict protocol mirror - non-medical only)
+      if (phase.engagement_actions && phase.engagement_actions.length > 0) {
+        html += `<div style="background: #EFF6FF; padding: 12px; border-radius: 6px; margin-top: 12px;">`;
+        html += `<strong style="color: #1E40AF; font-size: 12px; text-transform: uppercase;">Engagement Actions:</strong>`;
+        html += `<ul style="margin: 8px 0 0 0;">${phase.engagement_actions.map(a => `<li style="font-size: 13px;">${escapeHtml(a)}</li>`).join('')}</ul>`;
+        html += `</div>`;
+      }
+
+      // Protocol trace (strict protocol mirror - traceability)
+      if (phase.protocol_trace && phase.protocol_trace.length > 0) {
+        html += `<div style="background: #F5F5F5; padding: 10px; border-radius: 6px; margin-top: 12px;">`;
+        html += `<strong style="color: #525252; font-size: 11px; text-transform: uppercase;">Protocol Trace:</strong>`;
+        html += `<p style="margin: 4px 0 0 0; font-size: 12px; color: #737373;">${phase.protocol_trace.map(t => escapeHtml(t)).join(', ')}</p>`;
+        html += `</div>`;
+      }
+
+      // Monitoring section
       if (phase.monitoring && phase.monitoring.length > 0) {
         html += `<div style="background: #FEF3C7; padding: 12px; border-radius: 6px; margin-top: 12px;">`;
         html += `<strong style="color: #92400E; font-size: 12px; text-transform: uppercase;">Monitoring:</strong>`;
@@ -681,11 +732,12 @@ function formatEngagementPlanForPrint(planData) {
         html += `</div>`;
       }
 
-      // Safety Gate section (new format)
+      // Safety Gate section
       if (phase.safety_gate) {
         const gate = phase.safety_gate;
-        html += `<div style="background: #FEE2E2; padding: 12px; border-radius: 6px; margin-top: 12px; border-left: 4px solid #DC2626;">`;
-        html += `<strong style="color: #DC2626; font-size: 12px; text-transform: uppercase;">Safety Gate:</strong>`;
+        const isFromProtocol = gate.source && gate.source !== 'not_specified_in_protocol';
+        html += `<div style="background: ${isFromProtocol ? '#FEE2E2' : '#F5F5F5'}; padding: 12px; border-radius: 6px; margin-top: 12px; border-left: 4px solid ${isFromProtocol ? '#DC2626' : '#A3A3A3'};">`;
+        html += `<strong style="color: ${isFromProtocol ? '#DC2626' : '#525252'}; font-size: 12px; text-transform: uppercase;">Safety Gate:</strong>`;
         if (gate.conditions && gate.conditions.length > 0) {
           html += `<p style="margin: 8px 0 4px 0; font-weight: 600;">IF all TRUE:</p>`;
           html += `<ul style="margin: 0 0 8px 0;">${gate.conditions.map(c => `<li>${escapeHtml(c)}</li>`).join('')}</ul>`;
@@ -699,15 +751,15 @@ function formatEngagementPlanForPrint(planData) {
         html += `</div>`;
       }
 
-      // Progress goal (old format)
-      if (phase.progress_goal) {
+      // Progress goal (legacy format)
+      if (phase.progress_goal && !phase.phase_goal) {
         html += `<div class="goal">
           <span class="goal-label">Progress Goal:</span>
           <p style="margin: 4px 0 0 0;">${escapeHtml(phase.progress_goal)}</p>
         </div>`;
       }
 
-      // Check-in prompts (old format)
+      // Check-in prompts (legacy format)
       if (phase.check_in_prompts && phase.check_in_prompts.length > 0) {
         html += `<div class="check-in">
           <span class="check-in-label">Check-in Questions:</span>
@@ -757,34 +809,65 @@ function formatEngagementPlanForPrint(planData) {
     html += `</div>`;
   }
 
-  // Safety Rules section (new format)
+  // Safety Rules section (supports both strict and legacy formats)
   if (planData.safety_rules) {
     const rules = planData.safety_rules;
-    html += `<h2>Safety Rules</h2>`;
+    html += `<h2>Safety & Monitoring</h2>`;
+
+    // Safety summary note (strict format)
+    if (rules.note) {
+      html += `<p style="font-style: italic; color: #525252; margin-bottom: 12px;">${escapeHtml(rules.note)}</p>`;
+    }
+
+    // Helper to render rules (handles both string and object formats)
+    const renderRules = (ruleList) => {
+      return ruleList.map(r => {
+        if (typeof r === 'string') {
+          return `<li>${escapeHtml(r)}</li>`;
+        } else if (r.rule) {
+          const sourceNote = r.source && r.source !== 'not_specified' ? '' : ' <span style="font-size: 11px; color: #9CA3AF;">(clinic standard)</span>';
+          return `<li>${escapeHtml(r.rule)}${sourceNote}</li>`;
+        }
+        return '';
+      }).join('');
+    };
 
     if (rules.stop_immediately && rules.stop_immediately.length > 0) {
       html += `<div style="background: #FEE2E2; padding: 12px; border-radius: 6px; margin-bottom: 12px; border-left: 4px solid #DC2626;">`;
       html += `<strong style="color: #DC2626;">STOP IMMEDIATELY if:</strong>`;
-      html += `<ul style="margin: 8px 0 0 0;">${rules.stop_immediately.map(r => `<li>${escapeHtml(r)}</li>`).join('')}</ul>`;
+      html += `<ul style="margin: 8px 0 0 0;">${renderRules(rules.stop_immediately)}</ul>`;
       html += `</div>`;
     }
 
     if (rules.hold_and_contact && rules.hold_and_contact.length > 0) {
       html += `<div style="background: #FEF3C7; padding: 12px; border-radius: 6px; margin-bottom: 12px; border-left: 4px solid #F59E0B;">`;
       html += `<strong style="color: #92400E;">HOLD & Contact Clinician if:</strong>`;
-      html += `<ul style="margin: 8px 0 0 0;">${rules.hold_and_contact.map(r => `<li>${escapeHtml(r)}</li>`).join('')}</ul>`;
+      html += `<ul style="margin: 8px 0 0 0;">${renderRules(rules.hold_and_contact)}</ul>`;
       html += `</div>`;
     }
 
-    if (rules.escalation_24h && rules.escalation_24h.length > 0) {
+    // escalation_24h or escalation_triggers (strict format uses escalation_triggers)
+    const escalationRules = rules.escalation_24h || rules.escalation_triggers;
+    if (escalationRules && escalationRules.length > 0) {
       html += `<div style="background: #DBEAFE; padding: 12px; border-radius: 6px; margin-bottom: 12px; border-left: 4px solid #3B82F6;">`;
       html += `<strong style="color: #1E40AF;">Escalate within 24h if:</strong>`;
-      html += `<ul style="margin: 8px 0 0 0;">${rules.escalation_24h.map(r => `<li>${escapeHtml(r)}</li>`).join('')}</ul>`;
+      html += `<ul style="margin: 8px 0 0 0;">${renderRules(escalationRules)}</ul>`;
       html += `</div>`;
     }
   }
 
-  // Communication Schedule (old format)
+  // Maintenance/Exit Path (strict format)
+  if (planData.maintenance_path) {
+    html += `<h2>End-of-Protocol Path</h2>`;
+    if (planData.maintenance_path.note) {
+      html += `<p style="font-style: italic; color: #525252; margin-bottom: 8px;">${escapeHtml(planData.maintenance_path.note)}</p>`;
+    }
+    if (planData.maintenance_path.items && planData.maintenance_path.items.length > 0) {
+      html += `<ul>${planData.maintenance_path.items.map(item => `<li>${escapeHtml(item)}</li>`).join('')}</ul>`;
+    }
+  }
+
+  // Communication Schedule (legacy format)
   if (planData.communication_schedule) {
     const cs = planData.communication_schedule;
     html += `
@@ -799,7 +882,7 @@ function formatEngagementPlanForPrint(planData) {
     `;
   }
 
-  // Success Metrics (old format)
+  // Success Metrics (legacy format)
   if (planData.success_metrics && planData.success_metrics.length > 0) {
     html += `
       <h2>Success Metrics</h2>
