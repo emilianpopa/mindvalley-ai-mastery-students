@@ -959,6 +959,11 @@
       window.location.href = '/clients/new';
     }
 
+    // Alias for utility bar compatibility
+    function openCreateCustomerModal() {
+      openNewCustomerModal();
+    }
+
     function logout() {
       localStorage.removeItem('auth_token');
       window.location.href = '/login';
