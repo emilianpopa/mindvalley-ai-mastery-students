@@ -297,6 +297,11 @@ app.get('/appointments', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'appointments.html'));
 });
 
+// Appointment Checkout (public payment link page)
+app.get('/appointment-checkout', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'appointment-checkout.html'));
+});
+
 // Single Reservation (booking flow)
 app.get('/single-reservation', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'single-reservation.html'));

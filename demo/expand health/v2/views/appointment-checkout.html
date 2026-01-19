@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Appointment Checkout - Expand Health</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cline x1='20' y1='20' x2='80' y2='80' stroke='%230F766E' stroke-width='12' stroke-linecap='round'/%3E%3Cline x1='80' y1='20' x2='20' y2='80' stroke='%230F766E' stroke-width='12' stroke-linecap='round'/%3E%3C/svg%3E">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      background: #f8f9fa;
+      min-height: 100vh;
+    }
+
+    /* Header */
+    .checkout-header {
+      background: white;
+      border-bottom: 1px solid #e5e7eb;
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .checkout-header-logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+      color: #111827;
+    }
+
+    .checkout-header-logo svg {
+      width: 24px;
+      height: 24px;
+    }
+
+    .checkout-header-business {
+      font-size: 0.875rem;
+      color: #6b7280;
+    }
+
+    /* Main Content */
+    .checkout-container {
+      max-width: 480px;
+      margin: 40px auto;
+      padding: 0 20px;
+    }
+
+    .checkout-card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+
+    /* Host Section */
+    .checkout-host {
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1px solid #f3f4f6;
+    }
+
+    .checkout-host-avatar {
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .checkout-host-avatar svg {
+      width: 24px;
+      height: 24px;
+      color: white;
+    }
+
+    .checkout-host-info {
+      flex: 1;
+    }
+
+    .checkout-host-label {
+      font-size: 0.75rem;
+      color: #9ca3af;
+      margin-bottom: 2px;
+    }
+
+    .checkout-host-name {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #111827;
+    }
+
+    /* Appointment Details */
+    .checkout-details {
+      padding: 20px;
+      border-bottom: 1px solid #f3f4f6;
+    }
+
+    .checkout-service-name {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #111827;
+      margin-bottom: 12px;
+    }
+
+    .checkout-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      font-size: 0.875rem;
+      color: #6b7280;
+      margin-bottom: 12px;
+    }
+
+    .checkout-meta-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .checkout-meta-item svg {
+      width: 16px;
+      height: 16px;
+      color: #9ca3af;
+    }
+
+    .checkout-location {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.875rem;
+      color: #6b7280;
+      padding: 8px 12px;
+      background: #f9fafb;
+      border-radius: 6px;
+      margin-top: 12px;
+    }
+
+    .checkout-location svg {
+      width: 16px;
+      height: 16px;
+      color: #6366f1;
+    }
+
+    /* Customers to Pay */
+    .checkout-customers {
+      padding: 20px;
+      border-bottom: 1px solid #f3f4f6;
+    }
+
+    .checkout-customers-title {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #111827;
+      margin-bottom: 12px;
+    }
+
+    .checkout-customer-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      background: #f9fafb;
+      border-radius: 8px;
+    }
+
+    .checkout-customer-toggle {
+      width: 44px;
+      height: 24px;
+      background: #6366f1;
+      border-radius: 12px;
+      position: relative;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .checkout-customer-toggle::after {
+      content: '';
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      background: white;
+      border-radius: 50%;
+      top: 2px;
+      right: 2px;
+      transition: transform 0.2s;
+    }
+
+    .checkout-customer-toggle.off {
+      background: #d1d5db;
+    }
+
+    .checkout-customer-toggle.off::after {
+      transform: translateX(-20px);
+    }
+
+    .checkout-customer-avatar {
+      width: 32px;
+      height: 32px;
+      background: #e0e7ff;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .checkout-customer-avatar svg {
+      width: 16px;
+      height: 16px;
+      color: #6366f1;
+    }
+
+    .checkout-customer-name {
+      flex: 1;
+      font-size: 0.9375rem;
+      color: #111827;
+    }
+
+    .checkout-customer-price {
+      font-size: 0.875rem;
+      color: #6b7280;
+      padding: 4px 12px;
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 16px;
+    }
+
+    /* Totals */
+    .checkout-totals {
+      padding: 20px;
+      border-bottom: 1px solid #f3f4f6;
+    }
+
+    .checkout-totals-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .checkout-totals-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #111827;
+    }
+
+    .checkout-totals-toggle {
+      font-size: 0.75rem;
+      color: #6366f1;
+      cursor: pointer;
+    }
+
+    .checkout-total-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      font-size: 0.875rem;
+      color: #374151;
+    }
+
+    .checkout-total-row.customer-name {
+      font-weight: 500;
+      padding-top: 0;
+    }
+
+    .checkout-total-divider {
+      border-top: 1px solid #e5e7eb;
+      margin: 12px 0;
+    }
+
+    .checkout-total-breakdown {
+      background: #f9fafb;
+      border-radius: 8px;
+      padding: 12px;
+      margin-top: 12px;
+    }
+
+    .checkout-total-breakdown .checkout-total-row {
+      font-size: 0.8125rem;
+      color: #6b7280;
+    }
+
+    .checkout-total-breakdown .checkout-total-row.final {
+      font-weight: 600;
+      color: #111827;
+      border-top: 1px solid #e5e7eb;
+      padding-top: 12px;
+      margin-top: 8px;
+    }
+
+    /* Price Summary */
+    .checkout-price-summary {
+      padding: 20px;
+      border-bottom: 1px solid #f3f4f6;
+    }
+
+    .checkout-price-box {
+      background: #f9fafb;
+      border-radius: 8px;
+      padding: 16px;
+      text-align: center;
+      margin-bottom: 12px;
+    }
+
+    .checkout-price-label {
+      font-size: 0.8125rem;
+      color: #6b7280;
+      margin-bottom: 4px;
+    }
+
+    .checkout-price-value {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #111827;
+    }
+
+    .checkout-promo-btn, .checkout-gift-btn {
+      display: block;
+      width: 100%;
+      padding: 10px 16px;
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      color: #374151;
+      text-align: left;
+      cursor: pointer;
+      margin-bottom: 8px;
+      transition: border-color 0.2s;
+    }
+
+    .checkout-promo-btn:hover, .checkout-gift-btn:hover {
+      border-color: #6366f1;
+    }
+
+    .checkout-promo-btn::after, .checkout-gift-btn::after {
+      content: '›';
+      float: right;
+      color: #9ca3af;
+    }
+
+    /* Notice */
+    .checkout-notice {
+      background: #fef2f2;
+      color: #991b1b;
+      padding: 12px 16px;
+      font-size: 0.8125rem;
+      text-align: center;
+      margin: 0 20px 20px;
+      border-radius: 6px;
+    }
+
+    .checkout-notice.success {
+      background: #f0fdf4;
+      color: #166534;
+    }
+
+    /* Actions */
+    .checkout-actions {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .checkout-btn {
+      padding: 14px 24px;
+      border-radius: 8px;
+      font-size: 0.9375rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .checkout-btn-primary {
+      background: #6366f1;
+      color: white;
+      border: none;
+    }
+
+    .checkout-btn-primary:hover {
+      background: #4f46e5;
+    }
+
+    .checkout-btn-secondary {
+      background: white;
+      color: #374151;
+      border: 1px solid #e5e7eb;
+    }
+
+    .checkout-btn-secondary:hover {
+      background: #f9fafb;
+    }
+
+    .checkout-btn svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    /* Copy Link */
+    .checkout-copy-link {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px;
+      background: #f9fafb;
+      border-radius: 8px;
+      margin: 0 20px 20px;
+    }
+
+    .checkout-copy-link input {
+      flex: 1;
+      border: none;
+      background: transparent;
+      font-size: 0.8125rem;
+      color: #6b7280;
+      outline: none;
+    }
+
+    .checkout-copy-link button {
+      padding: 6px 12px;
+      background: #6366f1;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      cursor: pointer;
+    }
+
+    .checkout-copy-link button:hover {
+      background: #4f46e5;
+    }
+
+    /* Loading State */
+    .loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 400px;
+      color: #6b7280;
+    }
+
+    .loading-spinner {
+      width: 32px;
+      height: 32px;
+      border: 3px solid #e5e7eb;
+      border-top-color: #6366f1;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Error State */
+    .error-state {
+      text-align: center;
+      padding: 60px 20px;
+    }
+
+    .error-state svg {
+      width: 64px;
+      height: 64px;
+      color: #ef4444;
+      margin-bottom: 16px;
+    }
+
+    .error-state h2 {
+      font-size: 1.25rem;
+      color: #111827;
+      margin-bottom: 8px;
+    }
+
+    .error-state p {
+      color: #6b7280;
+      font-size: 0.9375rem;
+    }
+
+    /* Payment Status Badge */
+    .payment-status {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+
+    .payment-status.paid {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .payment-status.unpaid {
+      background: #fef2f2;
+      color: #991b1b;
+    }
+
+    .payment-status.pending {
+      background: #fef3c7;
+      color: #92400e;
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="checkout-header">
+    <a href="/" class="checkout-header-logo">
+      <svg viewBox="0 0 100 100" fill="none" stroke="#0F766E" stroke-width="12" stroke-linecap="round">
+        <line x1="20" y1="20" x2="80" y2="80"/>
+        <line x1="80" y1="20" x2="20" y2="80"/>
+      </svg>
+    </a>
+    <span class="checkout-header-business">Expand Health (Pty) Ltd</span>
+  </header>
+
+  <!-- Main Content -->
+  <div class="checkout-container">
+    <div id="loadingState" class="loading">
+      <div class="loading-spinner"></div>
+    </div>
+
+    <div id="errorState" class="checkout-card error-state" style="display: none;">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+      </svg>
+      <h2>Appointment Not Found</h2>
+      <p>This appointment may have been cancelled or the link is invalid.</p>
+    </div>
+
+    <div id="checkoutCard" class="checkout-card" style="display: none;">
+      <!-- Host Section -->
+      <div class="checkout-host">
+        <div class="checkout-host-avatar">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+          </svg>
+        </div>
+        <div class="checkout-host-info">
+          <div class="checkout-host-label">Hosted by</div>
+          <div id="hostName" class="checkout-host-name">-</div>
+        </div>
+      </div>
+
+      <!-- Appointment Details -->
+      <div class="checkout-details">
+        <h1 id="serviceName" class="checkout-service-name">-</h1>
+        <div class="checkout-meta">
+          <div class="checkout-meta-item">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+            </svg>
+            <span id="appointmentDate">-</span>
+          </div>
+          <div class="checkout-meta-item">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <span id="appointmentTime">-</span>
+          </div>
+          <div class="checkout-meta-item">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <span id="duration">-</span>
+          </div>
+          <div class="checkout-meta-item">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+            </svg>
+            <span id="staffName">-</span>
+          </div>
+        </div>
+        <div class="checkout-location">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+          </svg>
+          <span id="location">-</span>
+        </div>
+      </div>
+
+      <!-- Customers to Pay -->
+      <div class="checkout-customers">
+        <div class="checkout-customers-title">Customers to pay</div>
+        <div class="checkout-customer-row">
+          <div class="checkout-customer-toggle" id="customerToggle"></div>
+          <div class="checkout-customer-avatar">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+            </svg>
+          </div>
+          <span id="customerName" class="checkout-customer-name">-</span>
+          <span id="customerPrice" class="checkout-customer-price">ZAR 0.00</span>
+        </div>
+      </div>
+
+      <!-- Totals -->
+      <div class="checkout-totals">
+        <div class="checkout-totals-header">
+          <span class="checkout-totals-title">Totals</span>
+          <span class="checkout-totals-toggle">Show more</span>
+        </div>
+        <div class="checkout-total-row customer-name">
+          <span id="totalCustomerName">-</span>
+          <span id="totalCustomerPrice">ZAR 0.00</span>
+        </div>
+        <div class="checkout-total-breakdown">
+          <div class="checkout-total-row">
+            <span>Total</span>
+            <span></span>
+          </div>
+          <div class="checkout-total-row">
+            <span>Price excl. tax</span>
+            <span id="priceExclTax">ZAR 0.00</span>
+          </div>
+          <div class="checkout-total-row">
+            <span>Tax</span>
+            <span id="taxAmount">ZAR 0.00</span>
+          </div>
+          <div class="checkout-total-row final">
+            <span>Price</span>
+            <span id="finalPrice">ZAR 0.00</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Price Summary -->
+      <div class="checkout-price-summary">
+        <div class="checkout-price-box">
+          <div class="checkout-price-label">Price</div>
+          <div id="priceSummary" class="checkout-price-value">ZAR 0.00</div>
+        </div>
+        <button class="checkout-promo-btn">Apply promo code</button>
+        <button class="checkout-gift-btn">Apply gift card</button>
+      </div>
+
+      <!-- Notice -->
+      <div id="paymentNotice" class="checkout-notice">
+        This business doesn't have online payments turned on yet.
+      </div>
+
+      <!-- Copy Link -->
+      <div class="checkout-copy-link">
+        <input type="text" id="paymentLink" readonly>
+        <button onclick="copyPaymentLink()">Copy</button>
+      </div>
+
+      <!-- Actions -->
+      <div class="checkout-actions">
+        <button class="checkout-btn checkout-btn-secondary" onclick="sendPaymentLink()">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
+          </svg>
+          Send payment link
+        </button>
+        <button id="payBtn" class="checkout-btn checkout-btn-primary" onclick="processPayment()">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+          </svg>
+          Pay
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let appointmentData = null;
+
+    async function loadAppointment() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const appointmentId = urlParams.get('id');
+
+      if (!appointmentId) {
+        showError();
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/appointments/checkout/${appointmentId}`);
+        if (!response.ok) {
+          throw new Error('Appointment not found');
+        }
+
+        appointmentData = await response.json();
+        renderAppointment(appointmentData);
+      } catch (error) {
+        console.error('Error loading appointment:', error);
+        showError();
+      }
+    }
+
+    function showError() {
+      document.getElementById('loadingState').style.display = 'none';
+      document.getElementById('errorState').style.display = 'block';
+    }
+
+    function renderAppointment(apt) {
+      document.getElementById('loadingState').style.display = 'none';
+      document.getElementById('checkoutCard').style.display = 'block';
+
+      // Host/Staff
+      document.getElementById('hostName').textContent = apt.staffName || 'Staff';
+
+      // Service
+      document.getElementById('serviceName').textContent = apt.title || apt.serviceName || 'Appointment';
+
+      // Date & Time
+      const start = new Date(apt.startTime);
+      const end = new Date(apt.endTime);
+
+      document.getElementById('appointmentDate').textContent = start.toLocaleDateString('en-US', {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric'
+      });
+
+      document.getElementById('appointmentTime').textContent = start.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+      });
+
+      // Duration
+      const durationMins = Math.round((end - start) / 60000);
+      document.getElementById('duration').textContent = `${durationMins} minutes`;
+
+      // Staff
+      document.getElementById('staffName').textContent = apt.staffName || 'Staff';
+
+      // Location
+      document.getElementById('location').textContent = apt.locationDetails || apt.locationType || 'In Person';
+
+      // Customer
+      const customerName = apt.clientName || 'Customer';
+      const customerInitial = customerName.split(' ').map(n => n[0]).join('').substring(0, 2);
+      document.getElementById('customerName').textContent = `${customerInitial}. ${customerName.split(' ').pop()}`;
+
+      // Price
+      const price = parseFloat(apt.price) || 0;
+      const priceStr = `ZAR ${price.toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+      document.getElementById('customerPrice').textContent = priceStr;
+      document.getElementById('totalCustomerName').textContent = `${customerInitial}. ${customerName.split(' ').pop()}`;
+      document.getElementById('totalCustomerPrice').textContent = priceStr;
+      document.getElementById('priceExclTax').textContent = priceStr;
+      document.getElementById('taxAmount').textContent = 'ZAR 0.00';
+      document.getElementById('finalPrice').textContent = priceStr;
+      document.getElementById('priceSummary').textContent = priceStr;
+
+      // Payment link
+      const paymentLink = `${window.location.origin}/appointment-checkout?id=${apt.id}`;
+      document.getElementById('paymentLink').value = paymentLink;
+
+      // Payment status
+      const isPaid = apt.paymentStatus === 'paid';
+      if (isPaid) {
+        document.getElementById('paymentNotice').textContent = 'This appointment has been paid.';
+        document.getElementById('paymentNotice').className = 'checkout-notice success';
+        document.getElementById('payBtn').textContent = 'Paid';
+        document.getElementById('payBtn').disabled = true;
+        document.getElementById('payBtn').style.background = '#22c55e';
+      }
+    }
+
+    function copyPaymentLink() {
+      const linkInput = document.getElementById('paymentLink');
+      linkInput.select();
+      document.execCommand('copy');
+
+      const btn = linkInput.nextElementSibling;
+      const originalText = btn.textContent;
+      btn.textContent = 'Copied!';
+      setTimeout(() => {
+        btn.textContent = originalText;
+      }, 2000);
+    }
+
+    function sendPaymentLink() {
+      const link = document.getElementById('paymentLink').value;
+      const customerEmail = appointmentData?.clientEmail;
+
+      if (customerEmail) {
+        const subject = encodeURIComponent(`Payment link for your appointment - ${appointmentData.title}`);
+        const body = encodeURIComponent(`Hi,\n\nHere is your payment link for your upcoming appointment:\n\n${link}\n\nThank you!`);
+        window.open(`mailto:${customerEmail}?subject=${subject}&body=${body}`);
+      } else {
+        // Copy to clipboard as fallback
+        copyPaymentLink();
+        alert('Payment link copied to clipboard. Customer email not available.');
+      }
+    }
+
+    function processPayment() {
+      // For now, show a message
+      alert('Online payments coming soon! Please contact the business to complete your payment.');
+    }
+
+    // Load on page load
+    document.addEventListener('DOMContentLoaded', loadAppointment);
+  </script>
+</body>
+</html>

@@ -4950,7 +4950,7 @@
 
       const apt = selectedAppointment;
       // Generate a payment link based on appointment ID
-      const paymentLink = `${window.location.origin}/pay/${apt.id}`;
+      const paymentLink = `${window.location.origin}/appointment-checkout?id=${apt.id}`;
 
       navigator.clipboard.writeText(paymentLink).then(() => {
         // Show a brief success message

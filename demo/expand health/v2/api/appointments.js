@@ -8,7 +8,90 @@ const router = express.Router();
 const db = require('../database/db');
 const { authenticateToken, requireRole } = require('../middleware/auth');
 
-// Apply authentication to all routes
+// ============================================
+// PUBLIC ENDPOINTS (no auth required)
+// ============================================
+
+/**
+ * GET /api/appointments/checkout/:id
+ * Public endpoint for appointment checkout/payment page
+ */
+router.get('/checkout/:id', async (req, res, next) => {
+  try {
+    const appointmentId = req.params.id;
+
+    const result = await db.query(`
+      SELECT
+        a.id,
+        a.title,
+        a.start_time,
+        a.end_time,
+        a.status,
+        a.payment_status,
+        COALESCE(a.price, st.price, 0) as price,
+        a.location_type,
+        a.location_details,
+        a.notes,
+        c.id as client_id,
+        c.first_name as client_first_name,
+        c.last_name as client_last_name,
+        c.email as client_email,
+        c.phone as client_phone,
+        s.id as staff_id,
+        s.first_name as staff_first_name,
+        s.last_name as staff_last_name,
+        st.id as service_type_id,
+        st.name as service_name,
+        st.duration_minutes,
+        st.price as service_price,
+        t.name as tenant_name
+      FROM appointments a
+      LEFT JOIN clients c ON a.client_id = c.id
+      LEFT JOIN staff s ON a.staff_id = s.id
+      LEFT JOIN service_types st ON a.service_type_id = st.id
+      LEFT JOIN tenants t ON a.tenant_id = t.id
+      WHERE a.id = $1
+    `, [appointmentId]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Appointment not found' });
+    }
+
+    const apt = result.rows[0];
+
+    // Format response for checkout page
+    res.json({
+      id: apt.id,
+      title: apt.title || apt.service_name || 'Appointment',
+      serviceName: apt.service_name,
+      startTime: apt.start_time,
+      endTime: apt.end_time,
+      status: apt.status,
+      paymentStatus: apt.payment_status,
+      price: apt.price,
+      locationType: apt.location_type,
+      locationDetails: apt.location_details || apt.location_type || 'In Person',
+      clientId: apt.client_id,
+      clientName: apt.client_first_name && apt.client_last_name
+        ? `${apt.client_first_name} ${apt.client_last_name}`
+        : 'Customer',
+      clientEmail: apt.client_email,
+      clientPhone: apt.client_phone,
+      staffId: apt.staff_id,
+      staffName: apt.staff_first_name && apt.staff_last_name
+        ? `${apt.staff_first_name} ${apt.staff_last_name}`
+        : 'Staff',
+      serviceTypeId: apt.service_type_id,
+      durationMinutes: apt.duration_minutes,
+      tenantName: apt.tenant_name
+    });
+  } catch (error) {
+    console.error('Error fetching appointment for checkout:', error);
+    next(error);
+  }
+});
+
+// Apply authentication to all routes below
 router.use(authenticateToken);
 
 // ============================================
