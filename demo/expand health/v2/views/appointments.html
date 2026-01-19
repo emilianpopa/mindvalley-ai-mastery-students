@@ -4052,11 +4052,9 @@
 
       appointments.forEach(apt => {
         // Parse times - treat database times as local times (not UTC)
-        // Remove 'Z' suffix if present to prevent UTC conversion
-        const startStr = apt.start.replace('Z', '').replace('+00:00', '');
-        const endStr = apt.end.replace('Z', '').replace('+00:00', '');
-        const start = new Date(startStr);
-        const end = new Date(endStr);
+        // Parse UTC timestamps and let browser convert to local time
+        const start = new Date(apt.start);
+        const end = new Date(apt.end);
 
         // Calculate which day column (0-6) using local dates to avoid timezone issues
         const startLocal = new Date(start.getFullYear(), start.getMonth(), start.getDate());
