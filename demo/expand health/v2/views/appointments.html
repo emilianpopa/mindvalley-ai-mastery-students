@@ -2833,6 +2833,111 @@
       box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.1);
     }
 
+    /* Venue Dropdown Styles */
+    .venue-dropdown-container {
+      position: relative;
+      width: 100%;
+    }
+
+    .venue-dropdown {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--gray-300);
+      border-radius: 8px;
+      font-size: 0.875rem;
+      color: var(--gray-800);
+      background: white;
+      cursor: pointer;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .venue-dropdown:hover {
+      border-color: var(--gray-400);
+    }
+
+    .venue-dropdown.open {
+      border-color: var(--purple-500);
+      box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.1);
+    }
+
+    .venue-dropdown-text {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .venue-dropdown-text.placeholder {
+      color: var(--gray-500);
+    }
+
+    .venue-dropdown-arrow {
+      width: 16px;
+      height: 16px;
+      color: var(--gray-500);
+      flex-shrink: 0;
+      transition: transform 0.2s;
+    }
+
+    .venue-dropdown.open .venue-dropdown-arrow {
+      transform: rotate(180deg);
+    }
+
+    .venue-dropdown-menu {
+      display: none;
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      right: 0;
+      background: white;
+      border: 1px solid var(--gray-200);
+      border-radius: 8px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+      max-height: 280px;
+      overflow-y: auto;
+      z-index: 100;
+    }
+
+    .venue-dropdown-menu.show {
+      display: block;
+    }
+
+    .venue-dropdown-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+
+    .venue-dropdown-item:hover:not(.occupied) {
+      background: var(--gray-50);
+    }
+
+    .venue-dropdown-item.occupied {
+      cursor: not-allowed;
+      color: var(--gray-400);
+    }
+
+    .venue-item-name {
+      flex: 1;
+    }
+
+    .venue-occupied-badge {
+      background: #fef2f2;
+      color: #dc2626;
+      font-size: 0.75rem;
+      font-weight: 500;
+      padding: 2px 8px;
+      border-radius: 4px;
+      margin-left: 8px;
+    }
+
     .apt-toggle-row {
       display: flex;
       align-items: center;
@@ -5984,6 +6089,13 @@
       document.getElementById('newAptNote').value = '';
       document.getElementById('sendConfirmation').checked = true;
 
+      // Reset venue dropdown text
+      const venueText = document.getElementById('venueDropdownText');
+      if (venueText) {
+        venueText.textContent = 'Select...';
+        venueText.classList.add('placeholder');
+      }
+
       // Reset searchable customer dropdown
       resetCustomerDropdown();
 
@@ -6097,33 +6209,78 @@
     }
 
     function renderVenueDropdown() {
-      const select = document.getElementById('newAptVenue');
-      const currentValue = select.value;
-      select.innerHTML = '<option value="">Select...</option>';
+      const menu = document.getElementById('venueDropdownMenu');
+      const hiddenInput = document.getElementById('newAptVenue');
+      const textSpan = document.getElementById('venueDropdownText');
+      const currentValue = hiddenInput.value;
+
+      menu.innerHTML = '';
 
       newAptVenues.forEach(venue => {
-        const option = document.createElement('option');
-        option.value = venue.id;
+        const item = document.createElement('div');
+        item.className = 'venue-dropdown-item' + (venue.is_occupied ? ' occupied' : '');
+        item.dataset.id = venue.id;
+        item.dataset.name = venue.name;
+        item.dataset.occupied = venue.is_occupied ? 'true' : 'false';
 
         if (venue.is_occupied) {
-          option.textContent = `${venue.name}    Occupied`;
-          option.style.color = '#9ca3af';
-          option.disabled = true;
+          item.innerHTML = `
+            <span class="venue-item-name">${venue.name}</span>
+            <span class="venue-occupied-badge">Occupied</span>
+          `;
         } else {
-          option.textContent = venue.name;
+          item.innerHTML = `<span class="venue-item-name">${venue.name}</span>`;
+          item.onclick = () => selectVenue(venue.id, venue.name);
         }
 
-        select.appendChild(option);
+        menu.appendChild(item);
       });
 
-      // Restore selected value if still available
+      // Restore selected value if still available and not occupied
       if (currentValue) {
-        const selectedOption = select.querySelector(`option[value="${currentValue}"]`);
-        if (selectedOption && !selectedOption.disabled) {
-          select.value = currentValue;
+        const venue = newAptVenues.find(v => v.id == currentValue);
+        if (venue && !venue.is_occupied) {
+          textSpan.textContent = venue.name;
+          textSpan.classList.remove('placeholder');
+        } else {
+          // Clear selection if venue is now occupied
+          hiddenInput.value = '';
+          textSpan.textContent = 'Select...';
+          textSpan.classList.add('placeholder');
         }
       }
     }
+
+    function toggleVenueDropdown() {
+      const menu = document.getElementById('venueDropdownMenu');
+      const dropdown = document.getElementById('venueDropdown');
+      menu.classList.toggle('show');
+      dropdown.classList.toggle('open');
+    }
+
+    function closeVenueDropdown() {
+      const menu = document.getElementById('venueDropdownMenu');
+      const dropdown = document.getElementById('venueDropdown');
+      menu.classList.remove('show');
+      dropdown.classList.remove('open');
+    }
+
+    function selectVenue(id, name) {
+      document.getElementById('newAptVenue').value = id;
+      const textSpan = document.getElementById('venueDropdownText');
+      textSpan.textContent = name;
+      textSpan.classList.remove('placeholder');
+      closeVenueDropdown();
+    }
+
+    // Close venue dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+      const container = document.getElementById('venueDropdown');
+      const menu = document.getElementById('venueDropdownMenu');
+      if (container && menu && !container.contains(e.target) && !menu.contains(e.target)) {
+        closeVenueDropdown();
+      }
+    });
 
     async function loadNewAptCustomers() {
       try {
@@ -7164,9 +7321,18 @@
       <div class="apt-form-row">
         <label class="apt-form-label">Venue</label>
         <div class="apt-form-control">
-          <select class="apt-form-select" id="newAptVenue">
-            <option value="">Select...</option>
-          </select>
+          <div class="venue-dropdown-container">
+            <div class="venue-dropdown" id="venueDropdown" onclick="toggleVenueDropdown()">
+              <span class="venue-dropdown-text" id="venueDropdownText">Select...</span>
+              <svg class="venue-dropdown-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </div>
+            <div class="venue-dropdown-menu" id="venueDropdownMenu">
+              <!-- Venues populated by JS -->
+            </div>
+            <input type="hidden" id="newAptVenue" value="">
+          </div>
         </div>
       </div>
 
