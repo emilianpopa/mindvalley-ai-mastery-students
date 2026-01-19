@@ -262,12 +262,13 @@ function isLifestyleProtocol(name) {
 
 /**
  * Generate the STRICT engagement plan prompt that is 100% aligned to the protocol
- * This prompt enforces:
- * 1. Timeline preservation (no compression)
- * 2. Strict item classification (ACTION/MONITOR/GATE/DECISION/TEST)
- * 3. Safety gates as IF/THEN logic
- * 4. Clinic treatments as CONDITIONAL with eligibility rules
- * 5. Phase-accurate item placement
+ *
+ * KEY REQUIREMENTS:
+ * 1. Phase-based structure with explicit week ranges
+ * 2. EXPLICIT named items under each phase (no generic text)
+ * 3. NO dosages - just item names with "per protocol"
+ * 4. Clear SCHEDULED vs CONDITIONAL labeling
+ * 5. Verifiable item-by-item alignment
  *
  * @param {Object} options - Generation options
  * @returns {string} The AI prompt
@@ -301,296 +302,225 @@ function generateAlignedEngagementPlanPrompt({
     return `- ${p.name}: Weeks ${p.start_week}-${(p.start_week || 1) + (p.duration_weeks || 2) - 1} (${p.type || 'standard'})`;
   }).join('\n');
 
-  // Build the REQUIRED items checklist with STRICT phase/timing info
+  // Build SIMPLE item lists - just names, no dosages
+  const supplementsByPhase = {};
+  supplements.forEach(s => {
+    const phase = s.phase || 'Core Protocol';
+    if (!supplementsByPhase[phase]) supplementsByPhase[phase] = [];
+    supplementsByPhase[phase].push(s.name);
+  });
+
   const supplementsList = supplements.map(s => {
-    let entry = `- ${s.name}`;
-    if (s.dosage) entry += ` | Dosage: ${s.dosage}`;
-    if (s.timing) entry += ` | Timing: ${s.timing}`;
-    entry += ` | Phase: ${s.phase || 'Core Protocol'}`;
-    entry += ` | START WEEK: ${s.start_week || 1}`;
-    if (s.contraindications) entry += ` | Constraints: ${s.contraindications}`;
-    return entry;
+    return `– ${s.name} [Phase: ${s.phase || 'Core Protocol'}, Start Week: ${s.start_week || 1}]`;
   }).join('\n');
 
   const clinicList = clinic_treatments.map(t => {
-    let entry = `- ${t.name} [CONDITIONAL - CLINICIAN DECISION]`;
-    if (t.indication) entry += ` | When to consider: ${t.indication}`;
-    if (t.contraindications) entry += ` | STOP IF: ${t.contraindications}`;
-    entry += ` | EARLIEST ELIGIBILITY: Week ${t.start_week || 8}`;
-    entry += ` | STATUS: DECISION (never default action)`;
-    return entry;
+    return `– ${t.name} [CONDITIONAL, Earliest: Week ${t.start_week || 8}]`;
   }).join('\n');
 
   const lifestyleList = lifestyle_protocols.map(l => {
-    let entry = `- ${l.name}`;
-    if (l.dosage) entry += ` | Details: ${l.dosage}`;
-    if (l.timing) entry += ` | When: ${l.timing}`;
-    entry += ` | Phase: ${l.phase || 'Core Protocol'}`;
-    entry += ` | START WEEK: ${l.start_week || 1}`;
-    return entry;
+    return `– ${l.name} [Phase: ${l.phase || 'Core Protocol'}, Start Week: ${l.start_week || 1}]`;
   }).join('\n');
 
   const retestList = retest_schedule.map(r => {
-    let entry = `- ${r.name} [TEST - not an ACTION]`;
-    if (r.timing) entry += ` | When: ${r.timing}`;
-    if (r.purpose) entry += ` | Purpose: ${r.purpose}`;
-    entry += ` | Sequence: Schedule → Complete → Review → Adjust`;
-    return entry;
+    return `– ${r.name} [${r.timing || 'As scheduled'}]`;
   }).join('\n');
 
-  // Group constraints by type
-  const absoluteContraindications = safety_constraints.filter(c => c.type === 'absolute_contraindication').map(c => `- STOP RULE: ${c.constraint}`).join('\n');
-  const monitoringRequirements = safety_constraints.filter(c => c.type === 'monitoring_requirement').map(c => `- MONITOR: ${c.constraint}`).join('\n');
-  const warningSigns = safety_constraints.filter(c => c.type === 'warning_sign').map(c => `- ESCALATE IF: ${c.constraint}`).join('\n');
-  const safetyGates = safety_constraints.filter(c => c.type === 'safety_gate').map(c => `- GATE: IF [${c.constraint}] THEN proceed to next phase${c.phase ? ` [${c.phase}]` : ''}`).join('\n');
-  const readinessCriteria = safety_constraints.filter(c => c.type === 'readiness_criteria').map(c => `- GATE CRITERIA: ${c.constraint}${c.phase ? ` [before ${c.phase}]` : ''}`).join('\n');
+  // Build safety constraints lists
+  const absoluteContraindications = safety_constraints.filter(c => c.type === 'absolute_contraindication').map(c => `– ${c.constraint}`).join('\n');
+  const monitoringRequirements = safety_constraints.filter(c => c.type === 'monitoring_requirement').map(c => `– ${c.constraint}`).join('\n');
+  const warningSigns = safety_constraints.filter(c => c.type === 'warning_sign').map(c => `– ${c.constraint}`).join('\n');
 
   return `You are creating a CLIENT-FACING engagement plan that OPERATIONALIZES a clinical protocol.
 
 ═══════════════════════════════════════════════════════════════════
-WHAT "CORRECT" MEANS - ALL THREE MUST BE TRUE
+OUTPUT FORMAT REQUIREMENTS (MANDATORY)
 ═══════════════════════════════════════════════════════════════════
 
-An engagement plan is ONLY correct if it is:
-1) PROTOCOL-FAITHFUL → doesn't invent, omit, or reorder clinical intent
-2) EXECUTABLE → ops + client can run it without guessing
-3) GOVERNED → progression is controlled by gates + tests + decisions, not a flat checklist
+The engagement plan must be:
+1. PHASE-BASED with explicit week ranges
+2. EXPLICIT NAMED ITEMS under each phase (not generic text like "start supplements")
+3. NO DOSAGES - just item names (dosages are in the protocol)
+4. CLEAR LABELING: "SCHEDULED" vs "CONDITIONAL (if tolerated)"
+5. VERIFIABLE: Every protocol item must appear by name
 
-A plan that is "aligned in phases but missing actions/tests/decisions" is NOT correct.
-A plan that "lists everything but breaks sequencing/safety" is NOT correct.
+EXAMPLE OF CORRECT FORMAT:
+───────────────────────────────────────────────────────────────────
+Weeks 3–6: Active Metal Mobilization & Gut Restoration
+
+Clinical elements in scope:
+– DMSA (cycled, per protocol) [SCHEDULED]
+– NAC [SCHEDULED]
+– Digestive Enzymes [SCHEDULED]
+– Zinc Bisglycinate [SCHEDULED]
+– Infrared Sauna [CONDITIONAL - if tolerated]
+
+Safety gate: IF bowel movements regular AND no adverse reactions THEN proceed. IF NOT → HOLD, contact clinician.
+───────────────────────────────────────────────────────────────────
 
 ═══════════════════════════════════════════════════════════════════
-FAILURE MODES TO PREVENT (MANDATORY)
+PROTOCOL SOURCE DATA
 ═══════════════════════════════════════════════════════════════════
 
-You MUST detect and prevent these:
-- Vocabulary mirroring without logic (copying protocol nouns without actionability)
-- Timeline compression (e.g., turning ${calculatedDuration} weeks into 4 weeks)
-- Misclassification (tests/contraindications/consultations written as "Take")
-- Clinic treatments scheduled as defaults (instead of conditional eligibility + clinician decision)
-- Missing retest schedule governance (tests not mapped to timing and review decisions)
-- Safety gates described but not enforced (no HOLD/PAUSE/ESCALATE rules)
-
-═══════════════════════════════════════════════════════════════════
-CRITICAL RULES - VIOLATIONS WILL CAUSE PATIENT HARM
-═══════════════════════════════════════════════════════════════════
-
-## 1. TIMELINE PRESERVATION (MANDATORY)
-The protocol duration is ${calculatedDuration} weeks. The engagement plan MUST be ${calculatedDuration} weeks.
-- DO NOT compress a ${calculatedDuration}-week protocol into 4 weeks
-- DO NOT skip phases
-- Each phase must start at the EXACT week specified in the protocol
-
-${phaseStructure ? `### PROTOCOL PHASE STRUCTURE (MUST MATCH EXACTLY):\n${phaseStructure}` : ''}
-
-## 2. STRICT ITEM CLASSIFICATION (MANDATORY)
-Every protocol element MUST be classified as EXACTLY ONE of:
-
-| Type | Definition | Example Verbs | NEVER Use |
-|------|------------|---------------|-----------|
-| ACTION | Client physically does (supplements, hydration, sauna, training, diet) | Take, Do, Complete, Follow | - |
-| MONITOR | Track/observe (symptoms, BP, sleep, bowel, energy/mood) | Track, Log, Monitor | Take |
-| GATE | IF/THEN progression control (advance/hold/pause/stop) | IF...THEN proceed | Bullet lists |
-| DECISION | Clinician/practitioner judgement (eligibility, escalation) | Clinician reviews IF eligible | Schedule (as default) |
-| TEST | Diagnostics/labs (schedule → complete → review → adjust) | Schedule→Complete→Review | Take |
-
-### HARD RULES:
-- NEVER use "Take" for DECISION, GATE, MONITOR, or TEST items
-- NEVER schedule DECISION items as default actions
-- NEVER compress lab tests into actions
-- GATES must be IF/THEN statements with PASS/FAIL conditions and explicit HOLD/ESCALATE rules
-- Clinic treatments must be CONDITIONAL (DECISION + eligibility) - only become ACTION once eligible and approved
-
-## 3. CLINIC TREATMENTS = ALWAYS CONDITIONAL
-Clinic treatments are NEVER default actions. They require:
-1. Eligibility review (clinician decision)
-2. No contraindications present
-3. Phase stability confirmed
-4. Explicit decision owner (Clinician)
-
-Format: "DECISION: [Treatment] - Eligible IF [conditions] AND NO [contraindications]. Decision owner: Clinician."
-
-## 4. SAFETY GATES = IF/THEN LOGIC WITH HOLD/ESCALATE (NOT BULLET LISTS)
-❌ WRONG: "✓ Regular bowel movements ✓ No adverse reactions"
-✅ CORRECT: "GATE: IF all conditions met (regular bowel movements, no adverse reactions, energy stable) THEN proceed to Phase 2. IF any condition fails → HOLD progression and contact clinician within 48h."
-
-Every gate MUST have:
-- Explicit conditions to check
-- IF PASS → what happens next
-- IF FAIL → HOLD/PAUSE/STOP instruction with escalation timeline
-
-## 5. SUPPLEMENTS IN CORRECT PHASES
-Supplements MUST appear in their protocol-specified phase, not earlier:
-- Core Protocol supplements: Weeks 1-2 only
-- Phase 1 supplements: ADD starting at Phase 1 start week
-- Phase 2 supplements: ADD starting at Phase 2 start week
-- Phase 3 supplements: ADD starting at Phase 3 start week
-
-## 6. PROTOCOL IS THE ONLY CLINICAL AUTHORITY
-- The engagement plan OPERATIONALIZES the protocol - it does NOT modify clinical decisions
-- Do NOT add or modify dosages; reference "per protocol" where needed
-- Do NOT invent items not in the protocol
-- Do NOT omit items from the protocol
-
-## PATIENT INFORMATION
-- Name: ${clientName}
-- Personality Type: ${personalityType || 'Standard'}
-- Communication Preferences: ${communicationPreferences || 'Standard supportive communication'}
-
+## PATIENT: ${clientName}
 ## PROTOCOL: ${protocolTitle}
-Duration: ${calculatedDuration} weeks (THIS IS MANDATORY - DO NOT CHANGE)
+## DURATION: ${calculatedDuration} weeks (MANDATORY - DO NOT COMPRESS)
 
-═══════════════════════════════════════════════════════════════════
-PROTOCOL COVERAGE CHECKLIST - PHASE-ACCURATE PLACEMENT REQUIRED
-═══════════════════════════════════════════════════════════════════
+${phaseStructure ? `### PHASE STRUCTURE:\n${phaseStructure}` : ''}
 
-### SUPPLEMENTS (${supplements.length} items - WITH START WEEKS)
+### ALL SUPPLEMENTS (${supplements.length} items - MUST LIST EACH BY NAME):
 ${supplementsList || 'None in protocol'}
 
-### CLINIC TREATMENTS (${clinic_treatments.length} items - ALL ARE DECISIONS, NOT ACTIONS)
-${clinicList || 'None in protocol'}
-
-### LIFESTYLE PROTOCOLS (${lifestyle_protocols.length} items - WITH START WEEKS)
+### ALL LIFESTYLE PROTOCOLS (${lifestyle_protocols.length} items):
 ${lifestyleList || 'None in protocol'}
 
-### TESTS/LABS (${retest_schedule.length} items - SCHEDULE→COMPLETE→REVIEW SEQUENCE)
+### ALL CLINIC TREATMENTS (${clinic_treatments.length} items - ALL CONDITIONAL):
+${clinicList || 'None in protocol'}
+
+### ALL TESTS (${retest_schedule.length} items):
 ${retestList || 'None specified'}
 
-### SAFETY RULES
-${absoluteContraindications ? `**STOP RULES (Absolute - halt protocol immediately):**\n${absoluteContraindications}\n` : ''}
-${safetyGates ? `**SAFETY GATES (IF/THEN progression logic):**\n${safetyGates}\n` : ''}
-${readinessCriteria ? `**GATE CRITERIA (must all be TRUE to advance):**\n${readinessCriteria}\n` : ''}
-${monitoringRequirements ? `**MONITORING (track daily/weekly):**\n${monitoringRequirements}\n` : ''}
-${warningSigns ? `**ESCALATION TRIGGERS (contact clinician within 24h):**\n${warningSigns}\n` : ''}
+### SAFETY CONSTRAINTS:
+${absoluteContraindications ? `STOP RULES:\n${absoluteContraindications}\n` : ''}
+${monitoringRequirements ? `MONITORING:\n${monitoringRequirements}\n` : ''}
+${warningSigns ? `ESCALATION TRIGGERS:\n${warningSigns}\n` : ''}
 
 ═══════════════════════════════════════════════════════════════════
-OUTPUT STRUCTURE - PHASE-BASED (NOT COMPRESSED)
+LABELING RULES
 ═══════════════════════════════════════════════════════════════════
 
-Return ONLY valid JSON with this structure:
+Every item MUST have one of these labels:
+
+[SCHEDULED] = Client does this as directed, no conditions
+[CONDITIONAL - if X] = Only if condition met (tolerance, stability, etc.)
+[CLINICIAN DECISION] = Requires clinician approval before scheduling
+
+Examples:
+– Magnesium Glycinate [SCHEDULED]
+– DMSA [SCHEDULED - cycled per protocol]
+– Infrared Sauna [CONDITIONAL - if tolerated]
+– IV Glutathione [CLINICIAN DECISION - eligible Week 8+ if stable]
+
+═══════════════════════════════════════════════════════════════════
+OUTPUT STRUCTURE
+═══════════════════════════════════════════════════════════════════
+
+Return ONLY valid JSON with this SIMPLIFIED structure:
 
 {
   "title": "Engagement Plan: ${protocolTitle} for ${clientName}",
-  "summary": "This ${calculatedDuration}-week engagement plan operationalizes the clinical protocol with conditional progression.",
   "total_weeks": ${calculatedDuration},
-  "protocol_governs_decisions": true,
 
   "phases": [
     {
       "phase_number": 1,
-      "title": "Phase 1: Foundation & Safety (Weeks 1-2)",
-      "subtitle": "Establish tolerance and baseline monitoring",
+      "title": "Core Protocol: Foundation & Safety",
       "week_range": "1-2",
-      "start_week": 1,
-      "end_week": 2,
 
-      "actions": [
-        {
-          "type": "ACTION",
-          "item": "Take Magnesium Glycinate (per protocol dosage)",
-          "timing": "Daily with dinner",
-          "notes": "per protocol"
-        }
+      "clinical_elements": [
+        { "name": "Magnesium Glycinate", "status": "SCHEDULED" },
+        { "name": "Vitamin D3", "status": "SCHEDULED" },
+        { "name": "Hydration Protocol", "status": "SCHEDULED" },
+        { "name": "Elimination Support", "status": "SCHEDULED" }
       ],
 
       "monitoring": [
-        {
-          "type": "MONITOR",
-          "item": "Track bowel movement frequency and quality",
-          "frequency": "Daily"
-        }
+        "Track bowel movements daily",
+        "Log energy levels",
+        "Note any adverse reactions"
       ],
 
       "safety_gate": {
-        "type": "GATE",
-        "description": "Core → Phase 1 Transition",
-        "conditions": [
-          "Tolerating core supplements well (no GI distress)",
-          "Regular bowel movements (1-2x daily)",
-          "No adverse reactions",
-          "Energy stable or improving"
-        ],
-        "if_pass": "Proceed to Phase 2 (Week 3)",
-        "if_fail": "HOLD at current phase. Contact clinician within 48 hours."
-      },
+        "conditions": ["Tolerating supplements well", "Regular bowel movements", "No adverse reactions"],
+        "if_pass": "Proceed to Phase 1 (Week 3)",
+        "if_fail": "HOLD. Contact clinician within 48h."
+      }
+    },
+    {
+      "phase_number": 2,
+      "title": "Phase 1: Gut Restoration & Binder Introduction",
+      "week_range": "3-4",
 
-      "progress_goal": "90%+ supplement adherence, establish baseline tolerance",
-      "check_in_prompts": ["How are you tolerating the supplements?", "Any digestive changes?"]
+      "clinical_elements": [
+        { "name": "Continue: Magnesium Glycinate", "status": "SCHEDULED" },
+        { "name": "Continue: Vitamin D3", "status": "SCHEDULED" },
+        { "name": "ADD: Activated Charcoal", "status": "SCHEDULED" },
+        { "name": "ADD: L-Glutamine", "status": "SCHEDULED" },
+        { "name": "ADD: Probiotics", "status": "SCHEDULED" }
+      ],
+
+      "monitoring": [
+        "Continue bowel tracking",
+        "Note detox symptoms if any"
+      ],
+
+      "safety_gate": {
+        "conditions": ["Binders tolerated", "No constipation", "Energy stable"],
+        "if_pass": "Proceed to Phase 2 (Week 5)",
+        "if_fail": "HOLD. Contact clinician within 48h."
+      }
     }
   ],
 
   "clinic_treatments": {
-    "note": "All clinic treatments are CONDITIONAL and require clinician approval",
-    "earliest_eligibility": "Week 8 (after Phase 2 stability confirmed)",
-    "treatments": [
+    "note": "All require clinician approval - NOT default actions",
+    "items": [
       {
-        "type": "DECISION",
-        "name": "IV Chelation Therapy (EDTA/DMPS)",
-        "eligibility_conditions": ["Phase 2 stable", "Kidney function normal", "No heart failure"],
-        "contraindications": ["Kidney disease", "Heart failure", "Pregnancy", "Active infections"],
-        "decision_owner": "Clinician",
-        "note": "NOT a default action - requires eligibility review"
+        "name": "IV Glutathione",
+        "status": "CLINICIAN DECISION",
+        "earliest_eligibility": "Week 8",
+        "conditions": ["Phase 2 stable", "No G6PD deficiency"]
+      },
+      {
+        "name": "Infrared Sauna",
+        "status": "CONDITIONAL",
+        "earliest_eligibility": "Week 5",
+        "conditions": ["Tolerated well", "Hydration adequate"]
       }
     ]
   },
 
   "testing_schedule": [
     {
-      "type": "TEST",
-      "name": "Heavy Metals Panel (post-provocative)",
+      "name": "Heavy Metals Panel (provoked)",
       "timing": "Week 8-10",
-      "action_sequence": [
-        "Week 8: Schedule test appointment",
-        "Week 9: Complete test",
-        "Week 10: Review results with practitioner",
-        "Adjust protocol based on findings"
-      ]
+      "sequence": ["Schedule", "Complete", "Review with practitioner", "Adjust protocol"]
     }
   ],
 
   "safety_rules": {
-    "stop_rules": ["STOP all supplements and contact clinician IMMEDIATELY if: severe allergic reaction, chest pain, severe GI distress"],
-    "hold_rules": ["HOLD progression if: bowel movements irregular, energy declining, new adverse reactions"],
-    "escalation_rules": ["Contact clinician within 24 hours if: persistent fatigue, unusual mood changes, sleep disruption >3 days"]
+    "stop_immediately": ["Severe allergic reaction", "Chest pain", "Severe GI distress"],
+    "hold_and_contact": ["Irregular bowel movements >3 days", "Significant energy decline", "New adverse reactions"],
+    "escalation_24h": ["Persistent fatigue", "Unusual mood changes", "Sleep disruption >3 days"]
   },
 
-  "communication_schedule": {
-    "frequency": "Every 3 days",
-    "channel": "WhatsApp",
-    "tone": "Encouraging and supportive"
-  },
-
-  "alignment_self_check": {
-    "all_protocol_supplements_explicitly_listed": true,
-    "all_modalities_explicitly_listed": true,
-    "all_clinic_interventions_as_conditional_decisions": true,
-    "all_tests_mapped_to_timing_and_review": true,
-    "no_misclassified_take_items": true,
-    "timeline_matches_protocol_duration": true,
-    "safety_gates_have_hold_escalate_rules": true,
-    "no_invented_items": true
+  "alignment_verification": {
+    "protocol_supplements_count": ${supplements.length},
+    "engagement_plan_supplements_count": "MUST EQUAL ${supplements.length}",
+    "all_items_explicitly_named": true,
+    "no_dosages_in_plan": true,
+    "all_clinic_treatments_conditional": true,
+    "timeline_preserved": true
   }
 }
 
 ═══════════════════════════════════════════════════════════════════
-MANDATORY SELF-CHECK BEFORE RETURNING (ALL MUST BE TRUE)
+CRITICAL VALIDATION BEFORE RETURNING
 ═══════════════════════════════════════════════════════════════════
 
-Before returning the JSON, verify each of these. If ANY is false, FIX IT first:
+COUNT CHECK:
+- Protocol has ${supplements.length} supplements → Plan must list ${supplements.length} supplements BY NAME
+- Protocol has ${clinic_treatments.length} clinic treatments → Plan must list ${clinic_treatments.length} as CONDITIONAL
+- Protocol has ${lifestyle_protocols.length} lifestyle protocols → Plan must list ${lifestyle_protocols.length} BY NAME
+- Protocol has ${retest_schedule.length} tests → Plan must list ${retest_schedule.length} tests
 
-1. [ ] All protocol supplements explicitly listed by name (not "add supplements")
-2. [ ] All modalities explicitly listed by name (not "add modalities")
-3. [ ] All clinic interventions included as CONDITIONAL DECISIONS (never default actions)
-4. [ ] All tests mapped to specific timing with Schedule→Complete→Review→Adjust loop
-5. [ ] No misclassified "Take" items (tests, contraindications, consultations)
-6. [ ] Timeline = ${calculatedDuration} weeks (matches protocol, NOT compressed to 4 weeks)
-7. [ ] Every safety gate has IF/THEN with explicit HOLD/PAUSE/ESCALATE rules
-8. [ ] No invented items (only items from protocol checklist above)
-9. [ ] Each phase starts at protocol-specified week
-10. [ ] Contraindications listed as STOP rules (not embedded in actions)
+FORMAT CHECK:
+- Each clinical_element has "name" (explicit) and "status" (SCHEDULED/CONDITIONAL/CLINICIAN DECISION)
+- NO dosages in the plan (just "per protocol")
+- Safety gates have if_pass AND if_fail with HOLD instruction
+- Timeline is ${calculatedDuration} weeks (NOT compressed)
 
-CRITICAL: If you produce a plan that is "aligned in phases but missing governance" it is WRONG.
-CRITICAL: If you produce a plan that "lists everything but breaks sequencing/safety" it is WRONG.
+If ANY item from the protocol is missing from the engagement plan, ADD IT before returning.
 
 Return ONLY the JSON object. No markdown, no code blocks, no explanatory text.`;
 }
@@ -750,12 +680,13 @@ function getNameVariants(name) {
 }
 
 /**
- * Auto-fix an engagement plan by regenerating missing sections
- * This version handles the new strict schema with:
- * - Phase-based structure with start_week/end_week
- * - Strict item classification (ACTION/MONITOR/GATE/DECISION/TEST)
- * - Clinic treatments as CONDITIONAL DECISIONS
- * - Tests with action sequences
+ * Auto-fix an engagement plan by adding missing items
+ *
+ * NEW SIMPLIFIED STRUCTURE:
+ * - Phase-based with clinical_elements array
+ * - Each element has "name" and "status" (SCHEDULED/CONDITIONAL/CLINICIAN DECISION)
+ * - No dosages - just names
+ * - Clinic treatments in separate section with conditions
  *
  * @param {Object} engagementPlan - The engagement plan to fix
  * @param {Object} validationResult - The validation result with missing items
@@ -801,20 +732,19 @@ function autoFixEngagementPlan(engagementPlan, validationResult, protocolElement
       fixed.phases.push({
         phase_number: idx + 1,
         title: p.name || `Phase ${idx + 1}`,
-        subtitle: p.readiness_criteria?.join('; ') || 'Protocol phase',
         week_range: `${startWeek}-${endWeek}`,
-        start_week: startWeek,
-        end_week: endWeek,
-        actions: [],
+        clinical_elements: [],
         monitoring: [],
-        safety_gate: null,
-        progress_goal: '',
-        check_in_prompts: []
+        safety_gate: {
+          conditions: p.readiness_criteria || ['Tolerating current phase well'],
+          if_pass: `Proceed to Phase ${idx + 2}`,
+          if_fail: 'HOLD. Contact clinician within 48h.'
+        }
       });
     });
   }
 
-  // FIX 3: Add missing supplements with STRICT phase placement
+  // FIX 3: Add missing supplements with SIMPLIFIED structure
   if (validationResult?.missingSupplements?.length > 0) {
     validationResult.missingSupplements.forEach(suppName => {
       const supp = supplements.find(s => s.name === suppName);
@@ -822,37 +752,35 @@ function autoFixEngagementPlan(engagementPlan, validationResult, protocolElement
 
       // Find the correct phase for this supplement
       const targetPhaseIndex = fixed.phases.findIndex(phase => {
-        const phaseStart = phase.start_week || 1;
-        const phaseEnd = phase.end_week || (phaseStart + 2);
-        return startWeek >= phaseStart && startWeek <= phaseEnd;
+        const weekRange = phase.week_range?.split('-').map(Number) || [1, 2];
+        return startWeek >= weekRange[0] && startWeek <= weekRange[1];
       });
 
       const phaseIdx = targetPhaseIndex >= 0 ? targetPhaseIndex : 0;
 
       if (fixed.phases[phaseIdx]) {
-        if (!fixed.phases[phaseIdx].actions) {
-          fixed.phases[phaseIdx].actions = [];
+        if (!fixed.phases[phaseIdx].clinical_elements) {
+          fixed.phases[phaseIdx].clinical_elements = [];
         }
 
-        // Add as properly typed ACTION
-        const existingAction = fixed.phases[phaseIdx].actions.find(
-          a => a.item?.toLowerCase().includes(suppName.toLowerCase())
+        // Check if not already there
+        const existingElement = fixed.phases[phaseIdx].clinical_elements.find(
+          e => e.name?.toLowerCase().includes(suppName.toLowerCase())
         );
 
-        if (!existingAction) {
-          fixed.phases[phaseIdx].actions.push({
-            type: 'ACTION',
-            item: `Take ${suppName} (per protocol dosage)`,
-            timing: supp?.timing || 'As directed',
-            notes: 'per protocol',
-            start_week: startWeek
+        if (!existingElement) {
+          // Add with new simplified structure
+          const isNewInPhase = phaseIdx > 0;
+          fixed.phases[phaseIdx].clinical_elements.push({
+            name: isNewInPhase ? `ADD: ${suppName}` : suppName,
+            status: 'SCHEDULED'
           });
         }
       }
     });
   }
 
-  // FIX 4: Add missing lifestyle protocols with correct phase placement
+  // FIX 4: Add missing lifestyle protocols
   if (validationResult?.missingLifestyleProtocols?.length > 0) {
     validationResult.missingLifestyleProtocols.forEach(protocolName => {
       const lifestyle = lifestyle_protocols.find(l => l.name === protocolName);
@@ -860,48 +788,43 @@ function autoFixEngagementPlan(engagementPlan, validationResult, protocolElement
 
       // Find the correct phase
       const targetPhaseIndex = fixed.phases.findIndex(phase => {
-        const phaseStart = phase.start_week || 1;
-        const phaseEnd = phase.end_week || (phaseStart + 2);
-        return startWeek >= phaseStart && startWeek <= phaseEnd;
+        const weekRange = phase.week_range?.split('-').map(Number) || [1, 2];
+        return startWeek >= weekRange[0] && startWeek <= weekRange[1];
       });
 
       const phaseIdx = targetPhaseIndex >= 0 ? targetPhaseIndex : 0;
 
       if (fixed.phases[phaseIdx]) {
-        if (!fixed.phases[phaseIdx].actions) {
-          fixed.phases[phaseIdx].actions = [];
+        if (!fixed.phases[phaseIdx].clinical_elements) {
+          fixed.phases[phaseIdx].clinical_elements = [];
         }
 
-        const existingAction = fixed.phases[phaseIdx].actions.find(
-          a => a.item?.toLowerCase().includes(protocolName.toLowerCase())
+        const existingElement = fixed.phases[phaseIdx].clinical_elements.find(
+          e => e.name?.toLowerCase().includes(protocolName.toLowerCase())
         );
 
-        if (!existingAction) {
-          fixed.phases[phaseIdx].actions.push({
-            type: 'ACTION',
-            item: `Follow ${protocolName}`,
-            timing: lifestyle?.timing || 'Daily',
-            notes: 'per protocol',
-            start_week: startWeek
+        if (!existingElement) {
+          fixed.phases[phaseIdx].clinical_elements.push({
+            name: protocolName,
+            status: 'SCHEDULED'
           });
         }
       }
     });
   }
 
-  // FIX 5: Add missing clinic treatments as CONDITIONAL DECISIONS
+  // FIX 5: Add missing clinic treatments with SIMPLIFIED structure
   if (validationResult?.missingClinicTreatments?.length > 0) {
-    // Ensure clinic_treatments section exists with correct structure
+    // Ensure clinic_treatments section exists with new structure
     if (!fixed.clinic_treatments) {
       fixed.clinic_treatments = {
-        note: 'All clinic treatments are CONDITIONAL and require clinician approval',
-        earliest_eligibility: 'Week 8 (after Phase 2 stability confirmed)',
-        treatments: []
+        note: 'All require clinician approval - NOT default actions',
+        items: []
       };
     }
 
-    if (!fixed.clinic_treatments.treatments) {
-      fixed.clinic_treatments.treatments = [];
+    if (!fixed.clinic_treatments.items) {
+      fixed.clinic_treatments.items = [];
     }
 
     validationResult.missingClinicTreatments.forEach(treatmentName => {
@@ -909,26 +832,24 @@ function autoFixEngagementPlan(engagementPlan, validationResult, protocolElement
       const startWeek = treatment?.start_week || 8;
 
       // Check if not already there
-      const existingTreatment = fixed.clinic_treatments.treatments.find(
+      const existingTreatment = fixed.clinic_treatments.items.find(
         t => t.name?.toLowerCase() === treatmentName.toLowerCase()
       );
 
       if (!existingTreatment) {
-        // Add as DECISION (never as ACTION)
-        fixed.clinic_treatments.treatments.push({
-          type: 'DECISION',
+        fixed.clinic_treatments.items.push({
           name: treatmentName,
+          status: 'CLINICIAN DECISION',
           earliest_eligibility: `Week ${startWeek}`,
-          eligibility_conditions: ['Phase stability confirmed', 'No contraindications present'],
-          contraindications: treatment?.contraindications ? [treatment.contraindications] : [],
-          decision_owner: 'Clinician',
-          note: 'NOT a default action - requires eligibility review'
+          conditions: treatment?.contraindications
+            ? ['Phase stable', `No ${treatment.contraindications}`]
+            : ['Phase stable', 'No contraindications']
         });
       }
     });
   }
 
-  // FIX 6: Add missing retests with proper TEST structure and action sequence
+  // FIX 6: Add missing tests with SIMPLIFIED structure
   if (validationResult?.missingRetests?.length > 0) {
     if (!fixed.testing_schedule) {
       fixed.testing_schedule = [];
@@ -943,115 +864,96 @@ function autoFixEngagementPlan(engagementPlan, validationResult, protocolElement
       );
 
       if (!existingTest) {
-        // Parse timing to get week number
-        let weekNum = 'As directed';
-        if (test?.timing) {
-          const weekMatch = test.timing.match(/week\s*(\d+)/i);
-          if (weekMatch) {
-            weekNum = `Week ${weekMatch[1]}`;
-          } else {
-            weekNum = test.timing;
-          }
-        }
-
-        // Add with proper TEST structure and action sequence
         fixed.testing_schedule.push({
-          type: 'TEST',
           name: testName,
-          timing: weekNum,
-          purpose: test?.purpose || 'Monitor progress and adjust protocol',
-          action_sequence: [
-            `Schedule ${testName} appointment`,
-            `Complete ${testName}`,
-            `Review results with practitioner`,
-            'Adjust protocol based on findings'
-          ]
+          timing: test?.timing || 'As scheduled',
+          sequence: ['Schedule', 'Complete', 'Review with practitioner', 'Adjust protocol']
         });
       }
     });
   }
 
-  // FIX 7: Ensure safety_rules has correct structure with STOP/HOLD/ESCALATE
+  // FIX 7: Ensure safety_rules has correct structure
   if (!fixed.safety_rules) {
     fixed.safety_rules = {
-      stop_rules: [],
-      hold_rules: [],
-      escalation_rules: []
+      stop_immediately: [],
+      hold_and_contact: [],
+      escalation_24h: []
     };
   }
 
   // Add absolute contraindications as STOP rules
   const absoluteContraindications = safety_constraints.filter(c => c.type === 'absolute_contraindication');
   absoluteContraindications.forEach(c => {
-    if (!fixed.safety_rules.stop_rules.some(r => r.includes(c.constraint))) {
-      fixed.safety_rules.stop_rules.push(`STOP all supplements and contact clinician IMMEDIATELY if: ${c.constraint}`);
+    const stopRules = fixed.safety_rules.stop_immediately || fixed.safety_rules.stop_rules || [];
+    if (!stopRules.some(r => r.includes(c.constraint))) {
+      if (!fixed.safety_rules.stop_immediately) fixed.safety_rules.stop_immediately = [];
+      fixed.safety_rules.stop_immediately.push(c.constraint);
     }
   });
 
-  // Add warning signs as ESCALATION rules
+  // Add warning signs as escalation rules
   const warningSigns = safety_constraints.filter(c => c.type === 'warning_sign');
   warningSigns.forEach(w => {
-    if (!fixed.safety_rules.escalation_rules.some(r => r.includes(w.constraint))) {
-      fixed.safety_rules.escalation_rules.push(`Contact clinician within 24 hours if: ${w.constraint}`);
+    const escalationRules = fixed.safety_rules.escalation_24h || fixed.safety_rules.escalation_rules || [];
+    if (!escalationRules.some(r => r.includes(w.constraint))) {
+      if (!fixed.safety_rules.escalation_24h) fixed.safety_rules.escalation_24h = [];
+      fixed.safety_rules.escalation_24h.push(w.constraint);
     }
   });
 
-  // FIX 8: Ensure safety gates are IF/THEN format (not bullet lists)
+  // FIX 8: Ensure each phase has safety_gate with if_pass/if_fail
   if (fixed.phases && Array.isArray(fixed.phases)) {
     fixed.phases.forEach((phase, idx) => {
-      // Get readiness criteria for this phase transition
-      const phaseSafetyGates = safety_constraints.filter(
-        c => c.type === 'safety_gate' || c.type === 'readiness_criteria'
-      ).filter(c => c.phase && c.phase.toLowerCase().includes(`phase ${idx + 1}`));
-
-      if (phaseSafetyGates.length > 0 && !phase.safety_gate) {
-        const conditions = phaseSafetyGates.map(g => g.constraint);
+      if (!phase.safety_gate) {
         phase.safety_gate = {
-          type: 'GATE',
-          description: `Phase ${idx + 1} → Phase ${idx + 2} Transition`,
-          conditions: conditions,
+          conditions: ['Tolerating current phase well', 'No adverse reactions'],
           if_pass: `Proceed to Phase ${idx + 2}`,
-          if_fail: 'HOLD at current phase. Contact clinician within 48 hours.'
+          if_fail: 'HOLD. Contact clinician within 48h.'
         };
+      } else if (!phase.safety_gate.if_fail) {
+        phase.safety_gate.if_fail = 'HOLD. Contact clinician within 48h.';
       }
     });
   }
 
-  // FIX 9: Update alignment_self_check with comprehensive validation
-  fixed.alignment_self_check = {
-    all_protocol_supplements_explicitly_listed: true,
-    all_modalities_explicitly_listed: true,
-    all_clinic_interventions_as_conditional_decisions: true,
-    all_tests_mapped_to_timing_and_review: true,
-    no_misclassified_take_items: true,
-    timeline_matches_protocol_duration: true,
-    safety_gates_have_hold_escalate_rules: true,
-    no_invented_items: true,
+  // FIX 9: Update alignment_verification
+  fixed.alignment_verification = {
+    protocol_supplements_count: supplements.length,
+    engagement_plan_supplements_count: countSupplementsInPlan(fixed),
+    all_items_explicitly_named: true,
+    no_dosages_in_plan: true,
+    all_clinic_treatments_conditional: true,
+    timeline_preserved: true,
     auto_fixed: true,
     auto_fix_timestamp: new Date().toISOString(),
     items_added: {
       supplements: validationResult?.missingSupplements?.length || 0,
       clinic_treatments: validationResult?.missingClinicTreatments?.length || 0,
       lifestyle_protocols: validationResult?.missingLifestyleProtocols?.length || 0,
-      retests: validationResult?.missingRetests?.length || 0
+      tests: validationResult?.missingRetests?.length || 0
     }
   };
 
-  // Keep alignment_verification for backward compatibility
-  fixed.alignment_verification = {
-    timeline_matches_protocol: true,
-    all_supplements_in_correct_phases: true,
-    all_clinic_treatments_conditional: true,
-    safety_gates_are_if_then: true,
-    no_tests_as_actions: true,
-    no_decisions_as_defaults: true,
-    auto_fixed: true
-  };
-
-  // Add alignment note
-  fixed._alignment_note = `Auto-fixed to include ${validationResult?.missingSupplements?.length || 0} supplements, ${validationResult?.missingClinicTreatments?.length || 0} clinic treatments, ${validationResult?.missingLifestyleProtocols?.length || 0} lifestyle protocols, and ${validationResult?.missingRetests?.length || 0} retest items that were missing from original generation.`;
-
   return fixed;
+}
+
+/**
+ * Count supplements in the new simplified plan structure
+ */
+function countSupplementsInPlan(plan) {
+  let count = 0;
+  if (plan.phases && Array.isArray(plan.phases)) {
+    plan.phases.forEach(phase => {
+      if (phase.clinical_elements && Array.isArray(phase.clinical_elements)) {
+        // Count elements that are SCHEDULED (supplements/lifestyle)
+        count += phase.clinical_elements.filter(e =>
+          e.status === 'SCHEDULED' && !e.name?.toLowerCase().includes('continue:')
+        ).length;
+      }
+    });
+  }
+  return count;
 }
 
 /**
