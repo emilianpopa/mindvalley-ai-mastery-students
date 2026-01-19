@@ -692,6 +692,7 @@ function parseCSVLine(line) {
 
 function parseMomenceDate(dateStr) {
   // Format: "2024-11-04, 2:30 PM"
+  // Momence times are in SAST (South Africa Standard Time, UTC+2)
   const [datePart, timePart] = dateStr.split(', ');
   const [year, month, day] = datePart.split('-').map(Number);
   const timeMatch = timePart.match(/(\d+):(\d+)\s*(AM|PM)/i);
@@ -704,7 +705,14 @@ function parseMomenceDate(dateStr) {
   if (period === 'PM' && hours !== 12) hours += 12;
   else if (period === 'AM' && hours === 12) hours = 0;
 
-  return new Date(year, month - 1, day, hours, minutes, 0);
+  // Create ISO string with SAST offset (+02:00)
+  const monthStr = String(month).padStart(2, '0');
+  const dayStr = String(day).padStart(2, '0');
+  const hoursStr = String(hours).padStart(2, '0');
+  const minutesStr = String(minutes).padStart(2, '0');
+  const isoString = `${year}-${monthStr}-${dayStr}T${hoursStr}:${minutesStr}:00+02:00`;
+
+  return new Date(isoString);
 }
 
 function parseCustomerEmail(customerField) {
