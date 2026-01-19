@@ -527,6 +527,9 @@ Return ONLY the JSON object. No markdown, no code blocks, no explanatory text.`;
 
 /**
  * Validate that an engagement plan covers all protocol elements
+ * STRICT VALIDATION: Items must appear in clinical_elements or proper sections,
+ * not just anywhere in the JSON text.
+ *
  * @param {Object} engagementPlan - The generated engagement plan
  * @param {Object} protocolElements - The extracted protocol elements
  * @returns {Object} Validation result with missing items
@@ -539,6 +542,7 @@ function validateEngagementPlanAlignment(engagementPlan, protocolElements) {
     missingLifestyleProtocols: [],
     missingRetests: [],
     extraItems: [],
+    structureValid: true,
     coverage: {
       supplements: 0,
       clinic_treatments: 0,
@@ -553,13 +557,61 @@ function validateEngagementPlanAlignment(engagementPlan, protocolElements) {
   const lifestyle_protocols = protocolElements?.lifestyle_protocols || [];
   const retest_schedule = protocolElements?.retest_schedule || [];
 
-  // Flatten all items mentioned in the engagement plan
-  const planText = JSON.stringify(engagementPlan || {}).toLowerCase();
+  // STRICT: Extract clinical_elements from phases (new format)
+  const clinicalElementNames = [];
+  if (engagementPlan?.phases && Array.isArray(engagementPlan.phases)) {
+    engagementPlan.phases.forEach(phase => {
+      if (phase.clinical_elements && Array.isArray(phase.clinical_elements)) {
+        phase.clinical_elements.forEach(el => {
+          const name = typeof el === 'string' ? el : el.name;
+          if (name) clinicalElementNames.push(name.toLowerCase());
+        });
+      }
+      // Also check items array (old format) but flag it
+      if (phase.items && Array.isArray(phase.items)) {
+        result.structureValid = false; // Old format detected
+        phase.items.forEach(item => {
+          const name = typeof item === 'string' ? item : (item.name || item.item);
+          if (name) clinicalElementNames.push(name.toLowerCase());
+        });
+      }
+    });
+  }
 
-  // Check supplements coverage
+  // Extract clinic treatments from engagement plan
+  const planClinicTreatmentNames = [];
+  if (engagementPlan?.clinic_treatments?.items) {
+    engagementPlan.clinic_treatments.items.forEach(t => {
+      if (t.name) planClinicTreatmentNames.push(t.name.toLowerCase());
+    });
+  }
+  if (engagementPlan?.clinic_treatments?.treatments) {
+    engagementPlan.clinic_treatments.treatments.forEach(t => {
+      if (t.name) planClinicTreatmentNames.push(t.name.toLowerCase());
+    });
+  }
+
+  // Extract tests from engagement plan
+  const planTestNames = [];
+  if (engagementPlan?.testing_schedule && Array.isArray(engagementPlan.testing_schedule)) {
+    engagementPlan.testing_schedule.forEach(t => {
+      if (t.name) planTestNames.push(t.name.toLowerCase());
+    });
+  }
+
+  // Check if structure is correct (has clinical_elements, not generic items)
+  if (!result.structureValid || clinicalElementNames.length === 0) {
+    console.warn('[Validation] WARNING: Engagement plan uses OLD format or has no clinical_elements');
+    result.structureValid = false;
+    result.isAligned = false;
+  }
+
+  // STRICT: Check supplements coverage - must be in clinical_elements BY NAME
   supplements.forEach(supp => {
     const nameVariants = getNameVariants(supp.name);
-    const found = nameVariants.some(v => planText.includes(v.toLowerCase()));
+    const found = nameVariants.some(v =>
+      clinicalElementNames.some(el => el.includes(v.toLowerCase()))
+    );
     if (found) {
       result.coverage.supplements++;
     } else {
@@ -568,10 +620,12 @@ function validateEngagementPlanAlignment(engagementPlan, protocolElements) {
     }
   });
 
-  // Check clinic treatments coverage
+  // STRICT: Check clinic treatments coverage - must be in clinic_treatments section
   clinic_treatments.forEach(treatment => {
     const nameVariants = getNameVariants(treatment.name);
-    const found = nameVariants.some(v => planText.includes(v.toLowerCase()));
+    const found = nameVariants.some(v =>
+      planClinicTreatmentNames.some(t => t.includes(v.toLowerCase()))
+    );
     if (found) {
       result.coverage.clinic_treatments++;
     } else {
@@ -580,10 +634,12 @@ function validateEngagementPlanAlignment(engagementPlan, protocolElements) {
     }
   });
 
-  // Check lifestyle protocols coverage
+  // Check lifestyle protocols coverage - can be in clinical_elements
   lifestyle_protocols.forEach(protocol => {
     const nameVariants = getNameVariants(protocol.name);
-    const found = nameVariants.some(v => planText.includes(v.toLowerCase()));
+    const found = nameVariants.some(v =>
+      clinicalElementNames.some(el => el.includes(v.toLowerCase()))
+    );
     if (found) {
       result.coverage.lifestyle_protocols++;
     } else {
@@ -592,10 +648,12 @@ function validateEngagementPlanAlignment(engagementPlan, protocolElements) {
     }
   });
 
-  // Check retest schedule coverage
+  // STRICT: Check retest schedule coverage - must be in testing_schedule section
   retest_schedule.forEach(test => {
     const nameVariants = getNameVariants(test.name);
-    const found = nameVariants.some(v => planText.includes(v.toLowerCase()));
+    const found = nameVariants.some(v =>
+      planTestNames.some(t => t.includes(v.toLowerCase()))
+    );
     if (found) {
       result.coverage.retest_schedule++;
     } else {
@@ -626,6 +684,12 @@ function validateEngagementPlanAlignment(engagementPlan, protocolElements) {
      result.coveragePercentage.lifestyle_protocols +
      result.coveragePercentage.retest_schedule) / 4
   );
+
+  // Log detailed results
+  console.log('[Validation] Clinical elements found:', clinicalElementNames.length);
+  console.log('[Validation] Clinic treatments found:', planClinicTreatmentNames.length);
+  console.log('[Validation] Tests found:', planTestNames.length);
+  console.log('[Validation] Structure valid:', result.structureValid);
 
   return result;
 }

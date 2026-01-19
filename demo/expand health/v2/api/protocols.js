@@ -2986,92 +2986,35 @@ Return ONLY valid JSON.`;
     console.log('[Engagement Plan] Claude API response received');
 
     const aiResponse = response.content[0].text;
+    console.log('[Engagement Plan] AI Response length:', aiResponse.length);
+    console.log('[Engagement Plan] AI Response preview (first 1000 chars):', aiResponse.substring(0, 1000));
+
     let engagementPlan;
 
     try {
       const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         engagementPlan = JSON.parse(jsonMatch[0]);
+        console.log('[Engagement Plan] Successfully parsed JSON');
+        console.log('[Engagement Plan] Parsed structure keys:', Object.keys(engagementPlan));
+        console.log('[Engagement Plan] Has clinical_elements:', engagementPlan.phases?.[0]?.clinical_elements ? 'YES' : 'NO');
+        console.log('[Engagement Plan] Has items array:', engagementPlan.phases?.[0]?.items ? 'YES' : 'NO');
+        console.log('[Engagement Plan] Phase 1 title:', engagementPlan.phases?.[0]?.title);
+
+        // Check if AI returned old format instead of new format
+        if (engagementPlan.phases?.[0]?.items && !engagementPlan.phases?.[0]?.clinical_elements) {
+          console.warn('[Engagement Plan] WARNING: AI returned OLD format (items array) instead of NEW format (clinical_elements)');
+          console.warn('[Engagement Plan] Phase 1 items:', JSON.stringify(engagementPlan.phases[0].items, null, 2));
+        }
       } else {
         throw new Error('No JSON found in response');
       }
     } catch (parseError) {
       console.error('[Engagement Plan] Failed to parse response:', parseError.message);
-      // Return fallback engagement plan
-      engagementPlan = {
-        title: `${protocol.template_name || 'Wellness'} Engagement Plan`,
-        summary: `This 4-week engagement plan is designed to help ${clientName} successfully implement their wellness protocol through phased delivery and regular check-ins.`,
-        total_weeks: 4,
-        phases: [
-          {
-            phase_number: 1,
-            title: 'Phase 1: Foundations (Week 1)',
-            subtitle: 'Establishing the groundwork for success',
-            items: [
-              'Start core supplement regimen as prescribed',
-              'Get morning sunlight within 30 minutes of waking',
-              'Avoid screens at least 45 minutes before bedtime',
-              'Begin food journaling to track meals and energy levels',
-              'Journal stress triggers twice this week'
-            ],
-            progress_goal: 'Build initial rhythm and reduce common health disruptors',
-            check_in_prompts: ['How are you feeling with the new supplements?', 'Any challenges with the morning routine?']
-          },
-          {
-            phase_number: 2,
-            title: 'Phase 2: Expand & Adapt (Week 2)',
-            subtitle: 'Building on foundations and introducing dietary changes',
-            items: [
-              'Introduce dietary modifications per protocol guidelines',
-              'Begin elimination of trigger foods if applicable',
-              'Add 5-10 minutes of breathwork or meditation daily',
-              'Track energy levels and symptoms in app',
-              'Review and adjust supplement timing based on feedback'
-            ],
-            progress_goal: 'Establish dietary patterns and introduce mindfulness practices',
-            check_in_prompts: ['How is the dietary transition going?', 'Notice any changes in energy or sleep?']
-          },
-          {
-            phase_number: 3,
-            title: 'Phase 3: Refine & Reflect (Week 3)',
-            subtitle: 'Integrating feedback and tracking body response',
-            items: [
-              'Monitor wearable metrics daily (e.g. HRV, sleep quality)',
-              'Track cortisol-related symptoms like restlessness or energy crashes',
-              'Add one evening yoga or stretching session this week',
-              'Share journal notes with practitioner',
-              'Schedule recommended lab tests if applicable'
-            ],
-            progress_goal: 'Identify trends and begin individualizing the approach',
-            check_in_prompts: ['What patterns are you noticing?', 'Any symptoms we should address?']
-          },
-          {
-            phase_number: 4,
-            title: 'Phase 4: Assess & Sustain (Week 4)',
-            subtitle: 'Reviewing results and locking in long-term strategies',
-            items: [
-              'Complete any pending lab tests',
-              'Evaluate supplement effectiveness and tolerability',
-              'Refine the protocol with your practitioner based on results',
-              'Maintain consistent habits (routine, dietary choices, journaling)',
-              'Prepare questions for follow-up consultation'
-            ],
-            progress_goal: 'Make final adjustments and ensure long-term sustainability',
-            check_in_prompts: ['What has worked best for you?', 'What would you like to adjust going forward?']
-          }
-        ],
-        communication_schedule: {
-          check_in_frequency: 'Every 3 days',
-          preferred_channel: 'WhatsApp',
-          message_tone: 'Encouraging and supportive'
-        },
-        success_metrics: [
-          'Supplement adherence rate',
-          'Sleep quality improvement',
-          'Energy level changes',
-          'Symptom reduction'
-        ]
-      };
+      console.error('[Engagement Plan] Raw response that failed to parse:', aiResponse.substring(0, 500));
+
+      // DO NOT use hardcoded fallback - throw error instead so we can fix the issue
+      throw new Error(`Failed to parse AI response: ${parseError.message}. Response preview: ${aiResponse.substring(0, 200)}`);
     }
 
     // ========================================
