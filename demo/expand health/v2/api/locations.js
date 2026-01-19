@@ -241,6 +241,62 @@ router.delete('/:id', requireRole(['admin']), async (req, res, next) => {
 });
 
 /**
+ * GET /api/locations/availability
+ * Check which venues are occupied at a given time
+ * Query params: start_time, duration (in minutes)
+ */
+router.get('/availability', async (req, res, next) => {
+  try {
+    const tenantId = req.user.tenantId;
+    const { start_time, duration = 60, exclude_appointment_id } = req.query;
+
+    if (!start_time) {
+      return res.status(400).json({ error: 'start_time is required' });
+    }
+
+    const startTime = new Date(start_time);
+    const endTime = new Date(startTime.getTime() + parseInt(duration) * 60000);
+
+    // Get all locations
+    const locationsResult = await db.query(
+      `SELECT id, name FROM locations WHERE tenant_id = $1 AND is_active = true ORDER BY name ASC`,
+      [tenantId]
+    );
+
+    // Find appointments that overlap with the requested time slot
+    let conflictQuery = `
+      SELECT DISTINCT location_id
+      FROM appointments
+      WHERE tenant_id = $1
+        AND location_id IS NOT NULL
+        AND status NOT IN ('cancelled', 'no_show')
+        AND start_time < $3
+        AND end_time > $2
+    `;
+    const queryParams = [tenantId, startTime, endTime];
+
+    // Exclude current appointment when editing
+    if (exclude_appointment_id) {
+      conflictQuery += ` AND id != $4`;
+      queryParams.push(exclude_appointment_id);
+    }
+
+    const conflictsResult = await db.query(conflictQuery, queryParams);
+    const occupiedLocationIds = new Set(conflictsResult.rows.map(r => r.location_id));
+
+    // Return locations with availability status
+    const locations = locationsResult.rows.map(loc => ({
+      ...loc,
+      is_occupied: occupiedLocationIds.has(loc.id)
+    }));
+
+    res.json(locations);
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
  * POST /api/locations/seed
  * Seed default locations (for development)
  */

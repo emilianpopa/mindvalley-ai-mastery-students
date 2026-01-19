@@ -6073,22 +6073,53 @@
     async function loadNewAptVenues() {
       try {
         const token = localStorage.getItem('auth_token');
-        const response = await fetch('/api/locations', {
+        const startTime = document.getElementById('newAptStartsAt').value;
+        const duration = document.getElementById('newAptDuration').value || 60;
+
+        // Use availability endpoint if we have a start time
+        let url = '/api/locations';
+        if (startTime) {
+          url = `/api/locations/availability?start_time=${encodeURIComponent(startTime)}&duration=${duration}`;
+        }
+
+        const response = await fetch(url, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (response.ok) {
           newAptVenues = await response.json();
-          const select = document.getElementById('newAptVenue');
-          select.innerHTML = '<option value="">Select...</option>';
-          newAptVenues.forEach(venue => {
-            const option = document.createElement('option');
-            option.value = venue.id;
-            option.textContent = venue.name;
-            select.appendChild(option);
-          });
+          renderVenueDropdown();
         }
       } catch (error) {
         console.error('Failed to load venues:', error);
+      }
+    }
+
+    function renderVenueDropdown() {
+      const select = document.getElementById('newAptVenue');
+      const currentValue = select.value;
+      select.innerHTML = '<option value="">Select...</option>';
+
+      newAptVenues.forEach(venue => {
+        const option = document.createElement('option');
+        option.value = venue.id;
+
+        if (venue.is_occupied) {
+          option.textContent = `${venue.name}    Occupied`;
+          option.style.color = '#9ca3af';
+          option.disabled = true;
+        } else {
+          option.textContent = venue.name;
+        }
+
+        select.appendChild(option);
+      });
+
+      // Restore selected value if still available
+      if (currentValue) {
+        const selectedOption = select.querySelector(`option[value="${currentValue}"]`);
+        if (selectedOption && !selectedOption.disabled) {
+          select.value = currentValue;
+        }
       }
     }
 
@@ -6248,7 +6279,22 @@
         document.getElementById('newAptPrice').value = parseFloat(price).toFixed(2);
         document.getElementById('newAptBufferStart').value = bufferBefore;
         document.getElementById('newAptBufferEnd').value = bufferAfter;
+        // Refresh venue availability with new duration
+        onTimeOrDurationChange();
       }
+    }
+
+    // Debounce timer for venue availability check
+    let venueAvailabilityTimer = null;
+
+    function onTimeOrDurationChange() {
+      // Debounce the API call
+      if (venueAvailabilityTimer) {
+        clearTimeout(venueAvailabilityTimer);
+      }
+      venueAvailabilityTimer = setTimeout(() => {
+        loadNewAptVenues();
+      }, 300);
     }
 
     function addAnotherCustomer() {
@@ -7007,7 +7053,7 @@
       <div class="apt-form-row">
         <label class="apt-form-label">Starts at</label>
         <div class="apt-form-control">
-          <input type="datetime-local" class="apt-form-input" id="newAptStartsAt">
+          <input type="datetime-local" class="apt-form-input" id="newAptStartsAt" onchange="onTimeOrDurationChange()">
         </div>
       </div>
 
@@ -7161,7 +7207,7 @@
               <span class="buffer-label">Buffer at start</span>
             </div>
             <div class="buffer-field">
-              <input type="number" id="newAptDuration" value="60" min="5" step="5">
+              <input type="number" id="newAptDuration" value="60" min="5" step="5" onchange="onTimeOrDurationChange()">
               <span class="buffer-label">Duration</span>
             </div>
             <div class="buffer-field">
