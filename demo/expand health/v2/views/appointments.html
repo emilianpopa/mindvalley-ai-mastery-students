@@ -6596,10 +6596,29 @@
     }
 
     function bookAndPay() {
-      // Book the appointment first, then redirect to payment
-      bookAppointment().then(() => {
-        // Payment flow would go here
-      });
+      // Validate form fields first
+      const serviceId = document.getElementById('newAptService').value;
+      const venueId = document.getElementById('newAptVenue').value;
+      const customerId = document.getElementById('newAptCustomer').value;
+      const durationInput = document.getElementById('newAptDuration').value;
+      const priceInput = document.getElementById('newAptPrice').value;
+      const startsAt = document.getElementById('newAptStartsAt').value;
+
+      const errors = [];
+      if (!serviceId) errors.push('Service is required');
+      if (!venueId) errors.push('Venue is required');
+      if (!customerId) errors.push('Customer is required');
+      if (!durationInput || parseInt(durationInput) <= 0) errors.push('Duration is required');
+      if (priceInput === '' || parseFloat(priceInput) < 0 || isNaN(parseFloat(priceInput))) errors.push('Total price is required');
+      if (!startsAt) errors.push('Start time is required');
+
+      if (errors.length > 0) {
+        alert('Please fix the following errors:\n\n' + errors.join('\n'));
+        return;
+      }
+
+      // Open Quick Sale modal
+      openQuickSaleModal();
     }
   </script>
 
@@ -7858,6 +7877,847 @@
 
     function hideSuccessToast() {
       document.getElementById('successToast').classList.remove('show');
+    }
+  </script>
+
+  <!-- Quick Sale Modal -->
+  <div class="quick-sale-overlay" id="quickSaleOverlay" onclick="closeQuickSaleModal()"></div>
+  <div class="quick-sale-modal" id="quickSaleModal">
+    <div class="quick-sale-header">
+      <h2>Quick sale</h2>
+      <button class="quick-sale-close" onclick="closeQuickSaleModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+    <div class="quick-sale-body">
+      <!-- Who is selling -->
+      <div class="quick-sale-section">
+        <label class="quick-sale-label">Who is selling</label>
+        <select class="quick-sale-select" id="quickSaleSeller">
+          <option value="">Select staff...</option>
+        </select>
+      </div>
+
+      <!-- Customer -->
+      <div class="quick-sale-section">
+        <label class="quick-sale-label">Customer</label>
+        <div class="quick-sale-customer" id="quickSaleCustomer">
+          <div class="quick-sale-customer-avatar" id="quickSaleCustomerAvatar">EP</div>
+          <div class="quick-sale-customer-info">
+            <div class="quick-sale-customer-name" id="quickSaleCustomerName">Customer Name</div>
+            <div class="quick-sale-customer-email" id="quickSaleCustomerEmail">email@example.com</div>
+          </div>
+          <button class="quick-sale-customer-clear" onclick="clearQuickSaleCustomer()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Cart -->
+      <div class="quick-sale-section">
+        <label class="quick-sale-label">Cart</label>
+        <div class="quick-sale-cart">
+          <div class="quick-sale-cart-item" id="quickSaleCartItem">
+            <div class="cart-item-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+            </div>
+            <div class="cart-item-details">
+              <div class="cart-item-name" id="quickSaleServiceName">Service Name</div>
+              <div class="cart-item-date" id="quickSaleServiceDate">Mon, Jan 19, 2026 9:30 AM</div>
+            </div>
+            <div class="cart-item-actions">
+              <button class="cart-action-btn" title="Add tip">Add tip</button>
+              <span class="cart-item-price" id="quickSaleServicePrice">ZAR 200</span>
+              <button class="cart-action-btn cart-delete-btn" onclick="removeCartItem()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <button class="quick-sale-add-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            Add new cart item
+          </button>
+        </div>
+      </div>
+
+      <!-- Discounts & Totals -->
+      <div class="quick-sale-row">
+        <div class="quick-sale-discounts">
+          <label class="quick-sale-label">Discounts</label>
+          <div class="discount-input-row">
+            <input type="text" class="quick-sale-input" id="quickSaleDiscountCode" placeholder="Enter discount code here">
+            <button class="discount-apply-btn" onclick="applyDiscount()">Apply</button>
+          </div>
+          <label class="discount-checkbox">
+            <input type="checkbox" id="quickSaleCustomDiscount">
+            <span>Apply custom discount</span>
+          </label>
+        </div>
+        <div class="quick-sale-totals">
+          <label class="quick-sale-label">Totals</label>
+          <div class="totals-row">
+            <span>Subtotal excluding tax</span>
+            <span id="quickSaleSubtotal">ZAR 200</span>
+          </div>
+          <div class="totals-row totals-total">
+            <span>Total</span>
+            <span id="quickSaleTotal">ZAR 200</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Payment -->
+      <div class="quick-sale-section">
+        <div class="payment-header">
+          <label class="quick-sale-label">Payment</label>
+          <label class="split-payment-toggle">
+            <span>Split payment</span>
+            <div class="toggle-switch">
+              <input type="checkbox" id="quickSaleSplitPayment">
+              <span class="toggle-slider-round"></span>
+            </div>
+          </label>
+        </div>
+        <div class="payment-methods">
+          <button class="payment-method-btn active" data-method="card" onclick="selectPaymentMethod('card')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+              <line x1="1" y1="10" x2="23" y2="10"></line>
+            </svg>
+            Card
+          </button>
+          <button class="payment-method-btn" data-method="cash" onclick="selectPaymentMethod('cash')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="1" y="3" width="22" height="18" rx="2" ry="2"></rect>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+            Cash
+          </button>
+          <button class="payment-method-btn" data-method="link" onclick="selectPaymentMethod('link')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+            </svg>
+            Payment link
+          </button>
+          <button class="payment-method-btn" data-method="membership" onclick="selectPaymentMethod('membership')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            Membership
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="quick-sale-footer">
+      <button class="quick-sale-btn quick-sale-btn-cancel" onclick="closeQuickSaleModal()">Cancel</button>
+      <button class="quick-sale-btn quick-sale-btn-charge" onclick="processQuickSalePayment()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+          <line x1="1" y1="10" x2="23" y2="10"></line>
+        </svg>
+        Charge ZAR <span id="quickSaleChargeAmount">200</span>
+      </button>
+    </div>
+  </div>
+
+  <style>
+    /* Quick Sale Modal Styles */
+    .quick-sale-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 10010;
+    }
+
+    .quick-sale-overlay.show {
+      display: block;
+    }
+
+    .quick-sale-modal {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 25px 80px rgba(0, 0, 0, 0.3);
+      z-index: 10011;
+      width: 600px;
+      max-width: 95vw;
+      max-height: 90vh;
+      overflow: hidden;
+      display: none;
+      flex-direction: column;
+    }
+
+    .quick-sale-modal.show {
+      display: flex;
+    }
+
+    .quick-sale-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 24px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .quick-sale-header h2 {
+      margin: 0;
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #111827;
+    }
+
+    .quick-sale-close {
+      background: none;
+      border: none;
+      padding: 4px;
+      cursor: pointer;
+      color: #6b7280;
+      border-radius: 4px;
+    }
+
+    .quick-sale-close:hover {
+      background: #f3f4f6;
+      color: #374151;
+    }
+
+    .quick-sale-close svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    .quick-sale-body {
+      padding: 24px;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    .quick-sale-section {
+      margin-bottom: 24px;
+    }
+
+    .quick-sale-label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 8px;
+    }
+
+    .quick-sale-select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 0.9375rem;
+      color: #111827;
+      background: white;
+      cursor: pointer;
+    }
+
+    .quick-sale-select:focus {
+      outline: none;
+      border-color: #7c3aed;
+      box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+    }
+
+    /* Customer card */
+    .quick-sale-customer {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      background: #f9fafb;
+    }
+
+    .quick-sale-customer-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: #7c3aed;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.875rem;
+      font-weight: 600;
+    }
+
+    .quick-sale-customer-info {
+      flex: 1;
+    }
+
+    .quick-sale-customer-name {
+      font-weight: 500;
+      color: #111827;
+    }
+
+    .quick-sale-customer-email {
+      font-size: 0.8125rem;
+      color: #6b7280;
+    }
+
+    .quick-sale-customer-clear {
+      background: none;
+      border: none;
+      padding: 4px;
+      cursor: pointer;
+      color: #9ca3af;
+    }
+
+    .quick-sale-customer-clear:hover {
+      color: #6b7280;
+    }
+
+    .quick-sale-customer-clear svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    /* Cart */
+    .quick-sale-cart {
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .quick-sale-cart-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .cart-item-icon {
+      width: 36px;
+      height: 36px;
+      background: #ede9fe;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #7c3aed;
+    }
+
+    .cart-item-icon svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .cart-item-details {
+      flex: 1;
+    }
+
+    .cart-item-name {
+      font-weight: 500;
+      color: #111827;
+    }
+
+    .cart-item-date {
+      font-size: 0.8125rem;
+      color: #6b7280;
+    }
+
+    .cart-item-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .cart-action-btn {
+      background: none;
+      border: none;
+      padding: 4px 8px;
+      cursor: pointer;
+      color: #7c3aed;
+      font-size: 0.8125rem;
+      font-weight: 500;
+    }
+
+    .cart-action-btn:hover {
+      text-decoration: underline;
+    }
+
+    .cart-delete-btn {
+      color: #ef4444;
+      padding: 4px;
+    }
+
+    .cart-delete-btn svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .cart-item-price {
+      font-weight: 600;
+      color: #111827;
+    }
+
+    .quick-sale-add-item {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 12px;
+      background: none;
+      border: none;
+      color: #7c3aed;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .quick-sale-add-item:hover {
+      background: #f9fafb;
+    }
+
+    .quick-sale-add-item svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    /* Discounts & Totals row */
+    .quick-sale-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-bottom: 24px;
+    }
+
+    .quick-sale-discounts,
+    .quick-sale-totals {
+      /* flex: 1; */
+    }
+
+    .discount-input-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .quick-sale-input {
+      flex: 1;
+      padding: 10px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 0.875rem;
+    }
+
+    .quick-sale-input:focus {
+      outline: none;
+      border-color: #7c3aed;
+      box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+    }
+
+    .discount-apply-btn {
+      padding: 10px 20px;
+      background: #7c3aed;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .discount-apply-btn:hover {
+      background: #6d28d9;
+    }
+
+    .discount-checkbox {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.875rem;
+      color: #374151;
+      cursor: pointer;
+    }
+
+    .discount-checkbox input {
+      width: 16px;
+      height: 16px;
+      accent-color: #7c3aed;
+    }
+
+    .totals-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      font-size: 0.875rem;
+      color: #6b7280;
+    }
+
+    .totals-row.totals-total {
+      font-weight: 600;
+      color: #111827;
+      font-size: 1rem;
+      border-top: 1px solid #e5e7eb;
+      padding-top: 12px;
+      margin-top: 4px;
+    }
+
+    /* Payment */
+    .payment-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .payment-header .quick-sale-label {
+      margin-bottom: 0;
+    }
+
+    .split-payment-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.875rem;
+      color: #374151;
+      cursor: pointer;
+    }
+
+    .toggle-switch {
+      position: relative;
+      width: 44px;
+      height: 24px;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .toggle-slider-round {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: #e5e7eb;
+      border-radius: 24px;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+
+    .toggle-slider-round:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background: white;
+      border-radius: 50%;
+      transition: all 0.2s;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    }
+
+    .toggle-switch input:checked + .toggle-slider-round {
+      background: #7c3aed;
+    }
+
+    .toggle-switch input:checked + .toggle-slider-round:before {
+      transform: translateX(20px);
+    }
+
+    .payment-methods {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+
+    .payment-method-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      padding: 16px 12px;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      background: white;
+      color: #374151;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .payment-method-btn:hover {
+      border-color: #7c3aed;
+      background: #f5f3ff;
+    }
+
+    .payment-method-btn.active {
+      border-color: #7c3aed;
+      background: #f5f3ff;
+      color: #7c3aed;
+    }
+
+    .payment-method-btn svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    /* Footer */
+    .quick-sale-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      padding: 16px 24px;
+      border-top: 1px solid #e5e7eb;
+      background: #f9fafb;
+    }
+
+    .quick-sale-btn {
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 0.9375rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.15s;
+    }
+
+    .quick-sale-btn-cancel {
+      background: white;
+      border: 1px solid #d1d5db;
+      color: #374151;
+    }
+
+    .quick-sale-btn-cancel:hover {
+      background: #f9fafb;
+    }
+
+    .quick-sale-btn-charge {
+      background: #7c3aed;
+      border: none;
+      color: white;
+    }
+
+    .quick-sale-btn-charge:hover {
+      background: #6d28d9;
+    }
+
+    .quick-sale-btn-charge svg {
+      width: 18px;
+      height: 18px;
+    }
+  </style>
+
+  <script>
+    // Quick Sale Modal Functions
+    let quickSaleData = null;
+    let selectedPaymentMethod = 'card';
+
+    function openQuickSaleModal() {
+      // Get data from the appointment form
+      const serviceSelect = document.getElementById('newAptService');
+      const serviceName = serviceSelect.options[serviceSelect.selectedIndex]?.textContent || 'Service';
+      const staffSelect = document.getElementById('newAptStaff');
+      const staffName = staffSelect.options[staffSelect.selectedIndex]?.textContent || '';
+      const startsAt = document.getElementById('newAptStartsAt').value;
+      const price = parseFloat(document.getElementById('newAptPrice').value) || 0;
+      const customerId = document.getElementById('newAptCustomer').value;
+
+      // Find customer details
+      const customer = newAptCustomers.find(c => c.id == customerId);
+      const customerName = customer ? `${customer.first_name || ''} ${customer.last_name || ''}`.trim() : 'Customer';
+      const customerEmail = customer?.email || '';
+      const customerInitials = getCustomerInitials(customer?.first_name, customer?.last_name);
+
+      // Format date
+      const dateObj = new Date(startsAt);
+      const formattedDate = dateObj.toLocaleDateString('en-US', {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+      });
+
+      // Store data for later
+      quickSaleData = {
+        serviceId: document.getElementById('newAptService').value,
+        venueId: document.getElementById('newAptVenue').value,
+        staffId: document.getElementById('newAptStaff').value,
+        customerId: customerId,
+        startsAt: startsAt,
+        duration: parseInt(document.getElementById('newAptDuration').value) || 60,
+        price: price,
+        serviceName: serviceName,
+        customerName: customerName
+      };
+
+      // Populate the modal
+      populateQuickSaleSeller(staffSelect.value, staffName);
+      document.getElementById('quickSaleCustomerName').textContent = customerName;
+      document.getElementById('quickSaleCustomerEmail').textContent = customerEmail || 'No email';
+      document.getElementById('quickSaleCustomerAvatar').textContent = customerInitials;
+      document.getElementById('quickSaleServiceName').textContent = serviceName;
+      document.getElementById('quickSaleServiceDate').textContent = formattedDate;
+      document.getElementById('quickSaleServicePrice').textContent = `ZAR ${price.toFixed(0)}`;
+      document.getElementById('quickSaleSubtotal').textContent = `ZAR ${price.toFixed(2)}`;
+      document.getElementById('quickSaleTotal').textContent = `ZAR ${price.toFixed(2)}`;
+      document.getElementById('quickSaleChargeAmount').textContent = price.toFixed(0);
+
+      // Show modal
+      document.getElementById('quickSaleOverlay').classList.add('show');
+      document.getElementById('quickSaleModal').classList.add('show');
+    }
+
+    function populateQuickSaleSeller(selectedStaffId, selectedStaffName) {
+      const select = document.getElementById('quickSaleSeller');
+      select.innerHTML = '<option value="">Select staff...</option>';
+
+      // Add staff from the appointment form's staff select
+      const staffSelect = document.getElementById('newAptStaff');
+      Array.from(staffSelect.options).forEach(opt => {
+        if (opt.value) {
+          const option = document.createElement('option');
+          option.value = opt.value;
+          option.textContent = opt.textContent;
+          if (opt.value === selectedStaffId) {
+            option.selected = true;
+          }
+          select.appendChild(option);
+        }
+      });
+    }
+
+    function getCustomerInitials(firstName, lastName) {
+      const first = (firstName || '').charAt(0).toUpperCase();
+      const last = (lastName || '').charAt(0).toUpperCase();
+      return first + last || '??';
+    }
+
+    function closeQuickSaleModal() {
+      document.getElementById('quickSaleOverlay').classList.remove('show');
+      document.getElementById('quickSaleModal').classList.remove('show');
+      quickSaleData = null;
+    }
+
+    function clearQuickSaleCustomer() {
+      // Could implement customer clearing/changing here
+      alert('Change customer - Feature coming soon');
+    }
+
+    function removeCartItem() {
+      closeQuickSaleModal();
+    }
+
+    function applyDiscount() {
+      const code = document.getElementById('quickSaleDiscountCode').value.trim();
+      if (!code) {
+        alert('Please enter a discount code');
+        return;
+      }
+      // Discount logic would go here
+      alert('Discount feature coming soon');
+    }
+
+    function selectPaymentMethod(method) {
+      selectedPaymentMethod = method;
+      document.querySelectorAll('.payment-method-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.method === method);
+      });
+    }
+
+    async function processQuickSalePayment() {
+      if (!quickSaleData) return;
+
+      const btn = document.querySelector('.quick-sale-btn-charge');
+      const originalHTML = btn.innerHTML;
+      btn.innerHTML = 'Processing...';
+      btn.disabled = true;
+
+      try {
+        const token = localStorage.getItem('auth_token');
+        const startTime = new Date(quickSaleData.startsAt);
+        const endTime = new Date(startTime.getTime() + quickSaleData.duration * 60000);
+
+        // Get service name
+        const serviceSelect = document.getElementById('newAptService');
+        const serviceName = serviceSelect.options[serviceSelect.selectedIndex]?.textContent || 'Appointment';
+
+        const appointmentData = {
+          service_type_id: quickSaleData.serviceId,
+          location_id: quickSaleData.venueId,
+          staff_id: quickSaleData.staffId || null,
+          client_id: quickSaleData.customerId,
+          title: serviceName,
+          start_time: startTime.toISOString(),
+          end_time: endTime.toISOString(),
+          price: quickSaleData.price,
+          status: 'completed',
+          payment_status: 'paid',
+          location_type: 'in_person'
+        };
+
+        // Create the appointment
+        const response = await fetch('/api/appointments', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(appointmentData)
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'Failed to create appointment');
+        }
+
+        // Success!
+        closeQuickSaleModal();
+        closeNewAptModal();
+        showSuccessToast('Appointment reservation created successfully!');
+        await loadAppointments();
+
+      } catch (error) {
+        console.error('Failed to process payment:', error);
+        alert(error.message || 'Failed to process payment');
+      } finally {
+        btn.innerHTML = originalHTML;
+        btn.disabled = false;
+      }
     }
   </script>
 </body>
