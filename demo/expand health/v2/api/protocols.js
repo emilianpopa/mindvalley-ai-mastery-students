@@ -2177,19 +2177,23 @@ async function generateEngagementPlanForProtocol({
     // Add protocol-type specific queries based on extracted elements
     const protocolTitleLower = (protocolTitle || '').toLowerCase();
 
-    if (protocolTitleLower.includes('detox') || protocolTitleLower.includes('heavy metal') || protocolElements.supplements.some(s => s.toLowerCase().includes('chelat') || s.toLowerCase().includes('dmsa') || s.toLowerCase().includes('ala'))) {
+    // Helper to check if any supplement name contains a keyword
+    const supplementContains = (keyword) => protocolElements.supplements.some(s => (s.name || '').toLowerCase().includes(keyword));
+    const treatmentContains = (keyword) => protocolElements.clinic_treatments.some(t => (t.name || '').toLowerCase().includes(keyword));
+
+    if (protocolTitleLower.includes('detox') || protocolTitleLower.includes('heavy metal') || supplementContains('chelat') || supplementContains('dmsa') || supplementContains('ala')) {
       engagementQueries.push('detoxification protocol phasing chelation sequencing safety gates');
       engagementQueries.push('heavy metal detox engagement plan supplement introduction schedule');
       engagementQueries.push('detox protocol safety monitoring bowel movement requirements');
     }
 
-    if (protocolTitleLower.includes('gut') || protocolElements.supplements.some(s => s.toLowerCase().includes('probiotic') || s.toLowerCase().includes('glutamine') || s.toLowerCase().includes('digestive'))) {
+    if (protocolTitleLower.includes('gut') || supplementContains('probiotic') || supplementContains('glutamine') || supplementContains('digestive')) {
       engagementQueries.push('gut healing protocol phasing supplement introduction');
       engagementQueries.push('elimination diet engagement coaching phases');
       engagementQueries.push('gut protocol safety gates food reintroduction');
     }
 
-    if (protocolTitleLower.includes('hormone') || protocolTitleLower.includes('hormonal') || protocolElements.supplements.some(s => s.toLowerCase().includes('dhea') || s.toLowerCase().includes('pregnenolone'))) {
+    if (protocolTitleLower.includes('hormone') || protocolTitleLower.includes('hormonal') || supplementContains('dhea') || supplementContains('pregnenolone')) {
       engagementQueries.push('hormone optimization protocol phasing safety monitoring');
       engagementQueries.push('hormonal support engagement plan lab monitoring schedule');
     }
@@ -2199,7 +2203,7 @@ async function generateEngagementPlanForProtocol({
       engagementQueries.push('circadian rhythm protocol coaching light exposure timing');
     }
 
-    if (protocolTitleLower.includes('adrenal') || protocolTitleLower.includes('stress') || protocolElements.supplements.some(s => s.toLowerCase().includes('ashwagandha') || s.toLowerCase().includes('rhodiola'))) {
+    if (protocolTitleLower.includes('adrenal') || protocolTitleLower.includes('stress') || supplementContains('ashwagandha') || supplementContains('rhodiola')) {
       engagementQueries.push('adrenal support protocol phasing adaptogen introduction');
       engagementQueries.push('stress management engagement coaching burnout recovery');
     }
@@ -2210,13 +2214,13 @@ async function generateEngagementPlanForProtocol({
       engagementQueries.push('IV therapy HBOT sauna treatment scheduling patient preparation');
 
       // Specific treatment queries
-      if (protocolElements.clinic_treatments.some(t => t.toLowerCase().includes('iv') || t.toLowerCase().includes('glutathione'))) {
+      if (treatmentContains('iv') || treatmentContains('glutathione')) {
         engagementQueries.push('IV glutathione therapy eligibility contraindications G6PD');
       }
-      if (protocolElements.clinic_treatments.some(t => t.toLowerCase().includes('sauna') || t.toLowerCase().includes('infrared'))) {
+      if (treatmentContains('sauna') || treatmentContains('infrared')) {
         engagementQueries.push('infrared sauna therapy protocol frequency duration detox');
       }
-      if (protocolElements.clinic_treatments.some(t => t.toLowerCase().includes('pemf'))) {
+      if (treatmentContains('pemf')) {
         engagementQueries.push('PEMF therapy protocol frequency duration indications');
       }
     }
@@ -2801,19 +2805,23 @@ router.post('/:id/generate-engagement-plan', authenticateToken, async (req, res,
       // Add protocol-type specific queries based on extracted elements
       const protocolTitle = (protocol.title || protocol.template_name || '').toLowerCase();
 
-      if (protocolTitle.includes('detox') || protocolTitle.includes('heavy metal') || protocolElements.supplements.some(s => s.toLowerCase().includes('chelat') || s.toLowerCase().includes('dmsa') || s.toLowerCase().includes('ala'))) {
+      // Helper to check if any supplement name contains a keyword
+      const supplementContains = (keyword) => protocolElements.supplements.some(s => (s.name || '').toLowerCase().includes(keyword));
+      const treatmentContains = (keyword) => protocolElements.clinic_treatments.some(t => (t.name || '').toLowerCase().includes(keyword));
+
+      if (protocolTitle.includes('detox') || protocolTitle.includes('heavy metal') || supplementContains('chelat') || supplementContains('dmsa') || supplementContains('ala')) {
         engagementQueries.push('detoxification protocol phasing chelation sequencing safety gates');
         engagementQueries.push('heavy metal detox engagement plan supplement introduction schedule');
         engagementQueries.push('detox protocol safety monitoring bowel movement requirements');
       }
 
-      if (protocolTitle.includes('gut') || protocolElements.supplements.some(s => s.toLowerCase().includes('probiotic') || s.toLowerCase().includes('glutamine') || s.toLowerCase().includes('digestive'))) {
+      if (protocolTitle.includes('gut') || supplementContains('probiotic') || supplementContains('glutamine') || supplementContains('digestive')) {
         engagementQueries.push('gut healing protocol phasing supplement introduction');
         engagementQueries.push('elimination diet engagement coaching phases');
         engagementQueries.push('gut protocol safety gates food reintroduction');
       }
 
-      if (protocolTitle.includes('hormone') || protocolTitle.includes('hormonal') || protocolElements.supplements.some(s => s.toLowerCase().includes('dhea') || s.toLowerCase().includes('pregnenolone'))) {
+      if (protocolTitle.includes('hormone') || protocolTitle.includes('hormonal') || supplementContains('dhea') || supplementContains('pregnenolone')) {
         engagementQueries.push('hormone optimization protocol phasing safety monitoring');
         engagementQueries.push('hormonal support engagement plan lab monitoring schedule');
       }
@@ -2823,7 +2831,7 @@ router.post('/:id/generate-engagement-plan', authenticateToken, async (req, res,
         engagementQueries.push('circadian rhythm protocol coaching light exposure timing');
       }
 
-      if (protocolTitle.includes('adrenal') || protocolTitle.includes('stress') || protocolElements.supplements.some(s => s.toLowerCase().includes('ashwagandha') || s.toLowerCase().includes('rhodiola'))) {
+      if (protocolTitle.includes('adrenal') || protocolTitle.includes('stress') || supplementContains('ashwagandha') || supplementContains('rhodiola')) {
         engagementQueries.push('adrenal support protocol phasing adaptogen introduction');
         engagementQueries.push('stress management engagement coaching burnout recovery');
       }
@@ -2834,13 +2842,13 @@ router.post('/:id/generate-engagement-plan', authenticateToken, async (req, res,
         engagementQueries.push('IV therapy HBOT sauna treatment scheduling patient preparation');
 
         // Specific treatment queries
-        if (protocolElements.clinic_treatments.some(t => t.toLowerCase().includes('iv') || t.toLowerCase().includes('glutathione'))) {
+        if (treatmentContains('iv') || treatmentContains('glutathione')) {
           engagementQueries.push('IV glutathione therapy eligibility contraindications G6PD');
         }
-        if (protocolElements.clinic_treatments.some(t => t.toLowerCase().includes('sauna') || t.toLowerCase().includes('infrared'))) {
+        if (treatmentContains('sauna') || treatmentContains('infrared')) {
           engagementQueries.push('infrared sauna therapy protocol frequency duration detox');
         }
-        if (protocolElements.clinic_treatments.some(t => t.toLowerCase().includes('pemf'))) {
+        if (treatmentContains('pemf')) {
           engagementQueries.push('PEMF therapy protocol frequency duration indications');
         }
       }
