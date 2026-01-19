@@ -8459,22 +8459,21 @@
     }
 
     .payment-methods {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      display: flex;
+      flex-wrap: wrap;
       gap: 8px;
     }
 
     .payment-method-btn {
       display: flex;
-      flex-direction: column;
       align-items: center;
-      gap: 6px;
-      padding: 16px 12px;
+      justify-content: center;
+      padding: 10px 16px;
       border: 1px solid #e5e7eb;
       border-radius: 8px;
       background: white;
       color: #374151;
-      font-size: 0.8125rem;
+      font-size: 0.875rem;
       font-weight: 500;
       cursor: pointer;
       transition: all 0.15s;
@@ -8650,11 +8649,17 @@
       document.getElementById('quickSaleServicePrice').textContent = `ZAR ${price.toFixed(0)}`;
       document.getElementById('quickSaleSubtotal').textContent = `ZAR ${price.toFixed(2)}`;
       document.getElementById('quickSaleTotal').textContent = `ZAR ${price.toFixed(2)}`;
-      document.getElementById('quickSaleChargeAmount').textContent = price.toFixed(0);
+
+      // Reset other payment select
+      document.getElementById('otherPaymentSelect').value = '';
+      document.getElementById('paymentOtherOptions').style.display = 'none';
 
       // Show modal
       document.getElementById('quickSaleOverlay').classList.add('show');
       document.getElementById('quickSaleModal').classList.add('show');
+
+      // Select default payment method (membership)
+      selectPaymentMethod('membership');
     }
 
     function populateQuickSaleSeller(selectedStaffId, selectedStaffName) {
