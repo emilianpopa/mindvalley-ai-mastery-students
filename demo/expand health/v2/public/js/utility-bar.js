@@ -55,7 +55,7 @@ function initUtilityBar(activePage = '') {
         <div class="utility-divider"></div>
         <div class="utility-add-group">
           <span class="utility-add-label">Add:</span>
-          <button class="utility-add-btn" onclick="openCreateCustomerModal && openCreateCustomerModal()">
+          <button class="utility-add-btn" onclick="openGlobalCustomerModal()">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
               <circle cx="8.5" cy="7" r="4"></circle>
@@ -979,7 +979,340 @@ function injectUtilityBarStyles() {
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => {
     injectUtilityBarStyles();
+    injectGlobalCustomerModal();
   });
 } else {
   injectUtilityBarStyles();
+  injectGlobalCustomerModal();
+}
+
+// ============================================
+// GLOBAL CUSTOMER MODAL
+// ============================================
+
+function injectGlobalCustomerModal() {
+  // Don't inject if already exists
+  if (document.getElementById('globalCustomerModal')) return;
+
+  const modalHTML = `
+    <div class="global-customer-modal-overlay" id="globalCustomerModalOverlay" onclick="closeGlobalCustomerModal()"></div>
+    <div class="global-customer-modal" id="globalCustomerModal">
+      <div class="global-customer-modal-header">
+        <h3>Create a new customer</h3>
+        <button class="global-customer-modal-close" onclick="closeGlobalCustomerModal()">&times;</button>
+      </div>
+      <div class="global-customer-modal-body">
+        <div class="global-customer-form-group">
+          <label>First name</label>
+          <input type="text" id="globalCustomerFirstName" placeholder="">
+        </div>
+        <div class="global-customer-form-group">
+          <label>Last name</label>
+          <input type="text" id="globalCustomerLastName" placeholder="">
+        </div>
+        <div class="global-customer-form-group">
+          <label>E-mail</label>
+          <input type="email" id="globalCustomerEmail" placeholder="">
+        </div>
+        <div class="global-customer-form-group">
+          <label>Phone number</label>
+          <div class="global-customer-phone-row">
+            <select id="globalCustomerCountryCode" class="global-customer-country-select">
+              <option value="+27">🇿🇦 +27</option>
+              <option value="+1">🇺🇸 +1</option>
+              <option value="+44">🇬🇧 +44</option>
+              <option value="+61">🇦🇺 +61</option>
+              <option value="+49">🇩🇪 +49</option>
+              <option value="+33">🇫🇷 +33</option>
+              <option value="+91">🇮🇳 +91</option>
+              <option value="+86">🇨🇳 +86</option>
+              <option value="+81">🇯🇵 +81</option>
+              <option value="+55">🇧🇷 +55</option>
+            </select>
+            <input type="tel" id="globalCustomerPhone" placeholder="">
+          </div>
+        </div>
+      </div>
+      <div class="global-customer-modal-footer">
+        <button class="global-customer-btn-cancel" onclick="closeGlobalCustomerModal()">Cancel</button>
+        <button class="global-customer-btn-create" onclick="createGlobalCustomer()">Create</button>
+      </div>
+    </div>
+  `;
+
+  const container = document.createElement('div');
+  container.id = 'globalCustomerModalContainer';
+  container.innerHTML = modalHTML;
+  document.body.appendChild(container);
+
+  // Inject modal styles
+  injectGlobalCustomerModalStyles();
+}
+
+function injectGlobalCustomerModalStyles() {
+  if (document.getElementById('globalCustomerModalStyles')) return;
+
+  const styles = document.createElement('style');
+  styles.id = 'globalCustomerModalStyles';
+  styles.textContent = `
+    .global-customer-modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 9998;
+    }
+
+    .global-customer-modal-overlay.show {
+      display: block;
+    }
+
+    .global-customer-modal {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      z-index: 9999;
+      width: 400px;
+      max-width: 90vw;
+    }
+
+    .global-customer-modal.show {
+      display: block;
+    }
+
+    .global-customer-modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 24px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .global-customer-modal-header h3 {
+      margin: 0;
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: #111827;
+    }
+
+    .global-customer-modal-close {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      color: #6b7280;
+      cursor: pointer;
+      padding: 0;
+      line-height: 1;
+    }
+
+    .global-customer-modal-close:hover {
+      color: #374151;
+    }
+
+    .global-customer-modal-body {
+      padding: 24px;
+    }
+
+    .global-customer-form-group {
+      margin-bottom: 16px;
+    }
+
+    .global-customer-form-group:last-child {
+      margin-bottom: 0;
+    }
+
+    .global-customer-form-group label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: #374151;
+      margin-bottom: 6px;
+    }
+
+    .global-customer-form-group input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 0.9375rem;
+      color: #111827;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      box-sizing: border-box;
+    }
+
+    .global-customer-form-group input:focus {
+      border-color: #7c3aed;
+      box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+    }
+
+    .global-customer-phone-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .global-customer-country-select {
+      width: 100px;
+      padding: 10px 8px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      background: white;
+      cursor: pointer;
+      outline: none;
+    }
+
+    .global-customer-country-select:focus {
+      border-color: #7c3aed;
+      box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+    }
+
+    .global-customer-phone-row input {
+      flex: 1;
+    }
+
+    .global-customer-modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      padding: 16px 24px;
+      border-top: 1px solid #e5e7eb;
+      background: #f9fafb;
+      border-radius: 0 0 12px 12px;
+    }
+
+    .global-customer-btn-cancel {
+      padding: 10px 20px;
+      border: 1px solid #d1d5db;
+      background: white;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: #374151;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .global-customer-btn-cancel:hover {
+      background: #f3f4f6;
+    }
+
+    .global-customer-btn-create {
+      padding: 10px 20px;
+      border: none;
+      background: #0d9488;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: white;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .global-customer-btn-create:hover {
+      background: #0f766e;
+    }
+
+    .global-customer-btn-create:disabled {
+      background: #9ca3af;
+      cursor: not-allowed;
+    }
+  `;
+  document.head.appendChild(styles);
+}
+
+function openGlobalCustomerModal() {
+  // Clear form
+  document.getElementById('globalCustomerFirstName').value = '';
+  document.getElementById('globalCustomerLastName').value = '';
+  document.getElementById('globalCustomerEmail').value = '';
+  document.getElementById('globalCustomerPhone').value = '';
+  document.getElementById('globalCustomerCountryCode').value = '+27';
+
+  // Show modal
+  document.getElementById('globalCustomerModalOverlay').classList.add('show');
+  document.getElementById('globalCustomerModal').classList.add('show');
+
+  // Focus first field
+  setTimeout(() => {
+    document.getElementById('globalCustomerFirstName').focus();
+  }, 100);
+}
+
+function closeGlobalCustomerModal() {
+  document.getElementById('globalCustomerModalOverlay').classList.remove('show');
+  document.getElementById('globalCustomerModal').classList.remove('show');
+}
+
+async function createGlobalCustomer() {
+  const firstName = document.getElementById('globalCustomerFirstName').value.trim();
+  const lastName = document.getElementById('globalCustomerLastName').value.trim();
+  const email = document.getElementById('globalCustomerEmail').value.trim();
+  const countryCode = document.getElementById('globalCustomerCountryCode').value;
+  const phone = document.getElementById('globalCustomerPhone').value.trim();
+
+  if (!firstName) {
+    alert('Please enter a first name');
+    document.getElementById('globalCustomerFirstName').focus();
+    return;
+  }
+
+  const btn = document.querySelector('.global-customer-btn-create');
+  const originalText = btn.textContent;
+  btn.textContent = 'Creating...';
+  btn.disabled = true;
+
+  try {
+    const token = localStorage.getItem('auth_token');
+    const response = await fetch('/api/clients', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        first_name: firstName,
+        last_name: lastName,
+        email: email || null,
+        phone: phone ? `${countryCode}${phone}` : null
+      })
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to create customer');
+    }
+
+    const newClient = await response.json();
+    console.log('Created new customer:', newClient);
+
+    closeGlobalCustomerModal();
+
+    // Refresh the page to show new customer, or update UI if possible
+    if (typeof loadCustomers === 'function') {
+      loadCustomers();
+    } else if (typeof loadClients === 'function') {
+      loadClients();
+    } else if (typeof loadNewAptCustomers === 'function') {
+      loadNewAptCustomers();
+    }
+
+    // Show success message
+    alert(`Customer "${firstName} ${lastName}" created successfully!`);
+
+  } catch (error) {
+    console.error('Error creating customer:', error);
+    alert(error.message || 'Failed to create customer');
+  } finally {
+    btn.textContent = originalText;
+    btn.disabled = false;
+  }
 }
