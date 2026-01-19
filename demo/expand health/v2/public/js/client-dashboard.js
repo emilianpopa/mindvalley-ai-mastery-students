@@ -5497,11 +5497,50 @@ async function generateEngagementPlan() {
             <span class="phase-drag-handle">⋮⋮</span>
             <h2 contenteditable="true">${phase.title}</h2>
           </div>
-          <p class="phase-subtitle" contenteditable="true">${phase.subtitle}</p>
+          <p class="phase-subtitle" contenteditable="true">${phase.subtitle || `Weeks ${phase.week_range || ''}`}</p>
+
+          ${phase.clinical_elements ? `
+          <div class="clinical-elements">
+            <p class="section-label"><strong>Clinical Elements in Scope:</strong></p>
+            <ul class="phase-items">
+              ${phase.clinical_elements.map(el => `
+                <li contenteditable="true">
+                  <span class="element-name">${typeof el === 'string' ? el : el.name}</span>
+                  ${el.status ? `<span class="element-status status-${el.status.toLowerCase().replace(/[^a-z]/g, '-')}">[${el.status}]</span>` : ''}
+                </li>
+              `).join('')}
+            </ul>
+          </div>
+          ` : ''}
+
+          ${phase.items ? `
           <ul class="phase-items">
-            ${phase.items.map(item => `<li contenteditable="true">${item}</li>`).join('')}
+            ${phase.items.map(item => `<li contenteditable="true">${typeof item === 'string' ? item : item.name || item.item || JSON.stringify(item)}</li>`).join('')}
           </ul>
-          <p class="progress-goal"><strong>Progress Goal:</strong> <span contenteditable="true">${phase.progress_goal}</span></p>
+          ` : ''}
+
+          ${phase.monitoring ? `
+          <div class="monitoring-section">
+            <p class="section-label"><strong>Monitoring:</strong></p>
+            <ul class="monitoring-list">
+              ${phase.monitoring.map(m => `<li>${typeof m === 'string' ? m : m.item || m.name || JSON.stringify(m)}</li>`).join('')}
+            </ul>
+          </div>
+          ` : ''}
+
+          ${phase.safety_gate ? `
+          <div class="safety-gate">
+            <p class="section-label"><strong>Safety Gate:</strong></p>
+            <div class="gate-conditions">
+              <p><em>Conditions:</em> ${Array.isArray(phase.safety_gate.conditions) ? phase.safety_gate.conditions.join(', ') : phase.safety_gate.conditions || ''}</p>
+              <p class="gate-pass">✓ IF PASS: ${phase.safety_gate.if_pass || 'Proceed to next phase'}</p>
+              <p class="gate-fail">✗ IF FAIL: ${phase.safety_gate.if_fail || 'HOLD. Contact clinician.'}</p>
+            </div>
+          </div>
+          ` : ''}
+
+          ${phase.progress_goal ? `<p class="progress-goal"><strong>Progress Goal:</strong> <span contenteditable="true">${phase.progress_goal}</span></p>` : ''}
+
           ${phase.check_in_prompts ? `
           <div class="check-in-prompts">
             <p class="prompts-label"><strong>Check-in Questions:</strong></p>
@@ -5530,6 +5569,61 @@ async function generateEngagementPlan() {
           <ul>
             ${plan.success_metrics.map(metric => `<li>${metric}</li>`).join('')}
           </ul>
+        </div>
+        ` : ''}
+
+        ${plan.clinic_treatments ? `
+        <div class="engagement-clinic-treatments">
+          <h3>Clinic Treatments</h3>
+          <p class="treatments-note">${plan.clinic_treatments.note || 'All require clinician approval'}</p>
+          <ul>
+            ${(plan.clinic_treatments.items || plan.clinic_treatments.treatments || []).map(t => `
+              <li>
+                <strong>${t.name}</strong>
+                <span class="treatment-status">[${t.status || 'CLINICIAN DECISION'}]</span>
+                ${t.earliest_eligibility ? `<br><em>Earliest eligibility: ${t.earliest_eligibility}</em>` : ''}
+                ${t.conditions ? `<br><small>Conditions: ${Array.isArray(t.conditions) ? t.conditions.join(', ') : t.conditions}</small>` : ''}
+              </li>
+            `).join('')}
+          </ul>
+        </div>
+        ` : ''}
+
+        ${plan.testing_schedule ? `
+        <div class="engagement-testing">
+          <h3>Testing Schedule</h3>
+          <ul>
+            ${plan.testing_schedule.map(test => `
+              <li>
+                <strong>${test.name}</strong> - ${test.timing || 'As scheduled'}
+                ${test.sequence ? `<br><small>Sequence: ${test.sequence.join(' → ')}</small>` : ''}
+              </li>
+            `).join('')}
+          </ul>
+        </div>
+        ` : ''}
+
+        ${plan.safety_rules ? `
+        <div class="engagement-safety-rules">
+          <h3>Safety Rules</h3>
+          ${plan.safety_rules.stop_immediately ? `
+            <div class="safety-stop">
+              <p><strong>🛑 STOP Immediately:</strong></p>
+              <ul>${plan.safety_rules.stop_immediately.map(r => `<li>${r}</li>`).join('')}</ul>
+            </div>
+          ` : ''}
+          ${plan.safety_rules.hold_and_contact ? `
+            <div class="safety-hold">
+              <p><strong>⏸️ HOLD & Contact Clinician:</strong></p>
+              <ul>${plan.safety_rules.hold_and_contact.map(r => `<li>${r}</li>`).join('')}</ul>
+            </div>
+          ` : ''}
+          ${plan.safety_rules.escalation_24h ? `
+            <div class="safety-escalate">
+              <p><strong>⚠️ Escalate within 24h:</strong></p>
+              <ul>${plan.safety_rules.escalation_24h.map(r => `<li>${r}</li>`).join('')}</ul>
+            </div>
+          ` : ''}
         </div>
         ` : ''}
 
