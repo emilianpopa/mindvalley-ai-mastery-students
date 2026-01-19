@@ -2936,7 +2936,7 @@ router.post('/:id/generate-engagement-plan', authenticateToken, async (req, res,
 
     // Generate engagement plan DETERMINISTICALLY from protocol data
     // This ensures 100% alignment - no AI hallucination or generic content
-    const engagementPlan = generateEngagementPlanFromProtocol({
+    let engagementPlan = generateEngagementPlanFromProtocol({
       clientName,
       protocolTitle: protocol.title || protocol.template_name || 'Custom Protocol',
       protocolElements,
