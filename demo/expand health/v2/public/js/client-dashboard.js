@@ -583,34 +583,148 @@ function formatEngagementPlanForPrint(planData) {
     html += `<div class="summary"><p>${escapeHtml(planData.summary)}</p></div>`;
   }
 
-  // Phases
+  // Phases - supports both new (clinical_elements) and old (items) formats
   if (planData.phases && Array.isArray(planData.phases)) {
     planData.phases.forEach((phase, index) => {
-      html += `
-        <div class="phase">
-          <h3>${escapeHtml(phase.title || `Phase ${index + 1}`)}</h3>
-          ${phase.subtitle ? `<p class="phase-subtitle">${escapeHtml(phase.subtitle)}</p>` : ''}
-          ${phase.items && phase.items.length > 0 ? `
-            <ul>${phase.items.map(item => `<li>${escapeHtml(item)}</li>`).join('')}</ul>
-          ` : ''}
-          ${phase.progress_goal ? `
-            <div class="goal">
-              <span class="goal-label">Progress Goal:</span>
-              <p style="margin: 4px 0 0 0;">${escapeHtml(phase.progress_goal)}</p>
-            </div>
-          ` : ''}
-          ${phase.check_in_prompts && phase.check_in_prompts.length > 0 ? `
-            <div class="check-in">
-              <span class="check-in-label">Check-in Questions:</span>
-              <ul style="margin: 8px 0 0 0;">${phase.check_in_prompts.map(q => `<li>${escapeHtml(q)}</li>`).join('')}</ul>
-            </div>
-          ` : ''}
-        </div>
-      `;
+      const hasClinicElements = phase.clinical_elements && phase.clinical_elements.length > 0;
+      const hasItems = phase.items && phase.items.length > 0;
+      const weekRange = phase.week_range ? `(Weeks ${phase.week_range})` : '';
+
+      html += `<div class="phase">`;
+      html += `<h3>${escapeHtml(phase.title || `Phase ${index + 1}`)} ${weekRange}</h3>`;
+
+      if (phase.subtitle) {
+        html += `<p class="phase-subtitle">${escapeHtml(phase.subtitle)}</p>`;
+      }
+
+      // NEW FORMAT: clinical_elements with name/status
+      if (hasClinicElements) {
+        html += `<div style="margin: 12px 0;"><strong style="color: #0F766E;">Clinical Elements in Scope:</strong>`;
+        html += `<ul style="margin-top: 8px;">`;
+        phase.clinical_elements.forEach(el => {
+          const name = typeof el === 'string' ? el : el.name;
+          const status = el.status || 'SCHEDULED';
+          html += `<li><span>${escapeHtml(name)}</span> <span style="color: #6B7280; font-size: 12px;">[${escapeHtml(status)}]</span></li>`;
+        });
+        html += `</ul></div>`;
+      }
+      // OLD FORMAT: items array
+      else if (hasItems) {
+        html += `<ul>${phase.items.map(item => `<li>${escapeHtml(item)}</li>`).join('')}</ul>`;
+      }
+
+      // Monitoring section (new format)
+      if (phase.monitoring && phase.monitoring.length > 0) {
+        html += `<div style="background: #FEF3C7; padding: 12px; border-radius: 6px; margin-top: 12px;">`;
+        html += `<strong style="color: #92400E; font-size: 12px; text-transform: uppercase;">Monitoring:</strong>`;
+        html += `<ul style="margin: 8px 0 0 0;">${phase.monitoring.map(m => `<li>${escapeHtml(m)}</li>`).join('')}</ul>`;
+        html += `</div>`;
+      }
+
+      // Safety Gate section (new format)
+      if (phase.safety_gate) {
+        const gate = phase.safety_gate;
+        html += `<div style="background: #FEE2E2; padding: 12px; border-radius: 6px; margin-top: 12px; border-left: 4px solid #DC2626;">`;
+        html += `<strong style="color: #DC2626; font-size: 12px; text-transform: uppercase;">Safety Gate:</strong>`;
+        if (gate.conditions && gate.conditions.length > 0) {
+          html += `<p style="margin: 8px 0 4px 0; font-weight: 600;">IF all TRUE:</p>`;
+          html += `<ul style="margin: 0 0 8px 0;">${gate.conditions.map(c => `<li>${escapeHtml(c)}</li>`).join('')}</ul>`;
+        }
+        if (gate.if_pass) {
+          html += `<p style="margin: 4px 0; color: #166534;"><strong>THEN:</strong> ${escapeHtml(gate.if_pass)}</p>`;
+        }
+        if (gate.if_fail) {
+          html += `<p style="margin: 4px 0; color: #DC2626;"><strong>ELSE:</strong> ${escapeHtml(gate.if_fail)}</p>`;
+        }
+        html += `</div>`;
+      }
+
+      // Progress goal (old format)
+      if (phase.progress_goal) {
+        html += `<div class="goal">
+          <span class="goal-label">Progress Goal:</span>
+          <p style="margin: 4px 0 0 0;">${escapeHtml(phase.progress_goal)}</p>
+        </div>`;
+      }
+
+      // Check-in prompts (old format)
+      if (phase.check_in_prompts && phase.check_in_prompts.length > 0) {
+        html += `<div class="check-in">
+          <span class="check-in-label">Check-in Questions:</span>
+          <ul style="margin: 8px 0 0 0;">${phase.check_in_prompts.map(q => `<li>${escapeHtml(q)}</li>`).join('')}</ul>
+        </div>`;
+      }
+
+      html += `</div>`;
     });
   }
 
-  // Communication Schedule
+  // Clinic Treatments section (new format)
+  if (planData.clinic_treatments && planData.clinic_treatments.items && planData.clinic_treatments.items.length > 0) {
+    html += `<h2>Clinic Treatments</h2>`;
+    if (planData.clinic_treatments.note) {
+      html += `<p style="color: #DC2626; font-style: italic;">${escapeHtml(planData.clinic_treatments.note)}</p>`;
+    }
+    html += `<div style="background: #F9FAFB; padding: 16px; border-radius: 8px;">`;
+    planData.clinic_treatments.items.forEach(treatment => {
+      html += `<div style="margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #E5E7EB;">`;
+      html += `<strong>${escapeHtml(treatment.name)}</strong> <span style="color: #6B7280;">[${escapeHtml(treatment.status)}]</span>`;
+      html += `<p style="margin: 4px 0; font-size: 14px;">Earliest: ${escapeHtml(treatment.earliest_eligibility || 'TBD')}</p>`;
+      if (treatment.conditions && treatment.conditions.length > 0) {
+        html += `<p style="margin: 4px 0; font-size: 14px;">Conditions: ${treatment.conditions.map(c => escapeHtml(c)).join(', ')}</p>`;
+      }
+      html += `</div>`;
+    });
+    html += `</div>`;
+  }
+
+  // Testing Schedule section (new format)
+  if (planData.testing_schedule && planData.testing_schedule.length > 0) {
+    html += `<h2>Testing Schedule</h2>`;
+    html += `<div style="background: #F9FAFB; padding: 16px; border-radius: 8px;">`;
+    planData.testing_schedule.forEach(test => {
+      html += `<div style="margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #E5E7EB;">`;
+      html += `<strong>${escapeHtml(test.name)}</strong>`;
+      html += `<p style="margin: 4px 0; font-size: 14px;"><strong>Timing:</strong> ${escapeHtml(test.timing)}</p>`;
+      if (test.purpose) {
+        html += `<p style="margin: 4px 0; font-size: 14px;"><strong>Purpose:</strong> ${escapeHtml(test.purpose)}</p>`;
+      }
+      if (test.sequence && test.sequence.length > 0) {
+        html += `<p style="margin: 4px 0; font-size: 14px;"><strong>Sequence:</strong> ${test.sequence.map(s => escapeHtml(s)).join(' → ')}</p>`;
+      }
+      html += `</div>`;
+    });
+    html += `</div>`;
+  }
+
+  // Safety Rules section (new format)
+  if (planData.safety_rules) {
+    const rules = planData.safety_rules;
+    html += `<h2>Safety Rules</h2>`;
+
+    if (rules.stop_immediately && rules.stop_immediately.length > 0) {
+      html += `<div style="background: #FEE2E2; padding: 12px; border-radius: 6px; margin-bottom: 12px; border-left: 4px solid #DC2626;">`;
+      html += `<strong style="color: #DC2626;">STOP IMMEDIATELY if:</strong>`;
+      html += `<ul style="margin: 8px 0 0 0;">${rules.stop_immediately.map(r => `<li>${escapeHtml(r)}</li>`).join('')}</ul>`;
+      html += `</div>`;
+    }
+
+    if (rules.hold_and_contact && rules.hold_and_contact.length > 0) {
+      html += `<div style="background: #FEF3C7; padding: 12px; border-radius: 6px; margin-bottom: 12px; border-left: 4px solid #F59E0B;">`;
+      html += `<strong style="color: #92400E;">HOLD & Contact Clinician if:</strong>`;
+      html += `<ul style="margin: 8px 0 0 0;">${rules.hold_and_contact.map(r => `<li>${escapeHtml(r)}</li>`).join('')}</ul>`;
+      html += `</div>`;
+    }
+
+    if (rules.escalation_24h && rules.escalation_24h.length > 0) {
+      html += `<div style="background: #DBEAFE; padding: 12px; border-radius: 6px; margin-bottom: 12px; border-left: 4px solid #3B82F6;">`;
+      html += `<strong style="color: #1E40AF;">Escalate within 24h if:</strong>`;
+      html += `<ul style="margin: 8px 0 0 0;">${rules.escalation_24h.map(r => `<li>${escapeHtml(r)}</li>`).join('')}</ul>`;
+      html += `</div>`;
+    }
+  }
+
+  // Communication Schedule (old format)
   if (planData.communication_schedule) {
     const cs = planData.communication_schedule;
     html += `
@@ -625,7 +739,7 @@ function formatEngagementPlanForPrint(planData) {
     `;
   }
 
-  // Success Metrics
+  // Success Metrics (old format)
   if (planData.success_metrics && planData.success_metrics.length > 0) {
     html += `
       <h2>Success Metrics</h2>

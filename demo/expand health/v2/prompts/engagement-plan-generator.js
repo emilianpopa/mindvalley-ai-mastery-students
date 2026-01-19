@@ -54,7 +54,7 @@ function generateEngagementPlanFromProtocol({
 
   // Build the complete engagement plan
   const engagementPlan = {
-    title: `Engagement Plan: ${protocolTitle} for ${clientName}`,
+    title: `Engagement Plan: ${protocolTitle}`,
     summary: `This ${totalWeeks}-week engagement plan operationalizes the clinical protocol with explicit clinical elements, safety gates, and conditional progression. Every item is derived directly from the source protocol.`,
     total_weeks: totalWeeks,
     generated_method: 'DETERMINISTIC_FROM_PROTOCOL',

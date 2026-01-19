@@ -4050,9 +4050,17 @@
       const startOfWeek = getStartOfWeek(currentDate);
       const grid = document.getElementById('calendarGrid');
 
+      // Deduplicate appointments by ID (in case of data issues)
+      const seenIds = new Set();
+      const uniqueAppointments = appointments.filter(apt => {
+        if (seenIds.has(apt.id)) return false;
+        seenIds.add(apt.id);
+        return true;
+      });
+
       // Group appointments by day and calculate overlaps
       const appointmentsByDay = {};
-      appointments.forEach(apt => {
+      uniqueAppointments.forEach(apt => {
         const start = new Date(apt.start);
         const startLocal = new Date(start.getFullYear(), start.getMonth(), start.getDate());
         const weekStartLocal = new Date(startOfWeek.getFullYear(), startOfWeek.getMonth(), startOfWeek.getDate());
