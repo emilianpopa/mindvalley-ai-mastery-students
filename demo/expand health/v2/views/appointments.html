@@ -7996,45 +7996,50 @@
           </label>
         </div>
         <div class="payment-methods">
-          <button class="payment-method-btn active" data-method="card" onclick="selectPaymentMethod('card')">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
-              <line x1="1" y1="10" x2="23" y2="10"></line>
-            </svg>
-            Card
-          </button>
-          <button class="payment-method-btn" data-method="cash" onclick="selectPaymentMethod('cash')">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="1" y="3" width="22" height="18" rx="2" ry="2"></rect>
-              <circle cx="12" cy="12" r="3"></circle>
-            </svg>
-            Cash
-          </button>
-          <button class="payment-method-btn" data-method="link" onclick="selectPaymentMethod('link')">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
-              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
-            </svg>
-            Payment link
-          </button>
           <button class="payment-method-btn" data-method="membership" onclick="selectPaymentMethod('membership')">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-              <circle cx="12" cy="7" r="4"></circle>
-            </svg>
             Membership
           </button>
+          <button class="payment-method-btn" data-method="cash" onclick="selectPaymentMethod('cash')">
+            Cash
+          </button>
+          <button class="payment-method-btn" data-method="free" onclick="selectPaymentMethod('free')">
+            Free
+          </button>
+          <button class="payment-method-btn" data-method="giftcard" onclick="selectPaymentMethod('giftcard')">
+            Gift card
+          </button>
+          <button class="payment-method-btn" data-method="other" onclick="selectPaymentMethod('other')">
+            Other
+          </button>
         </div>
+        <div class="payment-method-info" id="paymentMethodInfo">
+          <!-- Dynamic content based on selected payment method -->
+        </div>
+        <div class="payment-other-options" id="paymentOtherOptions" style="display: none;">
+          <p class="payment-method-hint">Select one of your custom payment methods.</p>
+          <select class="quick-sale-select" id="otherPaymentSelect">
+            <option value="">Select a payment option...</option>
+            <option value="eft">EFT</option>
+            <option value="expand_medical_yoco">Expand Medical Yoco</option>
+            <option value="salon_voucher">Salon Voucher</option>
+            <option value="sea_point_10_pack">Sea Point 10 pack</option>
+            <option value="sea_point_5_pack">Sea Point 5 pack</option>
+            <option value="sea_point_voucher">Sea Point Voucher</option>
+            <option value="soul_collage_event">Soul Collage Event</option>
+            <option value="yoco_expand_health">Yoco Expand Health</option>
+            <option value="yoco_payment_link">Yoco payment link</option>
+          </select>
+        </div>
+        <label class="send-email-checkbox">
+          <input type="checkbox" id="quickSaleSendEmail" checked>
+          <span>Send email</span>
+        </label>
       </div>
     </div>
     <div class="quick-sale-footer">
       <button class="quick-sale-btn quick-sale-btn-cancel" onclick="closeQuickSaleModal()">Cancel</button>
-      <button class="quick-sale-btn quick-sale-btn-charge" onclick="processQuickSalePayment()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
-          <line x1="1" y1="10" x2="23" y2="10"></line>
-        </svg>
-        Charge ZAR <span id="quickSaleChargeAmount">200</span>
+      <button class="quick-sale-btn quick-sale-btn-charge" id="quickSaleChargeBtn" onclick="processQuickSalePayment()">
+        <span id="quickSaleChargeBtnText">Charge customer</span>
       </button>
     </div>
   </div>
@@ -8491,6 +8496,56 @@
       height: 20px;
     }
 
+    /* Payment Method Info */
+    .payment-method-info {
+      margin-top: 12px;
+      padding: 12px;
+      background: #fef3c7;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      color: #92400e;
+    }
+
+    .payment-method-info:empty {
+      display: none;
+    }
+
+    .payment-method-info.info-blue {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+
+    .payment-method-info.info-green {
+      background: #d1fae5;
+      color: #065f46;
+    }
+
+    .payment-method-hint {
+      margin: 0 0 8px 0;
+      font-size: 0.875rem;
+      color: #6b7280;
+    }
+
+    .payment-other-options {
+      margin-top: 12px;
+    }
+
+    .send-email-checkbox {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 16px;
+      font-size: 0.875rem;
+      color: #374151;
+      cursor: pointer;
+    }
+
+    .send-email-checkbox input {
+      width: 18px;
+      height: 18px;
+      accent-color: #7c3aed;
+    }
+
     /* Footer */
     .quick-sale-footer {
       display: flex;
@@ -8657,6 +8712,63 @@
       document.querySelectorAll('.payment-method-btn').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.method === method);
       });
+
+      // Update payment method info and button based on selection
+      const infoDiv = document.getElementById('paymentMethodInfo');
+      const otherOptions = document.getElementById('paymentOtherOptions');
+      const chargeBtn = document.getElementById('quickSaleChargeBtn');
+      const chargeBtnText = document.getElementById('quickSaleChargeBtnText');
+      const price = quickSaleData?.price || 0;
+
+      // Hide other options by default
+      otherOptions.style.display = 'none';
+      infoDiv.className = 'payment-method-info';
+
+      switch (method) {
+        case 'membership':
+          infoDiv.textContent = 'This customer has no valid active memberships.';
+          infoDiv.className = 'payment-method-info';
+          chargeBtnText.textContent = 'Book with membership';
+          chargeBtn.style.background = '#7c3aed';
+          break;
+        case 'cash':
+          infoDiv.textContent = 'Take the cash payment, then click the button below.';
+          infoDiv.className = 'payment-method-info info-blue';
+          chargeBtnText.textContent = 'Charge customer';
+          chargeBtn.style.background = '#7c3aed';
+          break;
+        case 'free':
+          infoDiv.textContent = 'The customer will not be charged.';
+          infoDiv.className = 'payment-method-info info-blue';
+          chargeBtnText.textContent = 'Confirm free buy';
+          chargeBtn.style.background = '#6b7280';
+          // Update totals to show "Cart will be free of charge."
+          document.getElementById('quickSaleSubtotal').textContent = '';
+          document.getElementById('quickSaleTotal').innerHTML = '<span style="color: #10b981;">Cart will be free of charge.</span>';
+          break;
+        case 'giftcard':
+          infoDiv.textContent = 'Gift card payment selected.';
+          infoDiv.className = 'payment-method-info info-blue';
+          chargeBtnText.textContent = 'Apply gift card';
+          chargeBtn.style.background = '#7c3aed';
+          break;
+        case 'other':
+          infoDiv.textContent = '';
+          otherOptions.style.display = 'block';
+          chargeBtnText.textContent = 'Confirm purchase';
+          chargeBtn.style.background = '#7c3aed';
+          break;
+        default:
+          infoDiv.textContent = '';
+          chargeBtnText.textContent = 'Charge customer';
+          chargeBtn.style.background = '#7c3aed';
+      }
+
+      // Reset totals if not free
+      if (method !== 'free' && quickSaleData) {
+        document.getElementById('quickSaleSubtotal').textContent = `ZAR ${price.toFixed(2)}`;
+        document.getElementById('quickSaleTotal').textContent = `ZAR ${price.toFixed(2)}`;
+      }
     }
 
     async function processQuickSalePayment() {

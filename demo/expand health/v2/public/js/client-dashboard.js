@@ -5866,19 +5866,19 @@ async function generateEngagementPlan() {
           ${plan.safety_rules.stop_immediately ? `
             <div class="safety-stop">
               <p><strong>🛑 STOP Immediately:</strong></p>
-              <ul>${plan.safety_rules.stop_immediately.map(r => `<li>${r}</li>`).join('')}</ul>
+              <ul>${plan.safety_rules.stop_immediately.map(r => `<li>${typeof r === 'string' ? r : (r.rule || '')}</li>`).join('')}</ul>
             </div>
           ` : ''}
           ${plan.safety_rules.hold_and_contact ? `
             <div class="safety-hold">
               <p><strong>⏸️ HOLD & Contact Clinician:</strong></p>
-              <ul>${plan.safety_rules.hold_and_contact.map(r => `<li>${r}</li>`).join('')}</ul>
+              <ul>${plan.safety_rules.hold_and_contact.map(r => `<li>${typeof r === 'string' ? r : (r.rule || '')}</li>`).join('')}</ul>
             </div>
           ` : ''}
           ${plan.safety_rules.escalation_24h ? `
             <div class="safety-escalate">
               <p><strong>⚠️ Escalate within 24h:</strong></p>
-              <ul>${plan.safety_rules.escalation_24h.map(r => `<li>${r}</li>`).join('')}</ul>
+              <ul>${plan.safety_rules.escalation_24h.map(r => `<li>${typeof r === 'string' ? r : (r.rule || '')}</li>`).join('')}</ul>
             </div>
           ` : ''}
         </div>
@@ -11663,9 +11663,20 @@ function formatEngagementPlanHtml(planData) {
     `;
   }
 
-  // Safety Rules section (new format)
+  // Safety Rules section (new format) - handles both string and object {rule, source} formats
   if (planData.safety_rules) {
     const rules = planData.safety_rules;
+
+    // Helper to render rules - handles both string and object formats
+    const renderSafetyRule = (r) => {
+      if (typeof r === 'string') {
+        return escapeHtml(r);
+      } else if (r && r.rule) {
+        return escapeHtml(r.rule);
+      }
+      return '';
+    };
+
     html += `<div style="background: #FEF2F2; border-radius: 12px; padding: 20px; margin-bottom: 16px;">
       <h3 style="color: #DC2626; margin: 0 0 12px 0; font-size: 16px;">Safety Rules</h3>`;
 
@@ -11673,7 +11684,7 @@ function formatEngagementPlanHtml(planData) {
       html += `
         <div style="background: #FEE2E2; padding: 12px; border-radius: 6px; margin-bottom: 12px; border-left: 4px solid #DC2626;">
           <strong style="color: #DC2626;">STOP IMMEDIATELY if:</strong>
-          <ul style="margin: 8px 0 0 0; padding-left: 20px;">${rules.stop_immediately.map(r => `<li style="font-size: 13px;">${escapeHtml(r)}</li>`).join('')}</ul>
+          <ul style="margin: 8px 0 0 0; padding-left: 20px;">${rules.stop_immediately.map(r => `<li style="font-size: 13px;">${renderSafetyRule(r)}</li>`).join('')}</ul>
         </div>
       `;
     }
@@ -11682,7 +11693,7 @@ function formatEngagementPlanHtml(planData) {
       html += `
         <div style="background: #FEF3C7; padding: 12px; border-radius: 6px; margin-bottom: 12px; border-left: 4px solid #F59E0B;">
           <strong style="color: #92400E;">HOLD & Contact Clinician if:</strong>
-          <ul style="margin: 8px 0 0 0; padding-left: 20px;">${rules.hold_and_contact.map(r => `<li style="font-size: 13px;">${escapeHtml(r)}</li>`).join('')}</ul>
+          <ul style="margin: 8px 0 0 0; padding-left: 20px;">${rules.hold_and_contact.map(r => `<li style="font-size: 13px;">${renderSafetyRule(r)}</li>`).join('')}</ul>
         </div>
       `;
     }
@@ -11691,7 +11702,7 @@ function formatEngagementPlanHtml(planData) {
       html += `
         <div style="background: #DBEAFE; padding: 12px; border-radius: 6px; margin-bottom: 12px; border-left: 4px solid #3B82F6;">
           <strong style="color: #1E40AF;">Escalate within 24h if:</strong>
-          <ul style="margin: 8px 0 0 0; padding-left: 20px;">${rules.escalation_24h.map(r => `<li style="font-size: 13px;">${escapeHtml(r)}</li>`).join('')}</ul>
+          <ul style="margin: 8px 0 0 0; padding-left: 20px;">${rules.escalation_24h.map(r => `<li style="font-size: 13px;">${renderSafetyRule(r)}</li>`).join('')}</ul>
         </div>
       `;
     }
