@@ -41,7 +41,20 @@ function generateEngagementPlanFromProtocol({
   }
 
   // Build engagement plan phases from protocol phases
-  const engagementPhases = buildPhasesFromProtocol(phases, supplements, lifestyle_protocols, safety_constraints);
+  let engagementPhases = buildPhasesFromProtocol(phases, supplements, lifestyle_protocols, safety_constraints);
+
+  // SAFETY CHECK: Ensure every phase has non-empty clinical_elements
+  engagementPhases = engagementPhases.map((phase, idx) => {
+    if (!phase.clinical_elements || phase.clinical_elements.length === 0) {
+      // Add meaningful default content if empty
+      phase.clinical_elements = [
+        { name: `Phase ${idx + 1} Protocol Items`, status: 'SCHEDULED' },
+        { name: 'Follow clinician guidance', status: 'SCHEDULED' },
+        { name: 'Track progress daily', status: 'SCHEDULED' }
+      ];
+    }
+    return phase;
+  });
 
   // Build clinic treatments section
   const clinicTreatmentsSection = buildClinicTreatmentsSection(clinic_treatments);
@@ -99,27 +112,53 @@ function buildPhasesFromProtocol(phases, supplements, lifestyleProtocols, safety
   // Track which supplements have been introduced
   const introducedSupplements = new Set();
 
+  // CRITICAL: If supplements don't have start_week, distribute them across phases
+  // This handles the case where protocol has phases but supplements lack week info
+  const supplementsWithoutWeek = supplements.filter(s => !s.start_week);
+  const supplementsWithWeek = supplements.filter(s => s.start_week);
+
+  // Distribute supplements without week info across phases proportionally
+  const supplementsPerPhase = Math.ceil(supplementsWithoutWeek.length / phases.length);
+
   phases.forEach((phase, index) => {
     const startWeek = phase.start_week || (index * 2 + 1);
     const endWeek = startWeek + (phase.duration_weeks || 2) - 1;
     const phaseName = phase.name || `Phase ${index + 1}`;
 
-    // Get supplements for this phase
-    const phaseSupplements = supplements.filter(s => {
+    // Get supplements WITH start_week that belong to this phase
+    const phaseSupplementsWithWeek = supplementsWithWeek.filter(s => {
       const suppStartWeek = s.start_week || 1;
       return suppStartWeek >= startWeek && suppStartWeek <= endWeek;
     });
 
-    // Get lifestyle protocols for this phase
-    const phaseLifestyle = lifestyleProtocols.filter(l => {
-      const startW = l.start_week || 1;
-      return startW >= startWeek && startW <= endWeek;
-    });
+    // Get supplements WITHOUT start_week assigned to this phase
+    const startIdx = index * supplementsPerPhase;
+    const endIdx = Math.min(startIdx + supplementsPerPhase, supplementsWithoutWeek.length);
+    const phaseSupplementsWithoutWeek = supplementsWithoutWeek.slice(startIdx, endIdx);
 
-    // Get safety gates for this phase
+    // Combine both
+    const phaseSupplements = [...phaseSupplementsWithWeek, ...phaseSupplementsWithoutWeek];
+
+    // Get lifestyle protocols for this phase (first phase gets all without week, others by week range)
+    let phaseLifestyle = [];
+    if (index === 0) {
+      // First phase gets all lifestyle protocols without start_week
+      phaseLifestyle = lifestyleProtocols.filter(l => !l.start_week || l.start_week <= endWeek);
+    } else {
+      phaseLifestyle = lifestyleProtocols.filter(l => {
+        const startW = l.start_week || 0;
+        return startW >= startWeek && startW <= endWeek;
+      });
+    }
+
+    // Get safety gates for this phase - match by phase name OR by index
     const phaseGates = safetyConstraints.filter(c =>
       (c.type === 'safety_gate' || c.type === 'readiness_criteria') &&
-      c.phase && c.phase.toLowerCase().includes(phaseName.toLowerCase())
+      (
+        (c.phase && c.phase.toLowerCase().includes(phaseName.toLowerCase())) ||
+        (c.phase && c.phase.toLowerCase().includes(`phase ${index + 1}`)) ||
+        (c.phase && c.phase.toLowerCase().includes('core') && index === 0)
+      )
     );
 
     // Build clinical elements
@@ -135,21 +174,27 @@ function buildPhasesFromProtocol(phases, supplements, lifestyleProtocols, safety
 
     // Add new supplements for this phase
     phaseSupplements.forEach(supp => {
-      const isNew = !introducedSupplements.has(supp.name);
-      clinicalElements.push({
-        name: isNew ? `ADD: ${supp.name}` : supp.name,
-        status: 'SCHEDULED'
-      });
-      introducedSupplements.add(supp.name);
+      if (supp.name) {
+        const isNew = !introducedSupplements.has(supp.name);
+        clinicalElements.push({
+          name: isNew ? `ADD: ${supp.name}` : supp.name,
+          status: 'SCHEDULED'
+        });
+        introducedSupplements.add(supp.name);
+      }
     });
 
-    // Add lifestyle protocols
-    phaseLifestyle.forEach(lp => {
-      clinicalElements.push({
-        name: lp.name,
-        status: 'SCHEDULED'
+    // Add lifestyle protocols (only add to first phase to avoid duplicates)
+    if (index === 0) {
+      phaseLifestyle.forEach(lp => {
+        if (lp.name) {
+          clinicalElements.push({
+            name: lp.name,
+            status: 'SCHEDULED'
+          });
+        }
       });
-    });
+    }
 
     // Build monitoring items
     const monitoring = [
@@ -223,16 +268,25 @@ function buildDefaultPhases(supplements, lifestyleProtocols, safetyConstraints) 
   const weeks = Object.keys(supplementsByWeek).map(Number).sort((a, b) => a - b);
 
   if (weeks.length === 0) {
-    // No supplements - create minimal structure
+    // No supplements - create structure with lifestyle protocols or placeholder
+    const clinicalElements = lifestyleProtocols.length > 0
+      ? lifestyleProtocols.map(lp => ({
+          name: lp.name || 'Lifestyle Protocol',
+          status: 'SCHEDULED'
+        }))
+      : [
+          // Always provide meaningful default content
+          { name: 'Initial Assessment & Baseline', status: 'SCHEDULED' },
+          { name: 'Review Protocol Guidelines', status: 'SCHEDULED' },
+          { name: 'Establish Daily Tracking Routine', status: 'SCHEDULED' }
+        ];
+
     return [{
       phase_number: 1,
-      title: 'Core Protocol',
+      title: 'Core Protocol: Foundation',
       week_range: '1-4',
-      clinical_elements: lifestyleProtocols.map(lp => ({
-        name: lp.name,
-        status: 'SCHEDULED'
-      })),
-      monitoring: ['Track daily symptoms', 'Log energy levels'],
+      clinical_elements: clinicalElements,
+      monitoring: ['Track daily symptoms', 'Log energy levels', 'Note any changes'],
       safety_gate: {
         conditions: ['Tolerating protocol well', 'No adverse reactions'],
         if_pass: 'Continue protocol or schedule follow-up',
