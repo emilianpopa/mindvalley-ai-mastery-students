@@ -5519,135 +5519,6 @@
     // =====================
     let selectedCustomerId = null;
 
-    function getInitials(firstName, lastName) {
-      const first = firstName ? firstName.charAt(0).toUpperCase() : '';
-      const last = lastName ? lastName.charAt(0).toUpperCase() : '';
-      return first + last;
-    }
-
-    function populateCustomerList() {
-      const customerList = document.getElementById('customerList');
-      customerList.innerHTML = '';
-
-      if (clients.length === 0) {
-        customerList.innerHTML = '<div class="customer-no-results">No customers found</div>';
-        return;
-      }
-
-      clients.forEach(client => {
-        const item = document.createElement('div');
-        item.className = 'customer-item';
-        item.dataset.clientId = client.id;
-        item.onclick = () => selectCustomer(client);
-
-        const initials = getInitials(client.first_name, client.last_name);
-        const fullName = `${client.first_name} ${client.last_name}`;
-        const email = client.email || '';
-
-        item.innerHTML = `
-          <div class="customer-avatar">${initials}</div>
-          <div class="customer-info">
-            <div class="customer-name">${fullName}</div>
-            <div class="customer-email">${email}</div>
-          </div>
-        `;
-
-        customerList.appendChild(item);
-      });
-    }
-
-    function selectCustomer(client) {
-      selectedCustomerId = client.id;
-      document.getElementById('customerSelect').value = client.id;
-
-      // Update dropdown display
-      const selected = document.getElementById('customerDropdownSelected');
-      const initials = getInitials(client.first_name, client.last_name);
-      const fullName = `${client.first_name} ${client.last_name}`;
-      const email = client.email || '';
-
-      selected.innerHTML = `
-        <div class="selected-customer-avatar">${initials}</div>
-        <div class="selected-customer-info">
-          <div class="selected-customer-name">${fullName}</div>
-          <div class="selected-customer-email">${email}</div>
-        </div>
-      `;
-
-      // Mark as selected in list
-      document.querySelectorAll('.customer-item').forEach(item => {
-        item.classList.remove('selected');
-        if (parseInt(item.dataset.clientId) === client.id) {
-          item.classList.add('selected');
-        }
-      });
-
-      // Close dropdown
-      closeCustomerDropdown();
-    }
-
-    function toggleCustomerDropdown() {
-      const dropdown = document.getElementById('customerDropdown');
-      const menu = document.getElementById('customerDropdownMenu');
-
-      if (menu.classList.contains('open')) {
-        closeCustomerDropdown();
-      } else {
-        dropdown.classList.add('open');
-        menu.classList.add('open');
-        // Focus search input
-        setTimeout(() => {
-          document.getElementById('customerSearchInput').focus();
-        }, 100);
-      }
-    }
-
-    function closeCustomerDropdown() {
-      document.getElementById('customerDropdown').classList.remove('open');
-      document.getElementById('customerDropdownMenu').classList.remove('open');
-    }
-
-    function filterCustomerList() {
-      const searchTerm = document.getElementById('customerSearchInput').value.toLowerCase().trim();
-      const customerList = document.getElementById('customerList');
-      customerList.innerHTML = '';
-
-      const filteredClients = clients.filter(client => {
-        const fullName = `${client.first_name} ${client.last_name}`.toLowerCase();
-        const email = (client.email || '').toLowerCase();
-        return fullName.includes(searchTerm) || email.includes(searchTerm);
-      });
-
-      if (filteredClients.length === 0) {
-        customerList.innerHTML = '<div class="customer-no-results">No customers found</div>';
-        return;
-      }
-
-      filteredClients.forEach(client => {
-        const item = document.createElement('div');
-        item.className = 'customer-item';
-        if (selectedCustomerId === client.id) {
-          item.className += ' selected';
-        }
-        item.dataset.clientId = client.id;
-        item.onclick = () => selectCustomer(client);
-
-        const initials = getInitials(client.first_name, client.last_name);
-        const fullName = `${client.first_name} ${client.last_name}`;
-        const email = client.email || '';
-
-        item.innerHTML = `
-          <div class="customer-avatar">${initials}</div>
-          <div class="customer-info">
-            <div class="customer-name">${fullName}</div>
-            <div class="customer-email">${email}</div>
-          </div>
-        `;
-
-        customerList.appendChild(item);
-      });
-    }
-
     async function openAddCustomerModal() {
       if (!selectedAppointment) {
         console.log('No selected appointment');
@@ -5656,16 +5527,9 @@
 
       // Reset state
       selectedCustomerId = null;
-      document.getElementById('customerSelect').value = '';
-      document.getElementById('customerSearchInput').value = '';
-      document.getElementById('customerDropdownSelected').innerHTML = '<span class="dropdown-placeholder">Select customer...</span>';
-      closeCustomerDropdown();
 
       // Always reload clients to get fresh data
       await loadClients();
-
-      // Populate the customer list
-      populateCustomerList();
 
       // Show modal
       document.getElementById('addCustomerModalOverlay').classList.add('show');
