@@ -4713,9 +4713,30 @@
       const priceEl = document.getElementById('panelPrice');
       priceEl.innerHTML = `ZAR ${price.toFixed(2)} <span class="panel-price-credits">or ${credits} credits</span>`;
 
-      // Populate Timing tab
-      document.getElementById('panelTimingDateTime').textContent = `${dateStr} ${startTime} - ${endTime}`;
-      document.getElementById('panelTimingDuration').textContent = `Duration: ${durationMins} minutes`;
+      // Populate Timing tab - Reservation Preview
+      const bufferBefore = apt.extendedProps?.bufferBefore || 0;
+      const bufferAfter = apt.extendedProps?.bufferAfter || 0;
+      const locationName = apt.extendedProps?.locationDetails || apt.extendedProps?.locationType || 'Event Space';
+
+      // Duration value
+      document.getElementById('panelDurationValue').textContent = `${durationMins}m`;
+
+      // Buffer labels
+      document.getElementById('panelBufferStart').textContent = bufferBefore > 0 ? `${bufferBefore}m buffer` : 'Add Buffer time 10m';
+      document.getElementById('panelBufferEnd').textContent = bufferAfter > 0 ? `${bufferAfter}m buffer` : 'Add Buffer time 10m';
+
+      // Appointment block details
+      document.getElementById('panelBlockServiceName').textContent = serviceName;
+      document.getElementById('panelBlockCustomer').textContent = `👥 ${clientName}`;
+      document.getElementById('panelBlockLocation').textContent = `📍 ${locationName}`;
+      document.getElementById('panelBlockStaff').textContent = `👤 ${staffName || 'Staff'}`;
+      document.getElementById('panelBlockTime').textContent = `⏱ ${startTime}-${endTime}`;
+
+      // Time markers (with buffer)
+      const bufferStartTime = new Date(start.getTime() - bufferBefore * 60000);
+      const bufferEndTime = new Date(end.getTime() + bufferAfter * 60000);
+      document.getElementById('panelTimeStart').textContent = bufferStartTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+      document.getElementById('panelTimeEnd').textContent = bufferEndTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
 
       // Created at date
       const createdAt = apt.extendedProps?.createdAt;
@@ -6099,22 +6120,73 @@
 
       <!-- Timing Tab Content -->
       <div id="panelTimingContent" style="display: none; padding: 16px 0;">
-        <div class="panel-section">
-          <div class="panel-section-title">Timing Information</div>
-          <div class="panel-info-row">
-            <div class="panel-info-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10"></circle>
-                <polyline points="12 6 12 12 16 14"></polyline>
-              </svg>
+        <!-- Reservation Preview Header -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+          <div style="font-size: 0.875rem; font-weight: 500; color: #374151;">Reservation preview</div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2" style="width: 16px; height: 16px;">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
+        </div>
+
+        <!-- Timeline Container -->
+        <div style="display: flex; gap: 16px;">
+          <!-- Left Labels -->
+          <div style="display: flex; flex-direction: column; gap: 0; font-size: 0.75rem; color: #6B7280; min-width: 140px;">
+            <div style="display: flex; align-items: center; height: 40px;">
+              <div>
+                <div>Buffer/overlap at start</div>
+                <div id="panelBufferStart" style="color: #9CA3AF;">Add Buffer time 10m</div>
+              </div>
             </div>
-            <div class="panel-info-content">
-              <div class="panel-info-label" id="panelTimingDateTime">--</div>
-              <div class="panel-info-sublabel" id="panelTimingDuration">--</div>
+            <div style="display: flex; align-items: center; height: 60px;">
+              <div>
+                <div>Duration</div>
+                <div id="panelDurationValue" style="font-weight: 600; color: #374151;">38m</div>
+              </div>
+            </div>
+            <div style="display: flex; align-items: center; height: 40px;">
+              <div>
+                <div>Buffer/overlap at end</div>
+                <div id="panelBufferEnd" style="color: #9CA3AF;">Add Buffer time 10m</div>
+              </div>
             </div>
           </div>
+
+          <!-- Visual Timeline -->
+          <div style="flex: 1; display: flex; flex-direction: column; position: relative;">
+            <!-- Buffer Start (striped) -->
+            <div id="panelBufferStartVisual" style="height: 40px; background: repeating-linear-gradient(45deg, #E5E7EB, #E5E7EB 4px, #F3F4F6 4px, #F3F4F6 8px); border-radius: 4px 4px 0 0;"></div>
+
+            <!-- Main Appointment Block -->
+            <div id="panelAppointmentBlock" style="height: 60px; background: #0D9488; border-radius: 0; padding: 8px 12px; color: white; display: flex; flex-direction: column; justify-content: center;">
+              <div style="display: flex; align-items: center; gap: 6px; font-size: 0.75rem; font-weight: 600;">
+                <span style="width: 8px; height: 8px; background: #4ADE80; border-radius: 50%;"></span>
+                <span id="panelBlockServiceName">HBOT1 30 min</span>
+              </div>
+              <div style="font-size: 0.6875rem; opacity: 0.9; margin-top: 2px;">
+                <span id="panelBlockCustomer">👥 Customer</span> ·
+                <span id="panelBlockLocation">📍 Location</span>
+              </div>
+              <div style="font-size: 0.6875rem; opacity: 0.9;">
+                <span id="panelBlockStaff">👤 Staff</span>
+              </div>
+              <div style="font-size: 0.6875rem; opacity: 0.9;">
+                <span id="panelBlockTime">⏱ 9:00 AM-9:38 AM</span>
+              </div>
+            </div>
+
+            <!-- Buffer End (striped) -->
+            <div id="panelBufferEndVisual" style="height: 40px; background: repeating-linear-gradient(45deg, #E5E7EB, #E5E7EB 4px, #F3F4F6 4px, #F3F4F6 8px); border-radius: 0 0 4px 4px;"></div>
+
+            <!-- Time Labels on Right -->
+            <div style="position: absolute; right: -50px; top: 0; font-size: 0.6875rem; color: #9CA3AF;" id="panelTimeStart">9:15 AM</div>
+            <div style="position: absolute; right: -50px; bottom: 0; font-size: 0.6875rem; color: #9CA3AF;" id="panelTimeEnd">9:53 AM</div>
+          </div>
         </div>
-        <div class="panel-section">
+
+        <!-- Created Section -->
+        <div class="panel-section" style="margin-top: 24px;">
           <div class="panel-section-title">Created</div>
           <div class="panel-info-row">
             <div class="panel-info-icon gray">
