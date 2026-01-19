@@ -208,6 +208,7 @@ router.get('/calendar', async (req, res, next) => {
         a.start_time,
         a.end_time,
         a.status,
+        a.location_id,
         a.location_type,
         a.client_id,
         a.staff_id,
@@ -217,6 +218,7 @@ router.get('/calendar', async (req, res, next) => {
         a.payment_status,
         a.is_time_block,
         a.created_at,
+        a.internal_notes,
         c.first_name || ' ' || c.last_name as client_name,
         c.email as client_email,
         c.phone as client_phone,
@@ -226,11 +228,13 @@ router.get('/calendar', async (req, res, next) => {
         st.color as service_color,
         st.price as service_price,
         COALESCE(st.buffer_before_minutes, 0) as buffer_before_minutes,
-        COALESCE(st.buffer_after_minutes, 0) as buffer_after_minutes
+        COALESCE(st.buffer_after_minutes, 0) as buffer_after_minutes,
+        l.name as location_name
       FROM appointments a
       LEFT JOIN clients c ON a.client_id = c.id
       LEFT JOIN staff s ON a.staff_id = s.id
       LEFT JOIN service_types st ON a.service_type_id = st.id
+      LEFT JOIN locations l ON a.location_id = l.id
       WHERE a.tenant_id = $1
         AND a.start_time < $3
         AND a.end_time > $2
@@ -272,8 +276,11 @@ router.get('/calendar', async (req, res, next) => {
           staffName: apt.staff_name,
           serviceId: apt.service_type_id,
           serviceName: apt.service_name,
+          locationId: apt.location_id,
+          locationName: apt.location_name,
           locationType: apt.location_type,
           price: price,
+          notes: apt.internal_notes,
           checkedInAt: apt.checked_in_at,
           isTimeBlock: apt.is_time_block || false,
           bufferBefore: apt.buffer_before_minutes || 0,

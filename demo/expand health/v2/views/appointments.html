@@ -5420,13 +5420,16 @@
       if (!selectedAppointment) return;
 
       const apt = selectedAppointment;
+      // FullCalendar stores business data in extendedProps, and start/end at top level
+      const props = apt.extendedProps || {};
 
       // Populate the form with current appointment data
       document.getElementById('editAptBoard').textContent = 'Expand Health';
 
-      // Set starts at datetime
-      if (apt.start_time) {
-        const startDate = new Date(apt.start_time);
+      // Set starts at datetime - FullCalendar uses 'start' not 'start_time'
+      const startTime = apt.start || apt.start_time;
+      if (startTime) {
+        const startDate = new Date(startTime);
         const localDateTime = new Date(startDate.getTime() - startDate.getTimezoneOffset() * 60000)
           .toISOString()
           .slice(0, 16);
@@ -5435,39 +5438,50 @@
 
       // Load and populate services dropdown
       await loadServicesForEdit();
-      if (apt.service_id) {
-        document.getElementById('editAptService').value = apt.service_id;
+      const serviceId = props.serviceId || apt.service_id;
+      if (serviceId) {
+        document.getElementById('editAptService').value = serviceId;
       }
 
       // Load and populate staff dropdown
       await loadStaffForEdit();
-      if (apt.staff_id) {
-        document.getElementById('editAptStaff').value = apt.staff_id;
+      const staffId = props.staffId || apt.staff_id;
+      if (staffId) {
+        document.getElementById('editAptStaff').value = staffId;
+      }
+
+      // Load and populate venue dropdown
+      await loadVenuesForEdit();
+      const locationId = props.locationId || apt.location_id;
+      if (locationId) {
+        document.getElementById('editAptVenue').value = locationId;
       }
 
       // Set duration (calculate from start/end time or use default)
-      if (apt.start_time && apt.end_time) {
-        const start = new Date(apt.start_time);
-        const end = new Date(apt.end_time);
+      const endTime = apt.end || apt.end_time;
+      if (startTime && endTime) {
+        const start = new Date(startTime);
+        const end = new Date(endTime);
         const durationMinutes = Math.round((end - start) / (1000 * 60));
         document.getElementById('editAptDuration').value = durationMinutes;
       } else {
         document.getElementById('editAptDuration').value = 45;
       }
 
-      // Set buffers (default values)
-      document.getElementById('editAptBufferStart').value = 5;
-      document.getElementById('editAptBufferEnd').value = 5;
+      // Set buffers
+      document.getElementById('editAptBufferStart').value = props.bufferBefore || 5;
+      document.getElementById('editAptBufferEnd').value = props.bufferAfter || 5;
 
       // Set price
-      if (apt.price) {
-        document.getElementById('editAptPrice').value = apt.price;
+      const price = props.price || apt.price;
+      if (price) {
+        document.getElementById('editAptPrice').value = price;
       } else {
         document.getElementById('editAptPrice').value = 0;
       }
 
       // Set notes
-      document.getElementById('editAptNotes').value = apt.notes || '';
+      document.getElementById('editAptNotes').value = props.notes || apt.notes || '';
 
       // Show modal
       document.getElementById('editAptModalOverlay').classList.add('show');
@@ -5531,6 +5545,32 @@
       }
     }
 
+    async function loadVenuesForEdit() {
+      try {
+        const response = await fetch('/api/locations?active_only=true', {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (response.ok) {
+          const venues = await response.json();
+          const select = document.getElementById('editAptVenue');
+          select.innerHTML = '<option value="">Select venue...</option>';
+
+          venues.forEach(venue => {
+            const option = document.createElement('option');
+            option.value = venue.id;
+            option.textContent = venue.name;
+            select.appendChild(option);
+          });
+        }
+      } catch (error) {
+        console.error('Error loading venues:', error);
+      }
+    }
+
     async function saveAppointmentChanges() {
       if (!selectedAppointment) return;
 
@@ -5540,6 +5580,7 @@
       const startDateTime = document.getElementById('editAptStartsAt').value;
       const serviceId = document.getElementById('editAptService').value;
       const staffId = document.getElementById('editAptStaff').value;
+      const venueId = document.getElementById('editAptVenue').value;
       const duration = parseInt(document.getElementById('editAptDuration').value) || 45;
       const price = parseFloat(document.getElementById('editAptPrice').value) || 0;
       const notes = document.getElementById('editAptNotes').value;
@@ -5560,6 +5601,7 @@
             end_time: endDate.toISOString(),
             service_id: serviceId || null,
             staff_id: staffId || null,
+            location_id: venueId || null,
             price: price,
             notes: notes
           })
