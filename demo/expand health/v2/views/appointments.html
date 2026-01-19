@@ -4079,73 +4079,43 @@
           apt.totalColumns = 1;
         });
 
-        // Use a greedy column assignment algorithm
-        // For each appointment, find the first column where it doesn't overlap with existing appointments
-        const columns = []; // Array of arrays, each sub-array contains appointments in that column
-
+        // Simple greedy algorithm: place each appointment in the leftmost column that doesn't overlap
         dayAppts.forEach(apt => {
-          // Find the first column where this appointment fits (doesn't overlap)
-          let placed = false;
-          for (let col = 0; col < columns.length; col++) {
-            // Check if apt overlaps with any appointment in this column
-            const overlaps = columns[col].some(other =>
-              apt.startTime < other.endTime && apt.endTime > other.startTime
-            );
-            if (!overlaps) {
-              // Place in this column
-              apt.column = col;
-              columns[col].push(apt);
-              placed = true;
-              break;
-            }
-          }
-          if (!placed) {
-            // Create a new column
-            apt.column = columns.length;
-            columns.push([apt]);
-          }
+          // Find all appointments that overlap with this one and have already been placed
+          const overlapping = dayAppts.filter(other =>
+            other !== apt &&
+            other.column !== undefined &&
+            apt.startTime < other.endTime &&
+            apt.endTime > other.startTime
+          );
+
+          // Find the first available column
+          const usedColumns = new Set(overlapping.map(o => o.column));
+          let col = 0;
+          while (usedColumns.has(col)) col++;
+          apt.column = col;
         });
 
-        // Now calculate totalColumns for each appointment based on concurrent overlaps
-        // For each appointment, find max concurrent appointments at any point during its duration
+        // Calculate totalColumns for each appointment based on direct overlaps only
         dayAppts.forEach(apt => {
-          let maxConcurrent = 1;
-          dayAppts.forEach(other => {
-            if (apt !== other && apt.startTime < other.endTime && apt.endTime > other.startTime) {
-              // They overlap - count how many overlap at the same time
-              const overlapStart = Math.max(apt.startTime.getTime(), other.startTime.getTime());
-              const concurrent = dayAppts.filter(a =>
-                a.startTime.getTime() <= overlapStart && a.endTime.getTime() > overlapStart
-              ).length;
-              maxConcurrent = Math.max(maxConcurrent, concurrent);
-            }
-          });
-          apt.totalColumns = Math.max(columns.length, maxConcurrent);
-        });
+          // Find all appointments that directly overlap with this one
+          const directOverlaps = dayAppts.filter(other =>
+            other !== apt &&
+            apt.startTime < other.endTime &&
+            apt.endTime > other.startTime
+          );
 
-        // Normalize: all overlapping appointments should have the same totalColumns
-        // Find connected groups and set uniform totalColumns
-        const visited = new Set();
-        dayAppts.forEach(apt => {
-          if (visited.has(apt.id)) return;
-          // BFS to find all connected appointments
-          const group = [];
-          const queue = [apt];
-          while (queue.length > 0) {
-            const current = queue.shift();
-            if (visited.has(current.id)) continue;
-            visited.add(current.id);
-            group.push(current);
-            // Find all that overlap with current
-            dayAppts.forEach(other => {
-              if (!visited.has(other.id) && current.startTime < other.endTime && current.endTime > other.startTime) {
-                queue.push(other);
-              }
+          if (directOverlaps.length === 0) {
+            apt.totalColumns = 1;
+          } else {
+            // totalColumns = max column used by any overlapping appointment + 1
+            const maxCol = Math.max(apt.column, ...directOverlaps.map(o => o.column));
+            apt.totalColumns = maxCol + 1;
+            // Also update the overlapping appointments to have the same totalColumns
+            directOverlaps.forEach(o => {
+              o.totalColumns = Math.max(o.totalColumns, maxCol + 1);
             });
           }
-          // Set uniform totalColumns for the group
-          const maxCol = Math.max(...group.map(a => a.column)) + 1;
-          group.forEach(a => a.totalColumns = maxCol);
         });
       });
 
