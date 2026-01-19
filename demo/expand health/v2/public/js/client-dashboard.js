@@ -11334,7 +11334,7 @@ function copyEngagementPlanLink() {
   });
 }
 
-// Print engagement plan from editor
+// Print engagement plan from editor - uses formatEngagementPlanForPrint for consistent output
 function printEngagementPlanFromEditor() {
   if (!currentEngagementPlanData) return;
 
@@ -11345,31 +11345,132 @@ function printEngagementPlanFromEditor() {
     <head>
       <title>${currentEngagementPlanData.title || 'Engagement Plan'}</title>
       <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 40px; line-height: 1.6; max-width: 800px; margin: 0 auto; }
-        h1 { color: #0F766E; }
-        h2 { color: #374151; margin-top: 24px; }
-        .phase { background: #F9FAFB; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #0F766E; }
-        .phase h3 { margin-top: 0; color: #1F2937; }
-        ul { padding-left: 20px; }
-        li { margin-bottom: 8px; }
-        .goal { background: #E0F2F1; padding: 12px; border-radius: 6px; margin-top: 12px; }
-        @media print { body { padding: 20px; } }
+        @media print {
+          body { padding: 0; margin: 20px; }
+          .no-print { display: none; }
+        }
+        body {
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          padding: 40px;
+          max-width: 800px;
+          margin: 0 auto;
+          color: #1f2937;
+          line-height: 1.6;
+        }
+        .header {
+          border-bottom: 3px solid #0F766E;
+          padding-bottom: 20px;
+          margin-bottom: 30px;
+        }
+        .logo {
+          color: #0F766E;
+          font-size: 24px;
+          font-weight: 700;
+          margin-bottom: 8px;
+        }
+        h1 {
+          color: #1f2937;
+          margin: 0 0 8px;
+          font-size: 28px;
+        }
+        .meta {
+          color: #6b7280;
+          font-size: 14px;
+        }
+        .content {
+          margin-top: 20px;
+        }
+        h2 {
+          color: #0F766E;
+          border-bottom: 2px solid #0F766E;
+          padding-bottom: 8px;
+          margin-top: 28px;
+          margin-bottom: 16px;
+        }
+        h3 {
+          color: #374151;
+          margin-top: 20px;
+          margin-bottom: 12px;
+        }
+        ul {
+          padding-left: 24px;
+          margin: 12px 0;
+        }
+        li {
+          margin-bottom: 6px;
+        }
+        .footer {
+          margin-top: 50px;
+          padding-top: 20px;
+          border-top: 1px solid #e5e7eb;
+          color: #6b7280;
+          font-size: 12px;
+          text-align: center;
+        }
+        .summary {
+          background: #FEF9C3;
+          padding: 16px;
+          border-radius: 8px;
+          margin-bottom: 24px;
+        }
+        .summary p {
+          color: #713F12;
+          margin: 0;
+        }
+        .phase {
+          background: #F9FAFB;
+          padding: 20px;
+          border-radius: 8px;
+          margin-bottom: 20px;
+          border-left: 4px solid #0F766E;
+        }
+        .phase h3 {
+          margin-top: 0;
+          color: #1F2937;
+        }
+        .phase-subtitle {
+          color: #6B7280;
+          font-style: italic;
+          margin-bottom: 12px;
+        }
+        .goal {
+          background: #E0F2F1;
+          padding: 12px;
+          border-radius: 6px;
+          margin-top: 12px;
+        }
+        .goal-label, .check-in-label {
+          color: #0F766E;
+          font-weight: 600;
+          font-size: 12px;
+          text-transform: uppercase;
+        }
+        .check-in {
+          background: #EFF6FF;
+          padding: 12px;
+          border-radius: 6px;
+          margin-top: 12px;
+        }
       </style>
     </head>
     <body>
-      <h1>${escapeHtml(currentEngagementPlanData.title || 'Engagement Plan')}</h1>
-      ${currentEngagementPlanData.summary ? `<p style="color: #6B7280;">${escapeHtml(currentEngagementPlanData.summary)}</p>` : ''}
-
-      ${(currentEngagementPlanData.phases || []).map(phase => `
-        <div class="phase">
-          <h3>${escapeHtml(phase.title)}</h3>
-          ${phase.subtitle ? `<p style="font-style: italic; color: #6B7280;">${escapeHtml(phase.subtitle)}</p>` : ''}
-          ${phase.items && phase.items.length > 0 ? `
-            <ul>${phase.items.map(item => `<li>${escapeHtml(item)}</li>`).join('')}</ul>
-          ` : ''}
-          ${phase.progress_goal ? `<div class="goal"><strong>Progress Goal:</strong> ${escapeHtml(phase.progress_goal)}</div>` : ''}
+      <div class="header">
+        <div class="logo">EXPAND HEALTH</div>
+        <h1>${escapeHtml(currentEngagementPlanData.title || 'Engagement Plan')}</h1>
+        <div class="meta">
+          <strong>Client:</strong> ${escapeHtml(currentEngagementPlanData.client_name || 'N/A')} |
+          <strong>Generated:</strong> ${new Date().toLocaleDateString()}
         </div>
-      `).join('')}
+      </div>
+
+      <div class="content">
+        ${formatEngagementPlanForPrint(currentEngagementPlanData)}
+      </div>
+
+      <div class="footer">
+        Generated by ExpandHealth • ${new Date().toLocaleDateString()}<br>
+        This document is confidential and intended for the named recipient only.
+      </div>
     </body>
     </html>
   `);
