@@ -4815,7 +4815,7 @@
       document.getElementById('panelBufferEnd').textContent = bufferAfter > 0 ? `${bufferAfter}m buffer` : 'Add Buffer time 10m';
 
       // Appointment block details
-      document.getElementById('panelBlockServiceName').textContent = serviceName;
+      document.getElementById('panelBlockServiceName').textContent = apt.title || 'Service';
       document.getElementById('panelBlockCustomer').textContent = `👥 ${clientName}`;
       document.getElementById('panelBlockLocation').textContent = `📍 ${locationName}`;
       document.getElementById('panelBlockStaff').textContent = `👤 ${staffName || 'Staff'}`;
