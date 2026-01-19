@@ -5527,9 +5527,16 @@
 
       // Reset state
       selectedCustomerId = null;
+      document.getElementById('customerSelect').value = '';
+      document.getElementById('addCustSearchInput').value = '';
+      document.getElementById('addCustDropdownSelected').innerHTML = '<span class="dropdown-placeholder">Select customer...</span>';
+      closeAddCustDropdown();
 
       // Always reload clients to get fresh data
       await loadClients();
+
+      // Populate the customer list
+      populateAddCustList();
 
       // Show modal
       document.getElementById('addCustomerModalOverlay').classList.add('show');
@@ -5539,7 +5546,7 @@
     function closeAddCustomerModal() {
       document.getElementById('addCustomerModalOverlay').classList.remove('show');
       document.getElementById('addCustomerModal').classList.remove('show');
-      closeCustomerDropdown();
+      closeAddCustDropdown();
     }
 
     async function assignCustomer() {
@@ -5577,16 +5584,139 @@
       }
     }
 
-    // Close dropdown when clicking outside
+    // Close "Add Customer to Appointment" dropdown when clicking outside
     document.addEventListener('click', function(event) {
-      const dropdown = document.getElementById('customerDropdown');
-      const menu = document.getElementById('customerDropdownMenu');
+      const dropdown = document.getElementById('addCustDropdown');
+      const menu = document.getElementById('addCustDropdownMenu');
       if (dropdown && menu && menu.classList.contains('open')) {
         if (!dropdown.contains(event.target) && !menu.contains(event.target)) {
-          closeCustomerDropdown();
+          closeAddCustDropdown();
         }
       }
     });
+
+    // Functions for "Add Customer to Appointment" modal dropdown
+    function toggleAddCustDropdown() {
+      const dropdown = document.getElementById('addCustDropdown');
+      const menu = document.getElementById('addCustDropdownMenu');
+      if (menu.classList.contains('open')) {
+        closeAddCustDropdown();
+      } else {
+        dropdown.classList.add('open');
+        menu.classList.add('open');
+        setTimeout(() => {
+          document.getElementById('addCustSearchInput').focus();
+        }, 100);
+      }
+    }
+
+    function closeAddCustDropdown() {
+      document.getElementById('addCustDropdown').classList.remove('open');
+      document.getElementById('addCustDropdownMenu').classList.remove('open');
+    }
+
+    function filterAddCustList() {
+      const searchTerm = document.getElementById('addCustSearchInput').value.toLowerCase().trim();
+      const customerList = document.getElementById('addCustList');
+      customerList.innerHTML = '';
+
+      const filteredClients = clients.filter(client => {
+        const fullName = `${client.first_name} ${client.last_name}`.toLowerCase();
+        const email = (client.email || '').toLowerCase();
+        return fullName.includes(searchTerm) || email.includes(searchTerm);
+      });
+
+      if (filteredClients.length === 0) {
+        customerList.innerHTML = '<div class="customer-no-results">No customers found</div>';
+        return;
+      }
+
+      filteredClients.forEach(client => {
+        const item = document.createElement('div');
+        item.className = 'customer-item';
+        if (selectedCustomerId === client.id) {
+          item.className += ' selected';
+        }
+        item.dataset.clientId = client.id;
+        item.onclick = () => selectAddCustCustomer(client);
+
+        const initials = getInitials(client.first_name, client.last_name);
+        const fullName = `${client.first_name} ${client.last_name}`;
+        const email = client.email || '';
+
+        item.innerHTML = `
+          <div class="customer-avatar">${initials}</div>
+          <div class="customer-info">
+            <div class="customer-name">${fullName}</div>
+            <div class="customer-email">${email}</div>
+          </div>
+        `;
+        customerList.appendChild(item);
+      });
+    }
+
+    function selectAddCustCustomer(client) {
+      selectedCustomerId = client.id;
+      document.getElementById('customerSelect').value = client.id;
+
+      const selected = document.getElementById('addCustDropdownSelected');
+      const initials = getInitials(client.first_name, client.last_name);
+      const fullName = `${client.first_name} ${client.last_name}`;
+      const email = client.email || '';
+
+      selected.innerHTML = `
+        <div class="selected-customer-avatar">${initials}</div>
+        <div class="selected-customer-info">
+          <div class="selected-customer-name">${fullName}</div>
+          <div class="selected-customer-email">${email}</div>
+        </div>
+      `;
+
+      document.querySelectorAll('#addCustList .customer-item').forEach(item => {
+        item.classList.remove('selected');
+        if (parseInt(item.dataset.clientId) === client.id) {
+          item.classList.add('selected');
+        }
+      });
+
+      closeAddCustDropdown();
+    }
+
+    function populateAddCustList() {
+      const customerList = document.getElementById('addCustList');
+      customerList.innerHTML = '';
+
+      if (clients.length === 0) {
+        customerList.innerHTML = '<div class="customer-no-results">No customers found</div>';
+        return;
+      }
+
+      clients.forEach(client => {
+        const item = document.createElement('div');
+        item.className = 'customer-item';
+        item.dataset.clientId = client.id;
+        item.onclick = () => selectAddCustCustomer(client);
+
+        const initials = getInitials(client.first_name, client.last_name);
+        const fullName = `${client.first_name} ${client.last_name}`;
+        const email = client.email || '';
+
+        item.innerHTML = `
+          <div class="customer-avatar">${initials}</div>
+          <div class="customer-info">
+            <div class="customer-name">${fullName}</div>
+            <div class="customer-email">${email}</div>
+          </div>
+        `;
+        customerList.appendChild(item);
+      });
+    }
+
+    function getInitials(firstName, lastName) {
+      const first = firstName ? firstName.charAt(0).toUpperCase() : '';
+      const last = lastName ? lastName.charAt(0).toUpperCase() : '';
+      return first + last;
+    }
 
     // =====================
     // Create Customer Modal
@@ -6620,8 +6750,8 @@
       <label class="modal-label">Customer</label>
       <div class="customer-dropdown-container">
         <div class="customer-dropdown-row">
-          <div class="customer-dropdown" id="customerDropdown" onclick="toggleCustomerDropdown()">
-            <div class="customer-dropdown-selected" id="customerDropdownSelected">
+          <div class="customer-dropdown" id="addCustDropdown" onclick="toggleAddCustDropdown()">
+            <div class="customer-dropdown-selected" id="addCustDropdownSelected">
               <span class="dropdown-placeholder">Select customer...</span>
             </div>
             <svg class="dropdown-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -6635,15 +6765,15 @@
             </svg>
           </button>
         </div>
-        <div class="customer-dropdown-menu" id="customerDropdownMenu">
+        <div class="customer-dropdown-menu" id="addCustDropdownMenu">
           <div class="customer-search-wrapper">
             <svg class="customer-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="11" cy="11" r="8"></circle>
               <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
             </svg>
-            <input type="text" class="customer-search-input" id="customerSearchInput" placeholder="Search customers..." oninput="filterCustomerList()" onclick="event.stopPropagation()">
+            <input type="text" class="customer-search-input" id="addCustSearchInput" placeholder="Search customers..." oninput="filterAddCustList()" onclick="event.stopPropagation()">
           </div>
-          <div class="customer-list" id="customerList">
+          <div class="customer-list" id="addCustList">
             <!-- Customer items will be populated dynamically -->
           </div>
         </div>
