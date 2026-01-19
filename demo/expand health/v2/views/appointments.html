@@ -4050,31 +4050,105 @@
       const startOfWeek = getStartOfWeek(currentDate);
       const grid = document.getElementById('calendarGrid');
 
+      // Group appointments by day and calculate overlaps
+      const appointmentsByDay = {};
       appointments.forEach(apt => {
-        // Parse times - treat database times as local times (not UTC)
-        // Parse UTC timestamps and let browser convert to local time
         const start = new Date(apt.start);
-        const end = new Date(apt.end);
-
-        // Calculate which day column (0-6) using local dates to avoid timezone issues
         const startLocal = new Date(start.getFullYear(), start.getMonth(), start.getDate());
         const weekStartLocal = new Date(startOfWeek.getFullYear(), startOfWeek.getMonth(), startOfWeek.getDate());
         const dayDiff = Math.round((startLocal - weekStartLocal) / (1000 * 60 * 60 * 24));
-        if (dayDiff < 0 || dayDiff > 6) return; // Skip if outside current week
+        if (dayDiff >= 0 && dayDiff <= 6) {
+          if (!appointmentsByDay[dayDiff]) appointmentsByDay[dayDiff] = [];
+          appointmentsByDay[dayDiff].push({
+            ...apt,
+            startTime: start,
+            endTime: new Date(apt.end)
+          });
+        }
+      });
 
-        // Calculate position within the day
-        const startHour = start.getHours();
-        const startMinutes = start.getMinutes();
-        const endHour = end.getHours();
-        const endMinutes = end.getMinutes();
+      // For each day, calculate column positions for overlapping appointments
+      Object.keys(appointmentsByDay).forEach(day => {
+        const dayAppts = appointmentsByDay[day];
+        // Sort by start time
+        dayAppts.sort((a, b) => a.startTime - b.startTime);
 
-        // Calculate duration in hours
-        const durationHours = (end - start) / (1000 * 60 * 60);
+        // Calculate columns for overlapping appointments
+        dayAppts.forEach(apt => {
+          apt.column = 0;
+          apt.totalColumns = 1;
+        });
 
-        // Find the time slot for this hour and day
-        const timeSlots = grid.querySelectorAll('.time-slot');
-        const slotIndex = startHour * 7 + dayDiff;
-        const targetSlot = timeSlots[slotIndex];
+        // Find overlapping groups and assign columns
+        for (let i = 0; i < dayAppts.length; i++) {
+          const apt = dayAppts[i];
+          const overlapping = [apt];
+
+          // Find all appointments that overlap with this one
+          for (let j = 0; j < dayAppts.length; j++) {
+            if (i !== j) {
+              const other = dayAppts[j];
+              // Check if they overlap
+              if (apt.startTime < other.endTime && apt.endTime > other.startTime) {
+                overlapping.push(other);
+              }
+            }
+          }
+
+          if (overlapping.length > 1) {
+            // Sort overlapping by start time, then by id for consistency
+            overlapping.sort((a, b) => a.startTime - b.startTime || a.id - b.id);
+
+            // Assign columns
+            const usedColumns = new Set();
+            overlapping.forEach(o => {
+              if (o.columnAssigned) usedColumns.add(o.column);
+            });
+
+            overlapping.forEach((o, idx) => {
+              if (!o.columnAssigned) {
+                // Find first available column
+                let col = 0;
+                while (usedColumns.has(col)) col++;
+                o.column = col;
+                o.columnAssigned = true;
+                usedColumns.add(col);
+              }
+              o.totalColumns = Math.max(o.totalColumns, overlapping.length);
+            });
+
+            // Update totalColumns for all in group
+            const maxCol = Math.max(...overlapping.map(o => o.column)) + 1;
+            overlapping.forEach(o => {
+              o.totalColumns = Math.max(o.totalColumns, maxCol);
+            });
+          }
+        }
+      });
+
+      // Flatten appointmentsByDay to render with column info
+      Object.keys(appointmentsByDay).forEach(day => {
+        const dayAppts = appointmentsByDay[day];
+        dayAppts.forEach(apt => {
+          const start = apt.startTime;
+          const end = apt.endTime;
+          const dayDiff = parseInt(day);
+
+          // Calculate position within the day
+          const startHour = start.getHours();
+          const startMinutes = start.getMinutes();
+
+          // Calculate duration in hours
+          const durationHours = (end - start) / (1000 * 60 * 60);
+
+          // Find the time slot for this hour and day
+          const timeSlots = grid.querySelectorAll('.time-slot');
+          const slotIndex = startHour * 7 + dayDiff;
+          const targetSlot = timeSlots[slotIndex];
+
+          // Get column positioning info
+          const column = apt.column || 0;
+          const totalColumns = apt.totalColumns || 1;
 
         if (!targetSlot) return;
 
@@ -4122,11 +4196,16 @@
           blockClass += isPaid ? ' paid' : ' unpaid';
         }
         block.className = blockClass;
+        // Calculate column-based positioning for overlapping appointments
+        const columnWidth = (100 / totalColumns);
+        const leftPercent = column * columnWidth;
+        const widthPercent = columnWidth;
+
         block.style.cssText = `
           position: absolute;
           top: ${(startMinutes / 60) * slotHeight}px;
-          left: 2px;
-          right: 2px;
+          left: calc(${leftPercent}% + 2px);
+          width: calc(${widthPercent}% - 4px);
           height: ${Math.max(durationHours * slotHeight - 4, 24)}px;
           background: ${bgColor};
           border-radius: 4px;
@@ -4230,6 +4309,7 @@
         // Position relative to the slot
         targetSlot.style.position = 'relative';
         targetSlot.appendChild(block);
+        });
       });
     }
 
