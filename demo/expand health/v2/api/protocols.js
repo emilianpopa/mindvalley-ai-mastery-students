@@ -2202,38 +2202,60 @@ async function generateEngagementPlanForProtocol({
       aiPrompt += `\n\n## ADDITIONAL ENGAGEMENT STRATEGIES FROM KNOWLEDGE BASE\n${kbEngagementContext}\n\nUse these strategies to enhance delivery, but DO NOT add treatments not listed in the protocol above.`;
     }
   } else {
-    console.log('[Engagement Plan Helper] Using generic prompt (no protocol structure found)');
-    aiPrompt = `You are an expert health coach. Create a 4-phase engagement plan for ${clientName}.
+    // Fallback prompt - STILL must respect protocol structure
+    console.warn('[Engagement Plan Helper] WARNING: Falling back to generic prompt. Protocol extraction may have failed.');
+    console.warn('[Engagement Plan Helper] protocolElements:', JSON.stringify(protocolElements, null, 2));
 
+    aiPrompt = `You are creating a CLIENT-FACING engagement plan that OPERATIONALIZES a clinical protocol.
+
+CRITICAL: This engagement plan must be ${protocolDurationWeeks} weeks long. DO NOT compress it to 4 weeks.
+
+Patient: ${clientName}
 Protocol: ${protocolTitle || 'Custom Protocol'}
-Duration: ${protocolDurationWeeks} weeks
+Duration: ${protocolDurationWeeks} weeks (MANDATORY - DO NOT CHANGE)
 
-${kbEngagementContext ? `Knowledge Base Context:\n${kbEngagementContext}\n` : ''}
+${kbEngagementContext ? `## Knowledge Base Context:\n${kbEngagementContext}\n` : ''}
 
-Create a phased engagement plan with JSON structure:
+## RULES
+1. Timeline MUST be ${protocolDurationWeeks} weeks - DO NOT compress to 4 weeks
+2. List supplements by name, not generically
+3. Clinic treatments must be CONDITIONAL DECISIONS (not default actions)
+4. Include safety gates with IF/THEN HOLD/ESCALATE logic
+5. Do NOT invent items not in the protocol
+
+## Required JSON Structure
 {
-  "title": "Engagement Plan for ${clientName}",
+  "title": "Engagement Plan: ${protocolTitle || 'Custom Protocol'} for ${clientName}",
   "summary": "2-3 sentence overview",
   "total_weeks": ${protocolDurationWeeks},
   "phases": [
     {
       "phase_number": 1,
-      "title": "Phase 1: Foundations (Week 1)",
-      "subtitle": "Brief description",
-      "items": ["Action item 1", "Action item 2"],
-      "progress_goal": "Measurable goal",
+      "title": "Phase 1: Core Protocol (Weeks 1-2)",
+      "subtitle": "Foundation phase",
+      "week_range": "1-2",
+      "items": [
+        { "type": "ACTION", "name": "Take [Supplement Name] (per protocol)" },
+        { "type": "MONITOR", "name": "Track [metric] daily" },
+        { "type": "GATE", "conditions": ["condition1"], "if_pass": "Proceed to Phase 2", "if_fail": "HOLD. Contact clinician within 48h." }
+      ],
+      "progress_goal": "Goal for this phase",
       "check_in_prompts": ["Question for patient"]
     }
   ],
   "communication_schedule": {
-    "check_in_frequency": "Every 3 days",
-    "preferred_channel": "WhatsApp",
-    "message_tone": "Encouraging"
+    "frequency": "Every 3 days",
+    "channel": "WhatsApp",
+    "tone": "Encouraging and supportive"
   },
-  "success_metrics": ["Metric 1", "Metric 2"]
+  "success_metrics": ["Metric 1", "Metric 2"],
+  "alignment_self_check": {
+    "all_protocol_supplements_explicitly_listed": true,
+    "timeline_matches_protocol_duration": true,
+    "no_invented_items": true
+  }
 }
 
-IMPORTANT: Only include treatments/supplements that are in the protocol.
 Return ONLY valid JSON.`;
   }
 
@@ -2746,44 +2768,70 @@ router.post('/:id/generate-engagement-plan', authenticateToken, async (req, res,
         aiPrompt += `\n\n## ADDITIONAL ENGAGEMENT STRATEGIES FROM KNOWLEDGE BASE\n${kbEngagementContext}\n\nUse these strategies to enhance delivery, but DO NOT add treatments not listed in the protocol above.`;
       }
     } else {
-      // Fallback to generic prompt when no protocol structure is available
-      console.log('[Engagement Plan] Using generic prompt (no protocol structure found)');
-      aiPrompt = `You are an expert health coach. Create a 4-phase engagement plan for ${clientName}.
+      // Fallback prompt - STILL must respect protocol structure
+      // This should rarely be used - log a warning
+      console.warn('[Engagement Plan] WARNING: Falling back to module-based prompt. Protocol extraction may have failed.');
+      console.warn('[Engagement Plan] protocolElements:', JSON.stringify(protocolElements, null, 2));
+      console.warn('[Engagement Plan] protocolData keys:', protocolData ? Object.keys(protocolData) : 'null');
 
-Protocol: ${protocol.template_name || 'Custom Protocol'}
-Category: ${protocol.template_category || 'General Wellness'}
-Duration: ${protocolDurationWeeks} weeks
+      // Build module items list for the prompt
+      const moduleItemsList = modules.map(m => {
+        const items = m.items?.map(i => typeof i === 'string' ? i : i.name).join(', ') || 'No items';
+        return `- ${m.name}: ${items}`;
+      }).join('\n');
 
-Modules:
-${modules.map((m, i) => `${i + 1}. ${m.name}: ${m.items?.length || 0} items`).join('\n')}
+      aiPrompt = `You are creating a CLIENT-FACING engagement plan that OPERATIONALIZES a clinical protocol.
 
-${kbEngagementContext ? `Knowledge Base Context:\n${kbEngagementContext}\n` : ''}
+CRITICAL: This engagement plan must be ${protocolDurationWeeks} weeks long. DO NOT compress it to 4 weeks.
 
-Create a phased engagement plan with JSON structure:
+Patient: ${clientName}
+Protocol: ${protocol.title || protocol.template_name || 'Custom Protocol'}
+Duration: ${protocolDurationWeeks} weeks (MANDATORY - DO NOT CHANGE)
+
+## PROTOCOL MODULES (Source of Truth)
+${moduleItemsList}
+
+${kbEngagementContext ? `## Knowledge Base Context:\n${kbEngagementContext}\n` : ''}
+
+## RULES
+1. Timeline MUST be ${protocolDurationWeeks} weeks - DO NOT compress to 4 weeks
+2. List EVERY supplement from the modules by name
+3. Clinic treatments must be CONDITIONAL DECISIONS (not default actions)
+4. Include safety gates with IF/THEN HOLD/ESCALATE logic
+5. Do NOT invent items not in the protocol modules
+
+## Required JSON Structure
 {
-  "title": "Engagement Plan for ${clientName}",
+  "title": "Engagement Plan: ${protocol.title || protocol.template_name || 'Custom Protocol'} for ${clientName}",
   "summary": "2-3 sentence overview",
-  "total_weeks": 4,
+  "total_weeks": ${protocolDurationWeeks},
   "phases": [
     {
       "phase_number": 1,
-      "title": "Phase 1: Foundations (Week 1)",
-      "subtitle": "Brief description",
-      "items": ["Action item 1", "Action item 2"],
-      "progress_goal": "Measurable goal",
+      "title": "Phase 1: Core Protocol (Weeks 1-2)",
+      "subtitle": "Foundation phase",
+      "week_range": "1-2",
+      "items": [
+        { "type": "ACTION", "name": "Take [Supplement Name] (per protocol)" },
+        { "type": "MONITOR", "name": "Track [metric] daily" },
+        { "type": "GATE", "conditions": ["condition1"], "if_pass": "Proceed to Phase 2", "if_fail": "HOLD. Contact clinician within 48h." }
+      ],
+      "progress_goal": "Goal for this phase",
       "check_in_prompts": ["Question for patient"]
     }
   ],
   "communication_schedule": {
-    "check_in_frequency": "Every 3 days",
-    "preferred_channel": "WhatsApp",
-    "message_tone": "Encouraging"
+    "frequency": "Every 3 days",
+    "channel": "WhatsApp",
+    "tone": "Encouraging and supportive"
   },
-  "success_metrics": ["Metric 1", "Metric 2"]
+  "success_metrics": ["Metric 1", "Metric 2"],
+  "alignment_self_check": {
+    "all_protocol_supplements_explicitly_listed": true,
+    "timeline_matches_protocol_duration": true,
+    "no_invented_items": true
+  }
 }
-
-IMPORTANT: Only include treatments/supplements that are in the protocol modules above.
-Do NOT add treatments like HBOT, red light, cold plunge, etc. unless they are explicitly in the protocol.
 
 Return ONLY valid JSON.`;
     }
