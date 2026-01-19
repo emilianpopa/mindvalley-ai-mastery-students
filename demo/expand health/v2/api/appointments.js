@@ -347,6 +347,7 @@ router.post('/', async (req, res, next) => {
       start_time,
       end_time,
       status = 'scheduled',
+      location_id,
       location_type = 'in_person',
       location_address,
       video_link,
@@ -361,7 +362,7 @@ router.post('/', async (req, res, next) => {
       return res.status(400).json({ error: 'start_time and end_time are required' });
     }
 
-    // Check for conflicts if staff is assigned
+    // Check for staff conflicts if staff is assigned
     if (staff_id) {
       const conflictCheck = await db.query(`
         SELECT id FROM appointments
@@ -376,8 +377,28 @@ router.post('/', async (req, res, next) => {
 
       if (conflictCheck.rows.length > 0) {
         return res.status(409).json({
-          error: 'Time slot conflict',
+          error: 'Staff time slot conflict',
           conflicting_appointment_id: conflictCheck.rows[0].id
+        });
+      }
+    }
+
+    // Check for venue/location conflicts if location is assigned
+    if (location_id) {
+      const venueConflictCheck = await db.query(`
+        SELECT id, title FROM appointments
+        WHERE tenant_id = $1
+          AND location_id = $2
+          AND status NOT IN ('cancelled', 'no_show')
+          AND start_time < $4
+          AND end_time > $3
+      `, [tenantId, location_id, start_time, end_time]);
+
+      if (venueConflictCheck.rows.length > 0) {
+        return res.status(409).json({
+          error: 'Venue is occupied at this time',
+          conflicting_appointment_id: venueConflictCheck.rows[0].id,
+          conflicting_appointment_title: venueConflictCheck.rows[0].title
         });
       }
     }
@@ -386,15 +407,15 @@ router.post('/', async (req, res, next) => {
       INSERT INTO appointments (
         tenant_id, client_id, staff_id, service_type_id,
         title, start_time, end_time, status,
-        location_type, location_address, video_link,
+        location_id, location_type, location_address, video_link,
         price, client_notes, staff_notes, internal_notes,
         booked_by, booking_source, created_by
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
       RETURNING *
     `, [
       tenantId, client_id, staff_id, service_type_id,
       title, start_time, end_time, status,
-      location_type, location_address, video_link,
+      location_id, location_type, location_address, video_link,
       price, client_notes, staff_notes, internal_notes,
       'staff', 'admin', userId
     ]);
@@ -422,6 +443,7 @@ router.put('/:id', async (req, res, next) => {
       start_time,
       end_time,
       status,
+      location_id,
       location_type,
       location_address,
       video_link,
@@ -434,7 +456,7 @@ router.put('/:id', async (req, res, next) => {
 
     // Check appointment exists and belongs to tenant
     const existing = await db.query(
-      'SELECT id FROM appointments WHERE id = $1 AND tenant_id = $2',
+      'SELECT id, start_time, end_time FROM appointments WHERE id = $1 AND tenant_id = $2',
       [id, tenantId]
     );
 
@@ -442,7 +464,11 @@ router.put('/:id', async (req, res, next) => {
       return res.status(404).json({ error: 'Appointment not found' });
     }
 
-    // Check for conflicts if changing time/staff
+    // Get effective start/end times (use new values if provided, otherwise existing)
+    const effectiveStartTime = start_time || existing.rows[0].start_time;
+    const effectiveEndTime = end_time || existing.rows[0].end_time;
+
+    // Check for staff conflicts if changing time/staff
     if (staff_id && (start_time || end_time)) {
       const conflictCheck = await db.query(`
         SELECT id FROM appointments
@@ -454,12 +480,33 @@ router.put('/:id', async (req, res, next) => {
             (start_time < $4 AND end_time >= $4) OR
             (start_time >= $3 AND end_time <= $4)
           )
-      `, [staff_id, id, start_time, end_time]);
+      `, [staff_id, id, effectiveStartTime, effectiveEndTime]);
 
       if (conflictCheck.rows.length > 0) {
         return res.status(409).json({
-          error: 'Time slot conflict',
+          error: 'Staff time slot conflict',
           conflicting_appointment_id: conflictCheck.rows[0].id
+        });
+      }
+    }
+
+    // Check for venue conflicts if location is being set/changed
+    if (location_id) {
+      const venueConflictCheck = await db.query(`
+        SELECT id, title FROM appointments
+        WHERE tenant_id = $1
+          AND location_id = $2
+          AND id != $3
+          AND status NOT IN ('cancelled', 'no_show')
+          AND start_time < $5
+          AND end_time > $4
+      `, [tenantId, location_id, id, effectiveStartTime, effectiveEndTime]);
+
+      if (venueConflictCheck.rows.length > 0) {
+        return res.status(409).json({
+          error: 'Venue is occupied at this time',
+          conflicting_appointment_id: venueConflictCheck.rows[0].id,
+          conflicting_appointment_title: venueConflictCheck.rows[0].title
         });
       }
     }
@@ -473,21 +520,22 @@ router.put('/:id', async (req, res, next) => {
         start_time = COALESCE($5, start_time),
         end_time = COALESCE($6, end_time),
         status = COALESCE($7, status),
-        location_type = COALESCE($8, location_type),
-        location_address = COALESCE($9, location_address),
-        video_link = COALESCE($10, video_link),
-        price = COALESCE($11, price),
-        payment_status = COALESCE($12, payment_status),
-        client_notes = COALESCE($13, client_notes),
-        staff_notes = COALESCE($14, staff_notes),
-        internal_notes = COALESCE($15, internal_notes),
+        location_id = COALESCE($8, location_id),
+        location_type = COALESCE($9, location_type),
+        location_address = COALESCE($10, location_address),
+        video_link = COALESCE($11, video_link),
+        price = COALESCE($12, price),
+        payment_status = COALESCE($13, payment_status),
+        client_notes = COALESCE($14, client_notes),
+        staff_notes = COALESCE($15, staff_notes),
+        internal_notes = COALESCE($16, internal_notes),
         updated_at = NOW()
-      WHERE id = $16 AND tenant_id = $17
+      WHERE id = $17 AND tenant_id = $18
       RETURNING *
     `, [
       client_id, staff_id, service_type_id,
       title, start_time, end_time, status,
-      location_type, location_address, video_link,
+      location_id, location_type, location_address, video_link,
       price, payment_status,
       client_notes, staff_notes, internal_notes,
       id, tenantId

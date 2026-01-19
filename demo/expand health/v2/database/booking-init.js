@@ -222,6 +222,7 @@ async function initAppointments() {
       status VARCHAR(30) DEFAULT 'scheduled',
 
       -- Location
+      location_id INTEGER REFERENCES locations(id) ON DELETE SET NULL,
       location_type VARCHAR(30) DEFAULT 'in_person',
       location_address TEXT,
       video_link TEXT,
@@ -284,6 +285,7 @@ async function initAppointments() {
     CREATE INDEX IF NOT EXISTS idx_appointments_client ON appointments(client_id);
     CREATE INDEX IF NOT EXISTS idx_appointments_staff ON appointments(staff_id);
     CREATE INDEX IF NOT EXISTS idx_appointments_service ON appointments(service_type_id);
+    CREATE INDEX IF NOT EXISTS idx_appointments_location ON appointments(location_id);
     CREATE INDEX IF NOT EXISTS idx_appointments_status ON appointments(status);
     CREATE INDEX IF NOT EXISTS idx_appointments_start ON appointments(start_time);
     CREATE INDEX IF NOT EXISTS idx_appointments_date_range ON appointments(start_time, end_time);
