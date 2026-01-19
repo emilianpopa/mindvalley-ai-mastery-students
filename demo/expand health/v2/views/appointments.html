@@ -6323,16 +6323,47 @@
       const token = localStorage.getItem('auth_token');
       const startsAt = document.getElementById('newAptStartsAt').value;
       const serviceId = document.getElementById('newAptService').value;
+      const venueId = document.getElementById('newAptVenue').value;
       const staffId = document.getElementById('newAptStaff').value;
       const customerId = document.getElementById('newAptCustomer').value;
-      const duration = parseInt(document.getElementById('newAptDuration').value) || 60;
-      const price = parseFloat(document.getElementById('newAptPrice').value) || 0;
+      const durationInput = document.getElementById('newAptDuration').value;
+      const priceInput = document.getElementById('newAptPrice').value;
       const note = document.getElementById('newAptNote').value;
 
+      // Validate mandatory fields
+      const errors = [];
+
+      if (!serviceId) {
+        errors.push('Service is required');
+      }
+
+      if (!venueId) {
+        errors.push('Venue is required');
+      }
+
+      if (!customerId) {
+        errors.push('Customer is required');
+      }
+
+      if (!durationInput || parseInt(durationInput) <= 0) {
+        errors.push('Duration is required and must be a positive number');
+      }
+
+      if (priceInput === '' || priceInput === null || parseFloat(priceInput) < 0 || isNaN(parseFloat(priceInput))) {
+        errors.push('Total price is required and must be a valid non-negative number');
+      }
+
       if (!startsAt) {
-        alert('Please select a start time');
+        errors.push('Start time is required');
+      }
+
+      if (errors.length > 0) {
+        alert('Please fix the following errors:\n\n' + errors.join('\n'));
         return;
       }
+
+      const duration = parseInt(durationInput);
+      const price = parseFloat(priceInput);
 
       const startTime = new Date(startsAt);
       const endTime = new Date(startTime.getTime() + duration * 60000);
@@ -6342,9 +6373,10 @@
       const serviceName = serviceSelect.options[serviceSelect.selectedIndex]?.textContent || 'Appointment';
 
       const appointmentData = {
-        service_type_id: serviceId || null,
+        service_type_id: serviceId,
+        location_id: venueId,
         staff_id: staffId || null,
-        client_id: customerId || null,
+        client_id: customerId,
         title: serviceName,
         start_time: startTime.toISOString(),
         end_time: endTime.toISOString(),
