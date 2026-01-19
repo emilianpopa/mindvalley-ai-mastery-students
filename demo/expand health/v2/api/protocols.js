@@ -33,6 +33,9 @@ const {
   generateRegenerationPrompt
 } = require('../prompts/engagement-plan-alignment');
 
+// Import DETERMINISTIC Engagement Plan Generator (no AI improvisation)
+const { generateEngagementPlanFromProtocol } = require('../prompts/engagement-plan-generator');
+
 // Initialize Gemini SDK for Knowledge Base queries (using new File Search API)
 const { GoogleGenAI } = require('@google/genai');
 let genAI = null;
@@ -2881,141 +2884,32 @@ router.post('/:id/generate-engagement-plan', authenticateToken, async (req, res,
       console.error('[Engagement Plan] KB query error:', kbError.message);
     }
 
-    // Build the AI prompt for engagement plan using ALIGNED prompt generator
-    // This ensures the engagement plan ONLY includes items from the actual protocol
+    // ========================================
+    // DETERMINISTIC ENGAGEMENT PLAN GENERATION
+    // No AI improvisation - direct transformation from protocol data
+    // ========================================
+
     const protocolDurationWeeks = protocol.end_date
       ? Math.ceil((new Date(protocol.end_date) - new Date(protocol.start_date)) / (1000 * 60 * 60 * 24 * 7))
-      : 8;
+      : 12; // Default to 12 weeks for clinical protocols
 
-    let aiPrompt;
+    console.log('[Engagement Plan] Using DETERMINISTIC generator (no AI)');
+    console.log('[Engagement Plan] Protocol duration:', protocolDurationWeeks, 'weeks');
 
-    // Use aligned prompt if we have protocol elements, otherwise use generic prompt
-    if (protocolElements.supplements.length > 0 || protocolElements.clinic_treatments.length > 0) {
-      console.log('[Engagement Plan] Using ALIGNED prompt generator (protocol-driven)');
-      // Use protocol.title first (AI-generated title), then fallback to template_name
-      aiPrompt = generateAlignedEngagementPlanPrompt({
-        clientName,
-        protocolTitle: protocol.title || protocol.template_name || 'Custom Protocol',
-        protocolElements,
-        personalityType: personality_type,
-        communicationPreferences: communication_preferences,
-        protocolDurationWeeks
-      });
-
-      // Add KB context if available
-      if (kbEngagementContext) {
-        aiPrompt += `\n\n## ADDITIONAL ENGAGEMENT STRATEGIES FROM KNOWLEDGE BASE\n${kbEngagementContext}\n\nUse these strategies to enhance delivery, but DO NOT add treatments not listed in the protocol above.`;
-      }
-    } else {
-      // Fallback prompt - STILL must respect protocol structure
-      // This should rarely be used - log a warning
-      console.warn('[Engagement Plan] WARNING: Falling back to module-based prompt. Protocol extraction may have failed.');
-      console.warn('[Engagement Plan] protocolElements:', JSON.stringify(protocolElements, null, 2));
-      console.warn('[Engagement Plan] protocolData keys:', protocolData ? Object.keys(protocolData) : 'null');
-
-      // Build module items list for the prompt
-      const moduleItemsList = modules.map(m => {
-        const items = m.items?.map(i => typeof i === 'string' ? i : i.name).join(', ') || 'No items';
-        return `- ${m.name}: ${items}`;
-      }).join('\n');
-
-      aiPrompt = `You are creating a CLIENT-FACING engagement plan that OPERATIONALIZES a clinical protocol.
-
-CRITICAL: This engagement plan must be ${protocolDurationWeeks} weeks long. DO NOT compress it to 4 weeks.
-
-Patient: ${clientName}
-Protocol: ${protocol.title || protocol.template_name || 'Custom Protocol'}
-Duration: ${protocolDurationWeeks} weeks (MANDATORY - DO NOT CHANGE)
-
-## PROTOCOL MODULES (Source of Truth)
-${moduleItemsList}
-
-${kbEngagementContext ? `## Knowledge Base Context:\n${kbEngagementContext}\n` : ''}
-
-## RULES
-1. Timeline MUST be ${protocolDurationWeeks} weeks - DO NOT compress to 4 weeks
-2. List EVERY supplement from the modules by name
-3. Clinic treatments must be CONDITIONAL DECISIONS (not default actions)
-4. Include safety gates with IF/THEN HOLD/ESCALATE logic
-5. Do NOT invent items not in the protocol modules
-
-## Required JSON Structure
-{
-  "title": "Engagement Plan: ${protocol.title || protocol.template_name || 'Custom Protocol'} for ${clientName}",
-  "summary": "2-3 sentence overview",
-  "total_weeks": ${protocolDurationWeeks},
-  "phases": [
-    {
-      "phase_number": 1,
-      "title": "Phase 1: Core Protocol (Weeks 1-2)",
-      "subtitle": "Foundation phase",
-      "week_range": "1-2",
-      "items": [
-        { "type": "ACTION", "name": "Take [Supplement Name] (per protocol)" },
-        { "type": "MONITOR", "name": "Track [metric] daily" },
-        { "type": "GATE", "conditions": ["condition1"], "if_pass": "Proceed to Phase 2", "if_fail": "HOLD. Contact clinician within 48h." }
-      ],
-      "progress_goal": "Goal for this phase",
-      "check_in_prompts": ["Question for patient"]
-    }
-  ],
-  "communication_schedule": {
-    "frequency": "Every 3 days",
-    "channel": "WhatsApp",
-    "tone": "Encouraging and supportive"
-  },
-  "success_metrics": ["Metric 1", "Metric 2"],
-  "alignment_self_check": {
-    "all_protocol_supplements_explicitly_listed": true,
-    "timeline_matches_protocol_duration": true,
-    "no_invented_items": true
-  }
-}
-
-Return ONLY valid JSON.`;
-    }
-
-    console.log('[Engagement Plan] Calling Claude API...');
-
-    const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 4096,
-      messages: [{ role: 'user', content: aiPrompt }]
+    // Generate engagement plan DETERMINISTICALLY from protocol data
+    // This ensures 100% alignment - no AI hallucination or generic content
+    const engagementPlan = generateEngagementPlanFromProtocol({
+      clientName,
+      protocolTitle: protocol.title || protocol.template_name || 'Custom Protocol',
+      protocolElements,
+      protocolDurationWeeks
     });
 
-    console.log('[Engagement Plan] Claude API response received');
-
-    const aiResponse = response.content[0].text;
-    console.log('[Engagement Plan] AI Response length:', aiResponse.length);
-    console.log('[Engagement Plan] AI Response preview (first 1000 chars):', aiResponse.substring(0, 1000));
-
-    let engagementPlan;
-
-    try {
-      const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        engagementPlan = JSON.parse(jsonMatch[0]);
-        console.log('[Engagement Plan] Successfully parsed JSON');
-        console.log('[Engagement Plan] Parsed structure keys:', Object.keys(engagementPlan));
-        console.log('[Engagement Plan] Has clinical_elements:', engagementPlan.phases?.[0]?.clinical_elements ? 'YES' : 'NO');
-        console.log('[Engagement Plan] Has items array:', engagementPlan.phases?.[0]?.items ? 'YES' : 'NO');
-        console.log('[Engagement Plan] Phase 1 title:', engagementPlan.phases?.[0]?.title);
-
-        // Check if AI returned old format instead of new format
-        if (engagementPlan.phases?.[0]?.items && !engagementPlan.phases?.[0]?.clinical_elements) {
-          console.warn('[Engagement Plan] WARNING: AI returned OLD format (items array) instead of NEW format (clinical_elements)');
-          console.warn('[Engagement Plan] Phase 1 items:', JSON.stringify(engagementPlan.phases[0].items, null, 2));
-        }
-      } else {
-        throw new Error('No JSON found in response');
-      }
-    } catch (parseError) {
-      console.error('[Engagement Plan] Failed to parse response:', parseError.message);
-      console.error('[Engagement Plan] Raw response that failed to parse:', aiResponse.substring(0, 500));
-
-      // DO NOT use hardcoded fallback - throw error instead so we can fix the issue
-      throw new Error(`Failed to parse AI response: ${parseError.message}. Response preview: ${aiResponse.substring(0, 200)}`);
-    }
+    console.log('[Engagement Plan] Generated deterministically');
+    console.log('[Engagement Plan] Phases:', engagementPlan.phases?.length);
+    console.log('[Engagement Plan] Total clinical elements:', engagementPlan.phases?.reduce((sum, p) => sum + (p.clinical_elements?.length || 0), 0));
+    console.log('[Engagement Plan] Clinic treatments:', engagementPlan.clinic_treatments?.items?.length || 0);
+    console.log('[Engagement Plan] Tests:', engagementPlan.testing_schedule?.length || 0);
 
     // ========================================
     // VALIDATION & REGENERATION LOOP - Ensure engagement plan covers all protocol items
