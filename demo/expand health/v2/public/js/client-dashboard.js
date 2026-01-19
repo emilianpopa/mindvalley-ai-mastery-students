@@ -9354,6 +9354,20 @@ async function viewEngagementPlanById(id, isLegacy = false) {
 
         // Transform to format expected by editor
         const planData = engagementPlan.plan_data;
+
+        // DEBUG: Log what we received from the server
+        console.log('[Engagement Plan Load] Received plan_data:', {
+          hasPhases: !!planData?.phases,
+          phasesCount: planData?.phases?.length,
+          firstPhaseElements: planData?.phases?.[0]?.clinical_elements?.length,
+          title: planData?.title,
+          keys: planData ? Object.keys(planData) : 'null'
+        });
+        if (planData?.phases) {
+          planData.phases.forEach((p, i) => {
+            console.log(`[Engagement Plan Load] Phase ${i + 1}: ${p.title} - ${p.clinical_elements?.length || 0} elements`);
+          });
+        }
         const protocol = {
           id: engagementPlan.source_protocol_id,
           title: engagementPlan.protocol_title || engagementPlan.title,
