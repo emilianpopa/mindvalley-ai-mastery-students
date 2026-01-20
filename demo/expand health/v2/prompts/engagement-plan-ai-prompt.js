@@ -33,12 +33,13 @@ Produce a JSON object with these sections:
 
 A. protocol_reference - Protocol name, client, date, source
 B. overview - Purpose, phases included, success criteria (ONLY from protocol)
-C. phases - Phase-by-phase engagement plan with protocol_trace for each
+C. phases - Phase-by-phase engagement plan with protocol_trace for each (safety handled per-phase in safety_gate)
 D. clinic_treatments - Only if present in protocol input
 E. testing_schedule - Only if present in protocol input
-F. safety_rules - STRICT - only from protocol, mark as "not_specified" if absent
-G. maintenance_path - Non-medical exit path only
-H. compliance_disclaimer - Always include
+F. maintenance_path - Non-medical exit path only
+G. compliance_disclaimer - Always include
+
+NOTE: Do NOT include a separate "safety_rules" section. Safety conditions are handled per-phase in the safety_gate field.
 
 --------------------------------------------
 3) STRICT CONTENT RULES (NON-NEGOTIABLE)
@@ -182,11 +183,12 @@ Return ONLY valid JSON matching this structure:
   "phases": [ ... ],
   "clinic_treatments": { ... } or null,
   "testing_schedule": [ ... ] or null,
-  "safety_rules": { ... },
   "maintenance_path": { ... },
   "compliance_disclaimer": "This engagement plan is derived from the provided protocol text. It does not introduce new medical recommendations. Implementation must be supervised by a licensed healthcare practitioner.",
   "alignment_verification": { ... }
 }
+
+IMPORTANT: Do NOT include a "safety_rules" section. Safety is handled per-phase in the safety_gate field within each phase.
 
 Do not include markdown formatting, code blocks, or explanatory text outside the JSON.`;
 

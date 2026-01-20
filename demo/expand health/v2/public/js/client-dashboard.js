@@ -809,52 +809,8 @@ function formatEngagementPlanForPrint(planData) {
     html += `</div>`;
   }
 
-  // Safety Rules section (supports both strict and legacy formats)
-  if (planData.safety_rules) {
-    const rules = planData.safety_rules;
-    html += `<h2>Safety & Monitoring</h2>`;
-
-    // Safety summary note (strict format)
-    if (rules.note) {
-      html += `<p style="font-style: italic; color: #525252; margin-bottom: 12px;">${escapeHtml(rules.note)}</p>`;
-    }
-
-    // Helper to render rules (handles both string and object formats)
-    const renderRules = (ruleList) => {
-      return ruleList.map(r => {
-        if (typeof r === 'string') {
-          return `<li>${escapeHtml(r)}</li>`;
-        } else if (r.rule) {
-          const sourceNote = r.source && r.source !== 'not_specified' ? '' : ' <span style="font-size: 11px; color: #9CA3AF;">(clinic standard)</span>';
-          return `<li>${escapeHtml(r.rule)}${sourceNote}</li>`;
-        }
-        return '';
-      }).join('');
-    };
-
-    if (rules.stop_immediately && rules.stop_immediately.length > 0) {
-      html += `<div style="background: #FEE2E2; padding: 12px; border-radius: 6px; margin-bottom: 12px; border-left: 4px solid #DC2626;">`;
-      html += `<strong style="color: #DC2626;">STOP IMMEDIATELY if:</strong>`;
-      html += `<ul style="margin: 8px 0 0 0;">${renderRules(rules.stop_immediately)}</ul>`;
-      html += `</div>`;
-    }
-
-    if (rules.hold_and_contact && rules.hold_and_contact.length > 0) {
-      html += `<div style="background: #FEF3C7; padding: 12px; border-radius: 6px; margin-bottom: 12px; border-left: 4px solid #F59E0B;">`;
-      html += `<strong style="color: #92400E;">HOLD & Contact Clinician if:</strong>`;
-      html += `<ul style="margin: 8px 0 0 0;">${renderRules(rules.hold_and_contact)}</ul>`;
-      html += `</div>`;
-    }
-
-    // escalation_24h or escalation_triggers (strict format uses escalation_triggers)
-    const escalationRules = rules.escalation_24h || rules.escalation_triggers;
-    if (escalationRules && escalationRules.length > 0) {
-      html += `<div style="background: #DBEAFE; padding: 12px; border-radius: 6px; margin-bottom: 12px; border-left: 4px solid #3B82F6;">`;
-      html += `<strong style="color: #1E40AF;">Escalate within 24h if:</strong>`;
-      html += `<ul style="margin: 8px 0 0 0;">${renderRules(escalationRules)}</ul>`;
-      html += `</div>`;
-    }
-  }
+  // Safety Rules section removed - handled per-phase in Safety Gates
+  // The AI was incorrectly categorizing positive conditions under HOLD
 
   // Maintenance/Exit Path (strict format)
   if (planData.maintenance_path) {
