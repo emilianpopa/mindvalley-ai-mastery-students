@@ -82,6 +82,21 @@
       color: var(--gray-500);
     }
 
+    .customer-phone-large {
+      font-size: 0.875rem;
+      color: var(--gray-500);
+      margin-top: 2px;
+    }
+
+    .activity-link {
+      color: var(--teal-600);
+      text-decoration: none;
+    }
+
+    .activity-link:hover {
+      text-decoration: underline;
+    }
+
     /* Info items */
     .customer-info-section {
       padding: 16px 20px;
@@ -1225,6 +1240,7 @@
             </div>
             <h2 class="customer-name-large" id="customerName">Loading...</h2>
             <p class="customer-email-large" id="customerEmail">loading@example.com</p>
+            <p class="customer-phone-large" id="customerPhone"></p>
           </div>
 
           <!-- Info Section -->
@@ -1918,6 +1934,7 @@
       `;
       document.getElementById('customerName').textContent = customer.name || 'Unnamed';
       document.getElementById('customerEmail').textContent = customer.email || 'No email';
+      document.getElementById('customerPhone').textContent = customer.phone || '';
       document.getElementById('topbarCustomerName').textContent = customer.name || 'Unnamed';
       document.getElementById('referralsTitle').textContent = `New customers referred by ${customer.name || 'this customer'}`;
       document.getElementById('reviewsTitle').textContent = `Reviews by ${customer.name || 'this customer'}`;
@@ -1941,34 +1958,82 @@
       return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
     }
 
-    function renderSampleActivity() {
-      // Sample activity items (would come from API in real implementation)
-      const activities = [
-        { time: 'a day ago', icon: 'calendar', title: 'Appointment: Expand Health - HBOT1 60 min at HBOT with Avela Jafta', subtitle: 'Appointment ends' },
-        { time: 'a day ago', icon: 'dollar', title: 'Appointment transaction: Expand Health - HBOT1 60 min at HBOT with Avela Jafta', subtitle: customer?.name + ' paid for the appointment' },
-        { time: 'a day ago', icon: 'calendar', title: 'Appointment: Expand Health - HBOT1 60 min at HBOT with Avela Jafta', subtitle: 'Appointment starts' }
-      ];
-
+    async function renderSampleActivity() {
       const activityList = document.getElementById('activityList');
       if (!activityList) return;
 
-      activityList.innerHTML = activities.map(a => `
-        <div class="activity-item">
-          <div class="activity-time">${a.time}</div>
-          <div class="activity-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-              <line x1="16" y1="2" x2="16" y2="6"/>
-              <line x1="8" y1="2" x2="8" y2="6"/>
-              <line x1="3" y1="10" x2="21" y2="10"/>
-            </svg>
+      try {
+        // Load real appointments for this customer
+        const appointments = await apiRequest(`/api/appointments?client_id=${customerId}&limit=10`);
+
+        if (!appointments || appointments.length === 0) {
+          activityList.innerHTML = '<p class="overview-empty">No recent activity.</p>';
+          return;
+        }
+
+        const activities = appointments.map(apt => {
+          const date = new Date(apt.start_time);
+          const timeAgo = getTimeAgo(date);
+          const serviceName = apt.service_name || apt.title || 'Appointment';
+          const staffName = apt.staff_first_name && apt.staff_last_name
+            ? `${apt.staff_first_name} ${apt.staff_last_name}`
+            : 'Staff';
+          const locationName = apt.location_name || apt.location_type || '';
+
+          let subtitle = '';
+          const now = new Date();
+          if (apt.status === 'cancelled') {
+            subtitle = `Appointment was cancelled${apt.cancelled_by ? ' by ' + apt.cancelled_by : ''}`;
+          } else if (date > now) {
+            subtitle = `Appointment booked. Takes place on ${date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })} ${date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`;
+          } else {
+            subtitle = 'Appointment ends';
+          }
+
+          return {
+            time: timeAgo,
+            icon: 'calendar',
+            title: `Appointment: Expand Health - <a href="#" class="activity-link">${serviceName}</a> at ${locationName} with ${staffName}`,
+            subtitle: subtitle
+          };
+        });
+
+        activityList.innerHTML = activities.map(a => `
+          <div class="activity-item">
+            <div class="activity-time">${a.time}</div>
+            <div class="activity-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                <line x1="16" y1="2" x2="16" y2="6"/>
+                <line x1="8" y1="2" x2="8" y2="6"/>
+                <line x1="3" y1="10" x2="21" y2="10"/>
+              </svg>
+            </div>
+            <div class="activity-content">
+              <div class="activity-title">${a.title}</div>
+              <div class="activity-subtitle">${a.subtitle}</div>
+            </div>
           </div>
-          <div class="activity-content">
-            <div class="activity-title">${a.title}</div>
-            <div class="activity-subtitle">${a.subtitle}</div>
-          </div>
-        </div>
-      `).join('');
+        `).join('');
+      } catch (error) {
+        console.error('Failed to load activity:', error);
+        activityList.innerHTML = '<p class="overview-empty">Failed to load activity.</p>';
+      }
+    }
+
+    function getTimeAgo(date) {
+      const now = new Date();
+      const diffMs = now - date;
+      const diffMins = Math.floor(diffMs / 60000);
+      const diffHours = Math.floor(diffMs / 3600000);
+      const diffDays = Math.floor(diffMs / 86400000);
+
+      if (diffMins < 1) return 'just now';
+      if (diffMins < 60) return `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
+      if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+      if (diffDays === 1) return 'a day ago';
+      if (diffDays < 7) return `${diffDays} days ago`;
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     }
 
     function setupTabs() {
@@ -2012,41 +2077,74 @@
       });
     }
 
-    function loadActivityHistory() {
-      // Load history activity list with sample data
+    async function loadActivityHistory() {
       const historyList = document.getElementById('historyActivityList');
       if (!historyList || historyList.dataset.loaded) return;
 
-      const activities = [
-        { time: 'a day ago', icon: 'calendar', title: 'Appointment: Expand Health - HBOT1 60 min at HBOT with Avela Jafta', subtitle: 'Appointment completed' },
-        { time: 'a day ago', icon: 'dollar', title: 'Payment received: ZAR 500.00', subtitle: 'Appointment: HBOT1 60 min' },
-        { time: '2 days ago', icon: 'calendar', title: 'Appointment: Expand Health - HBOT1 60 min at HBOT with Avela Jafta', subtitle: 'Appointment completed' }
-      ];
+      try {
+        // Load past appointments (completed, cancelled)
+        const appointments = await apiRequest(`/api/appointments?client_id=${customerId}&status=completed,cancelled&limit=20`);
 
-      historyList.innerHTML = activities.map(a => `
-        <div class="activity-item">
-          <div class="activity-time">${a.time}</div>
-          <div class="activity-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              ${a.icon === 'calendar' ? `
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                <line x1="16" y1="2" x2="16" y2="6"/>
-                <line x1="8" y1="2" x2="8" y2="6"/>
-                <line x1="3" y1="10" x2="21" y2="10"/>
-              ` : `
-                <line x1="12" y1="1" x2="12" y2="23"/>
-                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-              `}
-            </svg>
-          </div>
-          <div class="activity-content">
-            <div class="activity-title">${a.title}</div>
-            <div class="activity-subtitle">${a.subtitle}</div>
-          </div>
-        </div>
-      `).join('');
+        if (!appointments || appointments.length === 0) {
+          historyList.innerHTML = '<p class="overview-empty">No appointment history.</p>';
+          historyList.dataset.loaded = 'true';
+          return;
+        }
 
-      historyList.dataset.loaded = 'true';
+        const activities = appointments.map(apt => {
+          const date = new Date(apt.start_time);
+          const timeAgo = getTimeAgo(date);
+          const serviceName = apt.service_name || apt.title || 'Appointment';
+          const staffName = apt.staff_first_name && apt.staff_last_name
+            ? `${apt.staff_first_name} ${apt.staff_last_name}`
+            : 'Staff';
+          const locationName = apt.location_name || apt.location_type || '';
+
+          let subtitle = apt.status === 'cancelled' ? 'Appointment cancelled' : 'Appointment completed';
+          let icon = 'calendar';
+
+          // Add payment activity if paid
+          if (apt.payment_status === 'paid' && apt.price > 0) {
+            icon = 'dollar';
+          }
+
+          return {
+            time: timeAgo,
+            icon: icon,
+            title: `Appointment: Expand Health - <a href="#" class="activity-link">${serviceName}</a> at ${locationName} with ${staffName}`,
+            subtitle: subtitle
+          };
+        });
+
+        historyList.innerHTML = activities.map(a => `
+          <div class="activity-item">
+            <div class="activity-time">${a.time}</div>
+            <div class="activity-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                ${a.icon === 'calendar' ? `
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                  <line x1="16" y1="2" x2="16" y2="6"/>
+                  <line x1="8" y1="2" x2="8" y2="6"/>
+                  <line x1="3" y1="10" x2="21" y2="10"/>
+                ` : `
+                  <line x1="12" y1="1" x2="12" y2="23"/>
+                  <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                `}
+              </svg>
+            </div>
+            <div class="activity-content">
+              <div class="activity-title">${a.title}</div>
+              <div class="activity-subtitle">${a.subtitle}</div>
+            </div>
+          </div>
+        `).join('');
+
+        historyList.dataset.loaded = 'true';
+      } catch (error) {
+        console.error('Failed to load activity history:', error);
+        historyList.innerHTML = '<p class="overview-empty">Failed to load history.</p>';
+        historyList.dataset.loaded = 'true';
+      }
     }
 
     function setupActionsDropdown() {
