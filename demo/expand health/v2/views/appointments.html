@@ -6243,7 +6243,7 @@
         const duration = document.getElementById('newAptDuration').value || 60;
 
         // Use availability endpoint if we have a start time, otherwise use basic locations
-        let url = '/api/locations';
+        let url = '/api/locations?active_only=true';
         if (startTime) {
           url = `/api/locations/availability?start_time=${encodeURIComponent(startTime)}&duration=${duration}`;
         }
@@ -6259,17 +6259,18 @@
           newAptVenues = Array.isArray(data) ? data : [];
           renderVenueDropdown();
         } else {
-          console.error('Failed to load venues, status:', response.status);
+          console.error('Failed to load venues, status:', response.status, await response.text());
           // Fallback: try basic locations endpoint
-          if (startTime) {
-            console.log('Falling back to /api/locations');
-            const fallbackResponse = await fetch('/api/locations', {
-              headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (fallbackResponse.ok) {
-              newAptVenues = await fallbackResponse.json();
-              renderVenueDropdown();
-            }
+          console.log('Falling back to /api/locations');
+          const fallbackResponse = await fetch('/api/locations?active_only=true', {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          if (fallbackResponse.ok) {
+            newAptVenues = await fallbackResponse.json();
+            console.log('Loaded venues from fallback:', newAptVenues);
+            renderVenueDropdown();
+          } else {
+            console.error('Fallback also failed:', fallbackResponse.status);
           }
         }
       } catch (error) {
@@ -6283,7 +6284,18 @@
       const textSpan = document.getElementById('venueDropdownText');
       const currentValue = hiddenInput.value;
 
+      console.log('Rendering venue dropdown with', newAptVenues.length, 'venues');
       menu.innerHTML = '';
+
+      if (newAptVenues.length === 0) {
+        const emptyItem = document.createElement('div');
+        emptyItem.className = 'venue-dropdown-item';
+        emptyItem.style.color = '#9ca3af';
+        emptyItem.style.fontStyle = 'italic';
+        emptyItem.textContent = 'No venues available';
+        menu.appendChild(emptyItem);
+        return;
+      }
 
       newAptVenues.forEach(venue => {
         const item = document.createElement('div');
