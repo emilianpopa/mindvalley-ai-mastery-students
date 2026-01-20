@@ -111,10 +111,25 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
             <span>Memberships</span>
           </a>
-          <a href="/customers" class="nav-item">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-            <span>Customers</span>
-          </a>
+          <div class="nav-dropdown">
+            <div class="nav-dropdown-trigger">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+              <span>Customers</span>
+              <svg class="nav-dropdown-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </div>
+            <div class="nav-dropdown-menu">
+              <div class="nav-dropdown-header">CUSTOMERS</div>
+              <div class="nav-dropdown-section">CRM</div>
+              <a href="/customers" class="nav-dropdown-item">Customer list</a>
+              <div class="nav-dropdown-section">ORGANIZATION</div>
+              <a href="/customers/custom-fields" class="nav-dropdown-item">Custom info fields</a>
+              <a href="/customers/tags" class="nav-dropdown-item">Tags</a>
+              <a href="/customers/notes" class="nav-dropdown-item">Notes</a>
+              <a href="/forms" class="nav-dropdown-item">Intake forms</a>
+              <div class="nav-dropdown-section">SET-UP</div>
+              <a href="/customers/payment-plans" class="nav-dropdown-item">Payment plans</a>
+            </div>
+          </div>
           <a href="/leads" class="nav-item">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
             <span>Marketing</span>
