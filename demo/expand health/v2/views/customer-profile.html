@@ -630,6 +630,11 @@
       color: var(--gray-500);
     }
 
+    /* Actions dropdown wrapper */
+    .actions-dropdown-wrapper {
+      position: relative;
+    }
+
     /* Actions dropdown */
     .actions-dropdown {
       display: none;
@@ -1434,41 +1439,43 @@
                 </svg>
                 New sale
               </button>
-              <button class="btn-actions" onclick="toggleActionsDropdown()">
-                Actions
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <polyline points="6 9 12 15 18 9"/>
-                </svg>
+              <div class="actions-dropdown-wrapper">
+                <button class="btn-actions" onclick="toggleActionsDropdown()">
+                  Actions
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="6 9 12 15 18 9"/>
+                  </svg>
+                </button>
                 <div class="actions-dropdown" id="actionsDropdown">
-                  <button class="dropdown-item">
+                  <button class="dropdown-item" onclick="contactCustomer()">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
                       <polyline points="22,6 12,13 2,6"/>
                     </svg>
                     Contact customer
                   </button>
-                  <button class="dropdown-item">
+                  <button class="dropdown-item" onclick="sendWaiver()">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <path d="M9 11l3 3L22 4"/>
                       <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
                     </svg>
                     Send waiver
                   </button>
-                  <button class="dropdown-item">
+                  <button class="dropdown-item" onclick="editCustomerInfo()">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
                       <circle cx="12" cy="7" r="4"/>
                     </svg>
                     Edit customer info
                   </button>
-                  <button class="dropdown-item">
+                  <button class="dropdown-item" onclick="editCustomerTags()">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
                       <line x1="7" y1="7" x2="7.01" y2="7"/>
                     </svg>
                     Edit customer's tags
                   </button>
-                  <button class="dropdown-item">
+                  <button class="dropdown-item" onclick="uploadDocuments()">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                       <polyline points="17 8 12 3 7 8"/>
@@ -1476,7 +1483,7 @@
                     </svg>
                     Upload documents
                   </button>
-                  <button class="dropdown-item">
+                  <button class="dropdown-item" onclick="addTask()">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <path d="M9 11l3 3L22 4"/>
                       <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
@@ -1484,7 +1491,7 @@
                     Add task
                   </button>
                   <div class="dropdown-divider"></div>
-                  <button class="dropdown-item">
+                  <button class="dropdown-item" onclick="addChild()">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
                       <circle cx="9" cy="7" r="4"/>
@@ -1493,20 +1500,20 @@
                     </svg>
                     Add child
                   </button>
-                  <button class="dropdown-item">
+                  <button class="dropdown-item" onclick="requestPasswordReset()">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
                       <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
                     </svg>
                     Request password reset
                   </button>
-                  <button class="dropdown-item">
+                  <button class="dropdown-item" onclick="selfCheckInKeys()">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"/>
                     </svg>
                     Self check-in keys
                   </button>
-                  <button class="dropdown-item">
+                  <button class="dropdown-item" onclick="sendPersonalData()">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                       <polyline points="7 10 12 15 17 10"/>
@@ -1515,7 +1522,7 @@
                     Send personal data
                   </button>
                   <div class="dropdown-divider"></div>
-                  <button class="dropdown-item danger">
+                  <button class="dropdown-item danger" onclick="deleteCustomer()">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <polyline points="3 6 5 6 21 6"/>
                       <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
@@ -1523,7 +1530,7 @@
                     Delete customer
                   </button>
                 </div>
-              </button>
+              </div>
             </div>
           </div>
 
@@ -2151,17 +2158,34 @@
       // Close dropdown when clicking outside
       document.addEventListener('click', (e) => {
         const dropdown = document.getElementById('actionsDropdown');
-        const btn = document.querySelector('.btn-actions');
-        if (!btn.contains(e.target)) {
+        const wrapper = document.querySelector('.actions-dropdown-wrapper');
+        if (wrapper && !wrapper.contains(e.target)) {
           dropdown.classList.remove('active');
         }
       });
     }
 
-    function toggleActionsDropdown() {
+    function toggleActionsDropdown(event) {
       event.stopPropagation();
       const dropdown = document.getElementById('actionsDropdown');
       dropdown.classList.toggle('active');
+    }
+
+    // Placeholder action functions
+    function contactCustomer() { alert('Contact customer - coming soon!'); }
+    function sendWaiver() { alert('Send waiver - coming soon!'); }
+    function editCustomerInfo() { window.location.href = `/customers/${customerId}/edit`; }
+    function editCustomerTags() { alert('Edit tags - coming soon!'); }
+    function uploadDocuments() { alert('Upload documents - coming soon!'); }
+    function addTask() { alert('Add task - coming soon!'); }
+    function addChild() { alert('Add child - coming soon!'); }
+    function requestPasswordReset() { alert('Request password reset - coming soon!'); }
+    function selfCheckInKeys() { alert('Self check-in keys - coming soon!'); }
+    function sendPersonalData() { alert('Send personal data - coming soon!'); }
+    function deleteCustomer() {
+      if (confirm('Are you sure you want to delete this customer?')) {
+        alert('Delete customer - coming soon!');
+      }
     }
 
     function openQuickSale() {
