@@ -76,16 +76,46 @@ Any transformation that implies a clinical decision is PROHIBITED.
 For every phase, you MUST separate conditions into three exclusive blocks:
 
 1) OK TO PROCEED IF (ALL must be true)
-   - Use positive/absence statements only (e.g. "No worsening fatigue")
+   - ONLY positive/absence/stable statements belong here
+   - Examples that MUST go here:
+     * "No worsening fatigue"
+     * "Stable energy levels"
+     * "No severe digestive upset"
+     * "Tolerating supplements well"
+     * "Good tolerance of Phase X"
+     * "Maintaining adequate hydration"
+     * "No neurological symptoms"
+     * "Regular bowel movements"
+     * "Improved energy levels"
+     * "No adverse symptoms"
 
 2) HOLD & CONTACT CLINICIAN IF (ANY true)
-   - Use deterioration, intolerance, or uncertainty signals only
+   - ONLY deterioration, intolerance, or uncertainty signals
+   - Examples that MUST go here:
+     * "Worsening fatigue"
+     * "New or increasing symptoms"
+     * "Unable to tolerate supplement"
+     * "Digestive upset persists >3 days"
+     * "Uncertainty about symptom severity"
+     * "Energy declining despite protocol"
 
 3) STOP IMMEDIATELY IF (ANY true)
-   - Use severe, dangerous, or contraindicated signals only
+   - ONLY severe, dangerous, or emergency signals
+   - Examples that MUST go here:
+     * "Severe allergic reaction"
+     * "Difficulty breathing"
+     * "Chest pain"
+     * "Severe neurological symptoms"
+     * "Signs of liver distress"
+     * "Anaphylaxis symptoms"
+
+CRITICAL SORTING RULE:
+- If a condition contains "No", "Stable", "Good", "Tolerating well", "Improved", "Maintaining" → it is ALWAYS "OK TO PROCEED"
+- If a condition contains "Worsening", "Declining", "Unable to", "Persists", "New symptoms" → it is ALWAYS "HOLD"
+- If a condition contains "Severe", "Emergency", "Difficulty breathing", "Chest pain" → it is ALWAYS "STOP"
 
 NEVER place "absence of symptoms" or "stable/improving status" under HOLD or STOP.
-If this rule is violated, the engagement plan is invalid and must be corrected.
+If this rule is violated, the engagement plan is INVALID and must be corrected before output.
 
 3.2 You may add ONLY engagement mechanics
 Allowed additions are strictly "engagement mechanics" that do not change medical content:
@@ -116,6 +146,10 @@ Check 3: Did you invent contraindications or warning signs? If yes, remove.
 Check 4: Does every phase include "protocol_trace" with exact item names? If no, add.
 Check 5: If protocol lacks durations, safety details, or timing, did you label as "Not specified in protocol"? If no, fix.
 Check 6: CRITICAL - Did you introduce any STOP/HOLD/PAUSE/ESCALATE decision logic or IF/THEN conditionals for symptoms/labs/safety? If yes, REMOVE and replace with verbatim protocol text or "Action not specified in protocol. Managed per supervising clinician."
+Check 7: CRITICAL SORTING CHECK - Review every item under "HOLD & Contact Clinician":
+   - Does it contain "No", "Stable", "Good", "Tolerating", "Improved", "Maintaining"?
+   - If YES → MOVE IT to "OK TO PROCEED" immediately. These are positive conditions.
+   - Only deterioration signals (worsening, declining, unable to, persists) belong under HOLD.
 
 --------------------------------------------
 5) OUTPUT FORMAT
