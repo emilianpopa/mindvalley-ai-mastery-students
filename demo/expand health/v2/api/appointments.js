@@ -219,6 +219,7 @@ router.get('/calendar', async (req, res, next) => {
         a.is_time_block,
         a.created_at,
         a.internal_notes,
+        a.recurring_appointment_id,
         c.first_name || ' ' || c.last_name as client_name,
         c.email as client_email,
         c.phone as client_phone,
@@ -285,7 +286,9 @@ router.get('/calendar', async (req, res, next) => {
           isTimeBlock: apt.is_time_block || false,
           bufferBefore: apt.buffer_before_minutes || 0,
           bufferAfter: apt.buffer_after_minutes || 0,
-          createdAt: apt.created_at
+          createdAt: apt.created_at,
+          isRecurring: !!apt.recurring_appointment_id,
+          recurringAppointmentId: apt.recurring_appointment_id
         }
       };
     });

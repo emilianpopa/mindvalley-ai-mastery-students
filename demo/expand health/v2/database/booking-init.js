@@ -255,6 +255,9 @@ async function initAppointments() {
       checked_in_at TIMESTAMP WITH TIME ZONE,
       no_show BOOLEAN DEFAULT false,
 
+      -- Recurring appointment link
+      recurring_appointment_id INTEGER REFERENCES recurring_appointments(id) ON DELETE SET NULL,
+
       -- Metadata
       external_id VARCHAR(255),
       external_platform VARCHAR(50),
@@ -286,6 +289,7 @@ async function initAppointments() {
     CREATE INDEX IF NOT EXISTS idx_appointments_staff ON appointments(staff_id);
     CREATE INDEX IF NOT EXISTS idx_appointments_service ON appointments(service_type_id);
     CREATE INDEX IF NOT EXISTS idx_appointments_location ON appointments(location_id);
+    CREATE INDEX IF NOT EXISTS idx_appointments_recurring ON appointments(recurring_appointment_id);
     CREATE INDEX IF NOT EXISTS idx_appointments_status ON appointments(status);
     CREATE INDEX IF NOT EXISTS idx_appointments_start ON appointments(start_time);
     CREATE INDEX IF NOT EXISTS idx_appointments_date_range ON appointments(start_time, end_time);
