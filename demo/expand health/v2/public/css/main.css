@@ -294,7 +294,7 @@ body {
 
 /* Nav dropdown menu */
 .nav-dropdown {
-  position: static;
+  position: relative;
 }
 
 .nav-dropdown-trigger {
@@ -353,8 +353,9 @@ body {
 }
 
 .nav-dropdown-menu {
-  position: fixed;
-  left: 260px;
+  position: absolute;
+  left: 100%;
+  top: 0;
   background: white;
   border-radius: 12px;
   box-shadow: 0 4px 24px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.05);
@@ -362,7 +363,7 @@ body {
   padding: 12px 0 12px 8px;
   z-index: 1001;
   display: none;
-  top: 400px;
+  margin-left: 8px;
 }
 
 /* Bridge to keep hover when moving to dropdown */
@@ -375,7 +376,7 @@ body {
   height: 100%;
 }
 
-.nav-dropdown:hover .nav-dropdown-menu,
+/* Only open on click via .open class */
 .nav-dropdown.open .nav-dropdown-menu {
   display: block;
 }
