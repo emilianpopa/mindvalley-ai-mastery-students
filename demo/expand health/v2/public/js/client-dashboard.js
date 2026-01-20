@@ -5860,29 +5860,7 @@ async function generateEngagementPlan() {
         </div>
         ` : ''}
 
-        ${plan.safety_rules ? `
-        <div class="engagement-safety-rules">
-          <h3>Safety Rules</h3>
-          ${plan.safety_rules.stop_immediately ? `
-            <div class="safety-stop">
-              <p><strong>🛑 STOP Immediately:</strong></p>
-              <ul>${plan.safety_rules.stop_immediately.map(r => `<li>${typeof r === 'string' ? r : (r.rule || '')}</li>`).join('')}</ul>
-            </div>
-          ` : ''}
-          ${plan.safety_rules.hold_and_contact ? `
-            <div class="safety-hold">
-              <p><strong>⏸️ HOLD & Contact Clinician:</strong></p>
-              <ul>${plan.safety_rules.hold_and_contact.map(r => `<li>${typeof r === 'string' ? r : (r.rule || '')}</li>`).join('')}</ul>
-            </div>
-          ` : ''}
-          ${plan.safety_rules.escalation_24h ? `
-            <div class="safety-escalate">
-              <p><strong>⚠️ Escalate within 24h:</strong></p>
-              <ul>${plan.safety_rules.escalation_24h.map(r => `<li>${typeof r === 'string' ? r : (r.rule || '')}</li>`).join('')}</ul>
-            </div>
-          ` : ''}
-        </div>
-        ` : ''}
+        <!-- Safety Rules section removed - handled per-phase in Safety Gates -->
 
         <div class="add-phase-btn" onclick="addEngagementPhase()">
           <span>+ Add a Phase</span>
@@ -10125,40 +10103,8 @@ function showEngagementPlanEditorView(protocol, planData) {
           </div>
           ` : ''}
 
-          <!-- Safety Rules -->
-          ${planData.safety_rules ? `
-          <div id="safetyRulesSection" class="engagement-safety" style="background: #FEF2F2; border: 1px solid #FECACA; border-radius: 12px; padding: 24px; margin-top: 24px;">
-            <h3 style="font-size: 16px; font-weight: 600; color: #991B1B; margin: 0 0 16px 0;">Safety Rules</h3>
-            ${planData.safety_rules.note ? `<p style="font-size: 13px; color: #7F1D1D; font-style: italic; margin: 0 0 16px 0;">${escapeHtml(planData.safety_rules.note)}</p>` : ''}
-
-            ${planData.safety_rules.stop_immediately && planData.safety_rules.stop_immediately.length > 0 ? `
-              <div style="background: #FEE2E2; padding: 16px; border-radius: 8px; margin-bottom: 12px; border-left: 4px solid #DC2626;">
-                <strong style="color: #DC2626; display: block; margin-bottom: 8px;">🛑 STOP IMMEDIATELY if:</strong>
-                <ul style="margin: 0; padding-left: 20px;">
-                  ${planData.safety_rules.stop_immediately.map(r => `<li style="color: #991B1B; margin-bottom: 4px;">${escapeHtml(typeof r === 'string' ? r : (r.rule || ''))}</li>`).join('')}
-                </ul>
-              </div>
-            ` : ''}
-
-            ${planData.safety_rules.hold_and_contact && planData.safety_rules.hold_and_contact.length > 0 ? `
-              <div style="background: #FEF3C7; padding: 16px; border-radius: 8px; margin-bottom: 12px; border-left: 4px solid #F59E0B;">
-                <strong style="color: #92400E; display: block; margin-bottom: 8px;">⏸️ HOLD & Contact Clinician if:</strong>
-                <ul style="margin: 0; padding-left: 20px;">
-                  ${planData.safety_rules.hold_and_contact.map(r => `<li style="color: #78350F; margin-bottom: 4px;">${escapeHtml(typeof r === 'string' ? r : (r.rule || ''))}</li>`).join('')}
-                </ul>
-              </div>
-            ` : ''}
-
-            ${(planData.safety_rules.escalation_24h || planData.safety_rules.escalation_triggers) && (planData.safety_rules.escalation_24h?.length > 0 || planData.safety_rules.escalation_triggers?.length > 0) ? `
-              <div style="background: #DBEAFE; padding: 16px; border-radius: 8px; border-left: 4px solid #3B82F6;">
-                <strong style="color: #1E40AF; display: block; margin-bottom: 8px;">⚠️ Escalate within 24h if:</strong>
-                <ul style="margin: 0; padding-left: 20px;">
-                  ${(planData.safety_rules.escalation_24h || planData.safety_rules.escalation_triggers).map(r => `<li style="color: #1E3A8A; margin-bottom: 4px;">${escapeHtml(typeof r === 'string' ? r : (r.rule || ''))}</li>`).join('')}
-                </ul>
-              </div>
-            ` : ''}
-          </div>
-          ` : ''}
+          <!-- Safety Rules - REMOVED: AI was incorrectly categorizing positive conditions under HOLD -->
+          <!-- Safety monitoring is handled per-phase in Safety Gates instead -->
 
         </div>
       </div>
@@ -11751,52 +11697,8 @@ function formatEngagementPlanHtml(planData) {
     `;
   }
 
-  // Safety Rules section (new format) - handles both string and object {rule, source} formats
-  if (planData.safety_rules) {
-    const rules = planData.safety_rules;
-
-    // Helper to render rules - handles both string and object formats
-    const renderSafetyRule = (r) => {
-      if (typeof r === 'string') {
-        return escapeHtml(r);
-      } else if (r && r.rule) {
-        return escapeHtml(r.rule);
-      }
-      return '';
-    };
-
-    html += `<div style="background: #FEF2F2; border-radius: 12px; padding: 20px; margin-bottom: 16px;">
-      <h3 style="color: #DC2626; margin: 0 0 12px 0; font-size: 16px;">Safety Rules</h3>`;
-
-    if (rules.stop_immediately && rules.stop_immediately.length > 0) {
-      html += `
-        <div style="background: #FEE2E2; padding: 12px; border-radius: 6px; margin-bottom: 12px; border-left: 4px solid #DC2626;">
-          <strong style="color: #DC2626;">STOP IMMEDIATELY if:</strong>
-          <ul style="margin: 8px 0 0 0; padding-left: 20px;">${rules.stop_immediately.map(r => `<li style="font-size: 13px;">${renderSafetyRule(r)}</li>`).join('')}</ul>
-        </div>
-      `;
-    }
-
-    if (rules.hold_and_contact && rules.hold_and_contact.length > 0) {
-      html += `
-        <div style="background: #FEF3C7; padding: 12px; border-radius: 6px; margin-bottom: 12px; border-left: 4px solid #F59E0B;">
-          <strong style="color: #92400E;">HOLD & Contact Clinician if:</strong>
-          <ul style="margin: 8px 0 0 0; padding-left: 20px;">${rules.hold_and_contact.map(r => `<li style="font-size: 13px;">${renderSafetyRule(r)}</li>`).join('')}</ul>
-        </div>
-      `;
-    }
-
-    if (rules.escalation_24h && rules.escalation_24h.length > 0) {
-      html += `
-        <div style="background: #DBEAFE; padding: 12px; border-radius: 6px; margin-bottom: 12px; border-left: 4px solid #3B82F6;">
-          <strong style="color: #1E40AF;">Escalate within 24h if:</strong>
-          <ul style="margin: 8px 0 0 0; padding-left: 20px;">${rules.escalation_24h.map(r => `<li style="font-size: 13px;">${renderSafetyRule(r)}</li>`).join('')}</ul>
-        </div>
-      `;
-    }
-
-    html += `</div>`;
-  }
+  // Safety Rules section removed - handled per-phase in Safety Gates
+  // The AI was incorrectly categorizing positive conditions under HOLD
 
   // Communication schedule
   if (planData.communication_schedule) {

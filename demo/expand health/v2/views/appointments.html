@@ -6625,13 +6625,34 @@
       };
 
       try {
-        // If recurring, create multiple appointments
+        // If recurring, create recurring pattern first, then multiple appointments
         if (isRecurring) {
           const repeatEvery = parseInt(document.getElementById('repeatEvery').value) || 7;
           const appointments = [appointmentData];
 
+          // Determine recurrence type based on interval
+          let recurrenceType = 'weekly';
+          if (repeatEvery === 1) recurrenceType = 'daily';
+          else if (repeatEvery === 14) recurrenceType = 'biweekly';
+          else if (repeatEvery >= 28) recurrenceType = 'monthly';
+
+          // Create recurring appointment pattern first
+          const recurringData = {
+            client_id: customerId || null,
+            staff_id: newAptStaffList.length > 0 ? newAptStaffList[0] : null,
+            service_type_id: serviceId || null,
+            recurrence_type: recurrenceType,
+            recurrence_interval: repeatEvery,
+            day_of_week: startTime.getDay(),
+            start_date: startTime.toISOString()
+          };
+
+          let recurringAppointmentId = null;
+
           if (endsMode === 'on') {
             const endDate = new Date(document.getElementById('endsOnDate').value);
+            recurringData.end_date = endDate.toISOString();
+
             let currentDate = new Date(startTime);
             currentDate.setDate(currentDate.getDate() + repeatEvery);
 
@@ -6644,6 +6665,7 @@
             }
           } else {
             const occurrences = parseInt(document.getElementById('endsAfterCount').value) || 4;
+            recurringData.occurrences = occurrences;
             let currentDate = new Date(startTime);
 
             for (let i = 1; i < occurrences; i++) {
@@ -6655,8 +6677,27 @@
             }
           }
 
-          // Create all appointments
+          // Create the recurring pattern
+          try {
+            const recurringResponse = await fetch('/api/appointments/recurring', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify(recurringData)
+            });
+            if (recurringResponse.ok) {
+              const recurringResult = await recurringResponse.json();
+              recurringAppointmentId = recurringResult.id;
+            }
+          } catch (e) {
+            console.warn('Could not create recurring pattern:', e);
+          }
+
+          // Create all appointments with recurring_appointment_id
           for (const apt of appointments) {
+            apt.recurring_appointment_id = recurringAppointmentId;
             await fetch('/api/appointments', {
               method: 'POST',
               headers: {

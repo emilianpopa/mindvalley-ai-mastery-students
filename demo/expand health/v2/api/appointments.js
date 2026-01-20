@@ -364,7 +364,8 @@ router.post('/', async (req, res, next) => {
       price,
       client_notes,
       staff_notes,
-      internal_notes
+      internal_notes,
+      recurring_appointment_id
     } = req.body;
 
     // Validate required fields
@@ -419,15 +420,15 @@ router.post('/', async (req, res, next) => {
         title, start_time, end_time, status,
         location_id, location_type, location_address, video_link,
         price, client_notes, staff_notes, internal_notes,
-        booked_by, booking_source, created_by
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
+        booked_by, booking_source, created_by, recurring_appointment_id
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
       RETURNING *
     `, [
       tenantId, client_id, staff_id, service_type_id,
       title, start_time, end_time, status,
       location_id, location_type, location_address, video_link,
       price, client_notes, staff_notes, internal_notes,
-      'staff', 'admin', userId
+      'staff', 'admin', userId, recurring_appointment_id || null
     ]);
 
     res.status(201).json(result.rows[0]);
@@ -2273,6 +2274,48 @@ router.post('/fix-staff-assignments', async (req, res, next) => {
       preview
     });
 
+  } catch (error) {
+    next(error);
+  }
+});
+
+// ============================================
+// RECURRING APPOINTMENTS
+// ============================================
+
+/**
+ * POST /api/appointments/recurring
+ * Create a recurring appointment pattern
+ */
+router.post('/recurring', async (req, res, next) => {
+  try {
+    const tenantId = req.user.tenantId;
+    const {
+      client_id,
+      staff_id,
+      service_type_id,
+      recurrence_type = 'weekly',
+      recurrence_interval = 1,
+      day_of_week,
+      start_date,
+      end_date,
+      occurrences
+    } = req.body;
+
+    const result = await db.query(`
+      INSERT INTO recurring_appointments (
+        tenant_id, client_id, staff_id, service_type_id,
+        recurrence_type, recurrence_interval, day_of_week,
+        start_date, end_date, occurrences, is_active
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, true)
+      RETURNING *
+    `, [
+      tenantId, client_id, staff_id, service_type_id,
+      recurrence_type, recurrence_interval, day_of_week,
+      start_date, end_date || null, occurrences || null
+    ]);
+
+    res.status(201).json(result.rows[0]);
   } catch (error) {
     next(error);
   }
