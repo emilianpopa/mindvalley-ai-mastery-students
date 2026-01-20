@@ -114,6 +114,22 @@ CRITICAL SORTING RULE:
 - If a condition contains "Worsening", "Declining", "Unable to", "Persists", "New symptoms" → it is ALWAYS "HOLD"
 - If a condition contains "Severe", "Emergency", "Difficulty breathing", "Chest pain" → it is ALWAYS "STOP"
 
+PHASE READINESS CRITERIA HANDLING:
+- Phase readiness_criteria from the protocol are "OK TO PROCEED" conditions
+- They describe what must be TRUE to advance to the next phase
+- NEVER put readiness_criteria under "HOLD & Contact Clinician"
+- Example: "Core protocol well-tolerated for 2 weeks" = OK TO PROCEED condition
+- Example: "No significant digestive upset" = OK TO PROCEED condition
+
+SAFETY_RULES SECTION STRUCTURE:
+- "🛑 STOP IMMEDIATELY if:" should contain NEGATED versions of critical safety conditions (e.g., "Severe allergic reaction occurs")
+- "⏸️ HOLD & Contact Clinician if:" should contain ACTUAL PROBLEMS (e.g., "Worsening fatigue despite protocol", "Unable to tolerate supplement")
+- "⚠️ Escalate within 24h if:" should contain warning signs that need urgent attention
+
+DO NOT POPULATE HOLD SECTION WITH POSITIVE CONDITIONS.
+If the protocol only provides readiness criteria (positive conditions), the HOLD section should say:
+"Any symptoms or concerns that deviate from expected progress - consult clinician"
+
 NEVER place "absence of symptoms" or "stable/improving status" under HOLD or STOP.
 If this rule is violated, the engagement plan is INVALID and must be corrected before output.
 
