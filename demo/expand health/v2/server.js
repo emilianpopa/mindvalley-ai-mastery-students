@@ -188,6 +188,23 @@ app.get('/customers/import', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'import-customers.html'));
 });
 
+// Customer organization pages - must be before /customers/:id
+app.get('/customers/tags', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'customer-tags.html'));
+});
+
+app.get('/customers/custom-fields', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'customer-custom-fields.html'));
+});
+
+app.get('/customers/notes', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'customer-notes.html'));
+});
+
+app.get('/customers/payment-plans', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'customer-payment-plans.html'));
+});
+
 app.get('/customers/:id', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'customer-profile.html'));
 });

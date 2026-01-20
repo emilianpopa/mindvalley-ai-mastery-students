@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notes Settings - ExpandHealth</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cline x1='20' y1='20' x2='80' y2='80' stroke='%230F766E' stroke-width='12' stroke-linecap='round'/%3E%3Cline x1='80' y1='20' x2='20' y2='80' stroke='%230F766E' stroke-width='12' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/css/main.css">
+  <script src="/js/feature-flags.js"></script>
+  <script src="/js/nav.js"></script>
+  <script src="/js/utility-bar.js"></script>
+  <style>
+    .notes-page { padding: 24px; }
+    .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+    .page-title { font-size: 1.75rem; font-weight: 600; color: var(--gray-900); }
+    .page-description { color: var(--gray-600); margin-bottom: 24px; font-size: 0.9375rem; max-width: 600px; }
+
+    .settings-card {
+      background: white;
+      border: 1px solid var(--gray-200);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+
+    .settings-card h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--gray-900);
+      margin-bottom: 8px;
+    }
+
+    .settings-card p {
+      color: var(--gray-500);
+      font-size: 0.875rem;
+      margin-bottom: 16px;
+    }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 0;
+      border-bottom: 1px solid var(--gray-100);
+    }
+
+    .toggle-row:last-child { border-bottom: none; }
+
+    .toggle-info { flex: 1; }
+    .toggle-label { font-weight: 500; color: var(--gray-900); font-size: 0.9375rem; }
+    .toggle-desc { color: var(--gray-500); font-size: 0.8125rem; margin-top: 4px; }
+
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 48px;
+      height: 26px;
+    }
+
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      background-color: var(--gray-300);
+      transition: 0.3s;
+      border-radius: 26px;
+    }
+
+    .toggle-slider:before {
+      position: absolute;
+      content: "";
+      height: 20px;
+      width: 20px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: 0.3s;
+      border-radius: 50%;
+    }
+
+    .toggle-switch input:checked + .toggle-slider { background-color: var(--teal-600); }
+    .toggle-switch input:checked + .toggle-slider:before { transform: translateX(22px); }
+
+    .note-categories {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .category-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      background: var(--gray-50);
+      border-radius: 8px;
+    }
+
+    .category-color {
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+
+    .category-name { flex: 1; font-weight: 500; color: var(--gray-700); }
+
+    .category-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .category-action-btn {
+      padding: 6px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      border-radius: 4px;
+      color: var(--gray-400);
+    }
+
+    .category-action-btn:hover { background: var(--gray-200); color: var(--gray-600); }
+    .category-action-btn svg { width: 14px; height: 14px; }
+
+    .btn-add-category {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      border: 1px dashed var(--gray-300);
+      background: transparent;
+      color: var(--gray-600);
+      border-radius: 8px;
+      font-size: 0.875rem;
+      cursor: pointer;
+      margin-top: 12px;
+    }
+
+    .btn-add-category:hover { border-color: var(--teal-500); color: var(--teal-600); }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">
+          <svg class="logo-icon" width="28" height="28" viewBox="0 0 24 24" fill="none">
+            <path d="M4 4L11 12L4 20" stroke="#0F766E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M20 4L13 12L20 20" stroke="#0F766E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <div class="logo-text">
+            <span class="logo-expand">EXPAND</span>
+            <span class="logo-health">HEALTH</span>
+          </div>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section-title">AI</div>
+        <a href="/" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg><span>Dashboard</span></a>
+        <a href="/clients" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg><span>Clients</span></a>
+
+        <div class="nav-section-title">AI ADMIN</div>
+        <a href="/forms" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg><span>Forms</span></a>
+        <a href="/protocol-templates" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg><span>Protocol Templates</span></a>
+        <a href="/admin" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg><span>Admin Settings</span></a>
+        <a href="/kb-admin" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg><span>AI Knowledge Base</span></a>
+
+        <div class="nav-section booking-nav">
+          <div class="nav-section-title">BOOKING</div>
+          <a href="/schedule" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect></svg><span>Dashboard</span></a>
+          <a href="/inbox" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg><span>Inbox</span></a>
+          <a href="/pos" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg><span>Point of sale</span></a>
+          <div class="nav-dropdown"><div class="nav-dropdown-trigger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg><span>Classes</span><svg class="nav-dropdown-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg></div><div class="nav-dropdown-menu"><div class="nav-dropdown-header">CLASSES</div><div class="nav-dropdown-section">SCHEDULING</div><a href="/classes" class="nav-dropdown-item">Schedule</a><a href="/class-templates" class="nav-dropdown-item">Class templates</a><div class="nav-dropdown-section">PRACTITIONERS</div><a href="/substitution-requests" class="nav-dropdown-item">Substitution requests</a></div></div>
+          <div class="nav-dropdown"><div class="nav-dropdown-trigger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg><span>Appointments</span><svg class="nav-dropdown-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg></div><div class="nav-dropdown-menu"><div class="nav-dropdown-header">APPOINTMENTS</div><a href="/appointments" class="nav-dropdown-item">Schedule</a><a href="/reservations" class="nav-dropdown-item">Reservations</a><a href="/services" class="nav-dropdown-item">Services & add-ons</a><a href="/boards" class="nav-dropdown-item">Boards</a></div></div>
+          <a href="/community" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg><span>Community</span></a>
+          <a href="/on-demand" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg><span>On-Demand</span></a>
+          <a href="/memberships" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg><span>Memberships</span></a>
+          <div class="nav-dropdown open">
+            <div class="nav-dropdown-trigger active">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+              <span>Customers</span>
+              <svg class="nav-dropdown-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </div>
+            <div class="nav-dropdown-menu">
+              <div class="nav-dropdown-header">CUSTOMERS</div>
+              <div class="nav-dropdown-section">CRM</div>
+              <a href="/customers" class="nav-dropdown-item">Customer list</a>
+              <div class="nav-dropdown-section">ORGANIZATION</div>
+              <a href="/customers/custom-fields" class="nav-dropdown-item">Custom info fields</a>
+              <a href="/customers/tags" class="nav-dropdown-item">Tags</a>
+              <a href="/customers/notes" class="nav-dropdown-item active">Notes</a>
+              <a href="/forms" class="nav-dropdown-item">Intake forms</a>
+              <div class="nav-dropdown-section">SET-UP</div>
+              <a href="/customers/payment-plans" class="nav-dropdown-item">Payment plans</a>
+            </div>
+          </div>
+          <a href="/leads" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg><span>Marketing</span></a>
+          <a href="/analytics" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg><span>Analytics</span></a>
+          <a href="/financials" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg><span>Financials</span></a>
+        </div>
+
+        <div class="nav-section booking-nav">
+          <div class="nav-section-title">STUDIO SET-UP</div>
+          <a href="/studio/practitioners" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg><span>Practitioners</span></a>
+          <a href="/services" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg><span>Services</span></a>
+          <a href="/studio/locations" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg><span>Locations</span></a>
+        </div>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="support-links">
+          <a href="#" class="support-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>Support</a>
+          <a href="#" class="support-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Help Center</a>
+        </div>
+        <div class="user-info">
+          <div class="user-avatar" id="userAvatar">U</div>
+          <div class="user-details">
+            <span class="user-name" id="userName">Loading...</span>
+            <span class="user-role" id="userRole">...</span>
+          </div>
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="logout()">Logout</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div id="utilityBarContainer"></div>
+      <div class="notes-page">
+        <div class="page-header">
+          <h1 class="page-title">Notes Settings</h1>
+        </div>
+
+        <p class="page-description">
+          Configure how notes work for your customer profiles. Set up categories and permissions.
+        </p>
+
+        <div class="settings-card">
+          <h3>General Settings</h3>
+          <p>Control how notes are displayed and managed</p>
+
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <div class="toggle-label">Enable notes on customer profiles</div>
+              <div class="toggle-desc">Allow adding notes to customer profiles</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <div class="toggle-label">Show notes in activity feed</div>
+              <div class="toggle-desc">Display notes alongside other customer activity</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <div class="toggle-label">Allow practitioners to add notes</div>
+              <div class="toggle-desc">Practitioners can add notes to their customers</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="settings-card">
+          <h3>Note Categories</h3>
+          <p>Organize notes with custom categories</p>
+
+          <div class="note-categories" id="noteCategories">
+            <div class="category-item">
+              <div class="category-color" style="background: #3B82F6;"></div>
+              <span class="category-name">General</span>
+              <div class="category-actions">
+                <button class="category-action-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+              </div>
+            </div>
+            <div class="category-item">
+              <div class="category-color" style="background: #EF4444;"></div>
+              <span class="category-name">Important</span>
+              <div class="category-actions">
+                <button class="category-action-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+              </div>
+            </div>
+            <div class="category-item">
+              <div class="category-color" style="background: #22C55E;"></div>
+              <span class="category-name">Follow-up</span>
+              <div class="category-actions">
+                <button class="category-action-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+              </div>
+            </div>
+          </div>
+
+          <button class="btn-add-category">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="5" x2="12" y2="19"/>
+              <line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            Add category
+          </button>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="/js/auth.js"></script>
+  <script>
+    const token = localStorage.getItem('auth_token');
+    if (!token) window.location.href = '/login';
+
+    async function loadUserInfo() {
+      try {
+        const response = await fetch('/api/users/me', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.ok) {
+          const user = await response.json();
+          document.getElementById('userName').textContent = user.name || user.email;
+          document.getElementById('userRole').textContent = user.role || 'User';
+          document.getElementById('userAvatar').textContent = (user.name || user.email).charAt(0).toUpperCase();
+        }
+      } catch (error) {
+        console.error('Failed to load user info:', error);
+      }
+    }
+    loadUserInfo();
+  </script>
+</body>
+</html>
